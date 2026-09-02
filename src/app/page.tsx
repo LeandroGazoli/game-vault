@@ -67,8 +67,11 @@ export default function HomePage() {
       {/* ==========================================
           1. HERO SECTION COM BUSCA E RESUMO
       ========================================== */}
-      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-[#1c1d22] via-[#141518] to-surface-50 p-5 sm:p-12 text-center sm:text-left shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-radial from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
+      <section className="relative z-30 rounded-3xl border border-white/10 bg-gradient-to-b from-[#1c1d22] via-[#141518] to-surface-50 p-5 sm:p-12 text-center sm:text-left shadow-2xl">
+        {/* Camada de fundo com overflow-hidden isolada para manter o efeito visual dos cantos */}
+        <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none -z-0">
+          <div className="absolute inset-0 bg-gradient-radial from-cyan-500/10 via-transparent to-transparent" />
+        </div>
 
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-4">

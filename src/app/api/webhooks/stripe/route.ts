@@ -3,6 +3,8 @@ import { stripe } from "@/lib/stripe";
 import { saveUserProfile, getUserProfile } from "@/lib/firebase";
 import Stripe from "stripe";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");

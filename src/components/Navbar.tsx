@@ -75,72 +75,78 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#121316]/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#121316]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <Logo size="md" />
-          </Link>
+          {/* Lado Esquerdo: Logo & Navegação Principal */}
+          <div className="flex items-center gap-4 xl:gap-6 flex-shrink-0">
+            <Link href="/" className="flex-shrink-0">
+              <Logo size="md" />
+            </Link>
 
-          {/* Barra de Pesquisa Central com Autocomplete ao Vivo (Desktop) */}
-          <div className="hidden md:flex flex-1 max-w-md">
-            <LiveSearchInput
-              variant="navbar"
-              placeholder="Buscar no IGDB (Elden Ring, GTA, Zelda...)"
-            />
+            {/* Divisor vertical elegante entre logo e navegação */}
+            <div className="hidden lg:block h-5 w-px bg-white/15" />
+
+            {/* Links de Navegação (Desktop) */}
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-sm font-medium">
+              <Link
+                href="/"
+                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  pathname === "/" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Flame className="w-4 h-4 text-orange-400" />
+                Início
+              </Link>
+              <Link
+                href="/calendar"
+                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  pathname === "/calendar" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <CalendarIcon className="w-4 h-4 text-[#00E5FF]" />
+                Calendário
+              </Link>
+              <Link
+                href="/rankings"
+                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  pathname === "/rankings" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                Rankings
+              </Link>
+              <Link
+                href="/profile"
+                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  pathname === "/profile" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Trophy className="w-4 h-4 text-emerald-400" />
+                Meus Jogos
+              </Link>
+            </nav>
           </div>
 
-          {/* Links de Navegação (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
-            <Link
-              href="/"
-              className={`transition-colors flex items-center gap-1.5 ${
-                pathname === "/" ? "text-white font-bold" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <Flame className="w-4 h-4 text-orange-400" />
-              Início
-            </Link>
-            <Link
-              href="/calendar"
-              className={`transition-colors flex items-center gap-1.5 ${
-                pathname === "/calendar" ? "text-white font-bold" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <CalendarIcon className="w-4 h-4 text-[#00E5FF]" />
-              Calendário
-            </Link>
-            <Link
-              href="/rankings"
-              className={`transition-colors flex items-center gap-1.5 ${
-                pathname === "/rankings" ? "text-white font-bold" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Rankings
-            </Link>
-            <Link
-              href="/profile"
-              className={`transition-colors flex items-center gap-1.5 ${
-                pathname === "/profile" ? "text-white font-bold" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <Trophy className="w-4 h-4 text-emerald-400" />
-              Meus Jogos
-            </Link>
+          {/* Lado Direito: Barra de Pesquisa Destacada & Área do Usuário */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+            {/* Barra de Pesquisa Destacada com Autocomplete ao Vivo (Desktop) */}
+            <div className="hidden md:flex w-52 lg:w-64 xl:w-72 2xl:w-80 focus-within:w-72 lg:focus-within:w-80 xl:focus-within:w-96 transition-all duration-300">
+              <LiveSearchInput
+                variant="navbar"
+                placeholder="Buscar jogos (God of War, GTA...)"
+              />
+            </div>
+
             {!isPremium && (
               <Link
                 href="/planos"
-                className="text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm"
+                className="hidden xl:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm flex-shrink-0"
               >
                 <Crown className="w-3.5 h-3.5 text-amber-400" />
-                Planos PRO
+                <span>Planos PRO</span>
               </Link>
             )}
-          </nav>
 
-          {/* Área do Usuário & Controles Mobile */}
-          <div className="flex items-center gap-2 sm:gap-3">
             {/* Botão Visível de Instalar PWA no Mobile */}
             <button
               onClick={triggerPwaInstall}

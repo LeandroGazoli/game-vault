@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getPlansConfig, PlanKey } from "@/lib/plans";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: "STRIPE_SECRET_KEY não configurada no servidor." },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { planId, userId, userEmail, returnUrl } = body;
 

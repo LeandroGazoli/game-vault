@@ -28,7 +28,30 @@ export default function LiveSearchInput({
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
+
+  // Atalho global: Cmd+K / Ctrl+K ou "/" para focar rapidamente na busca
+  useEffect(() => {
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      } else if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
 
   // Debounced search com cancelamento via AbortController e cache no cliente
   useEffect(() => {
@@ -114,14 +137,17 @@ export default function LiveSearchInput({
 
   return (
     <>
-      <div ref={containerRef} className={`relative w-full ${className}`}>
+      <div ref={containerRef} className={`relative w-full group ${className}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center w-full">
           <Search
-            className={`text-gray-400 absolute left-4 pointer-events-none ${
-              isHero ? "w-5 h-5" : "w-4 h-4"
+            className={`absolute pointer-events-none transition-colors ${
+              isHero
+                ? "left-4 w-5 h-5 text-cyan-400 group-focus-within:text-[#00E5FF]"
+                : "left-3.5 w-4 h-4 text-[#00E5FF] group-focus-within:text-cyan-300"
             }`}
           />
           <input
+            ref={inputRef}
             type="text"
             value={query}
             onFocus={() => {
@@ -131,13 +157,19 @@ export default function LiveSearchInput({
             placeholder={placeholder}
             className={`w-full text-white placeholder-gray-400 focus:outline-none transition-all ${
               isHero
-                ? "pl-12 pr-32 py-3.5 rounded-full bg-white/10 border border-white/15 focus:border-[#00E5FF] shadow-2xl text-sm"
-                : "pl-10 pr-10 py-2 rounded-full bg-white/10 border border-white/10 focus:border-[#00E5FF] focus:bg-white/15 text-sm"
+                ? "pl-12 pr-32 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-sm font-medium"
+                : "pl-10 pr-14 py-2 rounded-full bg-[#14161f]/90 border border-cyan-500/30 hover:border-cyan-400/60 focus:border-[#00E5FF] focus:bg-[#181a26] focus:ring-2 focus:ring-[#00E5FF]/20 focus:shadow-[0_0_20px_rgba(0,229,255,0.2)] text-xs sm:text-sm font-medium shadow-inner"
             }`}
           />
 
-          {/* Botão de Limpar ou Loading Spinner */}
+          {/* Atalho de Teclado, Botão de Limpar ou Loading Spinner */}
           <div className="absolute right-3 flex items-center gap-1.5">
+            {!query && !loading && !isHero && (
+              <div className="hidden xl:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-gray-400 pointer-events-none">
+                <span className="text-[9px]">⌘</span>K
+              </div>
+            )}
+
             {loading ? (
               <Loader2 className="w-4 h-4 text-[#00E5FF] animate-spin" />
             ) : query ? (
@@ -148,7 +180,8 @@ export default function LiveSearchInput({
                   setResults([]);
                   setIsOpen(false);
                 }}
-                className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
+                className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Limpar busca"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -157,7 +190,7 @@ export default function LiveSearchInput({
             {isHero && (
               <button
                 type="submit"
-                className="px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs transition-all shadow-md ml-1"
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-[#00E5FF] to-cyan-400 hover:from-cyan-300 hover:to-cyan-200 text-black font-extrabold text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95 ml-1"
               >
                 Buscar
               </button>
@@ -169,10 +202,10 @@ export default function LiveSearchInput({
             POPUP DE AUTOCOMPLETE / PRÉVIA AO VIVO
         ========================================== */}
         {isOpen && query.trim().length >= 2 && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-[#18191c] border border-white/10 shadow-2xl overflow-hidden backdrop-blur-2xl animate-fadeIn divide-y divide-white/5">
+          <div className="absolute top-full left-0 right-0 mt-2 z-[60] rounded-2xl bg-[#14161f]/95 border border-cyan-500/30 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden backdrop-blur-2xl animate-fadeIn divide-y divide-white/5">
             {results.length === 0 && !loading ? (
               <div className="p-4 text-center text-xs text-gray-400">
-                Nenhum jogo encontrado para &quot;{query}&quot;. Pressione Enter para buscar.
+                Nenhum jogo encontrado para &quot;{query}&quot;. Pressione Enter para ver todos.
               </div>
             ) : (
               <div>
@@ -184,20 +217,21 @@ export default function LiveSearchInput({
                     return (
                       <div
                         key={game.id}
-                        className="group flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                        className="group flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
                         onClick={() => {
-                          setSelectedGame(game);
                           setIsOpen(false);
+                          router.push(`/game/${game.id}`);
                         }}
+                        title={`Abrir página de ${game.name}`}
                       >
                         {/* Capa + Informações */}
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-13 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 flex-shrink-0">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-13 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-cyan-500/50 flex-shrink-0 transition-colors shadow-sm">
                             {game.background_image ? (
                               <img
                                 src={game.background_image}
                                 alt={game.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[9px] text-gray-500">
@@ -206,8 +240,8 @@ export default function LiveSearchInput({
                             )}
                           </div>
 
-                          <div className="min-w-0">
-                            <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] truncate transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] truncate transition-colors">
                               {game.name}
                             </h4>
                             <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono mt-0.5">
@@ -233,6 +267,7 @@ export default function LiveSearchInput({
                           <button
                             type="button"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               setSelectedGame(game);
                               setIsOpen(false);
@@ -240,9 +275,9 @@ export default function LiveSearchInput({
                             className={`p-1.5 rounded-full transition-all ${
                               userGame
                                 ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                                : "bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white"
+                                : "bg-white/10 hover:bg-[#00E5FF]/20 text-gray-300 hover:text-[#00E5FF]"
                             }`}
-                            title={userGame ? "Na sua biblioteca" : "Adicionar à lista"}
+                            title={userGame ? "Na sua biblioteca (clique para gerenciar)" : "Adicionar à biblioteca rápido"}
                           >
                             {userGame ? (
                               <Check className="w-3.5 h-3.5" />

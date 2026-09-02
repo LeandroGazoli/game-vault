@@ -1,7 +1,10 @@
 import Stripe from "stripe";
 
+// Fallback para build estático do Next.js caso as variáveis ainda não tenham sido injetadas
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_placeholder_for_build_environment";
+
 export const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY || "",
+  stripeSecretKey,
   {
     apiVersion: "2025-02-24.acacia" as any,
     appInfo: {

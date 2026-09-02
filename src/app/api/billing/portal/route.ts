@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: "STRIPE_SECRET_KEY não configurada no servidor." },
+        { status: 503 }
+      );
+    }
+
     const { customerId, userEmail, returnUrl } = await request.json();
 
     let targetCustomerId = customerId;
