@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { GameStatus, UserGame } from "@/lib/types";
@@ -40,6 +40,7 @@ import {
   LayoutGrid,
   List,
   Smartphone,
+  ArrowRight,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -59,6 +60,30 @@ export default function ProfilePage() {
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
+  const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
+
+  // Verificação e ativação automática se o usuário retornou do Stripe Checkout
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const sId = params.get("session_id");
+    const isUpgraded = params.get("upgraded");
+
+    if (sId) {
+      fetch(`/api/checkout/verify?session_id=${sId}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.success) {
+            setCelebrationBanner(
+              `🎉 Parabéns! Seu plano ${data.planName || "GameVault PRO"} foi ativado com sucesso! Aproveite todos os benefícios.`
+            );
+          }
+        })
+        .catch((e) => console.error("Erro ao verificar sessão do checkout:", e));
+    } else if (isUpgraded === "true") {
+      setCelebrationBanner("🎉 Parabéns! Sua assinatura foi ativada com sucesso!");
+    }
+  }, []);
 
   // Filtra jogos da biblioteca
   const filteredLibrary = library.filter((game) => {
@@ -116,6 +141,37 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 pb-12">
+      {/* Banner de Celebração de Upgrade / Retorno do Stripe */}
+      {celebrationBanner && (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-950/90 via-black to-emerald-950/90 border-2 border-[#00E5FF] p-5 sm:p-6 shadow-2xl shadow-cyan-500/20 animate-fadeIn">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 text-[#00E5FF] flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <span>Assinatura Ativada com Sucesso!</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#00E5FF] text-black font-extrabold uppercase">
+                    PRO ATIVO
+                  </span>
+                </h3>
+                <p className="text-xs text-gray-300">{celebrationBanner}</p>
+                <p className="text-[11px] text-[#00E5FF]/90 font-mono">
+                  Aproveite zero anúncios, selo neon no perfil, temas exclusivos e exportações ilimitadas.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setCelebrationBanner(null)}
+              className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Perfil do Jogador */}
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-6 sm:p-8 shadow-2xl">
         {user.bannerURL && (
@@ -136,7 +192,7 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   {user.displayName}
@@ -149,6 +205,43 @@ export default function ProfilePage() {
                   </span>
                 )}
               </div>
+
+              {/* Status e Detalhes da Assinatura */}
+              {user.plan === "vip" ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Membro Fundador VIP Vitalício</span>
+                </div>
+              ) : user.plan === "pro" ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit">
+                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                  <span>
+                    Assinante PRO Ativo
+                    {user.premiumUntil ? (
+                      <span className="text-gray-300 font-normal ml-1">
+                        • Válido até{" "}
+                        {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
+                    )}
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium w-fit">
+                  <span>Plano Gratuito</span>
+                  <button
+                    onClick={() => setIsUpgradeOpen(true)}
+                    className="text-[#00E5FF] hover:underline font-bold ml-1 inline-flex items-center gap-0.5"
+                  >
+                    Seja PRO <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
 
               <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
                 {user.bio || "Nenhuma bio informada."}
@@ -191,6 +284,24 @@ export default function ProfilePage() {
 
             {/* Ações Secundárias e Ferramentas com Scroll Suave no Mobile */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {user.plan === "free" ? (
+                <button
+                  onClick={() => setIsUpgradeOpen(true)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-[#00E5FF]/40 text-xs font-bold text-[#00E5FF] transition-all shadow-md hover:scale-105"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                  Seja PRO
+                </button>
+              ) : (
+                <Link
+                  href="/planos"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-bold text-[#00E5FF] transition-all shadow-sm hover:bg-cyan-500/25"
+                  title="Ver detalhes do seu plano ativo"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                  Plano PRO Ativo
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   href="/admin"
