@@ -23,6 +23,7 @@ import {
   Edit3,
   Sparkles,
 } from "lucide-react";
+import { sanitizeTranslation } from "@/lib/translate";
 
 export default function GameDetailPage() {
   const params = useParams();
@@ -195,7 +196,7 @@ export default function GameDetailPage() {
           <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-4">
             <h3 className="text-lg font-bold text-white">Sobre o Jogo</h3>
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
-              {game.description_raw || "Descrição não disponível para este jogo."}
+              {sanitizeTranslation(game.description_raw) || "Descrição não disponível para este jogo."}
             </p>
           </div>
 

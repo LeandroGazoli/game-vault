@@ -6,6 +6,7 @@ import GameModal from "./GameModal";
 import Link from "next/link";
 import { Plus, Check, Star, Eye, ChevronRight, Sparkles } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
+import { sanitizeTranslation } from "@/lib/translate";
 
 interface TopTenImdbSectionProps {
   games: Game[];
@@ -153,7 +154,7 @@ export default function TopTenImdbSection({
 
                   {/* Sinopse resumida */}
                   <p className="text-[11px] text-gray-400 line-clamp-2 mt-2 leading-relaxed">
-                    {game.description_raw}
+                    {sanitizeTranslation(game.description_raw)}
                   </p>
                 </div>
               </div>
