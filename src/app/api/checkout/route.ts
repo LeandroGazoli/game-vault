@@ -14,9 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder")) {
+      console.error("STRIPE_SECRET_KEY não configurada ou inválida.");
       return NextResponse.json(
-        { error: "A chave STRIPE_SECRET_KEY não foi configurada nas variáveis de ambiente." },
-        { status: 500 }
+        { error: "O gateway de pagamento está em manutenção. Por favor, tente novamente em alguns instantes." },
+        { status: 503 }
       );
     }
 
@@ -65,9 +66,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (error: any) {
-    console.error("Erro ao criar Checkout Session do Stripe:", error);
+    // Log detalhado APENAS no servidor (nunca vaza para o cliente)
+    console.error("Erro interno ao criar Checkout Session do Stripe:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao iniciar checkout no Stripe" },
+      { error: "Não foi possível iniciar o checkout de pagamento. Verifique as configurações ou tente novamente mais tarde." },
       { status: 500 }
     );
   }

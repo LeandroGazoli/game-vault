@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     if (!customerId) {
       return NextResponse.json(
-        { error: "ID de cliente Stripe não encontrado." },
+        { error: "Identificador de assinatura não encontrado." },
         { status: 400 }
       );
     }
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error: any) {
-    console.error("Erro ao criar Portal do Stripe:", error);
+    console.error("Erro interno ao criar Portal do Stripe:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao abrir portal de assinaturas" },
+      { error: "Não foi possível abrir o portal de assinaturas no momento. Tente novamente mais tarde." },
       { status: 500 }
     );
   }
