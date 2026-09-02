@@ -8,6 +8,7 @@ import AuthModal from "./AuthModal";
 import LiveSearchInput from "./LiveSearchInput";
 import Logo from "./Logo";
 import PlanBadge from "./PlanBadge";
+import UserAvatar from "./UserAvatar";
 import {
   Gamepad2,
   Trophy,
@@ -92,14 +93,7 @@ export default function Navbar() {
                   href="/profile"
                   className="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-white/10 border border-white/10 hover:border-white/30 transition-colors"
                 >
-                  <img
-                    src={
-                      user.photoURL ||
-                      "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80"
-                    }
-                    alt={user.displayName}
-                    className="w-7 h-7 rounded-full object-cover border border-[#00E5FF]/50"
-                  />
+                  <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
                   <span className="text-xs font-semibold text-gray-200 max-w-[90px] truncate">
                     {user.displayName}
                   </span>

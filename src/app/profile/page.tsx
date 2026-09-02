@@ -12,6 +12,7 @@ import AuthModal from "@/components/AuthModal";
 import ExportModal from "@/components/ExportModal";
 import UpgradeModal from "@/components/UpgradeModal";
 import PlanBadge from "@/components/PlanBadge";
+import UserAvatar from "@/components/UserAvatar";
 import Link from "next/link";
 import {
   Trophy,
@@ -106,13 +107,11 @@ export default function ProfilePage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="relative">
-              <img
-                src={
-                  user.photoURL ||
-                  "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80"
-                }
-                alt={user.displayName}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-[#00E5FF]/40 shadow-xl"
+              <UserAvatar
+                photoURL={user.photoURL}
+                name={user.displayName}
+                size="xl"
+                className="border-2 border-[#00E5FF]/40 shadow-xl"
               />
             </div>
 

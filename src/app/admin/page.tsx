@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getAllUsersForAdmin, updateUserPlanByAdmin } from "@/lib/firebase";
 import { UserProfile, UserPlan, ADMIN_EMAILS } from "@/lib/types";
 import PlanBadge from "@/components/PlanBadge";
+import UserAvatar from "@/components/UserAvatar";
 import AuthModal from "@/components/AuthModal";
 import Link from "next/link";
 import {
@@ -370,14 +371,7 @@ export default function AdminPage() {
                     <tr key={u.uid} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 pl-2">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={
-                              u.photoURL ||
-                              "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=80&auto=format&fit=crop&q=80"
-                            }
-                            alt={u.displayName}
-                            className="w-8 h-8 rounded-full object-cover border border-white/10"
-                          />
+                          <UserAvatar photoURL={u.photoURL} name={u.displayName} size="md" />
                           <div>
                             <div className="font-bold text-white flex items-center gap-1.5">
                               {u.displayName}

@@ -4,7 +4,7 @@ export type CompletionType = "main_story" | "main_extra" | "completionist" | "pl
 
 export type UserPlan = "free" | "pro" | "vip";
 
-export const ADMIN_EMAILS = ["leandro.gazolig@gmail.com", "leandro.gazoli@outlook.com"];
+export const ADMIN_EMAILS = ["leandro.gazolig@gmail.com"];
 
 export interface HLTBData {
   gameTitle?: string;
