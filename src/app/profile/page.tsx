@@ -17,6 +17,7 @@ import {
   Trophy,
   Gamepad2,
   Crown,
+  ShieldCheck,
   XCircle,
   Clock,
   Edit2,
@@ -30,7 +31,7 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, updateUserBio, isLoading: authLoading } = useAuth();
+  const { user, updateUserBio, isAdmin, isLoading: authLoading } = useAuth();
   const { library, stats, isLoading: libraryLoading } = useGameLibrary();
 
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -138,6 +139,15 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 hover:border-amber-500/70 text-xs font-bold text-amber-300 transition-all shadow-md"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                Painel Admin
+              </Link>
+            )}
             <button
               onClick={() => setIsUpgradeOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/30 hover:border-cyan-500/60 text-xs font-semibold text-white transition-all shadow-sm"

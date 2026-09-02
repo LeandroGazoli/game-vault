@@ -15,6 +15,7 @@ import {
   LogOut,
   Flame,
   Crown,
+  ShieldCheck,
   Calendar as CalendarIcon,
   Sparkles,
   Menu,
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { stats } = useGameLibrary();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -104,6 +105,17 @@ export default function Navbar() {
                   </span>
                   <PlanBadge plan={user.plan || "free"} size="sm" />
                 </Link>
+
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-xs font-semibold text-amber-300 transition-colors shadow-sm"
+                    title="Acessar Painel do Administrador"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </Link>
+                )}
 
                 <button
                   onClick={() => logout()}

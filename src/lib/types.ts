@@ -4,6 +4,8 @@ export type CompletionType = "main_story" | "main_extra" | "completionist" | "pl
 
 export type UserPlan = "free" | "pro" | "vip";
 
+export const ADMIN_EMAILS = ["leandro.gazolig@gmail.com"];
+
 export interface HLTBData {
   gameTitle?: string;
   mainStory: number | null;     // Horas (ex: 35)
@@ -44,8 +46,8 @@ export interface Game {
 }
 
 export interface UserGame {
-  id?: string;                      // ID único do registro no Firestore
-  userId?: string;                  // ID do usuário
+  id?: string;                     // ID único do registro no Firestore
+  userId?: string;                 // ID do usuário
   gameId: number;                  // ID do jogo no IGDB/RAWG
   gameSlug: string;
   gameTitle: string;
@@ -78,6 +80,7 @@ export interface UserProfile {
   favoriteGame?: string;
   plan?: UserPlan;                 // "free" | "pro" | "vip"
   isPremium?: boolean;             // Flag rápida para VIP/Pro
+  isAdmin?: boolean;               // Flag de Administrador da plataforma
   hideAds?: boolean;               // Opção de desativar anúncios
   premiumUntil?: string | null;    // Data de expiração da assinatura
   createdAt: string;

@@ -108,3 +108,45 @@ export async function saveUserProfile(userId: string, profile: Partial<UserProfi
     console.error("Erro ao salvar perfil no Firestore:", e);
   }
 }
+
+// ==========================================
+// FUNÇÕES DE ADMINISTRAÇÃO DA PLATAFORMA
+// ==========================================
+
+export async function getAllUsersForAdmin(): Promise<UserProfile[]> {
+  if (!db) return [];
+  try {
+    const q = query(collection(db, "users"));
+    const snapshot = await getDocs(q);
+    const users: UserProfile[] = [];
+    snapshot.forEach((docSnap) => {
+      users.push(docSnap.data() as UserProfile);
+    });
+    return users;
+  } catch (e) {
+    console.error("Erro ao listar usuários para o admin:", e);
+    return [];
+  }
+}
+
+export async function updateUserPlanByAdmin(
+  targetUserId: string,
+  newPlan: "free" | "pro" | "vip"
+): Promise<void> {
+  if (!targetUserId || !db) return;
+  try {
+    const isPremium = newPlan === "pro" || newPlan === "vip";
+    await setDoc(
+      doc(db, "users", targetUserId),
+      {
+        plan: newPlan,
+        isPremium,
+        hideAds: isPremium,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Erro ao atualizar plano pelo admin:", e);
+  }
+}
