@@ -490,6 +490,20 @@ export default function ProfilePage() {
         isOpen={Boolean(selectedGameToEdit)}
         onClose={() => setSelectedGameToEdit(null)}
       />
+
+      {/* Modal de Exportação */}
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        games={library}
+        username={user.username || user.uid}
+      />
+
+      {/* Modal de Upgrade de Planos */}
+      <UpgradeModal
+        isOpen={isUpgradeOpen}
+        onClose={() => setIsUpgradeOpen(false)}
+      />
     </div>
   );
 }

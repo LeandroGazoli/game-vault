@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   Flame,
+  Crown,
   Calendar as CalendarIcon,
   Sparkles,
   Menu,
@@ -72,6 +73,13 @@ export default function Navbar() {
             >
               <Trophy className="w-4 h-4 text-emerald-400" />
               Meus Jogos
+            </Link>
+            <Link
+              href="/planos"
+              className="text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              Planos PRO
             </Link>
           </nav>
 
