@@ -5,12 +5,18 @@ service cloud.firestore {
     // Regras para perfis de usuário
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.email in ["leandro.gazolig@gmail.com"]
+      );
 
       // Regras para jogos do usuário
       match /games/{gameId} {
         allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId ||
+          request.auth.token.email in ["leandro.gazolig@gmail.com"]
+        );
       }
     }
   }
