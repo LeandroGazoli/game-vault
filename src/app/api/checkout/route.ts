@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder")) {
-      console.error("STRIPE_SECRET_KEY não configurada ou inválida.");
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY não configurada.");
       return NextResponse.json(
         { error: "O gateway de pagamento está em manutenção. Por favor, tente novamente em alguns instantes." },
         { status: 503 }
