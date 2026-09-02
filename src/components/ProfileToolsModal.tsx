@@ -26,6 +26,7 @@ interface ProfileToolsModalProps {
   onOpenManagePlan: () => void;
   onOpenUpgrade: () => void;
   onOpenCustomizer: () => void;
+  onOpenTitles?: () => void;
   onOpenRoulette: () => void;
   onOpenWrapped: () => void;
   onOpenExport: () => void;
@@ -41,6 +42,7 @@ export default function ProfileToolsModal({
   onOpenManagePlan,
   onOpenUpgrade,
   onOpenCustomizer,
+  onOpenTitles,
   onOpenRoulette,
   onOpenWrapped,
   onOpenExport,
@@ -166,6 +168,32 @@ export default function ProfileToolsModal({
                 </span>
                 <p className="text-[11px] text-gray-400">
                   Capa, temas, títulos, insígnias e links sociais
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+          </button>
+
+          {/* 2.1. Títulos & Insígnias Gamer (Atalho Direto) */}
+          <button
+            onClick={() => handleAction(onOpenTitles || onOpenCustomizer)}
+            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent hover:from-amber-500/15 border border-amber-500/30 hover:border-amber-500/50 transition-all text-left group active:scale-[0.99] min-h-[52px]"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 flex-shrink-0 shadow-sm">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
+                    Títulos &amp; Insígnias Gamer
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-400 text-black">
+                    PRO / VIP
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  Crie até 10 customizadas e equipe até 3 no seu perfil
                 </p>
               </div>
             </div>

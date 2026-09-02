@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"],
     },
-    sitemap: "https://mygameslist.com.br/sitemap.xml",
+    sitemap: "https://www.mygameslist.com.br/sitemap.xml",
   };
 }

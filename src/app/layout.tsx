@@ -23,10 +23,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mygameslist.com.br"),
+  metadataBase: new URL("https://www.mygameslist.com.br"),
   title: "GameVault • Plataforma de Perfil, Lançamentos & Rastreamento de Jogos",
   description:
     "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos ao vivo.",
+  verification: {
+    google: "1DCEVYrBhAZ-w02hcc6ym1KKojqWyvoRHuEN9W6biyg",
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
