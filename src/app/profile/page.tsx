@@ -14,7 +14,9 @@ import UpgradeModal from "@/components/UpgradeModal";
 import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GamerWrappedModal from "@/components/GamerWrappedModal";
-import CustomHtmlBio from "@/components/CustomHtmlBio";
+import MarkdownProfileBio from "@/components/MarkdownProfileBio";
+import SocialGamertagsBar from "@/components/SocialGamertagsBar";
+import ShowcaseGameCard from "@/components/ShowcaseGameCard";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import Link from "next/link";
@@ -156,6 +158,9 @@ export default function ProfilePage() {
                   <strong>{user.favoriteGame}</strong>
                 </div>
               )}
+
+              {/* Barra de Gamertags e Redes Sociais */}
+              <SocialGamertagsBar socials={user.socialLinks} />
             </div>
           </div>
 
@@ -274,13 +279,22 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Showcase Customizado em HTML & CSS */}
-      {user.customHtml && (
-        <CustomHtmlBio html={user.customHtml} />
+      {/* Jogo em Destaque no Perfil (Se configurado) */}
+      {user.showcaseGameId && (
+        <ShowcaseGameCard
+          game={library.find((g) => g.gameId === user.showcaseGameId)}
+        />
       )}
 
-      {/* Estatísticas Gerais do Perfil */}
-      <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />
+      {/* Showcase / Bio em Markdown Rico & GIFs */}
+      {(user.customMarkdown || user.customHtml) && (
+        <MarkdownProfileBio content={user.customMarkdown || user.customHtml} />
+      )}
+
+      {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}
+      {user.visibility?.showStats !== false && (
+        <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />
+      )}
 
       {/* Abas de Navegação e Filtros */}
       <div className="space-y-4">
@@ -570,6 +584,7 @@ export default function ProfilePage() {
         isOpen={isCustomizerOpen}
         onClose={() => setIsCustomizerOpen(false)}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
+        games={library}
       />
 
       {/* Modal de Roleta do Backlog */}
