@@ -542,3 +542,45 @@ export async function getGamesCountIGDB(query: string): Promise<number> {
   }
 }
 
+// 8. Jogos Dublados em Português Brasileiro (TTL: 36 horas)
+export async function getPtBrDubbedGamesIGDB(limit = 20): Promise<Game[]> {
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, language_supports.language.name, language_supports.language_support_type.name; where language_supports.language = 21 & language_supports.language_support_type = 1 & cover != null & total_rating_count > 50; sort total_rating_count desc; limit ${limit};`;
+  const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
+  return data.map(mapIGDBGameToGame);
+}
+
+// 9. Jogos Curtos para Zerar no Fim de Semana (Normalmente até 10 horas) (TTL: 36 horas)
+export async function getShortGamesIGDB(limit = 20): Promise<Game[]> {
+  const hltbData = await fetchIGDB(
+    "game_time_to_beats",
+    `fields game_id, normally, count; where normally <= 36000 & normally >= 7200 & count >= 10; sort count desc; limit ${limit * 2};`,
+    TTL_CONFIG.RANKINGS
+  );
+
+  if (!Array.isArray(hltbData) || hltbData.length === 0) return [];
+
+  const gameIds = hltbData.map((h: any) => h.game_id).slice(0, limit).join(",");
+  if (!gameIds) return [];
+
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where id = (${gameIds}) & cover != null; limit ${limit};`;
+  const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
+
+  const timeMap = new Map<number, number>();
+  hltbData.forEach((h: any) => timeMap.set(h.game_id, Math.round(h.normally / 3600)));
+
+  return data.map((item: any) => {
+    const game = mapIGDBGameToGame(item);
+    const hours = timeMap.get(item.id);
+    if (hours) {
+      game.hltb = {
+        gameTitle: game.name,
+        mainStory: hours,
+        mainExtra: Math.round(hours * 1.5),
+        completionist: Math.round(hours * 2),
+        source: "IGDB Community Time",
+      };
+    }
+    return game;
+  });
+}
+
