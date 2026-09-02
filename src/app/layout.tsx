@@ -11,6 +11,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { Analytics } from "@vercel/analytics/next";
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
@@ -199,6 +200,7 @@ export default function RootLayout({
             </footer>
           </GameLibraryProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
