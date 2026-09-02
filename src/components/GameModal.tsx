@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Game, GameStatus, CompletionType } from "@/lib/types";
+import { Game, GameStatus, CompletionType, HLTBData } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
@@ -63,6 +63,7 @@ export default function GameModal({
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
   const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
   const [review, setReview] = useState<string>("");
+  const [hltb, setHltb] = useState<HLTBData | null>(game?.hltb || null);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
   // Controle de expansão do acordeão "Detalhes"
@@ -74,6 +75,20 @@ export default function GameModal({
   // Carrega os dados existentes do jogo ao abrir o modal
   useEffect(() => {
     if (game) {
+      if (game.hltb) {
+        setHltb(game.hltb);
+      } else {
+        fetch(`/api/games/hltb?name=${encodeURIComponent(game.name)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.hltb) {
+              setHltb(data.hltb);
+              game.hltb = data.hltb;
+            }
+          })
+          .catch(() => {});
+      }
+
       const existing = getGameInLibrary(game.id);
       if (existing) {
         setStatus(existing.status);
@@ -136,14 +151,15 @@ export default function GameModal({
   // Manipulador de tipo de conclusão rápida (100%, História Principal, Platina, etc.)
   const handleSelectCompletionType = (type: CompletionType) => {
     setCompletionType(type);
-    if (type === "main_story" && game.hltb?.mainStory) {
-      setPlaytime(String(game.hltb.mainStory));
-    } else if (type === "main_extra" && game.hltb?.mainExtra) {
-      setPlaytime(String(game.hltb.mainExtra));
-    } else if (type === "completionist" && game.hltb?.completionist) {
-      setPlaytime(String(game.hltb.completionist));
-    } else if (type === "platinum" && game.hltb?.completionist) {
-      setPlaytime(String(game.hltb.completionist));
+    const activeHltb = hltb || game.hltb;
+    if (type === "main_story" && activeHltb?.mainStory) {
+      setPlaytime(String(activeHltb.mainStory));
+    } else if (type === "main_extra" && activeHltb?.mainExtra) {
+      setPlaytime(String(activeHltb.mainExtra));
+    } else if (type === "completionist" && activeHltb?.completionist) {
+      setPlaytime(String(activeHltb.completionist));
+    } else if (type === "platinum" && activeHltb?.completionist) {
+      setPlaytime(String(activeHltb.completionist));
     }
   };
 
@@ -444,8 +460,8 @@ export default function GameModal({
                   >
                     <Sword className="w-3 h-3" />
                     História Principal
-                    {game.hltb?.mainStory && (
-                      <span className="opacity-75 font-mono">({game.hltb.mainStory}h)</span>
+                    {(hltb?.mainStory || game.hltb?.mainStory) && (
+                      <span className="opacity-75 font-mono">({(hltb?.mainStory || game.hltb?.mainStory)}h)</span>
                     )}
                   </button>
 
@@ -461,8 +477,8 @@ export default function GameModal({
                   >
                     <Compass className="w-3 h-3" />
                     História + Extras
-                    {game.hltb?.mainExtra && (
-                      <span className="opacity-75 font-mono">({game.hltb.mainExtra}h)</span>
+                    {(hltb?.mainExtra || game.hltb?.mainExtra) && (
+                      <span className="opacity-75 font-mono">({(hltb?.mainExtra || game.hltb?.mainExtra)}h)</span>
                     )}
                   </button>
 
@@ -478,8 +494,8 @@ export default function GameModal({
                   >
                     <Crown className="w-3 h-3" />
                     100% Completo
-                    {game.hltb?.completionist && (
-                      <span className="opacity-75 font-mono">({game.hltb.completionist}h)</span>
+                    {(hltb?.completionist || game.hltb?.completionist) && (
+                      <span className="opacity-75 font-mono">({(hltb?.completionist || game.hltb?.completionist)}h)</span>
                     )}
                   </button>
 
