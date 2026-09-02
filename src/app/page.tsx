@@ -67,7 +67,7 @@ export default function HomePage() {
       {/* ==========================================
           1. HERO SECTION COM BUSCA E RESUMO
       ========================================== */}
-      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-[#1c1d22] via-[#141518] to-surface-50 p-6 sm:p-12 text-center sm:text-left shadow-2xl">
+      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-[#1c1d22] via-[#141518] to-surface-50 p-5 sm:p-12 text-center sm:text-left shadow-2xl">
         <div className="absolute inset-0 bg-gradient-radial from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl">
@@ -76,17 +76,17 @@ export default function HomePage() {
             Catálogo Vivo IGDB • Metacritic • HowLongToBeat
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Descubra, Registre e Acompanhe <br />
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            Descubra, Registre e Acompanhe <br className="hidden sm:inline" />
             <span className="gamer-gradient-text">Seus Jogos Favoritos.</span>
           </h1>
 
-          <p className="mt-4 text-sm sm:text-base text-gray-300 max-w-2xl leading-relaxed">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-base text-gray-300 max-w-2xl leading-relaxed">
             Seu acervo gamer completo com <strong>lançamentos em tempo real</strong>, <strong>calendário de estreias</strong>, rankings da comunidade e tempos exatos de zeramento.
           </p>
 
           {/* Barra de Busca no Hero com Autocomplete ao Vivo */}
-          <div className="mt-8 max-w-xl">
+          <div className="mt-6 sm:mt-8 max-w-xl">
             <LiveSearchInput
               variant="hero"
               placeholder="Busque por Elden Ring, GTA, God of War, Zelda..."
@@ -95,18 +95,18 @@ export default function HomePage() {
 
           {/* Mini resumo do usuário se autenticado */}
           {user && (
-            <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-gray-400 border-t border-white/10 pt-4">
+            <div className="mt-6 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4 text-xs text-gray-400 border-t border-white/10 pt-4">
               <span className="text-gray-300">
                 Olá, <strong className="text-white">{user.displayName}</strong>!
               </span>
-              <span className="flex items-center gap-1 text-[#00E5FF]">
-                <Trophy className="w-3.5 h-3.5" /> {stats.completedCount} zerados
+              <span className="flex items-center gap-1 text-[#00E5FF] bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-500/20">
+                <Trophy className="w-3 h-3" /> {stats.completedCount} zerados
               </span>
-              <span className="flex items-center gap-1 text-blue-400">
-                <Gamepad2 className="w-3.5 h-3.5" /> {stats.playingCount} jogando
+              <span className="flex items-center gap-1 text-blue-400 bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-500/20">
+                <Gamepad2 className="w-3 h-3" /> {stats.playingCount} jogando
               </span>
-              <span className="flex items-center gap-1 text-amber-400">
-                <Clock className="w-3.5 h-3.5" /> {stats.totalPlaytimeHours}h registradas
+              <span className="flex items-center gap-1 text-amber-400 bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-500/20">
+                <Clock className="w-3 h-3" /> {stats.totalPlaytimeHours}h registradas
               </span>
             </div>
           )}

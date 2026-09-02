@@ -95,7 +95,7 @@ export default function CatalogRow({
         {/* Container Horizontal com Scroll Suave */}
         <div
           ref={rowRef}
-          className="flex items-stretch gap-4 overflow-x-auto scrollbar-none pb-2 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+          className="flex items-stretch gap-4 overflow-x-auto scrollbar-none pb-2 pt-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {games.map((game, index) => {
@@ -139,14 +139,14 @@ export default function CatalogRow({
                     <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
                   </Link>
 
-                  {/* Botão de Adição Rápida no Hover */}
+                  {/* Botão de Adição Rápida no Hover / Touch */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       setSelectedGame(game);
                     }}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20 border border-white/10"
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20 border border-white/10 active:scale-95"
                     title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                   >
                     {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}

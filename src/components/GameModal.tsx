@@ -234,11 +234,11 @@ export default function GameModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
         onClick={onClose}
       >
         <div
-          className="relative w-full max-w-xl rounded-[32px] bg-[#18191c] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 text-white my-8 overflow-hidden max-h-[90vh] flex flex-col justify-between"
+          className="relative w-full max-w-xl rounded-[32px] bg-[#18191c] border border-white/10 shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 text-white my-auto overflow-hidden max-h-[92dvh] flex flex-col justify-between"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Botão Fechar no Canto Superior Direito */}

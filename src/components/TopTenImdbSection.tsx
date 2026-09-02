@@ -87,10 +87,10 @@ export default function TopTenImdbSection({
                       e.stopPropagation();
                       setSelectedGame(game);
                     }}
-                    className="absolute top-1.5 left-1.5 p-1 rounded-lg bg-black/60 hover:bg-amber-500 text-white hover:text-black backdrop-blur-md transition-all z-20"
+                    className="absolute top-1.5 left-1.5 p-1.5 rounded-xl bg-black/70 hover:bg-amber-500 text-white hover:text-black backdrop-blur-md transition-all z-20 border border-white/10 active:scale-95"
                     title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                   >
-                    {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                   </button>
                 </div>
 
@@ -198,15 +198,15 @@ export default function TopTenImdbSection({
                       )}
                     </Link>
 
-                    {/* Botão de Ação Rápida no Hover */}
+                    {/* Botão de Ação Rápida no Hover / Touch */}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setSelectedGame(game);
                       }}
-                      className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20"
-                      title="Adicionar à lista"
+                      className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20 border border-white/10 active:scale-95"
+                      title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                     >
                       {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                     </button>

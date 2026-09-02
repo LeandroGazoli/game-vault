@@ -167,10 +167,10 @@ export default function GameDetailPage() {
             </div>
 
             {/* Botão de Ação: Registrar / Editar */}
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            <div className="pt-2 w-full sm:w-auto flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-gray-200 text-black text-xs sm:text-sm font-bold shadow-xl transition-all hover:scale-105"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs sm:text-sm font-bold shadow-xl transition-all active:scale-95"
               >
                 <Edit3 className="w-4 h-4" />
                 {userGame ? "Atualizar Meu Registro / Resenha" : "+ Adicionar ao Meu Perfil"}

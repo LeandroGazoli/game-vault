@@ -19,6 +19,7 @@ import SocialGamertagsBar from "@/components/SocialGamertagsBar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
+import { triggerPwaInstall } from "@/components/PwaInstallPrompt";
 import Link from "next/link";
 import {
   Trophy,
@@ -38,6 +39,7 @@ import {
   Download,
   LayoutGrid,
   List,
+  Smartphone,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -164,74 +166,89 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            {isAdmin && (
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+            {/* Ações Primárias */}
+            <div className="flex items-center gap-2">
               <Link
-                href="/admin"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 hover:border-amber-500/70 text-xs font-bold text-amber-300 transition-all shadow-md"
+                href="/search"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md active:scale-95"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                Painel Admin
+                <Plus className="w-3.5 h-3.5" />
+                Adicionar Jogos
               </Link>
-            )}
-            <button
-              onClick={() => setIsCustomizerOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-xs font-semibold text-purple-300 transition-colors shadow-sm"
-              title="Personalizar capa e tema do perfil"
-            >
-              <Palette className="w-3.5 h-3.5 text-purple-400" />
-              Personalizar
-            </button>
-            <button
-              onClick={() => setIsRouletteOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-colors shadow-sm"
-              title="Sortear o próximo jogo do seu backlog"
-            >
-              <Dices className="w-3.5 h-3.5 text-indigo-400" />
-              Roleta Backlog
-            </button>
-            <button
-              onClick={() => setIsWrappedOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors shadow-sm"
-              title="Ver sua retrospectiva gamer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-              Retrospectiva
-            </button>
-            <button
-              onClick={() => setIsUpgradeOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/30 hover:border-cyan-500/60 text-xs font-semibold text-white transition-all shadow-sm"
-              title="Gerenciar plano e remover anúncios"
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              {user.plan === "pro" || user.plan === "vip" ? "Plano PRO" : "Seja PRO"}
-            </button>
-            <button
-              onClick={() => setIsExportOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors"
-              title="Exportar biblioteca em Excel, JSON ou link dinâmico"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Exportar
-            </button>
-            <button
-              onClick={() => {
-                setBioInput(user.bio || "");
-                setFavGameInput(user.favoriteGame || "");
-                setIsEditingBio(true);
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 text-xs font-semibold text-gray-200 transition-colors"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-              Editar Perfil
-            </button>
-            <Link
-              href="/search"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Adicionar Jogos
-            </Link>
+              <button
+                onClick={() => {
+                  setBioInput(user.bio || "");
+                  setFavGameInput(user.favoriteGame || "");
+                  setIsEditingBio(true);
+                }}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 text-xs font-semibold text-gray-200 transition-colors"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                Editar Perfil
+              </button>
+            </div>
+
+            {/* Ações Secundárias e Ferramentas com Scroll Suave no Mobile */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-xs font-bold text-amber-300 transition-all shadow-md"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  Admin
+                </Link>
+              )}
+              <button
+                onClick={() => setIsCustomizerOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-xs font-semibold text-purple-300 transition-colors shadow-sm"
+                title="Personalizar capa e tema do perfil"
+              >
+                <Palette className="w-3.5 h-3.5 text-purple-400" />
+                Personalizar
+              </button>
+              <button
+                onClick={() => setIsRouletteOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-colors shadow-sm"
+                title="Sortear o próximo jogo do seu backlog"
+              >
+                <Dices className="w-3.5 h-3.5 text-indigo-400" />
+                Roleta Backlog
+              </button>
+              <button
+                onClick={() => setIsWrappedOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors shadow-sm"
+                title="Ver sua retrospectiva gamer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                Retrospectiva
+              </button>
+              <button
+                onClick={() => setIsUpgradeOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold text-amber-300 transition-all shadow-sm"
+                title="Gerenciar plano e remover anúncios"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                {user.plan === "pro" || user.plan === "vip" ? "Plano PRO" : "Seja PRO"}
+              </button>
+              <button
+                onClick={() => setIsExportOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors"
+                title="Exportar biblioteca em Excel, JSON ou link dinâmico"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Exportar
+              </button>
+              <button
+                onClick={triggerPwaInstall}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-300 transition-colors"
+                title="Instalar aplicativo mobile"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                App Mobile
+              </button>
+            </div>
           </div>
         </div>
 
@@ -291,6 +308,33 @@ export default function ProfilePage() {
         <MarkdownProfileBio content={user.customMarkdown || user.customHtml} />
       )}
 
+      {/* Card Promocional do App Mobile PWA */}
+      <div className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-surface-100 to-indigo-950/40 border border-[#00E5FF]/25 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] flex-shrink-0 shadow-lg shadow-cyan-500/10">
+            <Smartphone className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-bold text-white">Instale o GameVault no seu Celular</h4>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono bg-[#00E5FF]/20 text-[#00E5FF]">
+                PWA
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Acesse sua biblioteca, backlog e estatísticas em tela cheia direto da tela de início, mesmo sem internet.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={triggerPwaInstall}
+          className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#00E5FF] hover:bg-cyan-300 text-black text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 flex-shrink-0"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Instalar Aplicativo
+        </button>
+      </div>
+
       {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}
       {user.visibility?.showStats !== false && (
         <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />
@@ -299,8 +343,8 @@ export default function ProfilePage() {
       {/* Abas de Navegação e Filtros */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
-          {/* Abas */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Abas com rolagem suave horizontal no mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0 flex-nowrap sm:flex-wrap">
             {[
               { id: "all", label: "Todos", count: stats.totalGames },
               { id: "completed", label: "Zerados 🏆", count: stats.completedCount },
@@ -311,7 +355,7 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`flex-shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 ${
                   activeTab === tab.id
                     ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/20"
                     : "bg-[#18191c] text-gray-400 hover:text-gray-200 hover:bg-[#202126] border border-white/5"
