@@ -53,7 +53,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
           {/* Status do Jogador se já estiver na biblioteca (Topo Direito) */}
           <div className="absolute top-2.5 right-2.5 z-10">
             {userGame ? (
-              <StatusBadge status={userGame.status} size="sm" />
+              <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
             ) : null}
           </div>
 

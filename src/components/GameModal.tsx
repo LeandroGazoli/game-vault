@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Game, GameStatus, UserGame } from "@/lib/types";
+import React, { useState, useEffect, useCallback } from "react";
+import { Game, GameStatus, CompletionType } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
-import HltbCard from "./HltbCard";
 import {
   X,
   Trophy,
@@ -14,9 +13,15 @@ import {
   Clock,
   Heart,
   Trash2,
-  Save,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Sword,
+  Compass,
+  Crown,
   Sparkles,
-  ExternalLink,
+  RotateCcw,
+  Check,
 } from "lucide-react";
 
 interface GameModalProps {
@@ -46,47 +51,130 @@ export default function GameModal({
   const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
 
-  const [status, setStatus] = useState<GameStatus>("playing");
-  const [rating, setRating] = useState<number>(8.5);
-  const [hasRated, setHasRated] = useState<boolean>(false);
+  // Estados principais
+  const [status, setStatus] = useState<GameStatus>("completed");
+  const [completionType, setCompletionType] = useState<CompletionType | null>("main_story");
+  const [rating, setRating] = useState<number | null>(8.5); // null = "NS" (Sem nota)
   const [playtime, setPlaytime] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [completedDate, setCompletedDate] = useState<string>("");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
   const [review, setReview] = useState<string>("");
-  const [platform, setPlatform] = useState<string>("PC");
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+
+  // Controle de expansão do acordeão "Detalhes"
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const existingInLibrary = game ? getGameInLibrary(game.id) : undefined;
 
+  // Carrega os dados existentes do jogo ao abrir o modal
   useEffect(() => {
     if (game) {
       const existing = getGameInLibrary(game.id);
       if (existing) {
         setStatus(existing.status);
-        if (existing.userRating !== null && existing.userRating !== undefined) {
-          setRating(existing.userRating);
-          setHasRated(true);
-        } else {
-          setRating(8.0);
-          setHasRated(false);
-        }
+        setCompletionType(existing.completionType || "main_story");
+        setRating(existing.userRating ?? null);
         setPlaytime(existing.userPlaytimeHours ? String(existing.userPlaytimeHours) : "");
+        setStartDate(existing.startedAt ? existing.startedAt.split("T")[0] : "");
+        setCompletedDate(existing.completedAt ? existing.completedAt.split("T")[0] : "");
+        
+        const platList = existing.platformsPlayed && existing.platformsPlayed.length > 0
+          ? existing.platformsPlayed
+          : existing.platformPlayed
+          ? [existing.platformPlayed]
+          : ["PC"];
+        setSelectedPlatforms(platList);
+        
         setReview(existing.userReview || "");
-        setPlatform(existing.platformPlayed || "PC");
         setIsFavorite(existing.isFavorite || false);
+        setIsDetailsExpanded(Boolean(existing.userReview || existing.userPlaytimeHours || existing.completedAt));
       } else {
-        setStatus("playing");
-        setRating(8.0);
-        setHasRated(false);
-        setPlaytime("");
+        // Padrão para novo jogo
+        setStatus("completed");
+        setCompletionType("main_story");
+        setRating(8.5);
+        
+        // Auto preenche o tempo com a história principal do HLTB se disponível
+        if (game.hltb?.mainStory) {
+          setPlaytime(String(game.hltb.mainStory));
+        } else {
+          setPlaytime("");
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+        setStartDate("");
+        setCompletedDate(today);
+        setSelectedPlatforms(["PC"]);
         setReview("");
-        setPlatform("PC");
         setIsFavorite(false);
+        setIsDetailsExpanded(false);
       }
     }
   }, [game, isOpen]);
 
+  // Fecha o modal ao pressionar a tecla Esc
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen || !game) return null;
 
+  // Manipulador de tipo de conclusão rápida (100%, História Principal, Platina, etc.)
+  const handleSelectCompletionType = (type: CompletionType) => {
+    setCompletionType(type);
+    if (type === "main_story" && game.hltb?.mainStory) {
+      setPlaytime(String(game.hltb.mainStory));
+    } else if (type === "main_extra" && game.hltb?.mainExtra) {
+      setPlaytime(String(game.hltb.mainExtra));
+    } else if (type === "completionist" && game.hltb?.completionist) {
+      setPlaytime(String(game.hltb.completionist));
+    } else if (type === "platinum" && game.hltb?.completionist) {
+      setPlaytime(String(game.hltb.completionist));
+    }
+  };
+
+  // Alterna plataforma (seleção múltipla)
+  const togglePlatform = (plat: string) => {
+    setSelectedPlatforms((prev) => {
+      if (prev.includes(plat)) {
+        return prev.length > 1 ? prev.filter((p) => p !== plat) : prev;
+      } else {
+        return [...prev, plat];
+      }
+    });
+  };
+
+  // Reação dinâmica do Emoji para a nota
+  const getRatingReaction = (score: number | null) => {
+    if (score === null) return { emoji: "😐", text: "Sem Nota (NS)", color: "text-gray-400" };
+    if (score <= 3.0) return { emoji: "🤮", text: "Ruim", color: "text-rose-400" };
+    if (score <= 5.5) return { emoji: "😕", text: "Mediano", color: "text-amber-400" };
+    if (score <= 7.5) return { emoji: "🙂", text: "Bom", color: "text-emerald-400" };
+    if (score <= 9.0) return { emoji: "😃", text: "Muito Bom!", color: "text-cyan-400" };
+    return { emoji: "🤩", text: "Obra-Prima!", color: "text-purple-400" };
+  };
+
+  const reaction = getRatingReaction(rating);
+
+  // Salva no banco de dados / estado
   const handleSave = async () => {
     if (!user) {
       if (onOpenAuthModal) onOpenAuthModal();
@@ -101,11 +189,15 @@ export default function GameModal({
         gameTitle: game.name,
         gameCover: game.background_image,
         status,
-        userRating: hasRated ? Number(rating) : null,
+        completionType: status === "completed" ? completionType : null,
+        userRating: rating,
         userPlaytimeHours: playtime ? parseFloat(playtime) : null,
         userReview: review.trim(),
-        platformPlayed: platform,
+        platformPlayed: selectedPlatforms[0] || "PC",
+        platformsPlayed: selectedPlatforms,
         isFavorite,
+        completedAt: status === "completed" ? (completedDate ? new Date(completedDate).toISOString() : new Date().toISOString()) : null,
+        startedAt: startDate ? new Date(startDate).toISOString() : null,
         metacritic: game.metacritic,
         hltbData: game.hltb,
         genres: game.genres?.map((g) => g.name) || [],
@@ -128,286 +220,463 @@ export default function GameModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-sm animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
+      onClick={onClose}
+    >
       <div
-        className="relative w-full max-w-2xl rounded-2xl bg-surface-100 border border-gray-800 shadow-2xl overflow-hidden my-8"
+        className="relative w-full max-w-xl rounded-[32px] bg-[#18191c] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 text-white my-8 overflow-hidden max-h-[90vh] flex flex-col justify-between"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Banner do Jogo */}
-        <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-gray-950">
-          {game.background_image ? (
-            <img
-              src={game.background_image}
-              alt={game.name}
-              className="w-full h-full object-cover object-center filter brightness-60"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-indigo-950 to-purple-950" />
-          )}
-
-          <div className="absolute inset-0 bg-gradient-to-t from-surface-100 via-surface-100/40 to-transparent" />
-
-          {/* Botão Fechar */}
+        {/* Botão Fechar no Canto Superior Direito */}
+        <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-2 rounded-full bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white transition-colors"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
+            title="Fechar (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
 
-          {/* Informações no Banner */}
-          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+        {/* Conteúdo Rolável */}
+        <div className="space-y-6 overflow-y-auto pr-1">
+          {/* ==========================================
+              1. CABEÇALHO DO JOGO (Flex-row)
+          ========================================== */}
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/* Capa com cantos arredondados */}
+            <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 shadow-lg flex-shrink-0">
+              {game.background_image ? (
+                <img
+                  src={game.background_image}
+                  alt={game.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                  Sem Capa
+                </div>
+              )}
+            </div>
+
+            {/* Informações do Jogo */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+              <div className="flex items-center gap-2">
+                {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
                 {game.released && (
-                  <span className="text-xs font-mono text-gray-300 bg-black/40 px-2 py-0.5 rounded">
+                  <span className="text-xs font-mono text-gray-400">
                     {game.released.substring(0, 4)}
                   </span>
                 )}
-                {game.genres && game.genres.length > 0 && (
-                  <span className="text-xs text-indigo-300 bg-indigo-950/60 border border-indigo-500/20 px-2 py-0.5 rounded">
-                    {game.genres.slice(0, 2).map((g) => g.name).join(", ")}
+                {isFavorite && (
+                  <span className="text-xs text-pink-400 flex items-center gap-0.5">
+                    <Heart className="w-3.5 h-3.5 fill-pink-400" />
                   </span>
                 )}
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+
+              <h2 className="text-xl sm:text-2xl font-normal text-white tracking-tight leading-snug line-clamp-2">
                 {game.name}
               </h2>
+
+              {/* Indicador e Reação da Nota */}
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="text-lg">{reaction.emoji}</span>
+                <span className={`text-xs font-semibold ${reaction.color}`}>
+                  {rating !== null ? `${rating.toFixed(1)} / 10 • ${reaction.text}` : "Não avaliado"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ==========================================
+              2. SESSÃO DE AVALIAÇÃO (Range Slider)
+          ========================================== */}
+          <div className="space-y-2 p-4 rounded-2xl bg-white/[0.04] border border-white/5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Sua Nota
+              </span>
+              <button
+                type="button"
+                onClick={() => setRating(rating === null ? 8.0 : null)}
+                className={`text-xs font-medium px-2.5 py-0.5 rounded-full transition-colors ${
+                  rating === null
+                    ? "bg-white/20 text-white font-bold"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                {rating === null ? "Sem Nota (NS)" : "Zerar Nota (NS)"}
+              </button>
             </div>
 
-            {game.metacritic && (
-              <div className="flex flex-col items-end">
-                <MetacriticBadge score={game.metacritic} size="md" showLabel />
+            {rating !== null ? (
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    value={rating}
+                    onChange={(e) => setRating(parseFloat(e.target.value))}
+                    className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF]"
+                  />
+                  <span className="font-mono font-bold text-lg text-[#00E5FF] min-w-[2.5rem] text-right">
+                    {rating.toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500 font-mono">
+                  <span>0 (Péssimo)</span>
+                  <span>5 (Médio)</span>
+                  <span>10 (Obra-Prima)</span>
+                </div>
               </div>
+            ) : (
+              <p className="text-xs text-gray-400 py-1 italic">
+                Clique no controle deslizante ou desmarque NS para avaliar de 0 a 10.
+              </p>
             )}
           </div>
-        </div>
 
-        {/* Conteúdo do Formulário */}
-        <div className="p-5 sm:p-6 space-y-5 max-h-[calc(85vh-13rem)] overflow-y-auto">
-          {/* Card de Tempos HowLongToBeat */}
-          <HltbCard hltb={game.hltb} />
-
-          {/* Seletor de Status */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-              Status do Jogo
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setStatus("completed")}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
-                  status === "completed"
-                    ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10"
-                    : "bg-surface-50 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200"
-                }`}
-              >
-                <Trophy className="w-4 h-4 text-emerald-400" />
-                Zerado
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatus("playing")}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
-                  status === "playing"
-                    ? "bg-blue-500/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10"
-                    : "bg-surface-50 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200"
-                }`}
-              >
-                <Gamepad2 className="w-4 h-4 text-blue-400" />
-                Jogando
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatus("dropped")}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
-                  status === "dropped"
-                    ? "bg-rose-500/20 border-rose-500 text-rose-300 shadow-lg shadow-rose-500/10"
-                    : "bg-surface-50 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200"
-                }`}
-              >
-                <XCircle className="w-4 h-4 text-rose-400" />
-                Dropado
-              </button>
-
+          {/* ==========================================
+              3. GRUPO DE STATUS (Radio Pill Group)
+          ========================================== */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Estado
+              </span>
               <button
                 type="button"
                 onClick={() => setStatus("backlog")}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
-                  status === "backlog"
-                    ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/10"
-                    : "bg-surface-50 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-300 transition-colors p-1"
+                title="Resetar estado"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {/* Concluído / Zerado */}
+              <button
+                type="button"
+                onClick={() => setStatus("completed")}
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                  status === "completed"
+                    ? "bg-[#00E5FF] text-black font-bold shadow-lg shadow-[#00E5FF]/20"
+                    : "bg-white/10 text-gray-300 hover:bg-white/15"
                 }`}
               >
-                <Clock className="w-4 h-4 text-amber-400" />
+                <Trophy className="w-3.5 h-3.5" />
+                Concluído
+              </button>
+
+              {/* Jogando */}
+              <button
+                type="button"
+                onClick={() => setStatus("playing")}
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                  status === "playing"
+                    ? "bg-blue-400 text-black font-bold shadow-lg shadow-blue-400/20"
+                    : "bg-white/10 text-gray-300 hover:bg-white/15"
+                }`}
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                Jogando
+              </button>
+
+              {/* Dropado / Abandonado */}
+              <button
+                type="button"
+                onClick={() => setStatus("dropped")}
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                  status === "dropped"
+                    ? "bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/20"
+                    : "bg-white/10 text-gray-300 hover:bg-white/15"
+                }`}
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                Dropado
+              </button>
+
+              {/* Quero Jogar / Backlog */}
+              <button
+                type="button"
+                onClick={() => setStatus("backlog")}
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                  status === "backlog"
+                    ? "bg-amber-400 text-black font-bold shadow-lg shadow-amber-400/20"
+                    : "bg-white/10 text-gray-300 hover:bg-white/15"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
                 Quero Jogar
               </button>
             </div>
           </div>
 
-          {/* Nota Pessoal e Horas Jogadas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Avaliação Pessoal */}
-            <div className="p-3.5 rounded-xl border border-gray-800 bg-surface-50">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Sua Nota Pessoal
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="hasRated"
-                    checked={hasRated}
-                    onChange={(e) => setHasRated(e.target.checked)}
-                    className="rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <label htmlFor="hasRated" className="text-xs text-gray-400 cursor-pointer">
-                    Avaliar
-                  </label>
-                </div>
+          {/* ==========================================
+              4. TIPO DE FINALIZAÇÃO (Quando Concluído)
+          ========================================== */}
+          {status === "completed" && (
+            <div className="space-y-2 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Como você finalizou o jogo?
+                </span>
+                <span className="text-[10px] text-gray-400">Preenchimento rápido</span>
               </div>
 
-              {hasRated ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      step="0.5"
-                      value={rating}
-                      onChange={(e) => setRating(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                    />
-                    <span className="ml-3 font-mono font-black text-xl text-indigo-400 min-w-[3rem] text-right">
-                      {rating.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-gray-500 font-mono">
-                    <span>0 (Péssimo)</span>
-                    <span>5 (Médio)</span>
-                    <span>10 (Obra-prima)</span>
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {/* História Principal */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectCompletionType("main_story")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    completionType === "main_story"
+                      ? "bg-cyan-400 text-black font-bold"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Sword className="w-3 h-3" />
+                  História Principal
+                  {game.hltb?.mainStory && (
+                    <span className="opacity-75 font-mono">({game.hltb.mainStory}h)</span>
+                  )}
+                </button>
+
+                {/* História + Extras */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectCompletionType("main_extra")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    completionType === "main_extra"
+                      ? "bg-purple-400 text-black font-bold"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Compass className="w-3 h-3" />
+                  História + Extras
+                  {game.hltb?.mainExtra && (
+                    <span className="opacity-75 font-mono">({game.hltb.mainExtra}h)</span>
+                  )}
+                </button>
+
+                {/* 100% Complecionista */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectCompletionType("completionist")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    completionType === "completionist"
+                      ? "bg-amber-400 text-black font-bold"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Crown className="w-3 h-3" />
+                  100% Completo
+                  {game.hltb?.completionist && (
+                    <span className="opacity-75 font-mono">({game.hltb.completionist}h)</span>
+                  )}
+                </button>
+
+                {/* Platina */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectCompletionType("platinum")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    completionType === "platinum"
+                      ? "bg-emerald-400 text-black font-bold"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Trophy className="w-3 h-3" />
+                  Platina / Conquistas
+                </button>
+
+                {/* Horas Customizadas */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectCompletionType("custom")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    completionType === "custom"
+                      ? "bg-white text-black font-bold"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  Personalizado
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+              5. SEÇÃO DE DETALHES (Acordeão Expansível)
+          ========================================== */}
+          <div className="border-t border-white/10 pt-3">
+            <button
+              type="button"
+              onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+              className="w-full flex items-center justify-between text-xs uppercase tracking-wider font-semibold text-gray-300 hover:text-white transition-colors py-2"
+            >
+              <span>Detalhes (Plataformas, Horas, Datas, Resenha)</span>
+              {isDetailsExpanded ? (
+                <ChevronUp className="w-4 h-4 text-gray-400" />
               ) : (
-                <p className="text-xs text-gray-500 italic py-1">
-                  Marque &quot;Avaliar&quot; para dar sua nota de 0 a 10
-                </p>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
               )}
-            </div>
+            </button>
 
-            {/* Horas Gastas */}
-            <div className="p-3.5 rounded-xl border border-gray-800 bg-surface-50">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                Tempo Gasto Jogando (Horas)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  max="9999"
-                  step="0.5"
-                  placeholder={game.hltb?.mainStory ? `Ex: ${game.hltb.mainStory}` : "Ex: 45"}
-                  value={playtime}
-                  onChange={(e) => setPlaytime(e.target.value)}
-                  className="w-full rounded-lg bg-surface-100 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
-                />
-                <span className="absolute right-3 top-2 text-xs text-gray-500">horas</span>
+            {isDetailsExpanded && (
+              <div className="space-y-4 pt-3 animate-fadeIn">
+                {/* Plataformas (Multi-seleção em pílulas) */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-gray-400">
+                    Plataformas Jogadas (seleção múltipla)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PLATFORM_OPTIONS.map((plat) => {
+                      const isSelected = selectedPlatforms.includes(plat);
+                      return (
+                        <button
+                          key={plat}
+                          type="button"
+                          onClick={() => togglePlatform(plat)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                            isSelected
+                              ? "bg-white/25 text-white border border-white/40 shadow-sm"
+                              : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                          {plat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Inputs de Tempo e Datas */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Horas Totais */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                      Horas Jogadas
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        placeholder="Ex: 45"
+                        value={playtime}
+                        onChange={(e) => setPlaytime(e.target.value)}
+                        className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none"
+                      />
+                      <Clock className="w-3.5 h-3.5 text-gray-500 absolute right-3.5 top-2.5" />
+                    </div>
+                  </div>
+
+                  {/* Data de Início */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                      Data de Início
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Data de Conclusão */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
+                      Data de Conclusão
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={completedDate}
+                        onChange={(e) => setCompletedDate(e.target.value)}
+                        className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resenha / Anotações */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-gray-400">
+                    Sua Resenha ou Notas Pessoais
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Escreva suas impressões sobre o jogo, história, jogabilidade..."
+                    value={review}
+                    onChange={(e) => setReview(e.target.value)}
+                    className="w-full rounded-2xl bg-white/5 border border-white/10 p-3.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white/30 resize-none"
+                  />
+                </div>
+
+                {/* Botão Favorito */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    className={`rounded-full px-4 py-2 text-xs font-medium flex items-center gap-2 transition-all ${
+                      isFavorite
+                        ? "bg-pink-500/20 border border-pink-500/50 text-pink-300"
+                        : "bg-white/5 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-pink-400 text-pink-400" : ""}`} />
+                    {isFavorite ? "Marcado como Favorito ❤️" : "Marcar como Favorito"}
+                  </button>
+                </div>
               </div>
-              {game.hltb?.mainStory && (
-                <p className="text-[11px] text-gray-400 mt-1.5">
-                  Média para zerar a história: <strong className="text-indigo-300">{game.hltb.mainStory}h</strong>
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Plataforma e Favorito */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-                Plataforma Jogada
-              </label>
-              <select
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                className="w-full rounded-lg bg-surface-50 border border-gray-700 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
-              >
-                {PLATFORM_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() => setIsFavorite(!isFavorite)}
-                className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  isFavorite
-                    ? "bg-pink-500/20 border-pink-500/50 text-pink-300"
-                    : "bg-surface-50 border-gray-700 text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isFavorite ? "fill-pink-400 text-pink-400" : ""}`} />
-                {isFavorite ? "Favorito ❤️" : "Marcar Favorito"}
-              </button>
-            </div>
-          </div>
-
-          {/* Anotações e Resenha Pessoal */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-              Sua Resenha / Anotações Pessoais
-            </label>
-            <textarea
-              rows={3}
-              placeholder="O que você achou do jogo, história, jogabilidade, gráficos ou motivos de ter dropado..."
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              className="w-full rounded-xl bg-surface-50 border border-gray-700 p-3 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none resize-none"
-            />
+            )}
           </div>
         </div>
 
-        {/* Rodapé do Modal */}
-        <div className="p-4 sm:p-5 bg-surface-50 border-t border-gray-800 flex items-center justify-between">
+        {/* ==========================================
+            6. RODAPÉ / CALL TO ACTION (Pill Button)
+        ========================================== */}
+        <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 mt-2">
           <div>
-            {existingInLibrary && (
+            {existingInLibrary ? (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex items-center gap-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-500/10 transition-colors"
+                className="text-rose-400 hover:text-rose-300 text-xs font-medium flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-rose-500/10 transition-colors"
               >
-                <Trash2 className="w-4 h-4" />
-                Remover da lista
+                <Trash2 className="w-3.5 h-3.5" />
+                Remover
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-gray-400 hover:text-white text-xs font-medium px-3 py-2 rounded-full transition-colors"
+              >
+                Cancelar
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? "Salvando..." : existingInLibrary ? "Atualizar Status" : "Adicionar ao Perfil"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm py-3 px-8 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+          >
+            {isSaving ? "Salvando..." : existingInLibrary ? "Salvar Alterações" : "Adicionar Jogo"}
+          </button>
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
 export type GameStatus = "completed" | "playing" | "dropped" | "backlog";
 
+export type CompletionType = "main_story" | "main_extra" | "completionist" | "platinum" | "custom";
+
 export interface HLTBData {
   gameTitle?: string;
   mainStory: number | null;     // Horas (ex: 35)
@@ -28,11 +30,11 @@ export interface Game {
   name: string;
   released: string | null;
   background_image: string | null;
-  rating: number;              // Nota RAWG (0 a 5)
+  rating: number;              // Nota (0 a 5)
   rating_top?: number;
-  metacritic: number | null;    // Nota Metacritic (0 a 100)
+  metacritic: number | null;    // Nota Metacritic / Crítica (0 a 100)
   metacritic_url?: string;
-  playtime?: number;            // Média de horas estimada RAWG
+  playtime?: number;
   description_raw?: string;
   genres: GenreItem[];
   platforms?: PlatformItem[];
@@ -49,10 +51,12 @@ export interface UserGame {
   gameTitle: string;
   gameCover: string | null;
   status: GameStatus;
-  userRating: number | null;       // Nota pessoal dada pelo usuário (0 a 10 ou 1 a 5)
+  completionType?: CompletionType | null; // Ex: "main_story", "main_extra", "completionist", "platinum"
+  userRating: number | null;       // Nota pessoal dada pelo usuário (0 a 10)
   userPlaytimeHours: number | null;// Tempo real que o usuário gastou jogando
   userReview: string;              // Resenha ou anotações pessoais
-  platformPlayed: string;          // Ex: "PC", "PlayStation 5", "Nintendo Switch", "Xbox"
+  platformPlayed: string;          // Plataforma principal
+  platformsPlayed?: string[];      // Múltiplas plataformas selecionadas
   isFavorite: boolean;
   completedAt: string | null;      // Data em que zerou (ISO string)
   startedAt: string | null;        // Data de início

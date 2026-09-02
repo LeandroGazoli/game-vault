@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
-import { GameStatus } from "@/lib/types";
-import { Trophy, Gamepad2, XCircle, Clock } from "lucide-react";
+import { GameStatus, CompletionType } from "@/lib/types";
+import { Trophy, Gamepad2, XCircle, Clock, Crown, Sword, Compass, Sparkles } from "lucide-react";
 
 interface StatusBadgeProps {
   status: GameStatus;
+  completionType?: CompletionType | null;
   size?: "sm" | "md" | "lg";
   showIcon?: boolean;
 }
@@ -16,9 +17,9 @@ export const STATUS_CONFIG: Record<
 > = {
   completed: {
     label: "Zerado",
-    bg: "bg-emerald-500/15",
-    text: "text-emerald-400",
-    border: "border-emerald-500/30",
+    bg: "bg-[#00E5FF]/15",
+    text: "text-[#00E5FF]",
+    border: "border-[#00E5FF]/30",
     icon: Trophy,
   },
   playing: {
@@ -44,14 +45,34 @@ export const STATUS_CONFIG: Record<
   },
 };
 
-export default function StatusBadge({ status, size = "md", showIcon = true }: StatusBadgeProps) {
+export const COMPLETION_TYPE_LABELS: Record<CompletionType, { label: string; icon: any }> = {
+  main_story: { label: "História", icon: Sword },
+  main_extra: { label: "+ Extras", icon: Compass },
+  completionist: { label: "100%", icon: Crown },
+  platinum: { label: "Platina", icon: Sparkles },
+  custom: { label: "Zerado", icon: Trophy },
+};
+
+export default function StatusBadge({
+  status,
+  completionType,
+  size = "md",
+  showIcon = true,
+}: StatusBadgeProps) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.backlog;
-  const Icon = config.icon;
+  let label = config.label;
+  let Icon = config.icon;
+
+  if (status === "completed" && completionType && COMPLETION_TYPE_LABELS[completionType]) {
+    const compConfig = COMPLETION_TYPE_LABELS[completionType];
+    label = `${compConfig.label}`;
+    Icon = compConfig.icon;
+  }
 
   const sizeClasses = {
-    sm: "text-xs px-2 py-0.5 gap-1",
-    md: "text-xs font-medium px-2.5 py-1 gap-1.5",
-    lg: "text-sm font-semibold px-3 py-1.5 gap-2",
+    sm: "text-[11px] px-2.5 py-0.5 gap-1 font-semibold",
+    md: "text-xs font-bold px-3 py-1 gap-1.5",
+    lg: "text-sm font-bold px-3.5 py-1.5 gap-2",
   }[size];
 
   return (
@@ -59,7 +80,7 @@ export default function StatusBadge({ status, size = "md", showIcon = true }: St
       className={`inline-flex items-center rounded-full border backdrop-blur-md ${config.bg} ${config.text} ${config.border} ${sizeClasses}`}
     >
       {showIcon && <Icon className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-      {config.label}
+      {label}
     </span>
   );
 }

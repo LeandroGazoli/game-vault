@@ -162,7 +162,7 @@ export default function GameDetailPage() {
               {userGame && (
                 <div className="flex items-center gap-2 bg-surface-50/80 border border-gray-800 px-3 py-1.5 rounded-xl">
                   <span className="text-xs text-gray-400 font-medium">Seu Status:</span>
-                  <StatusBadge status={userGame.status} size="md" />
+                  <StatusBadge status={userGame.status} completionType={userGame.completionType} size="md" />
                 </div>
               )}
             </div>

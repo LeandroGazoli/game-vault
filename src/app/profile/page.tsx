@@ -317,7 +317,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="absolute top-2.5 right-2.5 z-10">
-                      <StatusBadge status={userGame.status} size="sm" />
+                      <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
                     </div>
                   </div>
 
@@ -407,7 +407,7 @@ export default function ProfilePage() {
 
                     <div className="space-y-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={userGame.status} size="sm" />
+                        <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
                         {userGame.metacritic && (
                           <MetacriticBadge score={userGame.metacritic} size="sm" />
                         )}
