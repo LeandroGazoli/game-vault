@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   auth,
+  db,
   getUserProfile,
   saveUserProfile,
 } from "@/lib/firebase";
@@ -15,6 +16,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { UserProfile, UserPlan, ADMIN_EMAILS } from "@/lib/types";
 
 interface AuthContextType {
@@ -38,27 +40,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Somente leandro.gazolig@gmail.com é admin
   const isAdmin = Boolean(
     user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
   );
 
+  // VIP / PRO baseado estritamente no plano atual (ou se for o Admin Master)
   const isPremium = Boolean(
-    isAdmin || (user && (user.plan === "pro" || user.plan === "vip" || user.isPremium))
+    isAdmin || (user && (user.plan === "pro" || user.plan === "vip"))
   );
 
   useEffect(() => {
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-        setFirebaseUser(fbUser);
-        if (fbUser) {
-          try {
-            const userIsAdmin = Boolean(
-              fbUser.email && ADMIN_EMAILS.includes(fbUser.email.toLowerCase())
-            );
+    if (auth && db) {
+      let unsubscribeDoc: (() => void) | null = null;
 
-            let profile = await getUserProfile(fbUser.uid);
-            if (profile) {
-              // Se for admin, garante automaticamente plano VIP e permissões de admin
+      const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+        setFirebaseUser(fbUser);
+
+        if (unsubscribeDoc) {
+          unsubscribeDoc();
+          unsubscribeDoc = null;
+        }
+
+        if (fbUser) {
+          const userIsAdmin = Boolean(
+            fbUser.email && ADMIN_EMAILS.includes(fbUser.email.toLowerCase())
+          );
+
+          // Escuta alterações em tempo real no Firestore
+          const userDocRef = doc(db, "users", fbUser.uid);
+          unsubscribeDoc = onSnapshot(userDocRef, async (docSnap) => {
+            if (docSnap.exists()) {
+              let profile = docSnap.data() as UserProfile;
               if (userIsAdmin && (profile.plan !== "vip" || !profile.isAdmin)) {
                 profile = {
                   ...profile,
@@ -89,15 +102,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               await saveUserProfile(fbUser.uid, newProfile);
               setUser(newProfile);
             }
-          } catch (err) {
-            console.error("Erro ao carregar perfil do Firebase:", err);
-          }
+            setIsLoading(false);
+          });
         } else {
           setUser(null);
+          setIsLoading(false);
         }
-        setIsLoading(false);
       });
-      return () => unsubscribe();
+
+      return () => {
+        unsubscribeAuth();
+        if (unsubscribeDoc) unsubscribeDoc();
+      };
     } else {
       setUser(null);
       setIsLoading(false);
@@ -108,77 +124,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     if (result.user) {
-      const userIsAdmin = Boolean(
-        result.user.email && ADMIN_EMAILS.includes(result.user.email.toLowerCase())
-      );
-
-      const immediateProfile: UserProfile = {
-        uid: result.user.uid,
-        username: result.user.displayName
-          ? result.user.displayName.toLowerCase().replace(/\s+/g, "_")
-          : (result.user.email ? result.user.email.split("@")[0] : "jogador"),
-        displayName: result.user.displayName || "Jogador",
-        email: result.user.email || "",
-        photoURL: result.user.photoURL || null,
-        bio: userIsAdmin ? "Administrador & Membro VIP GameVault." : "Apaixonado por games.",
-        plan: userIsAdmin ? "vip" : "free",
-        isPremium: userIsAdmin,
-        isAdmin: userIsAdmin,
-        hideAds: userIsAdmin,
-        createdAt: new Date().toISOString(),
-      };
       setFirebaseUser(result.user);
-      setUser(immediateProfile);
-
-      getUserProfile(result.user.uid).then((prof) => {
-        if (prof) {
-          if (userIsAdmin) {
-            const updated = { ...prof, plan: "vip" as const, isPremium: true, isAdmin: true, hideAds: true };
-            saveUserProfile(result.user.uid, updated);
-            setUser(updated);
-          } else {
-            setUser(prof);
-          }
-        } else {
-          saveUserProfile(result.user.uid, immediateProfile);
-        }
-      });
     }
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
     const result = await signInWithEmailAndPassword(auth, email, pass);
     if (result.user) {
-      const userIsAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-      const immediateProfile: UserProfile = {
-        uid: result.user.uid,
-        username: email.split("@")[0],
-        displayName: email.split("@")[0],
-        email: result.user.email || email,
-        photoURL: null,
-        bio: userIsAdmin ? "Administrador & Membro VIP GameVault." : "Apaixonado por games.",
-        plan: userIsAdmin ? "vip" : "free",
-        isPremium: userIsAdmin,
-        isAdmin: userIsAdmin,
-        hideAds: userIsAdmin,
-        createdAt: new Date().toISOString(),
-      };
       setFirebaseUser(result.user);
-      setUser(immediateProfile);
-
-      getUserProfile(result.user.uid).then((prof) => {
-        if (prof) {
-          if (userIsAdmin) {
-            const updated = { ...prof, plan: "vip" as const, isPremium: true, isAdmin: true, hideAds: true };
-            saveUserProfile(result.user.uid, updated);
-            setUser(updated);
-          } else {
-            setUser(prof);
-          }
-        } else {
-          saveUserProfile(result.user.uid, immediateProfile);
-        }
-      });
     }
   };
 
@@ -220,11 +173,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const upgradePlan = async (plan: UserPlan, hideAds = true) => {
     if (!user) return;
+    const isPlanPremium = plan === "pro" || plan === "vip" || isAdmin;
     const updated: UserProfile = {
       ...user,
       plan,
-      isPremium: plan === "pro" || plan === "vip" || isAdmin,
-      hideAds: plan === "pro" || plan === "vip" || isAdmin ? hideAds : false,
+      isPremium: isPlanPremium,
+      hideAds: isPlanPremium ? hideAds : false,
       updatedAt: new Date().toISOString(),
     };
     setUser(updated);
