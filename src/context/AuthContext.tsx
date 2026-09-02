@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   auth,
-  isFirebaseConfigured,
   getUserProfile,
   saveUserProfile,
 } from "@/lib/firebase";
@@ -37,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isFirebaseConfigured && auth) {
+    if (auth) {
       const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         setFirebaseUser(fbUser);
         if (fbUser) {
@@ -48,7 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
               const newProfile: UserProfile = {
                 uid: fbUser.uid,
-                username: fbUser.displayName ? fbUser.displayName.toLowerCase().replace(/\s+/g, "_") : (fbUser.email ? fbUser.email.split("@")[0] : "jogador"),
+                username: fbUser.displayName
+                  ? fbUser.displayName.toLowerCase().replace(/\s+/g, "_")
+                  : (fbUser.email ? fbUser.email.split("@")[0] : "jogador"),
                 displayName: fbUser.displayName || "Jogador",
                 email: fbUser.email || "",
                 photoURL: fbUser.photoURL || null,
@@ -74,18 +75,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    if (!auth) throw new Error("Firebase Auth não está configurado.");
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
-    if (!auth) throw new Error("Firebase Auth não está configurado.");
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
   const signUpWithEmail = async (email: string, pass: string, username: string) => {
-    if (!auth) throw new Error("Firebase Auth não está configurado.");
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const newProfile: UserProfile = {
       uid: cred.user.uid,
@@ -101,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    if (auth && firebaseUser) {
+    if (auth) {
       await signOut(auth);
     }
     setUser(null);

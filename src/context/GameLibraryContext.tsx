@@ -18,8 +18,6 @@ interface GameLibraryContextType {
 
 const GameLibraryContext = createContext<GameLibraryContextType | undefined>(undefined);
 
-const GUEST_LIBRARY_KEY = "game_vault_guest_library";
-
 export function GameLibraryProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [library, setLibrary] = useState<UserGame[]>([]);
@@ -30,41 +28,10 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       setIsLoading(true);
       try {
         if (user) {
-          // Usuário autenticado: busca no Firestore
           const userGames = await getUserLibrary(user.uid);
-          
-          // Se houver jogos salvos na sessão de convidado, mescla e sincroniza com o Firestore
-          if (typeof window !== "undefined") {
-            const guestData = localStorage.getItem(GUEST_LIBRARY_KEY);
-            if (guestData) {
-              try {
-                const guestGames: UserGame[] = JSON.parse(guestData);
-                for (const g of guestGames) {
-                  if (!userGames.some((ug) => String(ug.gameId) === String(g.gameId))) {
-                    userGames.push(g);
-                    await saveUserGame(user.uid, g);
-                  }
-                }
-                localStorage.removeItem(GUEST_LIBRARY_KEY);
-              } catch (e) {}
-            }
-          }
-
           setLibrary(userGames || []);
         } else {
-          // Convidado (não logado): carrega da memória local do navegador
-          if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(GUEST_LIBRARY_KEY);
-            if (stored) {
-              try {
-                setLibrary(JSON.parse(stored));
-              } catch {
-                setLibrary([]);
-              }
-            } else {
-              setLibrary([]);
-            }
-          }
+          setLibrary([]);
         }
       } catch (err) {
         console.error("Erro ao carregar biblioteca:", err);
@@ -90,6 +57,8 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   const addOrUpdateGame = async (
     gameData: Partial<UserGame> & { gameId: number | string; gameTitle: string }
   ) => {
+    if (!user) return;
+
     const existingIndex = library.findIndex((g) => String(g.gameId) === String(gameData.gameId));
     const isNewBeaten =
       gameData.status === "completed" &&
@@ -131,22 +100,14 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       triggerZeradoConfetti();
     }
 
-    if (user) {
-      await saveUserGame(user.uid, updatedGame);
-    } else if (typeof window !== "undefined") {
-      localStorage.setItem(GUEST_LIBRARY_KEY, JSON.stringify(nextList));
-    }
+    await saveUserGame(user.uid, updatedGame);
   };
 
   const deleteGame = async (gameId: number | string) => {
+    if (!user) return;
     const nextList = library.filter((g) => String(g.gameId) !== String(gameId));
     setLibrary(nextList);
-
-    if (user) {
-      await removeUserGame(user.uid, gameId);
-    } else if (typeof window !== "undefined") {
-      localStorage.setItem(GUEST_LIBRARY_KEY, JSON.stringify(nextList));
-    }
+    await removeUserGame(user.uid, gameId);
   };
 
   const getGameInLibrary = (gameId: number | string) => {
