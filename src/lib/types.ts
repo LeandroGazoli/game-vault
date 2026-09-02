@@ -4,7 +4,42 @@ export type CompletionType = "main_story" | "main_extra" | "completionist" | "pl
 
 export type UserPlan = "free" | "pro" | "vip";
 
+export type ProfileTheme = "cyan" | "gold" | "purple" | "crimson" | "emerald";
+
 export const ADMIN_EMAILS = ["leandro.gazolig@gmail.com"];
+
+export const PRESET_BANNERS = [
+  {
+    id: "cyberpunk",
+    name: "Cyberpunk Neon",
+    url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80",
+    preview: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "elden_ring",
+    name: "Dark Fantasy Epic",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80",
+    preview: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "retro_synthwave",
+    name: "Retro Synthwave",
+    url: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1600&auto=format&fit=crop&q=80",
+    preview: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "deep_space",
+    name: "Nebulosa Cósmica",
+    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1600&auto=format&fit=crop&q=80",
+    preview: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "gold_vip",
+    name: "Obsidian Gold VIP",
+    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&auto=format&fit=crop&q=80",
+    preview: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+  },
+];
 
 export interface HLTBData {
   gameTitle?: string;
@@ -82,6 +117,9 @@ export interface UserProfile {
   isPremium?: boolean;             // Flag rápida para VIP/Pro
   isAdmin?: boolean;               // Flag de Administrador da plataforma
   hideAds?: boolean;               // Opção de desativar anúncios
+  bannerURL?: string | null;       // Capa personalizada do perfil
+  theme?: ProfileTheme;            // Tema de cores (ex: "cyan", "gold", "purple", "crimson", "emerald")
+  customTitle?: string | null;     // Título Gamer (ex: "Caçador de Platinas", "Mestre dos RPGs")
   premiumUntil?: string | null;    // Data de expiração da assinatura
   createdAt: string;
   updatedAt?: string;

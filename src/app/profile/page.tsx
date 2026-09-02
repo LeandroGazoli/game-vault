@@ -11,6 +11,9 @@ import GameModal from "@/components/GameModal";
 import AuthModal from "@/components/AuthModal";
 import ExportModal from "@/components/ExportModal";
 import UpgradeModal from "@/components/UpgradeModal";
+import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
+import GameRouletteModal from "@/components/GameRouletteModal";
+import GamerWrappedModal from "@/components/GamerWrappedModal";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import Link from "next/link";
@@ -18,6 +21,9 @@ import {
   Trophy,
   Gamepad2,
   Crown,
+  Palette,
+  Dices,
+  Sparkles,
   ShieldCheck,
   XCircle,
   Clock,
@@ -45,6 +51,9 @@ export default function ProfilePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isRouletteOpen, setIsRouletteOpen] = useState(false);
+  const [isWrappedOpen, setIsWrappedOpen] = useState(false);
 
   // Filtra jogos da biblioteca
   const filteredLibrary = library.filter((game) => {
@@ -104,7 +113,14 @@ export default function ProfilePage() {
     <div className="space-y-8 pb-12">
       {/* Banner de Perfil do Jogador */}
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-6 sm:p-8 shadow-2xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        {user.bannerURL && (
+          <img
+            src={user.bannerURL}
+            alt="Banner de Capa"
+            className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+          />
+        )}
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="relative">
               <UserAvatar
@@ -122,6 +138,11 @@ export default function ProfilePage() {
                 </h1>
                 <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
                 <PlanBadge plan={user.plan || "free"} size="sm" />
+                {user.customTitle && (
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] font-bold">
+                    {user.customTitle}
+                  </span>
+                )}
               </div>
 
               <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
@@ -147,6 +168,30 @@ export default function ProfilePage() {
                 Painel Admin
               </Link>
             )}
+            <button
+              onClick={() => setIsCustomizerOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-xs font-semibold text-purple-300 transition-colors shadow-sm"
+              title="Personalizar capa e tema do perfil"
+            >
+              <Palette className="w-3.5 h-3.5 text-purple-400" />
+              Personalizar
+            </button>
+            <button
+              onClick={() => setIsRouletteOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-colors shadow-sm"
+              title="Sortear o próximo jogo do seu backlog"
+            >
+              <Dices className="w-3.5 h-3.5 text-indigo-400" />
+              Roleta Backlog
+            </button>
+            <button
+              onClick={() => setIsWrappedOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors shadow-sm"
+              title="Ver sua retrospectiva gamer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+              Retrospectiva
+            </button>
             <button
               onClick={() => setIsUpgradeOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/30 hover:border-cyan-500/60 text-xs font-semibold text-white transition-all shadow-sm"
@@ -512,6 +557,29 @@ export default function ProfilePage() {
       <UpgradeModal
         isOpen={isUpgradeOpen}
         onClose={() => setIsUpgradeOpen(false)}
+      />
+
+      {/* Modal de Personalização do Perfil */}
+      <ProfileCustomizerModal
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
+      />
+
+      {/* Modal de Roleta do Backlog */}
+      <GameRouletteModal
+        isOpen={isRouletteOpen}
+        onClose={() => setIsRouletteOpen(false)}
+        games={library}
+      />
+
+      {/* Modal de Retrospectiva Gamer Wrapped */}
+      <GamerWrappedModal
+        isOpen={isWrappedOpen}
+        onClose={() => setIsWrappedOpen(false)}
+        games={library}
+        user={user}
+        stats={stats}
       />
     </div>
   );
