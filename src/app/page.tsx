@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Game } from "@/lib/types";
-import { getPopularGamesApi } from "@/lib/gameApi";
 import GameCard from "@/components/GameCard";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
@@ -15,28 +14,32 @@ import {
   Search,
   Gamepad2,
   TrendingUp,
-  ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function HomePage() {
   const { user } = useAuth();
   const { stats } = useGameLibrary();
   const [games, setGames] = useState<Game[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const data = await getPopularGamesApi();
-      setGames(data);
-      setLoading(false);
+      try {
+        const res = await fetch("/api/games/search");
+        if (res.ok) {
+          const data = await res.json();
+          setGames(data.games || []);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar jogos populares:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
-  // Jogos filtrados para seções em destaque
   const topMetacritic = [...games].sort((a, b) => (b.metacritic || 0) - (a.metacritic || 0)).slice(0, 8);
   const epicLongGames = games.filter((g) => (g.hltb?.mainStory || 0) >= 45).slice(0, 4);
 
@@ -49,7 +52,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-4">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            Rastreamento de Jogos • Metacritic • HowLongToBeat
+            Rastreamento de Jogos • Metacritic • HowLongToBeat • IGDB
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
@@ -73,7 +76,7 @@ export default function HomePage() {
               <input
                 type="text"
                 name="q"
-                placeholder="Busque por Elden Ring, God of War, The Witcher..."
+                placeholder="Busque por Elden Ring, God of War, The Witcher, Zelda..."
                 className="w-full pl-12 pr-28 py-3.5 rounded-2xl bg-surface-50/90 border border-indigo-500/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xl text-sm"
               />
               <button
@@ -117,7 +120,7 @@ export default function HomePage() {
                 Em Alta na Comunidade
               </h2>
               <p className="text-xs text-gray-400">
-                Os jogos mais aclamados e jogados atualmente com tempos HowLongToBeat
+                Os jogos mais aclamados e jogados com notas e tempos HowLongToBeat
               </p>
             </div>
           </div>
@@ -130,41 +133,54 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Grid de Jogos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {games.slice(0, 8).map((game) => (
-            <GameCard key={game.id} game={game} />
-          ))}
-        </div>
+        {/* Grid de Jogos ou Loading Skeleton */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div
+                key={n}
+                className="h-64 rounded-2xl bg-surface-100/50 border border-gray-800 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {games.slice(0, 8).map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Seção 2: Maiores Notas no Metacritic */}
-      <section className="space-y-5 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Obras-Primas do Metacritic (90+)
-              </h2>
-              <p className="text-xs text-gray-400">
-                Jogos com as pontuações mais altas da crítica especializada mundial
-              </p>
+      {!loading && topMetacritic.length > 0 && (
+        <section className="space-y-5 pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  Obras-Primas Aclamadas (85+)
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Jogos com as pontuações mais altas da crítica especializada
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {topMetacritic.map((game) => (
-            <GameCard key={game.id} game={game} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {topMetacritic.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Seção 3: RPGs Épicos e Campanhas Longas */}
-      {epicLongGames.length > 0 && (
+      {!loading && epicLongGames.length > 0 && (
         <section className="space-y-5 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">

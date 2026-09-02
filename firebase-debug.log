@@ -1,0 +1,49 @@
+[debug] [2026-09-01T20:59:50.249Z] ----------------------------------------------------------------------
+[debug] [2026-09-01T20:59:50.251Z] Command:       /Users/leandro/.nvm/versions/node/v22.16.0/bin/node /Users/leandro/.npm/_npx/ba4f1959e38407b5/node_modules/.bin/firebase projects:create -n GameVault gamevault-profile-leandro
+[debug] [2026-09-01T20:59:50.251Z] CLI Version:   15.28.2
+[debug] [2026-09-01T20:59:50.251Z] Platform:      darwin
+[debug] [2026-09-01T20:59:50.251Z] Node Version:  v22.16.0
+[debug] [2026-09-01T20:59:50.251Z] Detected Agent: antigravity
+[debug] [2026-09-01T20:59:50.251Z] Time:          Tue Sep 01 2026 17:59:50 GMT-0300 (Brasilia Standard Time)
+[debug] [2026-09-01T20:59:50.251Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-01T20:59:50.257Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-09-01T20:59:50.280Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-01T20:59:50.280Z] > authorizing via signed-in user (leandro.gazolig@gmail.com)
+[debug] [2026-09-01T20:59:50.281Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:50.281Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:50.281Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects [none]
+[debug] [2026-09-01T20:59:50.281Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects {"projectId":"gamevault-profile-leandro","name":"GameVault"}
+[debug] [2026-09-01T20:59:50.684Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-09-01T20:59:50.684Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-09-01T20:59:51.318Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects 200
+[debug] [2026-09-01T20:59:51.318Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects {"name":"operations/create_project.global.5206240357477320889"}
+[debug] [2026-09-01T20:59:51.319Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:51.319Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:51.320Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 [none]
+[debug] [2026-09-01T20:59:52.118Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 200
+[debug] [2026-09-01T20:59:52.118Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 {"name":"operations/create_project.global.5206240357477320889"}
+[debug] [2026-09-01T20:59:52.620Z] [Project Creation Poller] Retrying task index 0
+[debug] [2026-09-01T20:59:52.624Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:52.624Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:52.624Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 [none]
+[debug] [2026-09-01T20:59:52.824Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 200
+[debug] [2026-09-01T20:59:52.825Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 {"name":"operations/create_project.global.5206240357477320889"}
+[debug] [2026-09-01T20:59:53.827Z] [Project Creation Poller] Retrying task index 0
+[debug] [2026-09-01T20:59:53.828Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:53.828Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:53.829Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 [none]
+[debug] [2026-09-01T20:59:54.039Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 200
+[debug] [2026-09-01T20:59:54.040Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/operations/create_project.global.5206240357477320889 {"name":"operations/create_project.global.5206240357477320889","metadata":{"@type":"type.googleapis.com/google.cloudresourcemanager.v1.ProjectCreationStatus","gettable":true,"ready":true},"done":true,"response":{"@type":"type.googleapis.com/google.cloudresourcemanager.v1.Project","projectNumber":"808579948323","projectId":"gamevault-profile-leandro","lifecycleState":"ACTIVE","name":"GameVault","createTime":"2026-09-01T20:59:51.181Z"}}
+[debug] [2026-09-01T20:59:54.042Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:54.043Z] Checked if tokens are valid: true, expires at: 1788299962553
+[debug] [2026-09-01T20:59:54.043Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/gamevault-profile-leandro:addFirebase [none]
+[debug] [2026-09-01T20:59:55.248Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/gamevault-profile-leandro:addFirebase 403
+[debug] [2026-09-01T20:59:55.249Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/gamevault-profile-leandro:addFirebase {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2026-09-01T20:59:55.251Z] Request to https://firebase.googleapis.com/v1beta1/projects/gamevault-profile-leandro:addFirebase had HTTP Error: 403, The caller does not have permission
+[debug] [2026-09-01T20:59:55.252Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/gamevault-profile-leandro:addFirebase had HTTP Error: 403, The caller does not have permission
+    at responseToError (/Users/leandro/.npm/_npx/ba4f1959e38407b5/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/Users/leandro/.npm/_npx/ba4f1959e38407b5/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[error] 
+[error] Error: Failed to add Firebase to Google Cloud Platform project. See firebase-debug.log for more info.
