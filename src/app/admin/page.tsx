@@ -25,9 +25,11 @@ import {
   ArrowUpRight,
   TrendingUp,
 } from "lucide-react";
+import AdminPlansManager from "@/components/AdminPlansManager";
 
 export default function AdminPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const [adminTab, setAdminTab] = useState<"users" | "plans">("users");
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -185,13 +187,50 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Toast de Sucesso */}
-      {successToast && (
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-          <span>{successToast}</span>
-        </div>
-      )}
+      {/* Seletor de Abas do Painel */}
+      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+        <button
+          onClick={() => setAdminTab("users")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+            adminTab === "users"
+              ? "bg-white text-black shadow-lg"
+              : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Usuários &amp; Assinaturas</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-black/10 font-mono">
+            {totalUsersCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab("plans")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+            adminTab === "plans"
+              ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/20"
+              : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Gestão de Planos &amp; Stripe</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] bg-cyan-950/60 text-cyan-200 border border-cyan-400/30 font-mono font-bold">
+            PRODUÇÃO
+          </span>
+        </button>
+      </div>
+
+      {adminTab === "plans" ? (
+        <AdminPlansManager adminEmail={user.email} />
+      ) : (
+        <>
+          {/* Toast de Sucesso */}
+          {successToast && (
+            <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>{successToast}</span>
+            </div>
+          )}
 
       {/* Grid de Cards KPI de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -446,6 +485,8 @@ export default function AdminPage() {
           </table>
         </div>
       </div>
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 }

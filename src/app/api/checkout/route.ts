@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, STRIPE_PLANS } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
+import { getPlansConfig, PlanKey } from "@/lib/plans";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,11 +22,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let selectedPlan: typeof STRIPE_PLANS[keyof typeof STRIPE_PLANS] = STRIPE_PLANS.PRO_MONTHLY;
-    if (planId === "pro_annual") {
-      selectedPlan = STRIPE_PLANS.PRO_ANNUAL;
-    } else if (planId === "vip_lifetime") {
-      selectedPlan = STRIPE_PLANS.VIP_LIFETIME;
+    // Carrega configurações dinâmicas de planos do Firestore
+    const plansConfig = await getPlansConfig();
+    const validPlanKey = (planId as PlanKey) in plansConfig ? (planId as PlanKey) : "pro_monthly";
+    const selectedPlan = plansConfig[validPlanKey];
+
+    if (!selectedPlan || !selectedPlan.priceId) {
+      return NextResponse.json(
+        { error: "Plano ou preço do Stripe não configurado." },
+        { status: 400 }
+      );
     }
 
     const origin =

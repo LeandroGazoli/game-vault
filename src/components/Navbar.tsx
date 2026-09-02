@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -37,17 +38,34 @@ export default function Navbar() {
   const { stats } = useGameLibrary();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Bloqueia scroll do body quando o menu drawer mobile estiver aberto
   useEffect(() => {
     if (isMobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
-    return () => {
-      document.body.style.overflow = "unset";
+  }, [isMobileMenuOpen]);
+
+  // Fecha o menu com a tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
     };
+    if (isMobileMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
   }, [isMobileMenuOpen]);
 
   // Fecha o menu ao trocar de rota
@@ -183,23 +201,25 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+      </header>
 
-        {/* =========================================================
-            MENU MOBILE MODERNO: DRAWER LATERAL COM GLASSMORPHISM
-        ========================================================= */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 animate-fadeIn">
-            {/* Overlay com Backdrop Blur */}
-            <div
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
+      {/* =========================================================
+          MENU MOBILE MODERNO: DRAWER LATERAL COM PORTAL NO BODY
+      ========================================================= */}
+      {mounted && isMobileMenuOpen && typeof document !== "undefined" && createPortal(
+        <div className="lg:hidden fixed inset-0 z-[100] animate-fadeIn">
+          {/* Overlay com Backdrop Blur */}
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-            {/* Painel Drawer Deslizante */}
-            <aside
-              className="absolute top-0 right-0 bottom-0 w-[86%] max-w-sm bg-[#111317] border-l border-white/15 p-5 flex flex-col justify-between overflow-y-auto pb-safe shadow-2xl z-10"
-              aria-label="Menu principal"
-            >
+          {/* Painel Drawer Deslizante */}
+          <aside
+            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#111317] border-l border-white/15 p-5 flex flex-col justify-between overflow-y-auto pb-safe shadow-2xl z-[101] animate-slideInRight"
+            aria-label="Menu principal"
+          >
               {/* Topo do Drawer: Logo & Fechar */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -456,9 +476,9 @@ export default function Navbar() {
                 </div>
               </div>
             </aside>
-          </div>
+          </div>,
+          document.body
         )}
-      </header>
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>

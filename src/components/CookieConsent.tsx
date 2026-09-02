@@ -37,7 +37,7 @@ export default function CookieConsent() {
   return (
     <aside
       aria-label="Consentimento de Cookies"
-      className="fixed bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-50 animate-fadeIn"
+      className="fixed bottom-24 sm:bottom-6 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-40 animate-fadeIn"
     >
       <div className="relative rounded-3xl bg-[#18191c]/95 border border-white/15 p-5 shadow-2xl backdrop-blur-xl space-y-3">
         <div className="flex items-start gap-3">

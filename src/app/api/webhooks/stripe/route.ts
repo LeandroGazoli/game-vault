@@ -40,13 +40,19 @@ export async function POST(request: NextRequest) {
 
         if (userId) {
           const plan = planId === "vip_lifetime" ? "vip" : "pro";
+          const isSingleMonth = planId === "pro_single_month";
+          const premiumUntil = isSingleMonth
+            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            : null;
+
           await saveUserProfile(userId, {
             plan,
             isPremium: true,
             hideAds: true,
+            premiumUntil,
             updatedAt: new Date().toISOString(),
           });
-          console.log(`Usuário ${userId} atualizado com sucesso para plano ${plan}!`);
+          console.log(`Usuário ${userId} atualizado com sucesso para plano ${plan} (avulso: ${isSingleMonth})!`);
         }
         break;
       }

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { DEFAULT_PLANS_CONFIG, PlansConfig, PlanKey } from "@/lib/plans";
 import AuthModal from "@/components/AuthModal";
 import {
   Crown,
@@ -15,15 +16,27 @@ import {
   ArrowRight,
   Star,
   HelpCircle,
+  RefreshCw,
 } from "lucide-react";
 
 export default function PlanosPage() {
   const { user, isPremium, upgradePlan } = useAuth();
+  const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS_CONFIG);
+  const [proBillingType, setProBillingType] = useState<"recurring" | "single_month">("recurring");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  const handleCheckout = async (planId: "pro_monthly" | "pro_annual" | "vip_lifetime") => {
+  useEffect(() => {
+    fetch("/api/plans")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setPlansConfig((prev) => ({ ...prev, ...data }));
+      })
+      .catch((e) => console.error("Erro ao carregar planos:", e));
+  }, []);
+
+  const handleCheckout = async (planId: PlanKey) => {
     if (!user) {
       setIsAuthOpen(true);
       return;
@@ -85,19 +98,64 @@ export default function PlanosPage() {
 
       {/* Grid de Planos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 1. PLANO MENSAL */}
+        {/* 1. PLANO MENSAL / AVULSO COM SELETOR */}
         <div className="rounded-[32px] p-6 sm:p-7 border border-white/10 bg-[#18191c] flex flex-col justify-between space-y-6 hover:border-white/20 transition-all shadow-xl">
           <div className="space-y-4">
+            {/* Seletor Recorrente vs 1 Mês Avulso */}
+            <div className="p-1 rounded-2xl bg-black/40 border border-white/10 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setProBillingType("recurring")}
+                className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center ${
+                  proBillingType === "recurring"
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Assinatura Mensal
+              </button>
+              <button
+                type="button"
+                onClick={() => setProBillingType("single_month")}
+                className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center ${
+                  proBillingType === "single_month"
+                    ? "bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40 shadow-sm"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                1 Mês Avulso
+              </button>
+            </div>
+
             <div className="space-y-1.5">
-              <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-white/10 text-gray-400 font-bold">
-                Mensal
-              </span>
-              <h3 className="text-xl font-bold text-white">PRO Mensal</h3>
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-white">R$ 9,90</span>
-                <span className="text-xs text-gray-400 font-mono">/mês</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-white/10 text-gray-400 font-bold">
+                  {proBillingType === "recurring" ? "Mensal Recorrente" : "Pagamento Único"}
+                </span>
+                {proBillingType === "single_month" && (
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold">
+                    Sem Renovação
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-gray-400">Cancele a qualquer momento sem taxas.</p>
+              <h3 className="text-xl font-bold text-white">
+                {proBillingType === "recurring" ? plansConfig.pro_monthly.name : plansConfig.pro_single_month.name}
+              </h3>
+              <div className="flex items-baseline gap-1 pt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white">
+                  {proBillingType === "recurring"
+                    ? plansConfig.pro_monthly.formattedPrice
+                    : plansConfig.pro_single_month.formattedPrice}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">
+                  {proBillingType === "recurring" ? plansConfig.pro_monthly.intervalText : " único"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                {proBillingType === "recurring"
+                  ? "Cancele a qualquer momento sem taxas ou carência."
+                  : "Pague apenas 1 único mês (30 dias de acesso completo sem cobranças automáticas)."}
+              </p>
             </div>
 
             <ul className="space-y-3 text-xs text-gray-300 pt-4 border-t border-white/5">
@@ -121,34 +179,42 @@ export default function PlanosPage() {
           </div>
 
           <button
-            onClick={() => handleCheckout("pro_monthly")}
+            onClick={() => handleCheckout(proBillingType === "recurring" ? "pro_monthly" : "pro_single_month")}
             disabled={Boolean(loadingPlan)}
-            className="w-full py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md"
+            className="w-full py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md active:scale-95"
           >
             <CreditCard className="w-4 h-4" />
-            {loadingPlan === "pro_monthly" ? "Conectando ao Stripe..." : "Assinar Plano Mensal"}
+            {loadingPlan === "pro_monthly" || loadingPlan === "pro_single_month"
+              ? "Conectando ao Stripe..."
+              : proBillingType === "recurring"
+              ? "Assinar Plano Mensal"
+              : "Pagar 1 Mês (Avulso)"}
           </button>
         </div>
 
         {/* 2. PLANO ANUAL (DESTAQUE) */}
         <div className="relative rounded-[32px] p-6 sm:p-7 border-2 border-[#00E5FF] bg-gradient-to-b from-cyan-950/40 via-[#18191c] to-black flex flex-col justify-between space-y-6 shadow-2xl shadow-cyan-500/15 scale-105 z-10">
           <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#00E5FF] text-black font-extrabold text-[11px] uppercase tracking-wider shadow-lg flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5 fill-black" /> Mais Popular • 2 Meses Grátis
+            <Star className="w-3.5 h-3.5 fill-black" /> {plansConfig.pro_annual.badge || "Mais Popular • Economize 33%"}
           </div>
 
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-[#00E5FF] font-bold">
-                Economize 20%
+                Economize 33%
               </span>
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#00E5FF]" /> PRO Anual
+                <Sparkles className="w-5 h-5 text-[#00E5FF]" /> {plansConfig.pro_annual.name}
               </h3>
               <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-[#00E5FF]">R$ 79,90</span>
-                <span className="text-xs text-gray-400 font-mono">/ano</span>
+                <span className="text-3xl sm:text-4xl font-black text-[#00E5FF]">
+                  {plansConfig.pro_annual.formattedPrice}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">{plansConfig.pro_annual.intervalText}</span>
               </div>
-              <p className="text-xs text-gray-300 font-mono">Equivalente a apenas R$ 6,65/mês</p>
+              <p className="text-xs text-gray-300 font-mono">
+                Equivalente a apenas R$ {(plansConfig.pro_annual.price / 12).toFixed(2).replace(".", ",")}/mês
+              </p>
             </div>
 
             <ul className="space-y-3 text-xs text-gray-200 pt-4 border-t border-white/10">
@@ -186,14 +252,16 @@ export default function PlanosPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">
-                Pagamento Único
+                {plansConfig.vip_lifetime.badge || "Pagamento Único"}
               </span>
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Crown className="w-5 h-5 text-amber-400" /> Membro VIP
+                <Crown className="w-5 h-5 text-amber-400" /> {plansConfig.vip_lifetime.name}
               </h3>
               <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-amber-400">R$ 149,90</span>
-                <span className="text-xs text-gray-400 font-mono">vitalício</span>
+                <span className="text-3xl sm:text-4xl font-black text-amber-400">
+                  {plansConfig.vip_lifetime.formattedPrice}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">{plansConfig.vip_lifetime.intervalText}</span>
               </div>
               <p className="text-xs text-gray-400">Pague uma única vez e tenha acesso para sempre.</p>
             </div>
