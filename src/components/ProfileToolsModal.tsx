@@ -165,7 +165,7 @@ export default function ProfileToolsModal({
                   Personalizar Perfil
                 </span>
                 <p className="text-[11px] text-gray-400">
-                  Banner de capa, tema visual e links sociais
+                  Capa, temas, títulos, insígnias e links sociais
                 </p>
               </div>
             </div>

@@ -10,6 +10,8 @@ import {
   SocialLinks,
   ProfileVisibility,
   UserGame,
+  DEFAULT_GAMER_TITLES,
+  GAMER_EMOJI_SUGGESTIONS,
 } from "@/lib/types";
 import MarkdownProfileBio from "./MarkdownProfileBio";
 import {
@@ -37,6 +39,10 @@ import {
   List,
   Quote,
   Table,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  Plus,
 } from "lucide-react";
 
 interface ProfileCustomizerModalProps {
@@ -54,16 +60,7 @@ const THEME_OPTIONS: { id: ProfileTheme; name: string; color: string; ring: stri
   { id: "emerald", name: "Emerald Forest", color: "bg-emerald-400", ring: "ring-emerald-400", badge: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
 ];
 
-const GAMER_TITLES = [
-  "🏆 Caçador de Platinas",
-  "⚔️ Mestre dos RPGs",
-  "🕹️ Maratonista de Backlog",
-  "💎 Colecionador Veterano",
-  "🎯 Estrategista Implacável",
-  "🌌 Explorador de Mundos",
-  "⚡ Speedrunner Dedicado",
-  "🛡️ Guardião da Biblioteca",
-];
+const GAMER_TITLES = DEFAULT_GAMER_TITLES;
 
 export default function ProfileCustomizerModal({
   isOpen,
@@ -73,13 +70,30 @@ export default function ProfileCustomizerModal({
 }: ProfileCustomizerModalProps) {
   const { user, isPremium } = useAuth();
 
-  const [activeSection, setActiveSection] = useState<"appearance" | "markdown" | "socials" | "showcase" | "visibility">("appearance");
+  const [activeSection, setActiveSection] = useState<"appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">("appearance");
 
   // Estados de Personalização
   const [selectedBanner, setSelectedBanner] = useState<string>(user?.bannerURL || PRESET_BANNERS[0].url);
   const [customBannerUrl, setCustomBannerUrl] = useState<string>("");
   const [selectedTheme, setSelectedTheme] = useState<ProfileTheme>(user?.theme || "cyan");
-  const [selectedTitle, setSelectedTitle] = useState<string>(user?.customTitle || GAMER_TITLES[0]);
+
+  // Títulos e Insígnias
+  const [equippedTitles, setEquippedTitles] = useState<string[]>(() => {
+    if (user?.customTitles && Array.isArray(user.customTitles) && user.customTitles.length > 0) {
+      return user.customTitles.slice(0, 3);
+    }
+    if (user?.customTitle) {
+      return [user.customTitle];
+    }
+    return [DEFAULT_GAMER_TITLES[0]];
+  });
+  const [createdTitles, setCreatedTitles] = useState<string[]>(() => {
+    return Array.isArray(user?.createdCustomTitles) ? user.createdCustomTitles : [];
+  });
+  const [newTitleInput, setNewTitleInput] = useState<string>("");
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [titlesNotice, setTitlesNotice] = useState<string | null>(null);
+
   const [markdownContent, setMarkdownContent] = useState<string>(user?.customMarkdown || user?.customHtml || "");
   const [markdownTab, setMarkdownTab] = useState<"edit" | "preview">("edit");
 
@@ -102,10 +116,98 @@ export default function ProfileCustomizerModal({
   const [isSaving, setIsSaving] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
 
+  // Sincroniza dados sempre que o modal abre ou o usuário atualiza
+  React.useEffect(() => {
+    if (user && isOpen) {
+      setSelectedBanner(user.bannerURL || PRESET_BANNERS[0].url);
+      setSelectedTheme(user.theme || "cyan");
+      if (user.customTitles && Array.isArray(user.customTitles) && user.customTitles.length > 0) {
+        setEquippedTitles(user.customTitles.slice(0, 3));
+      } else if (user.customTitle) {
+        setEquippedTitles([user.customTitle]);
+      } else {
+        setEquippedTitles([DEFAULT_GAMER_TITLES[0]]);
+      }
+      setCreatedTitles(Array.isArray(user.createdCustomTitles) ? user.createdCustomTitles : []);
+      setMarkdownContent(user.customMarkdown || user.customHtml || "");
+      setSocials(user.socialLinks || {});
+      setShowcaseGameId(user.showcaseGameId || null);
+      if (user.visibility) setVisibility(user.visibility);
+    }
+  }, [user, isOpen]);
+
   if (!isOpen || !user) return null;
 
   const insertMarkdown = (prefix: string, suffix = "") => {
     setMarkdownContent((prev) => `${prev}\n${prefix}Texto${suffix}\n`);
+  };
+
+  // Reordenação Direcional Instantânea (Sem Digitar Números)
+  const moveEquippedTitle = (index: number, direction: "left" | "right") => {
+    const newIndex = direction === "left" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= equippedTitles.length) return;
+    const updated = [...equippedTitles];
+    const temp = updated[index];
+    updated[index] = updated[newIndex];
+    updated[newIndex] = temp;
+    setEquippedTitles(updated);
+  };
+
+  const unequipTitle = (title: string) => {
+    setEquippedTitles((prev) => prev.filter((t) => t !== title));
+  };
+
+  const toggleEquipTitle = (title: string) => {
+    if (equippedTitles.includes(title)) {
+      unequipTitle(title);
+    } else {
+      if (equippedTitles.length >= 3) {
+        setTitlesNotice("Máximo de 3 insígnias no perfil atingido. Remova uma para adicionar esta.");
+        setTimeout(() => setTitlesNotice(null), 3500);
+        return;
+      }
+      setEquippedTitles((prev) => [...prev, title]);
+    }
+  };
+
+  const handleCreateCustomTitle = () => {
+    if (!isPremium) {
+      onClose();
+      onOpenUpgrade();
+      return;
+    }
+    const cleanTitle = newTitleInput.trim();
+    if (!cleanTitle) {
+      setCreateError("Digite o nome da sua insígnia.");
+      return;
+    }
+    if (cleanTitle.length > 32) {
+      setCreateError("O nome da insígnia pode ter no máximo 32 caracteres.");
+      return;
+    }
+    if (createdTitles.length >= 10) {
+      setCreateError("Limite de 10 insígnias customizadas atingido. Exclua uma para liberar espaço.");
+      return;
+    }
+    if (createdTitles.includes(cleanTitle) || DEFAULT_GAMER_TITLES.includes(cleanTitle)) {
+      setCreateError("Uma insígnia com este nome já existe.");
+      return;
+    }
+
+    const updatedCreated = [...createdTitles, cleanTitle];
+    setCreatedTitles(updatedCreated);
+    setNewTitleInput("");
+    setCreateError(null);
+
+    // Se o usuário tem menos de 3 no perfil, já equipa automaticamente para conveniência
+    if (equippedTitles.length < 3) {
+      setEquippedTitles((prev) => [...prev, cleanTitle]);
+    }
+  };
+
+  const handleDeleteCustomTitle = (titleToDelete: string) => {
+    setCreatedTitles((prev) => prev.filter((t) => t !== titleToDelete));
+    setEquippedTitles((prev) => prev.filter((t) => t !== titleToDelete));
   };
 
   const handleSave = async () => {
@@ -121,7 +223,9 @@ export default function ProfileCustomizerModal({
       await saveUserProfile(user.uid, {
         bannerURL: banner,
         theme: selectedTheme,
-        customTitle: selectedTitle,
+        customTitle: equippedTitles[0] || null, // Mantém compatibilidade com leitura legada
+        customTitles: equippedTitles,
+        createdCustomTitles: createdTitles,
         customMarkdown: markdownContent.trim(),
         customHtml: markdownContent.trim(), // Compatibilidade retroativa
         socialLinks: socials,
@@ -179,7 +283,8 @@ export default function ProfileCustomizerModal({
         {/* Barra de Abas de Configuração */}
         <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/5">
           {[
-            { id: "appearance", label: "Visual & Temas", icon: Palette },
+            { id: "appearance", label: "Capa & Cores", icon: Palette },
+            { id: "titles", label: `Títulos & Insígnias (${equippedTitles.length}/3)`, icon: Sparkles },
             { id: "markdown", label: "Bio em Markdown & GIFs", icon: Code2 },
             { id: "socials", label: "Gamertags & Redes", icon: Share2 },
             { id: "showcase", label: "Jogo em Destaque", icon: Trophy },
@@ -220,11 +325,24 @@ export default function ProfileCustomizerModal({
                   alt="Banner Preview"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${THEME_OPTIONS.find(t => t.id === selectedTheme)?.badge}`}>
-                      {selectedTitle}
-                    </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-end p-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {equippedTitles.length > 0 ? (
+                      equippedTitles.map((t, idx) => (
+                        <span
+                          key={idx}
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
+                            idx === 0
+                              ? THEME_OPTIONS.find((th) => th.id === selectedTheme)?.badge
+                              : "border-white/20 text-gray-200 bg-white/15"
+                          }`}
+                        >
+                          {t}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Nenhuma insígnia selecionada</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -291,27 +409,386 @@ export default function ProfileCustomizerModal({
               </div>
             </div>
 
-            {/* Título Gamer */}
-            <div className="space-y-2 pt-2 border-t border-white/5">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Título / Insígnia Gamer
-              </label>
+            {/* Resumo de Insígnias Equipadas */}
+            <div className="space-y-3 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Insígnias Equipadas no Perfil ({equippedTitles.length}/3)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("titles")}
+                  className="text-xs font-bold text-[#00E5FF] hover:underline flex items-center gap-1"
+                >
+                  <span>Gerenciar &amp; Criar Customizadas</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {equippedTitles.map((t, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/15 border border-cyan-500/40 text-[#00E5FF] flex items-center gap-1.5 shadow-sm"
+                  >
+                    <span>{t}</span>
+                    <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded font-mono text-cyan-300">
+                      #{idx + 1}
+                    </span>
+                  </span>
+                ))}
+                {equippedTitles.length === 0 && (
+                  <span className="text-xs text-gray-400 italic">Nenhuma insígnia selecionada.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: TÍTULOS & INSÍGNIAS */}
+        {activeSection === "titles" && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Header explicativo da aba */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/5 border border-white/10">
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  Gerenciador de Títulos &amp; Insígnias
+                </h4>
+                <p className="text-xs text-gray-400">
+                  Equipe até 3 insígnias no seu perfil público e organize a ordem exibida usando as setas. Usuários PRO e VIP podem criar até 10 insígnias customizadas exclusivas.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap flex-shrink-0">
+                <span className="text-[10px] font-bold uppercase text-gray-400">Slots:</span>
+                <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-xl border ${
+                  equippedTitles.length === 3
+                    ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                    : "bg-white/5 border-white/10 text-gray-300"
+                }`}>
+                  {equippedTitles.length} / 3 equipadas
+                </span>
+              </div>
+            </div>
+
+            {/* SEÇÃO 1: INSÍGNIAS EQUIPADAS NO PERFIL */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#121316] border border-white/10 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-[#00E5FF] flex items-center justify-center font-bold">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                      Insígnias Ativas no Perfil
+                      <span className="text-[10px] font-mono text-[#00E5FF] font-semibold">({equippedTitles.length}/3)</span>
+                    </h5>
+                    <p className="text-[11px] text-gray-400">
+                      Use as setas para trocar a prioridade com 1 clique (sem digitar números).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {titlesNotice && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs animate-fadeIn">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{titlesNotice}</span>
+                </div>
+              )}
+
+              {equippedTitles.length === 0 ? (
+                <div className="py-8 text-center text-gray-400 text-xs border border-dashed border-white/10 rounded-2xl bg-white/[0.02] space-y-1">
+                  <p className="font-bold text-gray-300">Nenhuma insígnia selecionada para o perfil.</p>
+                  <p className="text-[11px]">Escolha ou crie insígnias nas seções abaixo para começar!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {equippedTitles.map((title, idx) => (
+                    <div
+                      key={title + idx}
+                      className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${
+                        idx === 0
+                          ? "bg-gradient-to-br from-cyan-950/40 to-black/60 border-[#00E5FF]/40 shadow-lg shadow-cyan-500/5 ring-1 ring-[#00E5FF]/20"
+                          : "bg-white/5 border-white/10 hover:border-white/20"
+                      }`}
+                    >
+                      {/* Topo do Card de Slot */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg flex items-center gap-1 ${
+                          idx === 0
+                            ? "bg-[#00E5FF] text-black"
+                            : idx === 1
+                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                            : "bg-white/10 text-gray-300 border border-white/10"
+                        }`}>
+                          {idx === 0 ? "★ 1º Principal" : idx === 1 ? "2º Secundário" : "3º Terceiro"}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => unequipTitle(title)}
+                          className="p-1 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all active:scale-90"
+                          title="Desequipar do perfil"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Nome da Insígnia */}
+                      <div className="text-xs sm:text-sm font-bold text-white truncate py-1" title={title}>
+                        {title}
+                      </div>
+
+                      {/* Controles de Reordenação Sem Digitar Números */}
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-gray-400">
+                        <span className="text-[10px] text-gray-500 font-medium">Posição:</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => moveEquippedTitle(idx, "left")}
+                            disabled={idx === 0}
+                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed text-white text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95"
+                            title="Mover para a esquerda (posição anterior)"
+                          >
+                            <ArrowLeft className="w-3 h-3" />
+                            <span>Antes</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => moveEquippedTitle(idx, "right")}
+                            disabled={idx === equippedTitles.length - 1}
+                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed text-white text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95"
+                            title="Mover para a direita (próxima posição)"
+                          >
+                            <span>Depois</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 2: CRIAR INSÍGNIA CUSTOMIZADA (X/10) */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#121316] border border-white/10 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center justify-center font-bold">
+                    <Crown className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                      Minhas Insígnias Customizadas
+                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold">
+                        PRO / VIP
+                      </span>
+                    </h5>
+                    <p className="text-[11px] text-gray-400">
+                      Crie até 10 insígnias customizadas com seus apelidos, títulos e conquistas.
+                    </p>
+                  </div>
+                </div>
+
+                <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-xl border ${
+                  createdTitles.length >= 10
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                    : "bg-white/5 text-gray-300 border border-white/10"
+                }`}>
+                  {createdTitles.length} / 10 criadas
+                </span>
+              </div>
+
+              {!isPremium ? (
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-amber-300 flex items-center gap-1.5">
+                      <Lock className="w-4 h-4 text-amber-400" /> Criação Exclusiva para Assinantes PRO e VIP
+                    </p>
+                    <p className="text-xs text-gray-300 max-w-xl">
+                      Desbloqueie a criação de até 10 insígnias customizadas com seus próprios emojis e textos para se destacar no GameVault.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenUpgrade();
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-lg flex-shrink-0 active:scale-95"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Fazer Upgrade
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Seletor Rápido de Emojis */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      Clique em um emoji para adicionar ao início:
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {GAMER_EMOJI_SUGGESTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            if (newTitleInput.startsWith(emoji)) return;
+                            setNewTitleInput((prev) => `${emoji} ${prev}`.trim());
+                          }}
+                          className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-sm transition-transform hover:scale-110 active:scale-95"
+                          title={`Adicionar emoji ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campo de Texto e Botão de Criação */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={newTitleInput}
+                        onChange={(e) => {
+                          setNewTitleInput(e.target.value);
+                          if (createError) setCreateError(null);
+                        }}
+                        maxLength={32}
+                        disabled={createdTitles.length >= 10}
+                        placeholder="Ex: 👑 Rei dos Soulslikes ou Caçador Noturno"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF] disabled:opacity-50 disabled:cursor-not-allowed"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateCustomTitle();
+                          }
+                        }}
+                      />
+                      <span className="absolute right-3 top-2.5 text-[10px] text-gray-500 font-mono">
+                        {newTitleInput.length}/32
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCreateCustomTitle}
+                      disabled={createdTitles.length >= 10 || !newTitleInput.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed text-black text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md flex-shrink-0 active:scale-95"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Criar Insígnia</span>
+                    </button>
+                  </div>
+
+                  {createError && (
+                    <div className="text-rose-400 text-xs flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 p-2 rounded-xl">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{createError}</span>
+                    </div>
+                  )}
+
+                  {/* Lista de Insígnias Customizadas do Usuário */}
+                  {createdTitles.length > 0 ? (
+                    <div className="pt-2 space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Insígnias Customizadas Salvas ({createdTitles.length}/10):
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {createdTitles.map((title) => {
+                          const isEquipped = equippedTitles.includes(title);
+                          const equippedIndex = equippedTitles.indexOf(title);
+                          return (
+                            <div
+                              key={title}
+                              className={`flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                                isEquipped
+                                  ? "bg-cyan-500/15 border-cyan-500/40 text-[#00E5FF] shadow-sm"
+                                  : "bg-white/5 border-white/10 text-gray-300 hover:border-white/20"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleEquipTitle(title)}
+                                className="flex items-center gap-1.5 text-left truncate max-w-[220px]"
+                                title={isEquipped ? "Clique para desequipar do perfil" : "Clique para equipar no perfil"}
+                              >
+                                <span>{title}</span>
+                                {isEquipped && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#00E5FF] text-black">
+                                    #{equippedIndex + 1}
+                                  </span>
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCustomTitle(title)}
+                                className="p-1 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                title="Excluir esta insígnia customizada"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 text-center text-gray-400 text-xs bg-white/[0.02] border border-dashed border-white/10 rounded-xl">
+                      Você ainda não criou nenhuma insígnia personalizada. Digite acima e crie sua primeira!
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 3: INSÍGNIAS OFICIAIS GAMEVAULT */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#121316] border border-white/10 space-y-3.5 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 flex items-center justify-center font-bold">
+                  <Gamepad2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-white">
+                    Insígnias Oficiais GameVault
+                  </h5>
+                  <p className="text-[11px] text-gray-400">
+                    Insígnias clássicas prontas para equipar. Clique para equipar ou desequipar (máximo 3 no perfil).
+                  </p>
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-2">
-                {GAMER_TITLES.map((title) => (
-                  <button
-                    key={title}
-                    type="button"
-                    onClick={() => setSelectedTitle(title)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      selectedTitle === title
-                        ? "bg-white text-black font-bold shadow-md"
-                        : "bg-white/5 hover:bg-white/10 text-gray-300"
-                    }`}
-                  >
-                    {title}
-                  </button>
-                ))}
+                {DEFAULT_GAMER_TITLES.map((title) => {
+                  const isEquipped = equippedTitles.includes(title);
+                  const equippedIndex = equippedTitles.indexOf(title);
+                  return (
+                    <button
+                      key={title}
+                      type="button"
+                      onClick={() => toggleEquipTitle(title)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                        isEquipped
+                          ? "bg-white text-black font-bold shadow-md scale-105"
+                          : "bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/5 hover:border-white/15"
+                      }`}
+                    >
+                      <span>{title}</span>
+                      {isEquipped && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-cyan-500 text-black">
+                          #{equippedIndex + 1}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

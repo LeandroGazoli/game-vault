@@ -40,6 +40,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     features: [
       "100% Livre de Anúncios e Banners",
       "Selo PRO oficial no perfil e comentários",
+      "Crie até 10 títulos e insígnias personalizadas",
       "Personalização total com temas e banners",
       "Estatísticas avançadas de tempo e backlog",
       "Exportação completa (Excel, JSON e API)",
@@ -59,6 +60,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     enabled: true,
     features: [
       "30 dias de todos os benefícios PRO",
+      "Crie até 10 títulos e insígnias personalizadas",
       "Pagamento único sem surpresas no cartão",
       "Zero cobranças recorrentes automáticas",
       "100% Livre de Anúncios no período",
@@ -79,6 +81,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     enabled: true,
     features: [
       "Tudo do plano PRO por 1 ano completo",
+      "Crie até 10 títulos e insígnias personalizadas",
       "Equivalente a R$ 6,65 por mês",
       "Economia de R$ 38,90 no ano",
       "Badge dourado de Apoiador Anual",
@@ -98,6 +101,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     enabled: true,
     features: [
       "Acesso PRO e VIP para toda a vida",
+      "Crie até 10 títulos e insígnias personalizadas",
       "Pagamento único de R$ 149,90 sem mensalidades",
       "Selo exclusivo de Membro Fundador VIP",
       "Capa Obsidian Gold VIP exclusiva",

@@ -204,11 +204,37 @@ export default function ProfilePage() {
                 </h1>
                 <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
                 <PlanBadge plan={user.plan || "free"} size="sm" />
-                {user.customTitle && (
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] font-bold">
-                    {user.customTitle}
-                  </span>
-                )}
+                {/* Títulos & Insígnias Gamer (Até 3 no Perfil) */}
+                {(() => {
+                  const titlesToDisplay =
+                    user.customTitles && user.customTitles.length > 0
+                      ? user.customTitles
+                      : user.customTitle
+                      ? [user.customTitle]
+                      : [];
+
+                  return titlesToDisplay.map((title, idx) => (
+                    <span
+                      key={idx}
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-bold shadow-sm inline-flex items-center gap-1 transition-all ${
+                        idx === 0
+                          ? user.theme === "gold"
+                            ? "bg-amber-500/15 border border-amber-500/40 text-amber-300"
+                            : user.theme === "purple"
+                            ? "bg-purple-500/15 border border-purple-500/40 text-purple-300"
+                            : user.theme === "crimson"
+                            ? "bg-rose-500/15 border border-rose-500/40 text-rose-300"
+                            : user.theme === "emerald"
+                            ? "bg-emerald-500/15 border border-emerald-500/40 text-emerald-300"
+                            : "bg-cyan-500/15 border border-cyan-500/40 text-[#00E5FF]"
+                          : "bg-white/10 border border-white/20 text-gray-200"
+                      }`}
+                      title={idx === 0 ? "Insígnia Principal" : `Insígnia #${idx + 1}`}
+                    >
+                      {title}
+                    </span>
+                  ));
+                })()}
               </div>
 
               {/* Status e Detalhes da Assinatura (Limpo & Interativo) */}

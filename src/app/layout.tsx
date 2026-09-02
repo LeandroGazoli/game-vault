@@ -12,6 +12,7 @@ import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
@@ -201,6 +202,7 @@ export default function RootLayout({
           </GameLibraryProvider>
         </AuthProvider>
         <Analytics />
+        <GoogleAnalytics gaId="G-G7QH1XG25C" />
       </body>
     </html>
   );

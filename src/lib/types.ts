@@ -41,6 +41,24 @@ export const PRESET_BANNERS = [
   },
 ];
 
+export const GAMER_EMOJI_SUGGESTIONS = [
+  "👑", "🏆", "⚔️", "🕹️", "⚡", "🛡️", "💎", "🎯",
+  "🌌", "💀", "🔥", "🎮", "👾", "🚀", "🌟", "🧙‍♂️"
+];
+
+export const DEFAULT_GAMER_TITLES = [
+  "🏆 Caçador de Platinas",
+  "⚔️ Mestre dos RPGs",
+  "🕹️ Maratonista de Backlog",
+  "💎 Colecionador Veterano",
+  "🎯 Estrategista Implacável",
+  "🌌 Explorador de Mundos",
+  "⚡ Speedrunner Dedicado",
+  "🛡️ Guardião da Biblioteca",
+  "🔥 No-Hit Challenger",
+  "👑 Lorde Supremo do Vault",
+];
+
 export interface SocialLinks {
   steam?: string;
   psn?: string;
@@ -237,6 +255,8 @@ export interface UserProfile {
   bannerURL?: string | null;
   theme?: ProfileTheme;
   customTitle?: string | null;
+  customTitles?: string[];
+  createdCustomTitles?: string[];
   customHtml?: string | null;
   customMarkdown?: string | null;
   socialLinks?: SocialLinks;
