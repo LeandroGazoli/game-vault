@@ -7,8 +7,8 @@ import { GameStatus, UserGame } from "@/lib/types";
 import StatsOverview from "@/components/StatsOverview";
 import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
-import RatingStars from "@/components/RatingStars";
 import GameModal from "@/components/GameModal";
+import AuthModal from "@/components/AuthModal";
 import Link from "next/link";
 import {
   Trophy,
@@ -18,16 +18,14 @@ import {
   Edit2,
   Plus,
   Search,
-  Filter,
   Heart,
-  Calendar,
-  Sparkles,
+  User,
   LayoutGrid,
   List,
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, updateUserBio, isDemoMode } = useAuth();
+  const { user, updateUserBio } = useAuth();
   const { library, stats, isLoading } = useGameLibrary();
 
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -37,6 +35,7 @@ export default function ProfilePage() {
   const [bioInput, setBioInput] = useState(user?.bio || "");
   const [favGameInput, setFavGameInput] = useState(user?.favoriteGame || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Filtra jogos da biblioteca
   const filteredLibrary = library.filter((game) => {
@@ -61,28 +60,41 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-48 rounded-3xl bg-surface-100" />
-        <div className="h-32 rounded-3xl bg-surface-100" />
+        <div className="h-48 rounded-[32px] bg-[#18191c]" />
+        <div className="h-32 rounded-[32px] bg-[#18191c]" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="rounded-3xl border border-gray-800 bg-surface-100/50 p-12 text-center">
-        <Gamepad2 className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-white">Nenhum perfil ativo</h2>
-        <p className="text-xs text-gray-400 mt-1">
-          Faça login ou entre no modo demonstração para ver seu perfil de jogos.
-        </p>
-      </div>
+      <>
+        <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-4 max-w-lg mx-auto shadow-2xl my-8">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/10">
+            <Gamepad2 className="w-7 h-7" />
+          </div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            Acesse seu Perfil Gamer
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto">
+            Faça login com sua conta para salvar seus jogos zerados, favoritos e acompanhar estatísticas no Cloud Firestore.
+          </p>
+          <button
+            onClick={() => setIsAuthOpen(true)}
+            className="rounded-full bg-white hover:bg-gray-200 text-black font-bold px-8 py-3 text-sm transition-all shadow-xl hover:scale-105"
+          >
+            Entrar ou Criar Conta
+          </button>
+        </div>
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      </>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-12">
       {/* Banner de Perfil do Jogador */}
-      <div className="relative rounded-3xl overflow-hidden border border-gray-800 bg-surface-100 p-6 sm:p-8 shadow-2xl">
+      <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="relative">
@@ -92,13 +104,8 @@ export default function ProfilePage() {
                   "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80"
                 }
                 alt={user.displayName}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-indigo-500 shadow-xl"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-[#00E5FF]/40 shadow-xl"
               />
-              {isDemoMode && (
-                <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-black uppercase tracking-wider">
-                  Demo
-                </span>
-              )}
             </div>
 
             <div className="space-y-1">
@@ -106,7 +113,7 @@ export default function ProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   {user.displayName}
                 </h1>
-                <span className="text-xs text-indigo-400 font-mono">@{user.username}</span>
+                <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
               </div>
 
               <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
@@ -114,7 +121,7 @@ export default function ProfilePage() {
               </p>
 
               {user.favoriteGame && (
-                <div className="inline-flex items-center gap-1.5 text-xs text-pink-300 bg-pink-950/40 border border-pink-500/20 px-2.5 py-0.5 rounded-full mt-1">
+                <div className="inline-flex items-center gap-1.5 text-xs text-pink-300 bg-pink-950/40 border border-pink-500/20 px-3 py-0.5 rounded-full mt-1">
                   <Heart className="w-3 h-3 fill-pink-400 text-pink-400" /> Jogo Favorito:{" "}
                   <strong>{user.favoriteGame}</strong>
                 </div>
@@ -129,14 +136,14 @@ export default function ProfilePage() {
                 setFavGameInput(user.favoriteGame || "");
                 setIsEditingBio(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-50 border border-gray-700 hover:border-gray-500 text-xs font-semibold text-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 text-xs font-semibold text-gray-200 transition-colors"
             >
               <Edit2 className="w-3.5 h-3.5" />
               Editar Perfil
             </button>
             <Link
               href="/search"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
             >
               <Plus className="w-3.5 h-3.5" />
               Adicionar Jogos
@@ -144,9 +151,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Modal de Edição de Perfil */}
+        {/* Modal Inline de Edição de Perfil */}
         {isEditingBio && (
-          <div className="mt-6 pt-6 border-t border-gray-800 space-y-4 max-w-xl">
+          <div className="mt-6 pt-6 border-t border-white/10 space-y-4 max-w-xl animate-fadeIn">
             <div>
               <label className="block text-xs font-semibold text-gray-400 mb-1">
                 Bio / Apresentação
@@ -155,7 +162,7 @@ export default function ProfilePage() {
                 value={bioInput}
                 onChange={(e) => setBioInput(e.target.value)}
                 rows={2}
-                className="w-full rounded-xl bg-surface-50 border border-gray-700 p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-white focus:outline-none focus:border-[#00E5FF] resize-none"
               />
             </div>
             <div>
@@ -166,20 +173,20 @@ export default function ProfilePage() {
                 type="text"
                 value={favGameInput}
                 onChange={(e) => setFavGameInput(e.target.value)}
-                placeholder="Ex: Elden Ring, Chrono Trigger..."
-                className="w-full rounded-xl bg-surface-50 border border-gray-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                placeholder="Ex: Elden Ring, The Witcher 3, Zelda..."
+                className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
               />
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSaveBio}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500"
+                className="px-4 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors"
               >
                 Salvar Alterações
               </button>
               <button
                 onClick={() => setIsEditingBio(false)}
-                className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white"
+                className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-white"
               >
                 Cancelar
               </button>
@@ -193,7 +200,7 @@ export default function ProfilePage() {
 
       {/* Abas de Navegação e Filtros */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
           {/* Abas */}
           <div className="flex flex-wrap items-center gap-2">
             {[
@@ -206,16 +213,16 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                   activeTab === tab.id
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                    : "bg-surface-100 text-gray-400 hover:text-gray-200 hover:bg-surface-200"
+                    ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/20"
+                    : "bg-[#18191c] text-gray-400 hover:text-gray-200 hover:bg-[#202126] border border-white/5"
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    activeTab === tab.id ? "bg-white/20 text-white" : "bg-gray-800 text-gray-400"
+                    activeTab === tab.id ? "bg-black/20 text-black font-bold" : "bg-white/10 text-gray-400"
                   }`}
                 >
                   {tab.count}
@@ -227,21 +234,21 @@ export default function ProfilePage() {
           {/* Busca na Biblioteca e Modo de Visualização */}
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-2.5" />
               <input
                 type="text"
                 placeholder="Filtrar na biblioteca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-xl bg-surface-100 border border-gray-800 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 w-44 sm:w-56"
+                className="pl-9 pr-3 py-1.5 rounded-full bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] w-44 sm:w-56"
               />
             </div>
 
-            <div className="flex items-center rounded-xl bg-surface-100 border border-gray-800 p-0.5">
+            <div className="flex items-center rounded-full bg-[#18191c] border border-white/10 p-0.5">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-lg ${
-                  viewMode === "grid" ? "bg-indigo-600 text-white" : "text-gray-400 hover:text-white"
+                className={`p-1.5 rounded-full ${
+                  viewMode === "grid" ? "bg-white text-black" : "text-gray-400 hover:text-white"
                 }`}
                 title="Modo Grade"
               >
@@ -249,8 +256,8 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg ${
-                  viewMode === "list" ? "bg-indigo-600 text-white" : "text-gray-400 hover:text-white"
+                className={`p-1.5 rounded-full ${
+                  viewMode === "list" ? "bg-white text-black" : "text-gray-400 hover:text-white"
                 }`}
                 title="Modo Lista Detalhada"
               >
@@ -262,22 +269,22 @@ export default function ProfilePage() {
 
         {/* Lista de Jogos do Usuário */}
         {filteredLibrary.length === 0 ? (
-          <div className="rounded-3xl border border-gray-800 bg-surface-100/40 p-12 text-center">
-            <Gamepad2 className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+          <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-3">
+            <Gamepad2 className="w-10 h-10 text-gray-600 mx-auto" />
             <h3 className="text-base font-bold text-white">Nenhum jogo nesta categoria</h3>
-            <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-              Navegue pelo catálogo e adicione jogos para construir sua história gamer!
+            <p className="text-xs text-gray-400 max-w-sm mx-auto">
+              Navegue pelo catálogo do IGDB e adicione jogos para construir seu perfil!
             </p>
             <Link
               href="/search"
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
             >
-              <Plus className="w-3.5 h-3.5" /> Explorar Jogos
+              <Plus className="w-3.5 h-3.5" /> Explorar Catálogo
             </Link>
           </div>
         ) : viewMode === "grid" ? (
-          /* Visualização em Grade */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          /* Visualização em Grade com Posters */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {filteredLibrary.map((userGame) => {
               const asGame = {
                 id: userGame.gameId,
@@ -294,9 +301,9 @@ export default function ProfilePage() {
               return (
                 <div
                   key={userGame.gameId}
-                  className="group relative flex flex-col rounded-2xl bg-surface-100/90 border border-gray-800 overflow-hidden hover:border-indigo-500/40 transition-all hover:shadow-xl hover:-translate-y-1"
+                  className="group relative flex flex-col rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/70 hover:-translate-y-1"
                 >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-950">
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-900">
                     {userGame.gameCover ? (
                       <img
                         src={userGame.gameCover}
@@ -308,69 +315,63 @@ export default function ProfilePage() {
                         Sem Imagem
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface-100 via-transparent to-black/50" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
 
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      {userGame.metacritic ? (
+                    <div className="absolute top-2 left-2 z-10">
+                      {userGame.metacritic && (
                         <MetacriticBadge score={userGame.metacritic} size="sm" />
-                      ) : null}
+                      )}
                     </div>
 
-                    <div className="absolute top-2.5 right-2.5 z-10">
+                    <div className="absolute top-2 right-2 z-10">
                       <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
                     </div>
                   </div>
 
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
                     <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1">
+                      <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1 font-mono">
                         <span>{userGame.releaseYear || userGame.platformPlayed}</span>
                         {userGame.isFavorite && (
                           <span className="text-pink-400 flex items-center gap-0.5">
-                            <Heart className="w-3 h-3 fill-pink-400" /> Favorito
+                            <Heart className="w-3 h-3 fill-pink-400" />
                           </span>
                         )}
                       </div>
 
                       <Link href={`/game/${userGame.gameId}`}>
-                        <h3 className="font-bold text-base text-white hover:text-indigo-400 transition-colors line-clamp-1">
+                        <h3 className="font-semibold text-xs sm:text-sm text-white hover:text-[#00E5FF] transition-colors line-clamp-1">
                           {userGame.gameTitle}
                         </h3>
                       </Link>
                     </div>
 
-                    {/* Resumo de Avaliação e Horas Jogadas */}
-                    <div className="rounded-xl bg-surface-50 p-2.5 border border-gray-800/80 space-y-1.5 text-xs">
+                    {/* Resumo de Avaliação e Horas */}
+                    <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] font-mono">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Sua Nota:</span>
+                        <span className="text-gray-400">Nota:</span>
                         {userGame.userRating !== null ? (
-                          <span className="font-mono font-bold text-amber-300">
-                            ⭐ {userGame.userRating.toFixed(1)}/10
+                          <span className="font-bold text-amber-300">
+                            ⭐ {userGame.userRating.toFixed(1)}
                           </span>
                         ) : (
-                          <span className="text-gray-500 italic">Não avaliado</span>
+                          <span className="text-gray-500 italic">NS</span>
                         )}
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Tempo Jogado:</span>
-                        <span className="font-mono font-semibold text-indigo-300">
+                        <span className="text-gray-400">Tempo:</span>
+                        <span className="font-semibold text-cyan-300">
                           {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours}h` : "--"}
                         </span>
                       </div>
                     </div>
 
-                    {userGame.userReview && (
-                      <p className="text-xs text-gray-400 italic line-clamp-2">
-                        &quot;{userGame.userReview}&quot;
-                      </p>
-                    )}
-
                     <button
                       onClick={() => setSelectedGameToEdit(asGame)}
-                      className="w-full py-2 rounded-xl bg-surface-50 hover:bg-surface-200 border border-gray-700 text-xs font-semibold text-gray-200 transition-colors"
+                      className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors mt-1"
                     >
-                      Editar Registro
+                      Editar
                     </button>
                   </div>
                 </div>
@@ -379,7 +380,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           /* Visualização em Lista Detalhada */
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {filteredLibrary.map((userGame) => {
               const asGame = {
                 id: userGame.gameId,
@@ -396,13 +397,13 @@ export default function ProfilePage() {
               return (
                 <div
                   key={userGame.gameId}
-                  className="rounded-2xl bg-surface-100 border border-gray-800 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-indigo-500/30 transition-all"
+                  className="rounded-2xl bg-[#18191c] border border-white/5 p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-white/20 transition-all"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-3.5 min-w-0">
                     <img
                       src={userGame.gameCover || ""}
                       alt={userGame.gameTitle}
-                      className="w-16 h-20 rounded-xl object-cover border border-gray-700 flex-shrink-0"
+                      className="w-12 h-16 rounded-xl object-cover border border-white/10 flex-shrink-0"
                     />
 
                     <div className="space-y-1 min-w-0">
@@ -417,7 +418,7 @@ export default function ProfilePage() {
                       </div>
 
                       <Link href={`/game/${userGame.gameId}`}>
-                        <h3 className="text-base font-bold text-white hover:text-indigo-400 transition-colors truncate">
+                        <h3 className="text-sm font-semibold text-white hover:text-[#00E5FF] transition-colors truncate">
                           {userGame.gameTitle}
                         </h3>
                       </Link>
@@ -430,24 +431,24 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 self-end md:self-center">
+                  <div className="flex flex-wrap items-center gap-5 self-end md:self-center font-mono">
                     <div className="text-right">
-                      <div className="text-xs text-gray-400">Tempo Jogado</div>
-                      <div className="font-mono font-bold text-indigo-300 text-sm">
-                        {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours} horas` : "--"}
+                      <div className="text-[10px] text-gray-400">Tempo</div>
+                      <div className="font-bold text-cyan-300 text-xs">
+                        {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours}h` : "--"}
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs text-gray-400">Sua Nota</div>
-                      <div className="font-mono font-bold text-amber-400 text-sm">
-                        {userGame.userRating !== null ? `${userGame.userRating.toFixed(1)} / 10` : "--"}
+                      <div className="text-[10px] text-gray-400">Nota</div>
+                      <div className="font-bold text-amber-400 text-xs">
+                        {userGame.userRating !== null ? `${userGame.userRating.toFixed(1)}/10` : "--"}
                       </div>
                     </div>
 
                     <button
                       onClick={() => setSelectedGameToEdit(asGame)}
-                      className="px-3 py-1.5 rounded-xl bg-surface-50 hover:bg-surface-200 border border-gray-700 text-xs font-semibold text-gray-200"
+                      className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200"
                     >
                       Editar
                     </button>

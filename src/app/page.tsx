@@ -5,6 +5,7 @@ import { Game } from "@/lib/types";
 import TopTenImdbSection from "@/components/TopTenImdbSection";
 import CatalogRow from "@/components/CatalogRow";
 import RankingsSection from "@/components/RankingsSection";
+import LiveSearchInput from "@/components/LiveSearchInput";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Link from "next/link";
@@ -86,27 +87,12 @@ export default function HomePage() {
             Seu acervo gamer completo com <strong>lançamentos em tempo real</strong>, <strong>calendário de estreias</strong>, rankings da comunidade e tempos exatos de zeramento.
           </p>
 
-          {/* Barra de Busca no Hero */}
+          {/* Barra de Busca no Hero com Autocomplete ao Vivo */}
           <div className="mt-8 max-w-xl">
-            <form
-              action="/search"
-              method="GET"
-              className="relative flex items-center"
-            >
-              <Search className="w-5 h-5 text-gray-400 absolute left-4" />
-              <input
-                type="text"
-                name="q"
-                placeholder="Busque por Elden Ring, GTA, God of War, Zelda..."
-                className="w-full pl-12 pr-28 py-3.5 rounded-full bg-white/10 border border-white/15 text-white placeholder-gray-400 focus:outline-none focus:border-[#00E5FF] shadow-xl text-sm transition-all"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs transition-all shadow-md"
-              >
-                Buscar
-              </button>
-            </form>
+            <LiveSearchInput
+              variant="hero"
+              placeholder="Busque por Elden Ring, GTA, God of War, Zelda..."
+            />
           </div>
 
           {/* Mini resumo do usuário se autenticado */}
