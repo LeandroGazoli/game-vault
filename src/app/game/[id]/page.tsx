@@ -9,6 +9,7 @@ import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
 import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
+import AdBanner from "@/components/ads/AdBanner";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -183,6 +184,9 @@ export default function GameDetailPage() {
       <section className="space-y-3">
         <HltbCard hltb={game.hltb} />
       </section>
+
+      {/* Banner de Anúncio / Patrocínio no Jogo */}
+      <AdBanner slot="GAME_DETAIL_IN_CONTENT" fallbackIndex={2} />
 
       {/* Grid: Sinopse & Painel de Review do Usuário */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">

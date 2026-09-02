@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
+import AdBanner from "./ads/AdBanner";
 import Link from "next/link";
 import { Heart, Trophy, Sparkles, Plus, Check, Flame, Star, BarChart3 } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
@@ -229,6 +230,9 @@ export default function RankingsSection() {
                 <span>Mais Desejados</span>
               </button>
             </div>
+
+            {/* Anúncio Sidebar nos Rankings */}
+            <AdBanner slot="SIDEBAR_STICKY" fallbackIndex={1} />
           </div>
         </div>
       </section>

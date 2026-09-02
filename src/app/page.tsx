@@ -6,6 +6,7 @@ import TopTenImdbSection from "@/components/TopTenImdbSection";
 import CatalogRow from "@/components/CatalogRow";
 import RankingsSection from "@/components/RankingsSection";
 import LiveSearchInput from "@/components/LiveSearchInput";
+import AdBanner from "@/components/ads/AdBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Link from "next/link";
@@ -14,11 +15,8 @@ import {
   Trophy,
   Clock,
   Sparkles,
-  Search,
   Gamepad2,
   Calendar as CalendarIcon,
-  Compass,
-  Star,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -116,11 +114,21 @@ export default function HomePage() {
       </section>
 
       {/* ==========================================
+          PUBLICIDADE 1: LEADERBOARD SUPERIOR
+      ========================================== */}
+      <AdBanner slot="HOME_TOP_LEADERBOARD" fallbackIndex={0} />
+
+      {/* ==========================================
           2. TOP 10 NO GAMEVAULT (Estilo IMDb / Disney+)
       ========================================== */}
       {!loading && topTenGames.length > 0 && (
         <TopTenImdbSection games={topTenGames} />
       )}
+
+      {/* ==========================================
+          PUBLICIDADE 2: IN-FEED BANNER CENTRAL
+      ========================================== */}
+      <AdBanner slot="HOME_IN_FEED" fallbackIndex={1} />
 
       {/* ==========================================
           3. LANÇAMENTOS RECENTES (Últimos 60 Dias)

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
+import AdBanner from "./ads/AdBanner";
 import Link from "next/link";
 import {
   Calendar as CalendarIcon,
@@ -388,6 +389,9 @@ export default function CalendarView() {
               })}
             </div>
           </div>
+
+          {/* Anúncio Sidebar no Calendário */}
+          <AdBanner slot="SIDEBAR_STICKY" fallbackIndex={0} />
         </div>
       </div>
 

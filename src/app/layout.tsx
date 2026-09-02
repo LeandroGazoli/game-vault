@@ -5,6 +5,7 @@ import { GameLibraryProvider } from "@/context/GameLibraryContext";
 import Navbar from "@/components/Navbar";
 import PwaRegister from "@/components/PwaRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
+import GoogleAdScript from "@/components/ads/GoogleAdScript";
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
@@ -49,6 +50,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
+      <head>
+        <GoogleAdScript />
+      </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
         <AuthProvider>
           <GameLibraryProvider>
