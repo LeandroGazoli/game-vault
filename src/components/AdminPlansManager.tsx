@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PlansConfig, PlanKey, DEFAULT_PLANS_CONFIG } from "@/lib/plans";
+import { PlansConfig, PlanKey, DEFAULT_PLANS_CONFIG, savePlansConfig } from "@/lib/plans";
 import {
   CreditCard,
   RefreshCw,
@@ -145,25 +145,33 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
     setSaveSuccess(false);
 
     try {
-      const res = await fetch("/api/plans", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          adminEmail,
-          config: plansConfig,
-        }),
-      });
-
-      if (res.ok) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 4000);
-      } else {
-        const errData = await res.json();
-        setError(errData.error || "Erro ao salvar planos.");
-      }
+      // 1. Salva diretamente pelo cliente autenticado no Firestore (com credencial do Google do Admin)
+      await savePlansConfig(plansConfig);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
-      console.error("Erro ao salvar planos:", err);
-      setError(err.message || "Erro de conexão ao salvar.");
+      console.warn("Tentativa de salvar via cliente falhou, tentando rota da API...", err);
+      try {
+        const res = await fetch("/api/plans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            adminEmail,
+            config: plansConfig,
+          }),
+        });
+
+        if (res.ok) {
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 4000);
+          return;
+        } else {
+          const errData = await res.json();
+          setError(errData.error || "Erro ao salvar planos.");
+        }
+      } catch (apiErr: any) {
+        setError(err.message || apiErr.message || "Erro ao salvar planos.");
+      }
     } finally {
       setIsSaving(false);
     }
