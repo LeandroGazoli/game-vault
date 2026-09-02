@@ -9,6 +9,7 @@ import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
 import GameModal from "@/components/GameModal";
 import AuthModal from "@/components/AuthModal";
+import ExportModal from "@/components/ExportModal";
 import Link from "next/link";
 import {
   Trophy,
@@ -20,6 +21,7 @@ import {
   Search,
   Heart,
   User,
+  Download,
   LayoutGrid,
   List,
 } from "lucide-react";
@@ -36,6 +38,7 @@ export default function ProfilePage() {
   const [favGameInput, setFavGameInput] = useState(user?.favoriteGame || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Filtra jogos da biblioteca
   const filteredLibrary = library.filter((game) => {
@@ -130,6 +133,14 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsExportOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors"
+              title="Exportar biblioteca em Excel, JSON ou link dinâmico"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Exportar
+            </button>
             <button
               onClick={() => {
                 setBioInput(user.bio || "");
