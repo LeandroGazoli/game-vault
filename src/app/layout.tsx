@@ -82,7 +82,7 @@ export default function RootLayout({
                     </p>
                     <div className="flex items-center gap-2 text-[11px] text-gray-500 font-mono">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#00E5FF]" />
-                      <span>Cloud Firestore &amp; PWA Ready</span>
+                      <span>PWA &amp; Offline Ready</span>
                     </div>
                   </div>
 

@@ -77,7 +77,7 @@ export default function ProfilePage() {
             Acesse seu Perfil Gamer
           </h2>
           <p className="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto">
-            Faça login com sua conta para salvar seus jogos zerados, favoritos e acompanhar estatísticas no Cloud Firestore.
+            Faça login com sua conta para salvar seus jogos zerados, favoritos e acompanhar estatísticas na sua biblioteca.
           </p>
           <button
             onClick={() => setIsAuthOpen(true)}

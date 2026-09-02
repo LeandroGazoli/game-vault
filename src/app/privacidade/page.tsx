@@ -45,7 +45,7 @@ export default function PrivacidadePage() {
             <h2 className="text-base sm:text-lg font-bold text-white">2. Informações que Coletamos</h2>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>
-                <strong>Informações de Cadastro:</strong> Nome de exibição, endereço de e-mail e foto de perfil fornecidos voluntariamente no momento do registro via Firebase Authentication ou login social com o Google.
+                <strong>Informações de Cadastro:</strong> Nome de exibição, endereço de e-mail e foto de perfil fornecidos voluntariamente no momento do registro ou login social com o Google.
               </li>
               <li>
                 <strong>Dados da Biblioteca Gamer:</strong> Jogos adicionados, status de progresso (zerado, jogando, backlog), notas atribuídas, resenhas escritas e tempos de jogo registrados.
@@ -61,7 +61,7 @@ export default function PrivacidadePage() {
             <p>Os dados coletados são utilizados estritamente para:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Autenticar e manter sua sessão ativa na plataforma.</li>
-              <li>Sincronizar e salvar sua biblioteca de jogos no Cloud Firestore com segurança.</li>
+              <li>Sincronizar e salvar sua biblioteca de jogos na sua biblioteca com segurança.</li>
               <li>Calcular estatísticas de tempo de jogo e jogos zerados do seu perfil.</li>
               <li>Garantir a segurança técnica e prevenir fraudes ou abusos no sistema.</li>
             </ul>
@@ -88,7 +88,7 @@ export default function PrivacidadePage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">5. Armazenamento e Segurança dos Dados</h2>
             <p>
-              Adotamos práticas avançadas de segurança digital, incluindo criptografia de tráfego HTTPS/TLS, regras de segurança estritas no banco de dados Cloud Firestore e isolamento de dados por usuário autenticado. Não vendemos nem compartilhamos seus dados pessoais individuais com terceiros para fins de marketing direto.
+              Adotamos práticas avançadas de segurança digital, incluindo criptografia de tráfego HTTPS/TLS, regras de segurança estritas no banco de dados e isolamento de dados por usuário autenticado. Não vendemos nem compartilhamos seus dados pessoais individuais com terceiros para fins de marketing direto.
             </p>
           </section>
 

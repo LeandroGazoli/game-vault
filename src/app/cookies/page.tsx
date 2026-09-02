@@ -52,7 +52,7 @@ export default function CookiesPage() {
                   Cookies Estritamente Necessários (Essenciais)
                 </h3>
                 <p className="text-xs text-gray-400">
-                  Fundamentais para o funcionamento da plataforma. Permitem que você faça login em sua conta, navegue entre páginas e salve seus jogos no Cloud Firestore com segurança. O site não pode funcionar corretamente sem esses cookies.
+                  Fundamentais para o funcionamento da plataforma. Permitem que você faça login em sua conta, navegue entre páginas e salve seus jogos na sua biblioteca com segurança. O site não pode funcionar corretamente sem esses cookies.
                 </p>
               </div>
 

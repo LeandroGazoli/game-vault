@@ -82,7 +82,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {isSignUp ? "Criar Perfil Gamer" : "Acessar sua Conta"}
           </h3>
           <p className="text-xs text-gray-400 max-w-xs mx-auto">
-            Organize seus jogos zerados, favoritos e acompanhe seu tempo de jogo no Cloud Firestore
+            Organize seus jogos zerados, favoritos e acompanhe seu tempo de jogo na sua biblioteca
           </p>
         </div>
 

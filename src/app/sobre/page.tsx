@@ -91,7 +91,7 @@ export default function SobrePage() {
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-300">
           <li className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-white/5 border border-white/5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span><strong>Cloud Sync Seguro:</strong> Seus registros salvos na nuvem pelo Firebase e acessíveis de qualquer dispositivo.</span>
+            <span><strong>Cloud Sync Seguro:</strong> Seus registros sincronizados na nuvem e acessíveis de qualquer dispositivo.</span>
           </li>
           <li className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-white/5 border border-white/5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
