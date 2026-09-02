@@ -53,20 +53,13 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
       const data = await res.json();
 
       if (data.url) {
-        // Redireciona diretamente para o Checkout Oficial do Stripe
         window.location.href = data.url;
       } else {
-        // Modo fallback caso chave de API ainda não esteja setada em local
-        const plan = planId === "vip_lifetime" ? "vip" : "pro";
-        await upgradePlan(plan, true);
-        onClose();
+        setError(data.error || "Não foi possível abrir o checkout do Stripe. Verifique as configurações de pagamento.");
       }
     } catch (err: any) {
       console.error("Erro no checkout:", err);
-      // Ativa em modo de teste
-      const plan = planId === "vip_lifetime" ? "vip" : "pro";
-      await upgradePlan(plan, true);
-      onClose();
+      setError(err.message || "Erro de conexão ao iniciar checkout do Stripe.");
     } finally {
       setLoadingPlan(null);
     }

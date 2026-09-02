@@ -51,15 +51,11 @@ export default function PlanosPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        const plan = planId === "vip_lifetime" ? "vip" : "pro";
-        await upgradePlan(plan, true);
-        window.location.href = "/profile?upgraded=true";
+        setError(data.error || "Não foi possível abrir o checkout do Stripe. Verifique suas chaves de API.");
       }
     } catch (err: any) {
       console.error("Erro no checkout:", err);
-      const plan = planId === "vip_lifetime" ? "vip" : "pro";
-      await upgradePlan(plan, true);
-      window.location.href = "/profile?upgraded=true";
+      setError(err.message || "Erro de comunicação com o servidor.");
     } finally {
       setLoadingPlan(null);
     }

@@ -30,8 +30,8 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, updateUserBio } = useAuth();
-  const { library, stats, isLoading } = useGameLibrary();
+  const { user, updateUserBio, isLoading: authLoading } = useAuth();
+  const { library, stats, isLoading: libraryLoading } = useGameLibrary();
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,7 +64,7 @@ export default function ProfilePage() {
     setIsEditingBio(false);
   };
 
-  if (isLoading) {
+  if (authLoading || (user && libraryLoading)) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-48 rounded-[32px] bg-[#18191c]" />

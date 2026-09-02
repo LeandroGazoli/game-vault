@@ -8,8 +8,15 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Usuário precisa estar autenticado para assinar." },
+        { error: "Você precisa estar conectado à sua conta para assinar." },
         { status: 401 }
+      );
+    }
+
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder")) {
+      return NextResponse.json(
+        { error: "A chave STRIPE_SECRET_KEY não foi configurada nas variáveis de ambiente." },
+        { status: 500 }
       );
     }
 
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Erro ao criar Checkout Session do Stripe:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao iniciar checkout" },
+      { error: error.message || "Falha ao iniciar checkout no Stripe" },
       { status: 500 }
     );
   }
