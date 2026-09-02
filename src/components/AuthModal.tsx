@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { X, Gamepad2, ShieldAlert, Mail, Lock, User } from "lucide-react";
+import { X, ShieldAlert, Mail, Lock, User } from "lucide-react";
+import Logo from "./Logo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -74,8 +75,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </button>
 
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-[#00E5FF] shadow-lg shadow-cyan-500/10">
-            <Gamepad2 className="w-6 h-6" />
+          <div className="flex justify-center">
+            <Logo size="lg" showText={false} />
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             {isSignUp ? "Criar Perfil Gamer" : "Acessar sua Conta"}

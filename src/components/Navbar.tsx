@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import AuthModal from "./AuthModal";
 import LiveSearchInput from "./LiveSearchInput";
+import Logo from "./Logo";
 import {
   Gamepad2,
   Trophy,
@@ -29,18 +30,8 @@ export default function Navbar() {
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#121316]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-            <div className="p-2 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 text-black shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-              <Gamepad2 className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display font-black text-xl tracking-tight text-white flex items-center gap-1">
-                Game<span className="text-[#00E5FF]">Vault</span>
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-400 font-mono -mt-1">
-                MyGameList
-              </span>
-            </div>
+          <Link href="/" className="flex-shrink-0">
+            <Logo size="md" />
           </Link>
 
           {/* Barra de Pesquisa Central com Autocomplete ao Vivo */}
