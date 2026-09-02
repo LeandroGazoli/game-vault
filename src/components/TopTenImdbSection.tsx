@@ -242,3 +242,43 @@ export default function TopTenImdbSection({
     </>
   );
 }
+
+export function TopTenImdbSkeleton() {
+  return (
+    <section className="space-y-4" aria-busy="true" aria-label="Carregando Top 10">
+      {/* Cabeçalho estilo IMDb com barra dourada */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1.5 h-6 bg-amber-400/60 rounded-full animate-pulse" />
+          <div className="h-6 sm:h-7 w-48 sm:w-64 bg-white/10 rounded-xl animate-pulse" />
+        </div>
+        <div className="h-4 w-28 bg-white/5 rounded-lg animate-pulse hidden sm:block" />
+      </div>
+
+      {/* Top 1, 2, 3 - Cards Grandes Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map((num) => (
+          <div
+            key={num}
+            className="rounded-2xl bg-[#18191c]/80 border border-white/5 p-4 flex gap-4 animate-pulse"
+          >
+            {/* Poster / Capa com aspect 2/3 */}
+            <div className="w-28 sm:w-32 aspect-[2/3] rounded-xl bg-white/5 flex-shrink-0" />
+
+            {/* Informações detalhadas */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+              <div className="space-y-2">
+                <div className="w-8 h-4 rounded bg-[#00E5FF]/20" />
+                <div className="w-4/5 h-4 sm:h-5 rounded bg-white/10" />
+                <div className="w-1/2 h-3 rounded bg-white/5" />
+                <div className="w-20 h-4 rounded bg-amber-400/20 mt-2" />
+              </div>
+              <div className="w-full h-8 rounded-xl bg-white/5 mt-3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Game } from "@/lib/types";
-import TopTenImdbSection from "@/components/TopTenImdbSection";
-import CatalogRow from "@/components/CatalogRow";
+import TopTenImdbSection, { TopTenImdbSkeleton } from "@/components/TopTenImdbSection";
+import CatalogRow, { CatalogRowSkeleton } from "@/components/CatalogRow";
 import RankingsSection from "@/components/RankingsSection";
 import LiveSearchInput from "@/components/LiveSearchInput";
 import AdBanner from "@/components/ads/AdBanner";
@@ -121,9 +121,11 @@ export default function HomePage() {
       {/* ==========================================
           2. TOP 10 NO GAMEVAULT (Estilo IMDb / Disney+)
       ========================================== */}
-      {!loading && topTenGames.length > 0 && (
+      {loading ? (
+        <TopTenImdbSkeleton />
+      ) : topTenGames.length > 0 ? (
         <TopTenImdbSection games={topTenGames} />
-      )}
+      ) : null}
 
       {/* ==========================================
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
@@ -133,7 +135,13 @@ export default function HomePage() {
       {/* ==========================================
           3. LANÇAMENTOS RECENTES (Últimos 60 Dias)
       ========================================== */}
-      {!loading && releases.length > 0 && (
+      {loading ? (
+        <CatalogRowSkeleton
+          title="Lançamentos Recentes"
+          subtitle="Jogos recém-lançados disponíveis para jogar agora"
+          icon={Flame}
+        />
+      ) : releases.length > 0 ? (
         <CatalogRow
           title="Lançamentos Recentes"
           subtitle="Jogos recém-lançados disponíveis para jogar agora"
@@ -142,12 +150,18 @@ export default function HomePage() {
           actionHref="/calendar"
           actionText="Ver no Calendário →"
         />
-      )}
+      ) : null}
 
       {/* ==========================================
           4. EM BREVE (Próximos Lançamentos)
       ========================================== */}
-      {!loading && upcoming.length > 0 && (
+      {loading ? (
+        <CatalogRowSkeleton
+          title="Em Breve nos Games"
+          subtitle="Títulos aguardados que serão lançados nos próximos meses"
+          icon={CalendarIcon}
+        />
+      ) : upcoming.length > 0 ? (
         <CatalogRow
           title="Em Breve nos Games"
           subtitle="Títulos aguardados que serão lançados nos próximos meses"
@@ -156,7 +170,7 @@ export default function HomePage() {
           actionHref="/calendar"
           actionText="Calendário Completo →"
         />
-      )}
+      ) : null}
 
       {/* ==========================================
           5. RANKINGS MGL (Populares, Avaliados, Desejados)

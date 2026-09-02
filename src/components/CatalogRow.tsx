@@ -213,3 +213,58 @@ export default function CatalogRow({
     </>
   );
 }
+
+export function CatalogRowSkeleton({
+  title,
+  subtitle,
+  icon: Icon,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: any;
+}) {
+  return (
+    <section className="space-y-3.5 relative" aria-busy="true" aria-label={`Carregando ${title}`}>
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          {Icon ? (
+            <div className="p-1.5 rounded-xl bg-white/10 text-white">
+              <Icon className="w-4 h-4" />
+            </div>
+          ) : (
+            <div className="w-7 h-7 rounded-xl bg-white/10 animate-pulse" />
+          )}
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+              {title}
+            </h2>
+            {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Linha horizontal com 6 cards em skeleton com overflow protegido */}
+      <div className="flex items-stretch gap-4 overflow-hidden pb-2 pt-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+        {[1, 2, 3, 4, 5, 6].map((idx) => (
+          <div
+            key={idx}
+            className="flex-shrink-0 w-36 sm:w-44 rounded-2xl bg-[#18191c]/80 border border-white/5 overflow-hidden flex flex-col animate-pulse"
+          >
+            {/* Poster com aspect 3/4 */}
+            <div className="aspect-[3/4] w-full bg-white/5" />
+            {/* Informações */}
+            <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
+              <div className="w-3/4 h-4 bg-white/10 rounded" />
+              <div className="flex items-center justify-between pt-1">
+                <div className="w-12 h-3 bg-white/5 rounded" />
+                <div className="w-8 h-3 bg-white/5 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
