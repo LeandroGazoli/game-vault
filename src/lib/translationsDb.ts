@@ -5,24 +5,30 @@ import { sanitizeTranslation } from "./translate";
 export interface StoredTranslation {
   gameId: string;
   gameName?: string;
-  originalText: string;
-  translatedText: string;
+  originalText?: string;
+  translatedText?: string;
+  originalStoryline?: string;
+  translatedStoryline?: string;
   source: string;
-  createdAt: string;
+  createdAt?: string;
   updatedAt: string;
 }
 
+export interface GameTranslations {
+  description: string | null;
+  storyline: string | null;
+}
+
 // Cache local em memória para evitar requisições repetidas ao Firestore na mesma sessão/instância
-const memoryCache = new Map<string, string>();
+const memoryCache = new Map<string, GameTranslations>();
 
 /**
- * Busca a tradução persistida de um jogo no Firestore.
- * Retorna null se ainda não houver tradução salva.
+ * Busca todas as traduções salvas de um jogo (Sinopse e Enredo) no Firestore.
  */
-export async function getStoredGameTranslation(
+export async function getStoredGameTranslations(
   gameId: string | number
-): Promise<string | null> {
-  if (!db || !gameId) return null;
+): Promise<GameTranslations> {
+  if (!db || !gameId) return { description: null, storyline: null };
 
   const key = String(gameId);
 
@@ -32,7 +38,7 @@ export async function getStoredGameTranslation(
   }
 
   try {
-    // Timeout de 1.5s para garantir que uma lentidão de rede nunca trave a página
+    // Timeout de 1.5s para garantir que lentidão de rede nunca trave a página
     const fetchPromise = getDoc(doc(db, "game_translations", key));
     const timeoutPromise = new Promise<null>((resolve) =>
       setTimeout(() => resolve(null), 1500)
@@ -42,22 +48,86 @@ export async function getStoredGameTranslation(
 
     if (docSnap && docSnap.exists && docSnap.exists()) {
       const data = docSnap.data() as StoredTranslation;
-      const clean = sanitizeTranslation(data?.translatedText);
-      if (clean && clean.length > 0) {
-        memoryCache.set(key, clean);
-        return clean;
-      }
+      const cleanDesc = sanitizeTranslation(data?.translatedText) || null;
+      const cleanStoryline = sanitizeTranslation(data?.translatedStoryline) || null;
+
+      const result: GameTranslations = {
+        description: cleanDesc,
+        storyline: cleanStoryline,
+      };
+
+      memoryCache.set(key, result);
+      return result;
     }
   } catch (err) {
-    console.warn(`Aviso ao buscar tradução do jogo ${key} no Firestore:`, err);
+    console.warn(`Aviso ao buscar traduções do jogo ${key} no Firestore:`, err);
   }
 
-  return null;
+  return { description: null, storyline: null };
 }
 
 /**
- * Salva a tradução no Firestore para persistência definitiva (100% gratuita).
- * Uma vez gravada, todos os futuros visitantes receberão a tradução diretamente do banco.
+ * Busca a tradução persistida da sinopse de um jogo no Firestore (compatibilidade retroativa).
+ */
+export async function getStoredGameTranslation(
+  gameId: string | number
+): Promise<string | null> {
+  const translations = await getStoredGameTranslations(gameId);
+  return translations.description;
+}
+
+/**
+ * Salva as traduções (sinopse e/ou enredo) no Firestore para persistência definitiva (100% gratuita).
+ * Utiliza { merge: true } para não sobrepor outros campos já traduzidos.
+ */
+export async function saveGameTranslations(
+  gameId: string | number,
+  params: {
+    originalDescription?: string;
+    translatedDescription?: string;
+    originalStoryline?: string;
+    translatedStoryline?: string;
+    gameName?: string;
+  }
+): Promise<void> {
+  if (!db || !gameId) return;
+
+  const key = String(gameId);
+  const cleanDesc = params.translatedDescription
+    ? sanitizeTranslation(params.translatedDescription)
+    : undefined;
+  const cleanStoryline = params.translatedStoryline
+    ? sanitizeTranslation(params.translatedStoryline)
+    : undefined;
+
+  // Atualiza cache de memória imediatamente
+  const currentCached = memoryCache.get(key) || { description: null, storyline: null };
+  memoryCache.set(key, {
+    description: cleanDesc !== undefined ? cleanDesc : currentCached.description,
+    storyline: cleanStoryline !== undefined ? cleanStoryline : currentCached.storyline,
+  });
+
+  const docData: any = {
+    gameId: key,
+    source: "free_engine",
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (params.gameName) docData.gameName = params.gameName;
+  if (params.originalDescription) docData.originalText = params.originalDescription;
+  if (cleanDesc) docData.translatedText = cleanDesc;
+  if (params.originalStoryline) docData.originalStoryline = params.originalStoryline;
+  if (cleanStoryline) docData.translatedStoryline = cleanStoryline;
+
+  try {
+    await setDoc(doc(db, "game_translations", key), docData, { merge: true });
+  } catch (err) {
+    console.warn(`Erro ao salvar tradução do jogo ${key} no Firestore:`, err);
+  }
+}
+
+/**
+ * Salva a tradução da sinopse no Firestore (compatibilidade retroativa).
  */
 export async function saveGameTranslation(
   gameId: string | number,
@@ -65,29 +135,9 @@ export async function saveGameTranslation(
   translatedText: string,
   gameName?: string
 ): Promise<void> {
-  if (!db || !gameId || !translatedText) return;
-
-  const key = String(gameId);
-  const clean = sanitizeTranslation(translatedText);
-  if (!clean) return;
-
-  // Atualiza cache de memória imediatamente
-  memoryCache.set(key, clean);
-
-  try {
-    await setDoc(
-      doc(db, "game_translations", key),
-      {
-        gameId: key,
-        gameName: gameName || "",
-        originalText,
-        translatedText: clean,
-        source: "free_engine",
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
-  } catch (err) {
-    console.warn(`Erro ao salvar tradução do jogo ${key} no Firestore:`, err);
-  }
+  return saveGameTranslations(gameId, {
+    originalDescription: originalText,
+    translatedDescription: translatedText,
+    gameName,
+  });
 }
