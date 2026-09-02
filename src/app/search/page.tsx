@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Game } from "@/lib/types";
 import GameCard from "@/components/GameCard";
 import LiveSearchInput from "@/components/LiveSearchInput";
-import { Search, Filter, Trophy, Sparkles } from "lucide-react";
+import { Search, Filter, Trophy, Sparkles, Gamepad2 } from "lucide-react";
 
 const GENRES_LIST = [
   "Todos",
@@ -20,6 +20,24 @@ const GENRES_LIST = [
   "Horror",
 ];
 
+const SEARCH_PLATFORMS = [
+  "Todas",
+  "PlayStation 2",
+  "PlayStation",
+  "PlayStation 3",
+  "PlayStation 4",
+  "PlayStation 5",
+  "Xbox",
+  "Xbox 360",
+  "Xbox One",
+  "Xbox Series",
+  "Nintendo 64",
+  "GameCube",
+  "Super Nintendo",
+  "Nintendo Switch",
+  "PC",
+];
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
@@ -28,6 +46,7 @@ function SearchContent() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState("Todos");
+  const [selectedPlatform, setSelectedPlatform] = useState("Todas");
   const [minMetacritic, setMinMetacritic] = useState<number>(0);
 
   useEffect(() => {
@@ -57,13 +76,28 @@ function SearchContent() {
     fetchGames();
   }, [query]);
 
-  // Filtros de gênero e nota
+  // Filtros de gênero, plataforma e nota
   const filteredGames = games.filter((g) => {
     if (selectedGenre !== "Todos") {
       const hasGenre = g.genres?.some((genre) =>
         genre.name.toLowerCase().includes(selectedGenre.toLowerCase().replace(/[^a-z]/g, ""))
       );
       if (!hasGenre) return false;
+    }
+
+    if (selectedPlatform !== "Todas") {
+      const target = selectedPlatform.toLowerCase();
+      const hasPlat = g.platforms?.some((p) => {
+        const pName = p.platform.name.toLowerCase();
+        if (target === "playstation") {
+          return pName === "playstation" || pName.includes("ps1");
+        }
+        if (target === "xbox") {
+          return pName === "xbox" || pName.includes("original");
+        }
+        return pName.includes(target);
+      });
+      if (!hasPlat) return false;
     }
 
     if (minMetacritic > 0) {
@@ -114,6 +148,26 @@ function SearchContent() {
                 }`}
               >
                 {genre}
+              </button>
+            ))}
+          </div>
+
+          {/* Barra de Filtros por Plataforma / Console */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap pt-1">
+            <span className="text-xs font-semibold text-gray-400 mr-2 flex items-center gap-1">
+              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Console:
+            </span>
+            {SEARCH_PLATFORMS.map((plat) => (
+              <button
+                key={plat}
+                onClick={() => setSelectedPlatform(plat)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                  selectedPlatform === plat
+                    ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {plat}
               </button>
             ))}
           </div>

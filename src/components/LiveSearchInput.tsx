@@ -7,6 +7,7 @@ import GameModal from "./GameModal";
 import Link from "next/link";
 import { Search, Loader2, Plus, Check, Star, ArrowRight, X } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
+import { formatPlatformShort } from "@/lib/platformUtils";
 
 interface LiveSearchInputProps {
   placeholder?: string;
@@ -244,12 +245,21 @@ export default function LiveSearchInput({
                             <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] truncate transition-colors">
                               {game.name}
                             </h4>
-                            <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-mono mt-0.5 flex-wrap">
                               {releaseYear && <span>{releaseYear}</span>}
+                              {game.platforms && game.platforms.length > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-cyan-300 font-medium">
+                                    {game.platforms.slice(0, 2).map((p) => formatPlatformShort(p.platform.name)).join(", ")}
+                                    {game.platforms.length > 2 ? ` +${game.platforms.length - 2}` : ""}
+                                  </span>
+                                </>
+                              )}
                               {game.genres && game.genres[0] && (
                                 <>
                                   <span>•</span>
-                                  <span className="truncate">{game.genres[0].name}</span>
+                                  <span className="truncate text-gray-400">{game.genres[0].name}</span>
                                 </>
                               )}
                             </div>

@@ -24,7 +24,9 @@ import {
   Check,
   Lock,
   User,
+  Monitor,
 } from "lucide-react";
+import { CONSOLE_CATEGORIES, POPULAR_CONSOLES } from "@/lib/platformUtils";
 
 interface GameModalProps {
   game: Game | null;
@@ -32,17 +34,6 @@ interface GameModalProps {
   onClose: () => void;
   onOpenAuthModal?: () => void;
 }
-
-const PLATFORM_OPTIONS = [
-  "PC",
-  "PlayStation 5",
-  "PlayStation 4",
-  "Xbox Series X/S",
-  "Xbox One",
-  "Nintendo Switch",
-  "Steam Deck",
-  "Mobile",
-];
 
 export default function GameModal({
   game,
@@ -68,6 +59,7 @@ export default function GameModal({
 
   // Controle de expansão do acordeão "Detalhes"
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
+  const [showAllConsoles, setShowAllConsoles] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const existingInLibrary = game ? getGameInLibrary(game.id) : undefined;
@@ -116,7 +108,10 @@ export default function GameModal({
         setPlaytime("");
         setStartDate("");
         setCompletedDate("");
-        setSelectedPlatforms(["PC"]);
+        const defaultPlat = game.platforms && game.platforms.length > 0
+          ? [game.platforms[0].platform.name]
+          : ["PC"];
+        setSelectedPlatforms(defaultPlat);
         setSelectedChallenges([]);
         setReview("");
         setIsFavorite(false);
@@ -550,30 +545,104 @@ export default function GameModal({
               {isDetailsExpanded && (
                 <div className="space-y-4 pt-3 animate-fadeIn">
                   {/* Plataformas (Multi-seleção em pílulas) */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-gray-400">
-                      Plataformas Jogadas (seleção múltipla)
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {PLATFORM_OPTIONS.map((plat) => {
-                        const isSelected = selectedPlatforms.includes(plat);
-                        return (
-                          <button
-                            key={plat}
-                            type="button"
-                            onClick={() => togglePlatform(plat)}
-                            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                              isSelected
-                                ? "bg-white/25 text-white border border-white/40 shadow-sm"
-                                : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent"
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 inline mr-1" />}
-                            {plat}
-                          </button>
-                        );
-                      })}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-medium text-gray-300">
+                        Plataformas Jogadas (seleção múltipla)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllConsoles(!showAllConsoles)}
+                        className="text-[11px] text-[#00E5FF] hover:underline font-medium"
+                      >
+                        {showAllConsoles ? "Ocultar catálogo completo" : "Ver todos os consoles (+Retrô)"}
+                      </button>
                     </div>
+
+                    {/* 1. Se o jogo tiver plataformas cadastradas no IGDB, destaca aqui primeiro */}
+                    {game.platforms && game.platforms.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-cyan-950/25 border border-cyan-500/20 space-y-1.5">
+                        <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> Plataformas oficiais deste jogo:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {game.platforms.map((p) => {
+                            const platName = p.platform.name;
+                            const isSelected = selectedPlatforms.includes(platName);
+                            return (
+                              <button
+                                key={platName}
+                                type="button"
+                                onClick={() => togglePlatform(platName)}
+                                className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                                  isSelected
+                                    ? "bg-[#00E5FF] text-black font-bold shadow-sm shadow-[#00E5FF]/20"
+                                    : "bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 border border-cyan-500/30"
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                                {platName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. Plataformas Populares (Modernos + Retrô mais jogados) */}
+                    {!showAllConsoles && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {POPULAR_CONSOLES.map((plat) => {
+                          const isSelected = selectedPlatforms.includes(plat);
+                          return (
+                            <button
+                              key={plat}
+                              type="button"
+                              onClick={() => togglePlatform(plat)}
+                              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                                isSelected
+                                  ? "bg-white/25 text-white border border-white/40 shadow-sm"
+                                  : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent"
+                              }`}
+                            >
+                              {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                              {plat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* 3. Catálogo Completo por Fabricante (PlayStation, Xbox, Nintendo, Sega, etc.) */}
+                    {showAllConsoles && (
+                      <div className="space-y-3 pt-2 border-t border-white/10 animate-fadeIn">
+                        {Object.entries(CONSOLE_CATEGORIES).map(([category, consoles]) => (
+                          <div key={category} className="space-y-1.5">
+                            <span className="text-[11px] font-semibold text-gray-400 block">{category}</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {consoles.map((plat) => {
+                                const isSelected = selectedPlatforms.includes(plat);
+                                return (
+                                  <button
+                                    key={plat}
+                                    type="button"
+                                    onClick={() => togglePlatform(plat)}
+                                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
+                                      isSelected
+                                        ? "bg-white/25 text-white border border-white/40 shadow-sm"
+                                        : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent"
+                                    }`}
+                                  >
+                                    {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                                    {plat}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Inputs de Tempo e Datas */}
