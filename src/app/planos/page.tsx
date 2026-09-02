@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { DEFAULT_PLANS_CONFIG, PlansConfig, PlanKey } from "@/lib/plans";
 import AuthModal from "@/components/AuthModal";
 import {
@@ -21,11 +22,18 @@ import {
 
 export default function PlanosPage() {
   const { user, isPremium, upgradePlan } = useAuth();
+  const router = useRouter();
   const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS_CONFIG);
   const [proBillingType, setProBillingType] = useState<"recurring" | "single_month">("recurring");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  useEffect(() => {
+    if (isPremium) {
+      router.replace("/profile");
+    }
+  }, [isPremium, router]);
 
   useEffect(() => {
     fetch("/api/plans")
@@ -73,6 +81,28 @@ export default function PlanosPage() {
       setLoadingPlan(null);
     }
   };
+
+  if (isPremium) {
+    return (
+      <div className="max-w-md mx-auto my-16 rounded-[32px] p-8 border border-[#00E5FF]/30 bg-[#18191c] text-center space-y-4 shadow-2xl animate-fadeIn">
+        <div className="w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-[#00E5FF] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/10">
+          <Sparkles className="w-7 h-7" />
+        </div>
+        <h2 className="text-xl font-bold text-white tracking-tight">
+          Você já é um Assinante Ativo!
+        </h2>
+        <p className="text-xs text-gray-400">
+          Sua conta já possui todos os recursos liberados. Redirecionando para o seu perfil para gerenciar seu plano...
+        </p>
+        <button
+          onClick={() => router.replace("/profile")}
+          className="rounded-full bg-[#00E5FF] hover:bg-cyan-400 text-black font-bold px-6 py-2.5 text-xs transition-all shadow-md"
+        >
+          Ir para Meu Perfil
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 pb-16 pt-4 max-w-5xl mx-auto">

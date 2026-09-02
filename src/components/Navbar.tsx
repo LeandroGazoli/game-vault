@@ -34,7 +34,7 @@ import {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isPremium } = useAuth();
   const { stats } = useGameLibrary();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -128,13 +128,15 @@ export default function Navbar() {
               <Trophy className="w-4 h-4 text-emerald-400" />
               Meus Jogos
             </Link>
-            <Link
-              href="/planos"
-              className="text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm"
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              Planos PRO
-            </Link>
+            {!isPremium && (
+              <Link
+                href="/planos"
+                className="text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                Planos PRO
+              </Link>
+            )}
           </nav>
 
           {/* Área do Usuário & Controles Mobile */}
@@ -398,21 +400,23 @@ export default function Navbar() {
                     <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
                   </Link>
 
-                  <Link
-                    href="/planos"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
-                      pathname === "/planos" ? "bg-amber-500/20 text-amber-300 font-bold" : "text-amber-300 hover:bg-amber-500/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Crown className="w-4 h-4 text-amber-400" />
-                      <span>Assinatura Planos PRO</span>
-                    </div>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-400 text-black">
-                      VIP
-                    </span>
-                  </Link>
+                  {!isPremium && (
+                    <Link
+                      href="/planos"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                        pathname === "/planos" ? "bg-amber-500/20 text-amber-300 font-bold" : "text-amber-300 hover:bg-amber-500/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Crown className="w-4 h-4 text-amber-400" />
+                        <span>Assinatura Planos PRO</span>
+                      </div>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-400 text-black">
+                        VIP
+                      </span>
+                    </Link>
+                  )}
 
                   {isAdmin && (
                     <Link

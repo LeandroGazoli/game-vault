@@ -3,11 +3,23 @@ import { stripe } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    const { customerId, returnUrl } = await request.json();
+    const { customerId, userEmail, returnUrl } = await request.json();
 
-    if (!customerId) {
+    let targetCustomerId = customerId;
+
+    if (!targetCustomerId && userEmail) {
+      const customers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1,
+      });
+      if (customers.data.length > 0) {
+        targetCustomerId = customers.data[0].id;
+      }
+    }
+
+    if (!targetCustomerId) {
       return NextResponse.json(
-        { error: "Identificador de assinatura não encontrado." },
+        { error: "Nenhuma assinatura recorrente ativa vinculada ao seu e-mail no Stripe." },
         { status: 400 }
       );
     }

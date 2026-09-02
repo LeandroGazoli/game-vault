@@ -11,6 +11,7 @@ import GameModal from "@/components/GameModal";
 import AuthModal from "@/components/AuthModal";
 import ExportModal from "@/components/ExportModal";
 import UpgradeModal from "@/components/UpgradeModal";
+import ManagePlanModal from "@/components/ManagePlanModal";
 import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GamerWrappedModal from "@/components/GamerWrappedModal";
@@ -44,7 +45,7 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, updateUserBio, isAdmin, isLoading: authLoading } = useAuth();
+  const { user, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
   const { library, stats, isLoading: libraryLoading } = useGameLibrary();
 
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -57,6 +58,7 @@ export default function ProfilePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [isManagePlanOpen, setIsManagePlanOpen] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
@@ -208,28 +210,44 @@ export default function ProfilePage() {
 
               {/* Status e Detalhes da Assinatura */}
               {user.plan === "vip" ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit">
-                  <Crown className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Membro Fundador VIP Vitalício</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit">
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Membro Fundador VIP Vitalício</span>
+                  </div>
+                  <button
+                    onClick={() => setIsManagePlanOpen(true)}
+                    className="text-xs text-gray-300 hover:text-white px-3 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors font-medium"
+                  >
+                    Gerenciar Plano
+                  </button>
                 </div>
               ) : user.plan === "pro" ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit">
-                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  <span>
-                    Assinante PRO Ativo
-                    {user.premiumUntil ? (
-                      <span className="text-gray-300 font-normal ml-1">
-                        • Válido até{" "}
-                        {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </span>
-                    ) : (
-                      <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
-                    )}
-                  </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit">
+                    <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                    <span>
+                      Assinante PRO Ativo
+                      {user.premiumUntil ? (
+                        <span className="text-gray-300 font-normal ml-1">
+                          • Válido até{" "}
+                          {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsManagePlanOpen(true)}
+                    className="text-xs text-gray-300 hover:text-white px-3 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors font-medium"
+                  >
+                    Gerenciar Plano
+                  </button>
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium w-fit">
@@ -293,14 +311,14 @@ export default function ProfilePage() {
                   Seja PRO
                 </button>
               ) : (
-                <Link
-                  href="/planos"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-bold text-[#00E5FF] transition-all shadow-sm hover:bg-cyan-500/25"
-                  title="Ver detalhes do seu plano ativo"
+                <button
+                  onClick={() => setIsManagePlanOpen(true)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-bold text-[#00E5FF] transition-all shadow-sm hover:bg-cyan-500/25 active:scale-95"
+                  title="Gerenciar detalhes do seu plano ativo"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  Plano PRO Ativo
-                </Link>
+                  Gerenciar Plano
+                </button>
               )}
               {isAdmin && (
                 <Link
@@ -728,11 +746,20 @@ export default function ProfilePage() {
         username={user.username || user.uid}
       />
 
-      {/* Modal de Upgrade de Planos */}
-      <UpgradeModal
-        isOpen={isUpgradeOpen}
-        onClose={() => setIsUpgradeOpen(false)}
+      {/* Modal de Gerenciamento do Plano Ativo */}
+      <ManagePlanModal
+        isOpen={isManagePlanOpen}
+        onClose={() => setIsManagePlanOpen(false)}
+        user={user}
       />
+
+      {/* Modal de Upgrade de Planos (somente para usuários Free) */}
+      {!isPremium && (
+        <UpgradeModal
+          isOpen={isUpgradeOpen}
+          onClose={() => setIsUpgradeOpen(false)}
+        />
+      )}
 
       {/* Modal de Personalização do Perfil */}
       <ProfileCustomizerModal

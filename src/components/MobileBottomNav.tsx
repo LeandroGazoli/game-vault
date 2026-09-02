@@ -10,19 +10,22 @@ import {
   Calendar as CalendarIcon,
   Trophy,
   Crown,
+  Star,
   User,
 } from "lucide-react";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
 
   const navItems = [
     { href: "/", label: "Início", icon: Flame, color: "text-orange-400" },
     { href: "/search", label: "Buscar", icon: Search, color: "text-[#00E5FF]" },
     { href: "/calendar", label: "Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
     { href: "/profile", label: "Meus Jogos", icon: Trophy, color: "text-emerald-400" },
-    { href: "/planos", label: "PRO", icon: Crown, color: "text-amber-400" },
+    ...(isPremium
+      ? [{ href: "/rankings", label: "Rankings", icon: Star, color: "text-yellow-400" }]
+      : [{ href: "/planos", label: "PRO", icon: Crown, color: "text-amber-400" }]),
   ];
 
   return (
