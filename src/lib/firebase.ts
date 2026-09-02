@@ -19,12 +19,10 @@ import {
   getDocs,
   deleteDoc,
   query,
-  where,
   Firestore
 } from "firebase/firestore";
 import { UserGame, UserProfile } from "./types";
 
-// Configuração do Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -34,7 +32,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Verifica se as credenciais do Firebase foram fornecidas
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
   firebaseConfig.apiKey !== "your_firebase_api_key" &&
@@ -51,7 +48,7 @@ if (typeof window !== "undefined" && isFirebaseConfigured) {
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (err) {
-    console.warn("Firebase init error (using LocalStorage fallback):", err);
+    console.warn("Firebase init warning (using LocalStorage fallback):", err);
   }
 }
 
@@ -64,8 +61,18 @@ export { app, auth, db };
 const LOCAL_STORAGE_LIBRARY_KEY = "game_vault_user_library";
 const LOCAL_STORAGE_PROFILE_KEY = "game_vault_user_profile";
 
+function isRealAuthUser(userId: string): boolean {
+  return Boolean(
+    isFirebaseConfigured &&
+    db &&
+    auth?.currentUser &&
+    userId !== "demo-gamer-123" &&
+    auth.currentUser.uid === userId
+  );
+}
+
 export async function getUserLibrary(userId: string): Promise<UserGame[]> {
-  if (isFirebaseConfigured && db) {
+  if (isRealAuthUser(userId) && db) {
     try {
       const q = query(collection(db, "users", userId, "games"));
       const snapshot = await getDocs(q);
@@ -73,9 +80,9 @@ export async function getUserLibrary(userId: string): Promise<UserGame[]> {
       snapshot.forEach((docSnap) => {
         games.push(docSnap.data() as UserGame);
       });
-      return games;
+      if (games.length > 0) return games;
     } catch (e) {
-      console.error("Erro ao buscar biblioteca no Firestore:", e);
+      console.warn("Aviso ao carregar do Firestore, usando cache local:", e);
     }
   }
 
@@ -100,15 +107,16 @@ export async function saveUserGame(userId: string, game: UserGame): Promise<void
     updatedAt: new Date().toISOString(),
   };
 
-  if (isFirebaseConfigured && db) {
+  // Salva no Firestore apenas se o usuário estiver autenticado no Firebase
+  if (isRealAuthUser(userId) && db) {
     try {
       await setDoc(doc(db, "users", userId, "games", gameDocId), updatedGame, { merge: true });
     } catch (e) {
-      console.error("Erro ao salvar jogo no Firestore:", e);
+      console.warn("Não foi possível sincronizar com o Firestore neste momento:", e);
     }
   }
 
-  // Sempre sincroniza com LocalStorage para redundância e performance
+  // Sincroniza sempre com LocalStorage para velocidade e redundância
   if (typeof window !== "undefined") {
     const key = `${LOCAL_STORAGE_LIBRARY_KEY}_${userId}`;
     const raw = localStorage.getItem(key);
@@ -126,11 +134,11 @@ export async function saveUserGame(userId: string, game: UserGame): Promise<void
 export async function removeUserGame(userId: string, gameId: string | number): Promise<void> {
   const gameDocId = String(gameId);
 
-  if (isFirebaseConfigured && db) {
+  if (isRealAuthUser(userId) && db) {
     try {
       await deleteDoc(doc(db, "users", userId, "games", gameDocId));
     } catch (e) {
-      console.error("Erro ao remover jogo no Firestore:", e);
+      console.warn("Erro ao remover no Firestore:", e);
     }
   }
 
@@ -146,14 +154,14 @@ export async function removeUserGame(userId: string, gameId: string | number): P
 }
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-  if (isFirebaseConfigured && db) {
+  if (isRealAuthUser(userId) && db) {
     try {
       const docSnap = await getDoc(doc(db, "users", userId));
       if (docSnap.exists()) {
         return docSnap.data() as UserProfile;
       }
     } catch (e) {
-      console.error("Erro ao buscar perfil no Firestore:", e);
+      console.warn("Erro ao buscar perfil no Firestore:", e);
     }
   }
 
@@ -171,11 +179,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 }
 
 export async function saveUserProfile(userId: string, profile: Partial<UserProfile>): Promise<void> {
-  if (isFirebaseConfigured && db) {
+  if (isRealAuthUser(userId) && db) {
     try {
       await setDoc(doc(db, "users", userId), profile, { merge: true });
     } catch (e) {
-      console.error("Erro ao salvar perfil no Firestore:", e);
+      console.warn("Erro ao salvar perfil no Firestore:", e);
     }
   }
 
