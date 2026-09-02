@@ -134,3 +134,12 @@ body {
   animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Previne que modais e overlays com fixed inset-0 recebam margin-top de containers space-y */
+.fixed.inset-0,
+div[class*="fixed"][class*="inset-0"] {
+  margin: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+

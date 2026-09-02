@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Game, GameStatus, CompletionType, HLTBData } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
@@ -61,6 +62,11 @@ export default function GameModal({
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [showAllConsoles, setShowAllConsoles] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const existingInLibrary = game ? getGameInLibrary(game.id) : undefined;
 
@@ -226,10 +232,10 @@ export default function GameModal({
     }
   };
 
-  return (
+  const modalContent = (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
+        className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
         onClick={onClose}
       >
         <div
@@ -840,4 +846,10 @@ export default function GameModal({
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>
   );
+
+  if (mounted && typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 }

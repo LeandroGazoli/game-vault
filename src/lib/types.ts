@@ -132,6 +132,19 @@ export interface PlatformItem {
   };
 }
 
+export interface GameVideo {
+  id: number;
+  name: string;
+  video_id: string;
+}
+
+export interface SimilarGameItem {
+  id: number;
+  name: string;
+  coverUrl?: string | null;
+  rating?: number | null;
+}
+
 export interface Game {
   id: number;
   name: string;
@@ -143,10 +156,20 @@ export interface Game {
   platforms: PlatformItem[];
   hltb?: HLTBData | null;
   description_raw?: string;
+  storyline?: string;
   rating?: number;
   ratings_count?: number;
   playtime?: number;
   short_screenshots?: { id: number; image: string }[];
+  screenshots?: string[];
+  artworks?: string[];
+  videos?: GameVideo[];
+  developers?: string[];
+  publishers?: string[];
+  game_modes?: string[];
+  themes?: string[];
+  websites?: { id: number; category?: number; url: string; label?: string }[];
+  similar_games?: SimilarGameItem[];
 }
 
 export interface UserGame {

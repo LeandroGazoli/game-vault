@@ -428,7 +428,7 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
       {/* MODAL PARA CRIAR NOVO PREÇO NO STRIPE */}
       {isCreatePriceOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
           onClick={() => setIsCreatePriceOpen(false)}
         >
           <div

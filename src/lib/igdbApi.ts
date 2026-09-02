@@ -80,6 +80,54 @@ export function mapIGDBGameToGame(item: any): Game {
     ? Number((item.aggregated_rating / 10).toFixed(1))
     : 8.0;
 
+  const screenshots = item.screenshots
+    ? (item.screenshots.map((s: any) => getIGDBImageUrl(s.image_id, "1080p")).filter(Boolean) as string[])
+    : [];
+
+  const artworks = item.artworks
+    ? (item.artworks.map((a: any) => getIGDBImageUrl(a.image_id, "1080p")).filter(Boolean) as string[])
+    : [];
+
+  const videos = item.videos
+    ? item.videos.map((v: any) => ({
+        id: v.id,
+        name: v.name || "Trailer",
+        video_id: v.video_id,
+      })).filter((v: any) => Boolean(v.video_id))
+    : [];
+
+  const developers = item.involved_companies
+    ? (item.involved_companies
+        .filter((c: any) => c.developer && c.company?.name)
+        .map((c: any) => c.company.name) as string[])
+    : [];
+
+  const publishers = item.involved_companies
+    ? (item.involved_companies
+        .filter((c: any) => c.publisher && c.company?.name)
+        .map((c: any) => c.company.name) as string[])
+    : [];
+
+  const game_modes = item.game_modes ? (item.game_modes.map((m: any) => m.name) as string[]) : [];
+  const themes = item.themes ? (item.themes.map((t: any) => t.name) as string[]) : [];
+
+  const websites = item.websites
+    ? item.websites.map((w: any) => ({
+        id: w.id,
+        category: w.category,
+        url: w.url,
+      }))
+    : [];
+
+  const similar_games = item.similar_games
+    ? item.similar_games.map((sg: any) => ({
+        id: sg.id,
+        name: sg.name,
+        coverUrl: sg.cover?.image_id ? getIGDBImageUrl(sg.cover.image_id, "cover_big") : null,
+        rating: sg.rating ? Number((sg.rating / 10).toFixed(1)) : null,
+      }))
+    : [];
+
   return {
     id: item.id,
     slug: item.slug || String(item.id),
@@ -90,9 +138,19 @@ export function mapIGDBGameToGame(item: any): Game {
     metacritic: metacriticScore,
     playtime: item.total_rating_count || item.hypes || 30,
     description_raw: item.summary || item.storyline || "Sem sinopse disponível no momento.",
+    storyline: item.storyline || undefined,
     genres,
     platforms,
     hltb: null,
+    screenshots,
+    artworks,
+    videos,
+    developers,
+    publishers,
+    game_modes,
+    themes,
+    websites,
+    similar_games,
   };
 }
 
@@ -367,7 +425,7 @@ export async function getCalendarGamesIGDB(year: number, month: number): Promise
 // 6. Detalhes de um Jogo por ID (TTL: 144 horas / 6 dias)
 export async function getGameDetailsIGDB(id: string | number): Promise<Game | null> {
   if (isNaN(Number(id))) return null;
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, involved_companies.company.name; where id = ${id}; limit 1;`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating; where id = ${id}; limit 1;`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.GAME_DETAILS);
   if (data.length > 0) return mapIGDBGameToGame(data[0]);
   return null;

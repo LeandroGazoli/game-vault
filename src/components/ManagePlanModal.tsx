@@ -84,7 +84,7 @@ export default function ManagePlanModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div
         className="relative w-full max-w-lg rounded-[32px] bg-[#14161a] border border-white/15 p-6 sm:p-8 shadow-2xl space-y-6 overflow-hidden max-h-[92vh] overflow-y-auto"
         role="dialog"
