@@ -401,15 +401,16 @@ export default function AdminPage() {
                       </td>
 
                       <td className="py-3.5 text-right pr-2">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           {currentPlan !== "vip" && (
                             <button
                               onClick={() => handleUpdatePlan(u, "vip")}
                               disabled={updatingUserId === u.uid}
-                              className="px-2.5 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold text-[10px] transition-colors"
-                              title="Tornar VIP permanente"
+                              className="px-3 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-[10px] transition-all flex items-center gap-1 shadow-sm"
+                              title="Ativar plano VIP Vitalício para este usuário"
                             >
-                              + VIP
+                              <Crown className="w-3 h-3 text-amber-400" />
+                              Ativar VIP
                             </button>
                           )}
 
@@ -417,10 +418,11 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleUpdatePlan(u, "pro")}
                               disabled={updatingUserId === u.uid}
-                              className="px-2.5 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-[#00E5FF] font-semibold text-[10px] transition-colors"
-                              title="Conceder PRO"
+                              className="px-3 py-1 rounded-full bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-500/40 text-[#00E5FF] font-bold text-[10px] transition-all flex items-center gap-1 shadow-sm"
+                              title="Conceder plano PRO para este usuário"
                             >
-                              + PRO
+                              <Sparkles className="w-3 h-3 text-[#00E5FF]" />
+                              Ativar PRO
                             </button>
                           )}
 
@@ -428,10 +430,10 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleUpdatePlan(u, "free")}
                               disabled={updatingUserId === u.uid}
-                              className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 text-[10px] transition-colors"
-                              title="Reverter para Free"
+                              className="px-3 py-1 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-medium text-[10px] transition-all flex items-center gap-1"
+                              title="Fazer Downgrade / Remover plano e voltar para Free"
                             >
-                              Free
+                              Downgrade (Free)
                             </button>
                           )}
                         </div>
