@@ -28,32 +28,56 @@ export default function LiveSearchInput({
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
 
-  // Debounced search
+  // Debounced search com cancelamento via AbortController e cache no cliente
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 3) {
       setResults([]);
       setLoading(false);
       return;
     }
 
+    // 1. Responde instantaneamente se já foi buscado nesta sessão
+    const cacheKey = trimmed.toLowerCase();
+    if (searchCacheRef.current.has(cacheKey)) {
+      setResults(searchCacheRef.current.get(cacheKey)!);
+      setIsOpen(true);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    const abortController = new AbortController();
+
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/games/search?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`/api/games/search?q=${encodeURIComponent(trimmed)}`, {
+          signal: abortController.signal,
+        });
         if (res.ok) {
           const data = await res.json();
-          setResults((data.games || []).slice(0, 6));
+          const items = (data.games || []).slice(0, 6);
+          searchCacheRef.current.set(cacheKey, items);
+          setResults(items);
           setIsOpen(true);
         }
-      } catch (err) {
-        console.error("Erro na busca instantânea:", err);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Erro na busca instantânea:", err);
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
-    }, 250);
+    }, 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
   }, [query]);
 
   // Fecha o dropdown ao clicar fora ou ao pressionar Esc
