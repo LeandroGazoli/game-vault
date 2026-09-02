@@ -46,6 +46,7 @@ function SearchContent() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState("Todos");
@@ -70,6 +71,7 @@ function SearchContent() {
           const data = await res.json();
           const items = data.games || [];
           setGames(items);
+          setTotalCount(data.total || data.count || items.length);
           setHasMore(Boolean(data.hasMore ?? (items.length >= 50)));
         }
       } catch (err) {
@@ -238,6 +240,8 @@ function SearchContent() {
           <span>
             {loading
               ? "Buscando jogos no catálogo..."
+              : totalCount > 0
+              ? `${totalCount} jogos encontrados (Exibindo ${filteredGames.length} títulos)`
               : `Exibindo ${filteredGames.length} títulos`}
           </span>
           {query && (
@@ -278,11 +282,13 @@ function SearchContent() {
                       Carregando mais jogos...
                     </>
                   ) : (
-                    "Carregar mais jogos..."
+                    `Carregar mais jogos...`
                   )}
                 </button>
                 <span className="text-[11px] text-gray-500 font-mono">
-                  Mostrando {filteredGames.length} títulos
+                  {totalCount > filteredGames.length
+                    ? `Exibindo ${filteredGames.length} de ${totalCount} jogos`
+                    : `Mostrando todos os ${filteredGames.length} títulos`}
                 </span>
               </div>
             )}

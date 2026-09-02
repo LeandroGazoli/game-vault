@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { Game } from "@/lib/types";
+import { Game, AgeRatingItem } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "@/components/MetacriticBadge";
@@ -32,9 +32,80 @@ import {
   Building2,
   X,
   ChevronRight,
+  Eye,
+  Languages,
 } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { formatPlatformShort } from "@/lib/platformUtils";
+
+// Helper para selo oficial de Classificação Indicativa (CLASS_IND Brasil, ESRB, PEGI)
+function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
+  if (!ageRatings || ageRatings.length === 0) return null;
+
+  // 1. Prioridade: Classificação Indicativa Brasileira (CLASS_IND)
+  const classInd = ageRatings.find(
+    (r) => r.organization.toUpperCase().includes("CLASS_IND") || r.organization.toUpperCase().includes("CLASSIND")
+  );
+  if (classInd) {
+    const raw = classInd.rating.toUpperCase();
+    let bg = "bg-[#0c8a3f]"; // Livre - Verde
+    let text = "L";
+
+    if (raw.includes("10") || raw === "10") {
+      bg = "bg-[#0b75ba]"; // 10 anos - Azul
+      text = "10";
+    } else if (raw.includes("12") || raw === "12") {
+      bg = "bg-[#f5a200] text-black font-black"; // 12 anos - Amarelo
+      text = "12";
+    } else if (raw.includes("14") || raw === "14") {
+      bg = "bg-[#e5591f]"; // 14 anos - Laranja
+      text = "14";
+    } else if (raw.includes("16") || raw === "16") {
+      bg = "bg-[#d9222a]"; // 16 anos - Vermelho
+      text = "16";
+    } else if (raw.includes("18") || raw === "18") {
+      bg = "bg-[#111111] border border-red-500 text-red-500"; // 18 anos - Preto
+      text = "18";
+    }
+
+    return (
+      <div
+        className={`w-6 h-6 rounded flex items-center justify-center font-black text-[11px] shadow-md tracking-tighter ${bg}`}
+        title={`Classificação Indicativa Brasileira (CLASS_IND): ${text}`}
+      >
+        {text}
+      </div>
+    );
+  }
+
+  // 2. Fallback: ESRB
+  const esrb = ageRatings.find((r) => r.organization.toUpperCase().includes("ESRB"));
+  if (esrb) {
+    return (
+      <div
+        className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
+        title={`Classificação ESRB: ${esrb.rating}`}
+      >
+        ESRB {esrb.rating}
+      </div>
+    );
+  }
+
+  // 3. Fallback: PEGI
+  const pegi = ageRatings.find((r) => r.organization.toUpperCase().includes("PEGI"));
+  if (pegi) {
+    return (
+      <div
+        className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
+        title={`Classificação PEGI: ${pegi.rating}`}
+      >
+        PEGI {pegi.rating}
+      </div>
+    );
+  }
+
+  return null;
+}
 
 // Helper para estilizar links oficiais e lojas de acordo com o domínio
 function getWebsiteMeta(url: string) {
@@ -216,12 +287,40 @@ export default function GameDetailPage() {
           {/* Dados do Jogo */}
           <div className="flex-1 min-w-0 space-y-3.5">
             <div className="flex flex-wrap items-center gap-2">
+              {/* Selo Oficial de Classificação Indicativa (CLASS_IND Brasil / ESRB) */}
+              {getAgeRatingBadge(game.age_ratings)}
+
               {game.released && (
                 <span className="flex items-center gap-1 text-xs font-mono text-gray-300 bg-black/60 border border-white/10 px-3 py-1 rounded-full">
                   <Calendar className="w-3 h-3 text-[#00E5FF]" />
                   {game.released.substring(0, 4)}
                 </span>
               )}
+
+              {/* Franquia / Coleção Oficial */}
+              {(game.franchises?.[0] || game.collections?.[0]) && (
+                <Link
+                  href={`/search?q=${encodeURIComponent(game.franchises?.[0] || game.collections?.[0] || "")}`}
+                  className="flex items-center gap-1 text-xs text-amber-300 bg-amber-950/60 border border-amber-500/30 px-3 py-1 rounded-full hover:bg-amber-900/60 transition-colors"
+                  title="Ver todos os jogos desta franquia"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  {game.franchises?.[0] || game.collections?.[0]}
+                </Link>
+              )}
+
+              {/* Destaque de Localização PT-BR */}
+              {game.ptbrSupport?.audio && (
+                <span className="flex items-center gap-1 text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full font-medium" title="Possui Dublagem em Português do Brasil">
+                  🇧🇷 Dublado
+                </span>
+              )}
+              {game.ptbrSupport?.subtitles && !game.ptbrSupport?.audio && (
+                <span className="flex items-center gap-1 text-xs text-blue-300 bg-blue-950/60 border border-blue-500/30 px-3 py-1 rounded-full font-medium" title="Possui Legendas em Português do Brasil">
+                  🇧🇷 Legendado
+                </span>
+              )}
+
               {game.genres?.map((g) => (
                 <span
                   key={g.id}
@@ -469,9 +568,9 @@ export default function GameDetailPage() {
               )}
             </div>
 
-            {/* Modos de Jogo & Temas */}
-            {((game.game_modes && game.game_modes.length > 0) || (game.themes && game.themes.length > 0)) && (
-              <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Modos de Jogo, Perspectiva, Localização & Temas */}
+            {((game.game_modes && game.game_modes.length > 0) || (game.themes && game.themes.length > 0) || (game.player_perspectives && game.player_perspectives.length > 0) || game.ptbrSupport) && (
+              <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {game.game_modes && game.game_modes.length > 0 && (
                   <div className="space-y-2">
                     <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
@@ -486,6 +585,49 @@ export default function GameDetailPage() {
                           {m}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {game.player_perspectives && game.player_perspectives.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-amber-400" /> Perspectiva:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {game.player_perspectives.map((p) => (
+                        <span
+                          key={p}
+                          className="text-[11px] px-2.5 py-1 rounded-full bg-amber-950/40 text-amber-300 border border-amber-500/20"
+                        >
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {game.ptbrSupport && (
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                      <Languages className="w-3.5 h-3.5 text-emerald-400" /> Português (Brasil):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {game.ptbrSupport.audio && (
+                        <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20">
+                          Áudio (Dublado)
+                        </span>
+                      )}
+                      {game.ptbrSupport.subtitles && (
+                        <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20">
+                          Legendas
+                        </span>
+                      )}
+                      {game.ptbrSupport.interface && (
+                        <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20">
+                          Interface / Menus
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

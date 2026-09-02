@@ -6,6 +6,7 @@ import {
   getRankingsIGDB,
   getCalendarGamesIGDB,
   getGameDetailsIGDB,
+  getGamesCountIGDB,
 } from "./igdbApi";
 import { fetchHLTBData } from "./hltbApi";
 import { translateToPortuguese } from "./translate";
@@ -41,13 +42,17 @@ export async function searchGamesApi(
   query: string,
   page = 1,
   pageSize = 50
-): Promise<{ games: Game[]; count: number; page: number; hasMore: boolean }> {
+): Promise<{ games: Game[]; count: number; total: number; page: number; hasMore: boolean }> {
   const offset = Math.max(0, (page - 1) * pageSize);
-  const games = await searchGamesIGDB(query, pageSize, offset);
+  const [games, totalCount] = await Promise.all([
+    searchGamesIGDB(query, pageSize, offset),
+    page === 1 ? getGamesCountIGDB(query) : Promise.resolve(0),
+  ]);
   const enriched = await enrichWithHLTB(games, 3);
   return {
     games: enriched,
     count: enriched.length,
+    total: totalCount,
     page,
     hasMore: games.length >= pageSize,
   };

@@ -128,6 +128,40 @@ export function mapIGDBGameToGame(item: any): Game {
       }))
     : [];
 
+  const franchises = item.franchises
+    ? (item.franchises.map((f: any) => f.name).filter(Boolean) as string[])
+    : item.franchise?.name
+    ? [item.franchise.name]
+    : [];
+
+  const collections = item.collections
+    ? (item.collections.map((c: any) => c.name).filter(Boolean) as string[])
+    : item.collection?.name
+    ? [item.collection.name]
+    : [];
+
+  const player_perspectives = item.player_perspectives
+    ? (item.player_perspectives.map((p: any) => p.name).filter(Boolean) as string[])
+    : [];
+
+  const age_ratings = item.age_ratings
+    ? item.age_ratings.map((ar: any) => ({
+        organization: ar.organization?.name || (typeof ar.organization === "string" ? ar.organization : "Outro"),
+        rating: ar.rating_category?.rating || ar.rating?.toString() || "",
+      })).filter((ar: any) => Boolean(ar.rating))
+    : [];
+
+  // Mapear Suporte a PT-BR
+  const ptbrItems = item.language_supports?.filter((ls: any) =>
+    ls.language?.name?.toLowerCase()?.includes("portuguese (brazil)")
+  ) || [];
+
+  const ptbrSupport = ptbrItems.length > 0 ? {
+    audio: ptbrItems.some((ls: any) => ls.language_support_type?.name === "Audio" || ls.language_support_type?.id === 1),
+    subtitles: ptbrItems.some((ls: any) => ls.language_support_type?.name === "Subtitles" || ls.language_support_type?.id === 2),
+    interface: ptbrItems.some((ls: any) => ls.language_support_type?.name === "Interface" || ls.language_support_type?.id === 3),
+  } : undefined;
+
   return {
     id: item.id,
     slug: item.slug || String(item.id),
@@ -151,6 +185,11 @@ export function mapIGDBGameToGame(item: any): Game {
     themes,
     websites,
     similar_games,
+    age_ratings,
+    franchises,
+    collections,
+    player_perspectives,
+    ptbrSupport,
   };
 }
 
@@ -425,9 +464,81 @@ export async function getCalendarGamesIGDB(year: number, month: number): Promise
 // 6. Detalhes de um Jogo por ID (TTL: 144 horas / 6 dias)
 export async function getGameDetailsIGDB(id: string | number): Promise<Game | null> {
   if (isNaN(Number(id))) return null;
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating; where id = ${id}; limit 1;`;
-  const data = await fetchIGDB("games", body, TTL_CONFIG.GAME_DETAILS);
-  if (data.length > 0) return mapIGDBGameToGame(data[0]);
-  return null;
+  const numId = Number(id);
+
+  // Consulta rica do jogo e duração nativa (game_time_to_beats) em paralelo
+  const [gameData, hltbData] = await Promise.all([
+    fetchIGDB(
+      "games",
+      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name; where id = ${numId}; limit 1;`,
+      TTL_CONFIG.GAME_DETAILS
+    ),
+    fetchIGDB(
+      "game_time_to_beats",
+      `fields completely, hastily, normally, count, game_id; where game_id = ${numId}; limit 1;`,
+      TTL_CONFIG.GAME_DETAILS
+    ).catch(() => []),
+  ]);
+
+  if (gameData.length === 0) return null;
+
+  const game = mapIGDBGameToGame(gameData[0]);
+
+  // Se houver dados oficiais de tempo de zeramento do IGDB, preenche o hltb nativamente
+  if (hltbData && hltbData.length > 0 && hltbData[0]) {
+    const b = hltbData[0];
+    const mainSec = b.normally || b.hastily;
+    if (mainSec) {
+      const mainStory = Math.round(mainSec / 3600);
+      const completionist = b.completely ? Math.round(b.completely / 3600) : null;
+      const mainExtra = completionist && mainStory ? Math.round((mainStory + completionist) / 2) : null;
+
+      game.hltb = {
+        gameTitle: game.name,
+        mainStory: mainStory > 0 ? mainStory : null,
+        mainExtra: mainExtra && mainExtra > mainStory ? mainExtra : null,
+        completionist: completionist && completionist > mainStory ? completionist : null,
+        source: "IGDB Community Time",
+      };
+    }
+  }
+
+  return game;
+}
+
+// 7. Contador Total de Jogos para Busca ou Filtros (TTL: 45 min)
+export async function getGamesCountIGDB(query: string): Promise<number> {
+  const escapedQuery = query.replace(/"/g, "").trim();
+  if (!escapedQuery) return 0;
+  const cacheKey = `games_count:${escapedQuery}`;
+  const cached = getFromCache<number>(cacheKey);
+  if (cached && !cached.isStale) return cached.data;
+
+  try {
+    const res = await igdbDispatcher.schedule(async () => {
+      const token = await getTwitchAccessToken();
+      if (!token) return { count: 0 };
+      const response = await fetch(`${IGDB_API_URL}/games/count`, {
+        method: "POST",
+        headers: {
+          "Client-ID": TWITCH_CLIENT_ID,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "text/plain",
+        },
+        body: `search "${escapedQuery}";`,
+      });
+      if (!response.ok) return { count: 0 };
+      return response.json();
+    });
+
+    const count = typeof res?.count === "number" ? res.count : 0;
+    if (count > 0) {
+      setToCache(cacheKey, count, TTL_CONFIG.SEARCH);
+    }
+    return count;
+  } catch (err) {
+    console.error("Erro ao obter contagem de jogos do IGDB:", err);
+    return 0;
+  }
 }
 

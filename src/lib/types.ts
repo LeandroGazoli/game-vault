@@ -145,6 +145,24 @@ export interface SimilarGameItem {
   rating?: number | null;
 }
 
+export interface AgeRatingItem {
+  organization: string;
+  rating: string;
+}
+
+export interface LanguageSupportItem {
+  language: string;
+  supportsAudio: boolean;
+  supportsSubtitles: boolean;
+  supportsInterface: boolean;
+}
+
+export interface PTBRSupport {
+  audio: boolean;
+  subtitles: boolean;
+  interface: boolean;
+}
+
 export interface Game {
   id: number;
   name: string;
@@ -170,6 +188,13 @@ export interface Game {
   themes?: string[];
   websites?: { id: number; category?: number; url: string; label?: string }[];
   similar_games?: SimilarGameItem[];
+  age_ratings?: AgeRatingItem[];
+  franchises?: string[];
+  collections?: string[];
+  player_perspectives?: string[];
+  language_supports?: LanguageSupportItem[];
+  ptbrSupport?: PTBRSupport;
+  total_results_count?: number;
 }
 
 export interface UserGame {
