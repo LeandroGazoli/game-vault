@@ -20,11 +20,6 @@ export default function AdBanner({
   const adRef = useRef<HTMLModElement | null>(null);
   const [adLoaded, setAdLoaded] = useState(false);
 
-  // 1. USUÁRIO PREMIUM / PRO: NÃO EXIBE NENHUM ANÚNCIO (100% AD-FREE)
-  if (isPremium || user?.hideAds) {
-    return null;
-  }
-
   const adSlotConfig: AdSlotConfig =
     typeof slot === "string" ? AD_SLOTS[slot] || AD_SLOTS.HOME_IN_FEED : slot;
 
@@ -32,8 +27,9 @@ export default function AdBanner({
   const isRealAdSenseConfigured =
     ADSENSE_PUB_ID && ADSENSE_PUB_ID !== "ca-pub-0000000000000000";
 
+  // Sempre executa os hooks no topo respeitando as regras do React
   useEffect(() => {
-    if (isRealAdSenseConfigured && typeof window !== "undefined") {
+    if (isRealAdSenseConfigured && !isPremium && !user?.hideAds && typeof window !== "undefined") {
       try {
         ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
         setAdLoaded(true);
@@ -41,9 +37,10 @@ export default function AdBanner({
         // Ignora aviso do AdSense se adblock ativo
       }
     }
-  }, [isRealAdSenseConfigured]);
+  }, [isRealAdSenseConfigured, isPremium, user?.hideAds]);
 
-  if (!isRealAdSenseConfigured) {
+  // 1. USUÁRIO PREMIUM / PRO: NÃO EXIBE NENHUM ANÚNCIO (100% AD-FREE)
+  if (isPremium || user?.hideAds || !isRealAdSenseConfigured) {
     return null;
   }
 
