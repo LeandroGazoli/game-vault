@@ -391,7 +391,7 @@ export default function CalendarView() {
           </div>
 
           {/* Anúncio Sidebar no Calendário */}
-          <AdBanner slot="SIDEBAR_STICKY" fallbackIndex={0} />
+          <AdBanner slot="SIDEBAR_STICKY" />
         </div>
       </div>
 

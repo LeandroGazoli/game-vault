@@ -7,6 +7,7 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import AuthModal from "./AuthModal";
 import LiveSearchInput from "./LiveSearchInput";
 import Logo from "./Logo";
+import PlanBadge from "./PlanBadge";
 import {
   Gamepad2,
   Trophy,
@@ -90,9 +91,10 @@ export default function Navbar() {
                     alt={user.displayName}
                     className="w-7 h-7 rounded-full object-cover border border-[#00E5FF]/50"
                   />
-                  <span className="text-xs font-semibold text-gray-200 max-w-[100px] truncate">
+                  <span className="text-xs font-semibold text-gray-200 max-w-[90px] truncate">
                     {user.displayName}
                   </span>
+                  <PlanBadge plan={user.plan || "free"} size="sm" />
                 </Link>
 
                 <button

@@ -15,17 +15,19 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { UserProfile } from "@/lib/types";
+import { UserProfile, UserPlan } from "@/lib/types";
 
 interface AuthContextType {
   user: UserProfile | null;
   firebaseUser: FirebaseUser | null;
   isLoading: boolean;
+  isPremium: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserBio: (bio: string, favoriteGame?: string) => Promise<void>;
+  upgradePlan: (plan: UserPlan, hideAds?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isPremium = Boolean(
+    user && (user.plan === "pro" || user.plan === "vip" || user.isPremium)
+  );
 
   useEffect(() => {
     if (auth) {
@@ -54,6 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: fbUser.email || "",
                 photoURL: fbUser.photoURL || null,
                 bio: "Apaixonado por games.",
+                plan: "free",
+                isPremium: false,
+                hideAds: false,
                 createdAt: new Date().toISOString(),
               };
               await saveUserProfile(fbUser.uid, newProfile);
@@ -87,6 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: result.user.email || "",
         photoURL: result.user.photoURL || null,
         bio: "Apaixonado por games.",
+        plan: "free",
+        isPremium: false,
+        hideAds: false,
         createdAt: new Date().toISOString(),
       };
       setFirebaseUser(result.user);
@@ -109,6 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: result.user.email || email,
         photoURL: null,
         bio: "Apaixonado por games.",
+        plan: "free",
+        isPremium: false,
+        hideAds: false,
         createdAt: new Date().toISOString(),
       };
       setFirebaseUser(result.user);
@@ -130,6 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       photoURL: null,
       bio: "Novo jogador no GameVault!",
+      plan: "free",
+      isPremium: false,
+      hideAds: false,
       createdAt: new Date().toISOString(),
     };
     setFirebaseUser(cred.user);
@@ -152,17 +170,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await saveUserProfile(user.uid, updated);
   };
 
+  const upgradePlan = async (plan: UserPlan, hideAds = true) => {
+    if (!user) return;
+    const updated: UserProfile = {
+      ...user,
+      plan,
+      isPremium: plan === "pro" || plan === "vip",
+      hideAds: plan === "pro" || plan === "vip" ? hideAds : false,
+      updatedAt: new Date().toISOString(),
+    };
+    setUser(updated);
+    await saveUserProfile(user.uid, updated);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         firebaseUser,
         isLoading,
+        isPremium,
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,
         logout,
         updateUserBio,
+        upgradePlan,
       }}
     >
       {children}

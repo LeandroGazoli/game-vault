@@ -41,14 +41,14 @@ export default function RankingsSection() {
   // Formata o contador de métrica para ficar estilo "9.2K", "8.9K" ou nota
   const formatMetric = (game: Game, cat: RankingCategory, index: number) => {
     if (cat === "top_rated") {
-      return game.metacritic ? `${game.metacritic}%` : `${(game.rating).toFixed(1)}`;
+      return game.metacritic ? `${game.metacritic}%` : `${(game.rating || 9.0).toFixed(1)}`;
     }
     if (cat === "hyped") {
-      const hype = game.playtime || (20 - index) * 120;
+      const hype = game.ratings_count || (20 - index) * 120;
       return `${(hype / 100).toFixed(1)}K`;
     }
     // Popular: baseado no total_rating_count do IGDB
-    const count = game.playtime || (9500 - index * 380);
+    const count = game.ratings_count || (9500 - index * 380);
     return count > 999 ? `${(count / 1000).toFixed(1)}K` : `${count}`;
   };
 
@@ -232,7 +232,7 @@ export default function RankingsSection() {
             </div>
 
             {/* Anúncio Sidebar nos Rankings */}
-            <AdBanner slot="SIDEBAR_STICKY" fallbackIndex={1} />
+            <AdBanner slot="SIDEBAR_STICKY" />
           </div>
         </div>
       </section>

@@ -10,10 +10,13 @@ import StatusBadge from "@/components/StatusBadge";
 import GameModal from "@/components/GameModal";
 import AuthModal from "@/components/AuthModal";
 import ExportModal from "@/components/ExportModal";
+import UpgradeModal from "@/components/UpgradeModal";
+import PlanBadge from "@/components/PlanBadge";
 import Link from "next/link";
 import {
   Trophy,
   Gamepad2,
+  Crown,
   XCircle,
   Clock,
   Edit2,
@@ -39,6 +42,7 @@ export default function ProfilePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   // Filtra jogos da biblioteca
   const filteredLibrary = library.filter((game) => {
@@ -112,11 +116,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   {user.displayName}
                 </h1>
                 <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
+                <PlanBadge plan={user.plan || "free"} size="sm" />
               </div>
 
               <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
@@ -132,7 +137,15 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            <button
+              onClick={() => setIsUpgradeOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/30 hover:border-cyan-500/60 text-xs font-semibold text-white transition-all shadow-sm"
+              title="Gerenciar plano e remover anúncios"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              {user.plan === "pro" || user.plan === "vip" ? "Plano PRO" : "Seja PRO"}
+            </button>
             <button
               onClick={() => setIsExportOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors"

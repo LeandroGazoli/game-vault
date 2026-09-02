@@ -2,6 +2,8 @@ export type GameStatus = "completed" | "playing" | "dropped" | "backlog";
 
 export type CompletionType = "main_story" | "main_extra" | "completionist" | "platinum" | "custom";
 
+export type UserPlan = "free" | "pro" | "vip";
+
 export interface HLTBData {
   gameTitle?: string;
   mainStory: number | null;     // Horas (ex: 35)
@@ -25,28 +27,26 @@ export interface GenreItem {
 }
 
 export interface Game {
-  id: number | string;
-  slug: string;
+  id: number;
   name: string;
-  released: string | null;
+  slug: string;
   background_image: string | null;
-  rating: number;              // Nota (0 a 5)
-  rating_top?: number;
-  metacritic: number | null;    // Nota Metacritic / Crítica (0 a 100)
-  metacritic_url?: string;
-  playtime?: number;
-  description_raw?: string;
-  genres: GenreItem[];
-  platforms?: PlatformItem[];
-  developers?: { id: number; name: string }[];
-  publishers?: { id: number; name: string }[];
-  screenshots?: { id: number; image: string }[];
+  metacritic: number | null;
+  released: string | null;
+  genres: { id: number; name: string }[];
+  platforms: PlatformItem[];
   hltb?: HLTBData | null;
+  description_raw?: string;
+  rating?: number;
+  ratings_count?: number;
+  playtime?: number;
+  short_screenshots?: { id: number; image: string }[];
 }
 
 export interface UserGame {
-  id?: string;
-  gameId: number | string;
+  id?: string;                      // ID único do registro no Firestore
+  userId?: string;                  // ID do usuário
+  gameId: number;                  // ID do jogo no IGDB/RAWG
   gameSlug: string;
   gameTitle: string;
   gameCover: string | null;
@@ -76,7 +76,12 @@ export interface UserProfile {
   photoURL: string | null;
   bio: string;
   favoriteGame?: string;
+  plan?: UserPlan;                 // "free" | "pro" | "vip"
+  isPremium?: boolean;             // Flag rápida para VIP/Pro
+  hideAds?: boolean;               // Opção de desativar anúncios
+  premiumUntil?: string | null;    // Data de expiração da assinatura
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface LibraryStats {

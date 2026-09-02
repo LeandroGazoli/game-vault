@@ -116,7 +116,7 @@ export default function HomePage() {
       {/* ==========================================
           PUBLICIDADE 1: LEADERBOARD SUPERIOR
       ========================================== */}
-      <AdBanner slot="HOME_TOP_LEADERBOARD" fallbackIndex={0} />
+      <AdBanner slot="HOME_TOP_LEADERBOARD" />
 
       {/* ==========================================
           2. TOP 10 NO GAMEVAULT (Estilo IMDb / Disney+)
@@ -128,7 +128,7 @@ export default function HomePage() {
       {/* ==========================================
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
       ========================================== */}
-      <AdBanner slot="HOME_IN_FEED" fallbackIndex={1} />
+      <AdBanner slot="HOME_IN_FEED" />
 
       {/* ==========================================
           3. LANÇAMENTOS RECENTES (Últimos 60 Dias)
