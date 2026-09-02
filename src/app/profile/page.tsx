@@ -14,6 +14,7 @@ import UpgradeModal from "@/components/UpgradeModal";
 import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GamerWrappedModal from "@/components/GamerWrappedModal";
+import CustomHtmlBio from "@/components/CustomHtmlBio";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import Link from "next/link";
@@ -272,6 +273,11 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Showcase Customizado em HTML & CSS */}
+      {user.customHtml && (
+        <CustomHtmlBio html={user.customHtml} />
+      )}
 
       {/* Estatísticas Gerais do Perfil */}
       <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />

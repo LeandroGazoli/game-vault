@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { saveUserProfile } from "@/lib/firebase";
-import { PRESET_BANNERS, ProfileTheme } from "@/lib/types";
+import { PRESET_BANNERS, ProfileTheme, HTML_PRESETS } from "@/lib/types";
+import CustomHtmlBio from "./CustomHtmlBio";
 import {
   X,
   Palette,
@@ -12,10 +13,13 @@ import {
   Check,
   Crown,
   Lock,
-  Flame,
-  Shield,
   Save,
   Link as LinkIcon,
+  Code2,
+  Eye,
+  Trash2,
+  ShieldCheck,
+  FileCode,
 } from "lucide-react";
 
 interface ProfileCustomizerModalProps {
@@ -54,6 +58,8 @@ export default function ProfileCustomizerModal({
   const [customBannerUrl, setCustomBannerUrl] = useState<string>("");
   const [selectedTheme, setSelectedTheme] = useState<ProfileTheme>(user?.theme || "cyan");
   const [selectedTitle, setSelectedTitle] = useState<string>(user?.customTitle || GAMER_TITLES[0]);
+  const [customHtml, setCustomHtml] = useState<string>(user?.customHtml || "");
+  const [htmlTab, setHtmlTab] = useState<"edit" | "preview">("edit");
   const [isSaving, setIsSaving] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
 
@@ -73,6 +79,7 @@ export default function ProfileCustomizerModal({
         bannerURL: banner,
         theme: selectedTheme,
         customTitle: selectedTitle,
+        customHtml: customHtml.trim(),
       });
       setSuccessToast(true);
       setTimeout(() => {
@@ -107,7 +114,7 @@ export default function ProfileCustomizerModal({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-semibold">
             <Palette className="w-3.5 h-3.5" />
-            Personalização do Perfil
+            Personalização do Perfil &amp; HTML/CSS
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
             Estilize seu Perfil Gamer
@@ -118,7 +125,7 @@ export default function ProfileCustomizerModal({
             )}
           </h3>
           <p className="text-xs text-gray-400">
-            Escolha sua capa panorâmica, tema de cores e título gamer para destacar seu perfil na comunidade.
+            Personalize sua capa, tema de cores, título e adicione blocos ricos com **HTML, CSS, Imagens e GIFs**.
           </p>
         </div>
 
@@ -229,6 +236,98 @@ export default function ProfileCustomizerModal({
           </div>
         </div>
 
+        {/* Seção 4: Customizador de HTML, CSS, Imagens & GIFs */}
+        <div className="space-y-3 pt-2 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5 text-[#00E5FF]" /> 4. Showcase Customizado (HTML, CSS, Imagens &amp; GIFs)
+            </label>
+
+            {/* Alternador Código vs Preview */}
+            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => setHtmlTab("edit")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  htmlTab === "edit"
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <FileCode className="w-3.5 h-3.5" /> Código
+              </button>
+              <button
+                type="button"
+                onClick={() => setHtmlTab("preview")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  htmlTab === "preview"
+                    ? "bg-[#00E5FF] text-black font-bold shadow-sm"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" /> Prévia
+              </button>
+            </div>
+          </div>
+
+          {/* Presets Rápidos de HTML */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] text-gray-400">Modelos Prontos:</span>
+            {HTML_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => {
+                  setCustomHtml(preset.html);
+                  setHtmlTab("preview");
+                }}
+                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-mono text-cyan-300 transition-colors"
+              >
+                {preset.name}
+              </button>
+            ))}
+            {customHtml && (
+              <button
+                type="button"
+                onClick={() => setCustomHtml("")}
+                className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-[11px] text-rose-300 transition-colors flex items-center gap-1"
+                title="Limpar Código HTML"
+              >
+                <Trash2 className="w-3 h-3" /> Limpar
+              </button>
+            )}
+          </div>
+
+          {/* Área de Edição ou Prévia */}
+          {htmlTab === "edit" ? (
+            <div className="space-y-1.5">
+              <textarea
+                value={customHtml}
+                onChange={(e) => setCustomHtml(e.target.value)}
+                placeholder="Escreva seu código HTML e CSS aqui... Ex: <div style='border: 1px solid cyan; padding: 15px;'><h3>Meu Título</h3><img src='https://...' /></div>"
+                rows={6}
+                className="w-full bg-[#101114] border border-white/15 rounded-2xl p-4 font-mono text-xs text-cyan-100 placeholder:text-gray-600 focus:outline-none focus:border-[#00E5FF] leading-relaxed resize-y selection:bg-cyan-500/30"
+              />
+              <div className="flex items-center justify-between text-[11px] text-gray-400">
+                <span className="flex items-center gap-1 text-emerald-400">
+                  <ShieldCheck className="w-3.5 h-3.5" /> HTML, CSS e GIFs permitidos (JavaScript e scripts bloqueados por segurança).
+                </span>
+                <span>{customHtml.length} caracteres</span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-[#101114] p-4 min-h-[140px]">
+              {customHtml ? (
+                <CustomHtmlBio html={customHtml} />
+              ) : (
+                <div className="py-8 text-center text-xs text-gray-500">
+                  Nenhum código HTML inserido. Digite na aba &quot;Código&quot; ou clique em um modelo pronto acima.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Footer com Salvar ou CTA Upgrade */}
         <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-gray-400">
@@ -238,7 +337,7 @@ export default function ProfileCustomizerModal({
               </span>
             ) : (
               <span className="text-amber-300 flex items-center gap-1">
-                <Crown className="w-3.5 h-3.5 text-amber-400" /> Assine o PRO para aplicar capas e temas personalizados
+                <Crown className="w-3.5 h-3.5 text-amber-400" /> Assine o PRO para aplicar capas, temas e HTML personalizado
               </span>
             )}
           </div>
