@@ -9,7 +9,7 @@ import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
 import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
-import { Heart, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
@@ -71,7 +71,7 @@ export default function RootLayout({
             <CookieConsent />
 
             {/* Footer Completo e Institucional */}
-            <footer className="border-t border-white/10 bg-[#0a0b0d] pt-12 pb-8 text-xs text-gray-400">
+            <footer className="border-t border-white/10 bg-[#0a0b0d] pt-12 pb-10 text-xs text-gray-400">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   {/* Coluna 1: Marca e Resumo */}
@@ -158,21 +158,34 @@ export default function RootLayout({
                   </div>
                 </div>
 
-                {/* Linha Final de Copyright */}
-                <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[11px] text-gray-500">
-                  <div>
-                    © {new Date().getFullYear()} GameVault. Todos os direitos reservados.
+                {/* Linha Final de Copyright, Créditos & Game Data */}
+                <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] text-gray-400">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-gray-300">
+                      © {new Date().getFullYear()} GameVault. Todos os direitos reservados.
+                    </p>
+                    <p className="text-gray-500">
+                      Design por <strong className="text-gray-300">GameVault Studio</strong> • Desenvolvido por <strong className="text-gray-300">Leandro Gazoli</strong>
+                    </p>
+                    <p className="text-gray-500">
+                      Game data: <span className="text-gray-400 font-mono">IGDB (Twitch), HowLongToBeat &amp; Metacritic</span>
+                    </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Link href="/privacidade" className="hover:text-gray-300">
+
+                  <div className="flex flex-wrap items-center justify-center gap-4 text-gray-400 font-medium">
+                    <Link href="/sobre" className="hover:text-white transition-colors">
+                      Sobre
+                    </Link>
+                    <span>•</span>
+                    <Link href="/termos" className="hover:text-white transition-colors">
+                      Termos de Uso
+                    </Link>
+                    <span>•</span>
+                    <Link href="/privacidade" className="hover:text-white transition-colors">
                       Privacidade
                     </Link>
                     <span>•</span>
-                    <Link href="/termos" className="hover:text-gray-300">
-                      Termos
-                    </Link>
-                    <span>•</span>
-                    <Link href="/cookies" className="hover:text-gray-300">
+                    <Link href="/cookies" className="hover:text-white transition-colors">
                       Cookies
                     </Link>
                   </div>
