@@ -18,6 +18,8 @@ interface GameLibraryContextType {
 
 const GameLibraryContext = createContext<GameLibraryContextType | undefined>(undefined);
 
+const GUEST_LIBRARY_KEY = "game_vault_guest_library";
+
 export function GameLibraryProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [library, setLibrary] = useState<UserGame[]>([]);
@@ -25,19 +27,47 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     async function load() {
-      if (!user) {
-        setLibrary([]);
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       try {
-        const userGames = await getUserLibrary(user.uid);
-        setLibrary(userGames || []);
+        if (user) {
+          // Usuário autenticado: busca no Firestore
+          const userGames = await getUserLibrary(user.uid);
+          
+          // Se houver jogos salvos na sessão de convidado, mescla e sincroniza com o Firestore
+          if (typeof window !== "undefined") {
+            const guestData = localStorage.getItem(GUEST_LIBRARY_KEY);
+            if (guestData) {
+              try {
+                const guestGames: UserGame[] = JSON.parse(guestData);
+                for (const g of guestGames) {
+                  if (!userGames.some((ug) => String(ug.gameId) === String(g.gameId))) {
+                    userGames.push(g);
+                    await saveUserGame(user.uid, g);
+                  }
+                }
+                localStorage.removeItem(GUEST_LIBRARY_KEY);
+              } catch (e) {}
+            }
+          }
+
+          setLibrary(userGames || []);
+        } else {
+          // Convidado (não logado): carrega da memória local do navegador
+          if (typeof window !== "undefined") {
+            const stored = localStorage.getItem(GUEST_LIBRARY_KEY);
+            if (stored) {
+              try {
+                setLibrary(JSON.parse(stored));
+              } catch {
+                setLibrary([]);
+              }
+            } else {
+              setLibrary([]);
+            }
+          }
+        }
       } catch (err) {
-        console.error("Erro ao carregar biblioteca do usuário:", err);
-        setLibrary([]);
+        console.error("Erro ao carregar biblioteca:", err);
       } finally {
         setIsLoading(false);
       }
@@ -60,8 +90,6 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   const addOrUpdateGame = async (
     gameData: Partial<UserGame> & { gameId: number | string; gameTitle: string }
   ) => {
-    if (!user) return;
-
     const existingIndex = library.findIndex((g) => String(g.gameId) === String(gameData.gameId));
     const isNewBeaten =
       gameData.status === "completed" &&
@@ -73,9 +101,9 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       gameSlug: gameData.gameSlug || String(gameData.gameId),
       gameTitle: gameData.gameTitle,
       gameCover: gameData.gameCover || null,
-      status: gameData.status || "playing",
-      completionType: gameData.completionType || null,
-      userRating: gameData.userRating ?? null,
+      status: gameData.status || "backlog",
+      completionType: gameData.status === "completed" ? (gameData.completionType || null) : null,
+      userRating: gameData.userRating !== undefined ? gameData.userRating : null,
       userPlaytimeHours: gameData.userPlaytimeHours ?? null,
       userReview: gameData.userReview || "",
       platformPlayed: gameData.platformPlayed || "PC",
@@ -91,27 +119,34 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       releaseYear: gameData.releaseYear || "",
     };
 
-    setLibrary((prev) => {
-      const copy = [...prev];
-      if (existingIndex >= 0) {
-        copy[existingIndex] = updatedGame;
-      } else {
-        copy.unshift(updatedGame);
-      }
-      return copy;
-    });
+    const nextList = [...library];
+    if (existingIndex >= 0) {
+      nextList[existingIndex] = updatedGame;
+    } else {
+      nextList.unshift(updatedGame);
+    }
+    setLibrary(nextList);
 
     if (isNewBeaten) {
       triggerZeradoConfetti();
     }
 
-    await saveUserGame(user.uid, updatedGame);
+    if (user) {
+      await saveUserGame(user.uid, updatedGame);
+    } else if (typeof window !== "undefined") {
+      localStorage.setItem(GUEST_LIBRARY_KEY, JSON.stringify(nextList));
+    }
   };
 
   const deleteGame = async (gameId: number | string) => {
-    if (!user) return;
-    setLibrary((prev) => prev.filter((g) => String(g.gameId) !== String(gameId)));
-    await removeUserGame(user.uid, gameId);
+    const nextList = library.filter((g) => String(g.gameId) !== String(gameId));
+    setLibrary(nextList);
+
+    if (user) {
+      await removeUserGame(user.uid, gameId);
+    } else if (typeof window !== "undefined") {
+      localStorage.setItem(GUEST_LIBRARY_KEY, JSON.stringify(nextList));
+    }
   };
 
   const getGameInLibrary = (gameId: number | string) => {

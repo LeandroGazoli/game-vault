@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Game, GameStatus, CompletionType } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
 import {
   X,
@@ -15,7 +14,6 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Calendar,
   Sword,
   Compass,
   Crown,
@@ -46,15 +44,13 @@ export default function GameModal({
   game,
   isOpen,
   onClose,
-  onOpenAuthModal,
 }: GameModalProps) {
-  const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
 
-  // Estados principais
-  const [status, setStatus] = useState<GameStatus>("completed");
-  const [completionType, setCompletionType] = useState<CompletionType | null>("main_story");
-  const [rating, setRating] = useState<number | null>(8.5); // null = "NS" (Sem nota)
+  // Estados principais - Nota inicial é SEMPRE null (Não avaliada / NS) para novos jogos
+  const [status, setStatus] = useState<GameStatus>("backlog");
+  const [completionType, setCompletionType] = useState<CompletionType | null>(null);
+  const [rating, setRating] = useState<number | null>(null); // null = "NS" (Sem avaliação)
   const [playtime, setPlaytime] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [completedDate, setCompletedDate] = useState<string>("");
@@ -75,7 +71,7 @@ export default function GameModal({
       const existing = getGameInLibrary(game.id);
       if (existing) {
         setStatus(existing.status);
-        setCompletionType(existing.completionType || "main_story");
+        setCompletionType(existing.completionType || (existing.status === "completed" ? "main_story" : null));
         setRating(existing.userRating ?? null);
         setPlaytime(existing.userPlaytimeHours ? String(existing.userPlaytimeHours) : "");
         setStartDate(existing.startedAt ? existing.startedAt.split("T")[0] : "");
@@ -92,22 +88,15 @@ export default function GameModal({
         setIsFavorite(existing.isFavorite || false);
         setIsDetailsExpanded(Boolean(existing.userReview || existing.userPlaytimeHours || existing.completedAt));
       } else {
-        // Padrão para novo jogo
-        setStatus("completed");
-        setCompletionType("main_story");
-        setRating(8.5);
-        
-        // Auto preenche o tempo com a história principal do HLTB se disponível
-        if (game.hltb?.mainStory) {
-          setPlaytime(String(game.hltb.mainStory));
-        } else {
-          setPlaytime("");
-        }
-
-        const today = new Date().toISOString().split("T")[0];
+        // Novo jogo: Padrão Quero Jogar e Sem Nota (NS)
+        setStatus("backlog");
+        setCompletionType(null);
+        setRating(null); // SEM AVALIAÇÃO ATÉ O USUÁRIO MEXER
+        setPlaytime("");
         setStartDate("");
-        setCompletedDate(today);
+        setCompletedDate("");
         setSelectedPlatforms(["PC"]);
+        setSelectedChallenges([]);
         setReview("");
         setIsFavorite(false);
         setIsDetailsExpanded(false);
@@ -165,23 +154,18 @@ export default function GameModal({
 
   // Reação dinâmica do Emoji para a nota
   const getRatingReaction = (score: number | null) => {
-    if (score === null) return { emoji: "😐", text: "Sem Nota (NS)", color: "text-gray-400" };
+    if (score === null) return { emoji: "😑", text: "Não avaliado (NS)", color: "text-gray-400" };
     if (score <= 3.0) return { emoji: "🤮", text: "Ruim", color: "text-rose-400" };
     if (score <= 5.5) return { emoji: "😕", text: "Mediano", color: "text-amber-400" };
     if (score <= 7.5) return { emoji: "🙂", text: "Bom", color: "text-emerald-400" };
-    if (score <= 9.0) return { emoji: "😃", text: "Muito Bom!", color: "text-cyan-400" };
+    if (score <= 9.0) return { emoji: "😃", text: "Muito Bom!", color: "text-[#00E5FF]" };
     return { emoji: "🤩", text: "Obra-Prima!", color: "text-purple-400" };
   };
 
   const reaction = getRatingReaction(rating);
 
-  // Salva no banco de dados / estado
+  // Salva no banco de dados / biblioteca imediatamente
   const handleSave = async () => {
-    if (!user) {
-      if (onOpenAuthModal) onOpenAuthModal();
-      return;
-    }
-
     setIsSaving(true);
     try {
       await addOrUpdateGame({
@@ -190,8 +174,8 @@ export default function GameModal({
         gameTitle: game.name,
         gameCover: game.background_image,
         status,
-        completionType: status === "completed" ? completionType : null,
-        userRating: rating,
+        completionType: status === "completed" ? (completionType || "main_story") : null,
+        userRating: rating !== null ? rating : null,
         userPlaytimeHours: playtime ? parseFloat(playtime) : null,
         userReview: review.trim(),
         platformPlayed: selectedPlatforms[0] || "PC",
@@ -213,7 +197,7 @@ export default function GameModal({
   };
 
   const handleDelete = async () => {
-    if (!user || !existingInLibrary) return;
+    if (!existingInLibrary) return;
     if (confirm(`Deseja remover "${game.name}" da sua biblioteca?`)) {
       await deleteGame(game.id);
       onClose();
@@ -285,7 +269,7 @@ export default function GameModal({
               <div className="flex items-center gap-2 pt-0.5">
                 <span className="text-lg">{reaction.emoji}</span>
                 <span className={`text-xs font-semibold ${reaction.color}`}>
-                  {rating !== null ? `${rating.toFixed(1)} / 10 • ${reaction.text}` : "Não avaliado"}
+                  {rating !== null ? `${rating.toFixed(1)} / 10 • ${reaction.text}` : "NS (Não avaliado)"}
                 </span>
               </div>
             </div>
@@ -294,51 +278,53 @@ export default function GameModal({
           {/* ==========================================
               2. SESSÃO DE AVALIAÇÃO (Range Slider)
           ========================================== */}
-          <div className="space-y-2 p-4 rounded-2xl bg-white/[0.04] border border-white/5">
+          <div className="space-y-2.5 p-4 rounded-2xl bg-white/[0.04] border border-white/5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Sua Nota
               </span>
-              <button
-                type="button"
-                onClick={() => setRating(rating === null ? 8.0 : null)}
-                className={`text-xs font-medium px-2.5 py-0.5 rounded-full transition-colors ${
-                  rating === null
-                    ? "bg-white/20 text-white font-bold"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                {rating === null ? "Sem Nota (NS)" : "Zerar Nota (NS)"}
-              </button>
+              {rating !== null && (
+                <button
+                  type="button"
+                  onClick={() => setRating(null)}
+                  className="text-xs text-gray-400 hover:text-white font-medium px-2 py-0.5 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  Zerar Nota (NS)
+                </button>
+              )}
             </div>
 
-            {rating !== null ? (
-              <div className="space-y-1 pt-1">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    value={rating}
-                    onChange={(e) => setRating(parseFloat(e.target.value))}
-                    className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF]"
-                  />
-                  <span className="font-mono font-bold text-lg text-[#00E5FF] min-w-[2.5rem] text-right">
-                    {rating.toFixed(1)}
+            {/* Range Slider Interativo */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${
+                    rating === null ? "bg-white/20 text-white" : "bg-[#00E5FF] text-black"
+                  }`}>
+                    {rating !== null ? rating.toFixed(1) : "NS"}
                   </span>
                 </div>
-                <div className="flex justify-between text-[10px] text-gray-500 font-mono">
-                  <span>0 (Péssimo)</span>
-                  <span>5 (Médio)</span>
-                  <span>10 (Obra-Prima)</span>
-                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.5"
+                  value={rating !== null ? rating : 5}
+                  onChange={(e) => setRating(parseFloat(e.target.value))}
+                  className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF]"
+                />
+
+                <span className="text-xs text-gray-400 font-mono flex-shrink-0">
+                  10
+                </span>
               </div>
-            ) : (
-              <p className="text-xs text-gray-400 py-1 italic">
-                Clique no controle deslizante ou desmarque NS para avaliar de 0 a 10.
-              </p>
-            )}
+
+              <div className="flex justify-between text-[10px] text-gray-500 font-mono px-1">
+                <span>{rating === null ? "Deslize para avaliar > > > > > > >" : "0 (Péssimo)"}</span>
+                <span>{rating === null ? "" : "10 (Obra-Prima)"}</span>
+              </div>
+            </div>
           </div>
 
           {/* ==========================================
@@ -353,25 +339,25 @@ export default function GameModal({
                 type="button"
                 onClick={() => setStatus("backlog")}
                 className="text-gray-500 hover:text-gray-300 transition-colors p-1"
-                title="Resetar estado"
+                title="Resetar para Quero Jogar"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {/* Concluído / Zerado */}
+              {/* Quero Jogar / Backlog (Padrão) */}
               <button
                 type="button"
-                onClick={() => setStatus("completed")}
+                onClick={() => setStatus("backlog")}
                 className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
-                  status === "completed"
-                    ? "bg-[#00E5FF] text-black font-bold shadow-lg shadow-[#00E5FF]/20"
+                  status === "backlog"
+                    ? "bg-amber-400 text-black font-bold shadow-lg shadow-amber-400/20"
                     : "bg-white/10 text-gray-300 hover:bg-white/15"
                 }`}
               >
-                <Trophy className="w-3.5 h-3.5" />
-                Concluído
+                <Clock className="w-3.5 h-3.5" />
+                Quero Jogar
               </button>
 
               {/* Jogando */}
@@ -388,6 +374,23 @@ export default function GameModal({
                 Jogando
               </button>
 
+              {/* Concluído / Zerado */}
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus("completed");
+                  if (!completionType) setCompletionType("main_story");
+                }}
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                  status === "completed"
+                    ? "bg-[#00E5FF] text-black font-bold shadow-lg shadow-[#00E5FF]/20"
+                    : "bg-white/10 text-gray-300 hover:bg-white/15"
+                }`}
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                Concluído
+              </button>
+
               {/* Dropado / Abandonado */}
               <button
                 type="button"
@@ -400,20 +403,6 @@ export default function GameModal({
               >
                 <XCircle className="w-3.5 h-3.5" />
                 Dropado
-              </button>
-
-              {/* Quero Jogar / Backlog */}
-              <button
-                type="button"
-                onClick={() => setStatus("backlog")}
-                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
-                  status === "backlog"
-                    ? "bg-amber-400 text-black font-bold shadow-lg shadow-amber-400/20"
-                    : "bg-white/10 text-gray-300 hover:bg-white/15"
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                Quero Jogar
               </button>
             </div>
           </div>
@@ -611,7 +600,6 @@ export default function GameModal({
                   </div>
                 </div>
 
-                
                 {/* Conquistas & Desafios */}
                 <div className="space-y-1.5 pt-1">
                   <label className="block text-xs font-medium text-gray-400">
