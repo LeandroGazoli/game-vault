@@ -117,7 +117,7 @@ export default function SobrePage() {
           </p>
         </div>
         <a
-          href="mailto:contato@gamevault.app"
+          href="mailto:contato@mygameslist.com.br"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs shadow-lg transition-transform hover:scale-105"
         >
           <Mail className="w-4 h-4" /> Entrar em Contato

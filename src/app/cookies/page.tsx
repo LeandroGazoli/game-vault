@@ -99,7 +99,7 @@ export default function CookiesPage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">4. Dúvidas</h2>
             <p>
-              Para esclarecimentos sobre a nossa utilização de cookies e tecnologias semelhantes, contate: <a href="mailto:privacidade@gamevault.app" className="text-[#00E5FF] underline">privacidade@gamevault.app</a>.
+              Para esclarecimentos sobre a nossa utilização de cookies e tecnologias semelhantes, contate: <a href="mailto:privacidade@mygameslist.com.br" className="text-[#00E5FF] underline">privacidade@gamevault.app</a>.
             </p>
           </section>
         </div>

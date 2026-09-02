@@ -36,7 +36,7 @@ export default function TermosPage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">1. Aceitação dos Termos</h2>
             <p>
-              Ao acessar e utilizar o site e os serviços do <strong>GameVault</strong> (acessível através de gamevault.app e domínios associados), você concorda expressamente em cumprir e estar vinculado a estes Termos de Uso e a todas as leis e regulamentos aplicáveis. Se você não concordar com qualquer um destes termos, você está proibido de usar ou acessar este site.
+              Ao acessar e utilizar o site e os serviços do <strong>GameVault</strong> (acessível através de mygameslist.com.br e domínios associados), você concorda expressamente em cumprir e estar vinculado a estes Termos de Uso e a todas as leis e regulamentos aplicáveis. Se você não concordar com qualquer um destes termos, você está proibido de usar ou acessar este site.
             </p>
           </section>
 

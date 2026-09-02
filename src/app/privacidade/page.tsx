@@ -102,7 +102,7 @@ export default function PrivacidadePage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">7. Contato do Encarregado de Dados</h2>
             <p>
-              Caso tenha dúvidas sobre esta política ou queira exercer seus direitos de titular dos dados, entre em contato com nosso time pelo e-mail: <a href="mailto:privacidade@gamevault.app" className="text-[#00E5FF] underline">privacidade@gamevault.app</a>.
+              Caso tenha dúvidas sobre esta política ou queira exercer seus direitos de titular dos dados, entre em contato com nosso time pelo e-mail: <a href="mailto:privacidade@mygameslist.com.br" className="text-[#00E5FF] underline">privacidade@gamevault.app</a>.
             </p>
           </section>
         </div>

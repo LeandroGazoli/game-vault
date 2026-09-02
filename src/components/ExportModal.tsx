@@ -64,7 +64,7 @@ export default function ExportModal({
     const origin =
       typeof window !== "undefined"
         ? window.location.origin
-        : "https://game-vault-smoky-eta.vercel.app";
+        : "https://mygameslist.com.br";
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (onlyFavorites) params.set("favorites", "true");

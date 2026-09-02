@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://game-vault-smoky-eta.vercel.app"),
+  metadataBase: new URL("https://mygameslist.com.br"),
   title: "GameVault • Plataforma de Perfil, Lançamentos & Rastreamento de Jogos",
   description:
     "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos ao vivo.",
