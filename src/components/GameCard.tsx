@@ -69,7 +69,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
               e.stopPropagation();
               setIsModalOpen(true);
             }}
-            className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/80 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-200 shadow-xl backdrop-blur-md z-20"
+            className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/80 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 scale-100 sm:scale-90 sm:group-hover:scale-100 transition-all duration-200 shadow-xl backdrop-blur-md z-20 border border-white/10"
             title={userGame ? "Editar Status" : "Adicionar à Lista"}
           >
             {userGame ? <Check className="w-4 h-4 text-[#00E5FF]" /> : <Plus className="w-4 h-4" />}

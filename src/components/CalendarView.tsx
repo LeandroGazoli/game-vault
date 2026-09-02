@@ -278,7 +278,7 @@ export default function CalendarView() {
                                   e.stopPropagation();
                                   setSelectedGame(game);
                                 }}
-                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20"
+                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20 border border-white/10"
                                 title="Adicionar à biblioteca"
                               >
                                 {userGame ? (

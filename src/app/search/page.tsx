@@ -99,7 +99,7 @@ function SearchContent() {
 
         {/* Barra de Filtros por Gênero */}
         <div className="pt-4 border-t border-white/5 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
             <span className="text-xs font-semibold text-gray-400 mr-2 flex items-center gap-1">
               <Filter className="w-3.5 h-3.5" /> Gênero:
             </span>
@@ -119,7 +119,7 @@ function SearchContent() {
           </div>
 
           {/* Filtro por Nota Metacritic */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap pt-1">
             <span className="text-xs font-semibold text-gray-400 mr-2 flex items-center gap-1">
               <Trophy className="w-3.5 h-3.5 text-amber-400" /> Nota Mínima:
             </span>
