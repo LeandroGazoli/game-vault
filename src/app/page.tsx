@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Game } from "@/lib/types";
-import GameCard from "@/components/GameCard";
+import TopTenImdbSection from "@/components/TopTenImdbSection";
+import CatalogRow from "@/components/CatalogRow";
+import RankingsSection from "@/components/RankingsSection";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Link from "next/link";
@@ -13,56 +15,75 @@ import {
   Sparkles,
   Search,
   Gamepad2,
-  TrendingUp,
+  Calendar as CalendarIcon,
+  Compass,
+  Star,
 } from "lucide-react";
 
 export default function HomePage() {
   const { user } = useAuth();
   const { stats } = useGameLibrary();
-  const [games, setGames] = useState<Game[]>([]);
+  
+  const [topTenGames, setTopTenGames] = useState<Game[]>([]);
+  const [releases, setReleases] = useState<Game[]>([]);
+  const [upcoming, setUpcoming] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
+    async function loadData() {
       setLoading(true);
       try {
-        const res = await fetch("/api/games/search");
-        if (res.ok) {
-          const data = await res.json();
-          setGames(data.games || []);
+        const [popRes, relRes, upRes] = await Promise.all([
+          fetch("/api/games/search"),
+          fetch("/api/games/releases"),
+          fetch("/api/games/upcoming"),
+        ]);
+
+        if (popRes.ok) {
+          const data = await popRes.json();
+          setTopTenGames(data.games || []);
+        }
+
+        if (relRes.ok) {
+          const data = await relRes.json();
+          setReleases(data.games || []);
+        }
+
+        if (upRes.ok) {
+          const data = await upRes.json();
+          setUpcoming(data.games || []);
         }
       } catch (err) {
-        console.error("Erro ao carregar jogos populares:", err);
+        console.error("Erro ao carregar catálogo da home:", err);
       } finally {
         setLoading(false);
       }
     }
-    load();
+
+    loadData();
   }, []);
 
-  const topMetacritic = [...games].sort((a, b) => (b.metacritic || 0) - (a.metacritic || 0)).slice(0, 8);
-  const epicLongGames = games.filter((g) => (g.hltb?.mainStory || 0) >= 45).slice(0, 4);
-
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <section className="relative rounded-3xl overflow-hidden border border-indigo-500/20 bg-gradient-to-b from-indigo-950/40 via-surface-100/80 to-surface-50 p-6 sm:p-12 text-center sm:text-left shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-radial from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
-        
+    <div className="space-y-12 pb-12">
+      {/* ==========================================
+          1. HERO SECTION COM BUSCA E RESUMO
+      ========================================== */}
+      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-[#1c1d22] via-[#141518] to-surface-50 p-6 sm:p-12 text-center sm:text-left shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-radial from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
+
         <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            Rastreamento de Jogos • Metacritic • HowLongToBeat • IGDB
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            Catálogo Vivo IGDB • Metacritic • HowLongToBeat
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Seu Perfil Gamer <br />
-            <span className="gamer-gradient-text">Simples, Preciso e Completo.</span>
+            Descubra, Registre e Acompanhe <br />
+            <span className="gamer-gradient-text">Seus Jogos Favoritos.</span>
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg text-gray-300 max-w-2xl leading-relaxed">
-            Organize tudo o que você está <strong>jogando</strong>, já <strong>zerou</strong> ou <strong>dropou</strong>.
-            Acompanhe notas do Metacritic e descubra exatamente quantas horas você levará para zerar a história principal ou fazer 100%.
+          <p className="mt-4 text-sm sm:text-base text-gray-300 max-w-2xl leading-relaxed">
+            Seu acervo gamer completo com <strong>lançamentos em tempo real</strong>, <strong>calendário de estreias</strong>, rankings da comunidade e tempos exatos de zeramento.
           </p>
 
           {/* Barra de Busca no Hero */}
@@ -76,12 +97,12 @@ export default function HomePage() {
               <input
                 type="text"
                 name="q"
-                placeholder="Busque por Elden Ring, God of War, The Witcher, Zelda..."
-                className="w-full pl-12 pr-28 py-3.5 rounded-2xl bg-surface-50/90 border border-indigo-500/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xl text-sm"
+                placeholder="Busque por Elden Ring, GTA, God of War, Zelda..."
+                className="w-full pl-12 pr-28 py-3.5 rounded-full bg-white/10 border border-white/15 text-white placeholder-gray-400 focus:outline-none focus:border-[#00E5FF] shadow-xl text-sm transition-all"
               />
               <button
                 type="submit"
-                className="absolute right-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md"
+                className="absolute right-2 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs transition-all shadow-md"
               >
                 Buscar
               </button>
@@ -90,17 +111,17 @@ export default function HomePage() {
 
           {/* Mini resumo do usuário se autenticado */}
           {user && (
-            <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-gray-400 border-t border-gray-800/80 pt-4">
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-gray-400 border-t border-white/10 pt-4">
               <span className="text-gray-300">
                 Olá, <strong className="text-white">{user.displayName}</strong>!
               </span>
-              <span className="flex items-center gap-1 text-emerald-400">
+              <span className="flex items-center gap-1 text-[#00E5FF]">
                 <Trophy className="w-3.5 h-3.5" /> {stats.completedCount} zerados
               </span>
               <span className="flex items-center gap-1 text-blue-400">
-                <Gamepad2 className="w-3.5 h-3.5" /> {stats.playingCount} em andamento
+                <Gamepad2 className="w-3.5 h-3.5" /> {stats.playingCount} jogando
               </span>
-              <span className="flex items-center gap-1 text-indigo-300">
+              <span className="flex items-center gap-1 text-amber-400">
                 <Clock className="w-3.5 h-3.5" /> {stats.totalPlaytimeHours}h registradas
               </span>
             </div>
@@ -108,103 +129,69 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seção 1: Jogos em Destaque & Populares */}
-      <section className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400">
-              <Flame className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Em Alta na Comunidade
-              </h2>
-              <p className="text-xs text-gray-400">
-                Os jogos mais aclamados e jogados com notas e tempos HowLongToBeat
-              </p>
-            </div>
-          </div>
+      {/* ==========================================
+          2. TOP 10 NO GAMEVAULT (Estilo IMDb / Disney+)
+      ========================================== */}
+      {!loading && topTenGames.length > 0 && (
+        <TopTenImdbSection games={topTenGames} />
+      )}
 
-          <Link
-            href="/search"
-            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-          >
-            Ver catálogo completo →
-          </Link>
+      {/* ==========================================
+          3. LANÇAMENTOS RECENTES (Últimos 60 Dias)
+      ========================================== */}
+      {!loading && releases.length > 0 && (
+        <CatalogRow
+          title="Lançamentos Recentes"
+          subtitle="Jogos recém-lançados disponíveis para jogar agora"
+          icon={Flame}
+          games={releases}
+          actionHref="/calendar"
+          actionText="Ver no Calendário →"
+        />
+      )}
+
+      {/* ==========================================
+          4. EM BREVE (Próximos Lançamentos)
+      ========================================== */}
+      {!loading && upcoming.length > 0 && (
+        <CatalogRow
+          title="Em Breve nos Games"
+          subtitle="Títulos aguardados que serão lançados nos próximos meses"
+          icon={CalendarIcon}
+          games={upcoming}
+          actionHref="/calendar"
+          actionText="Calendário Completo →"
+        />
+      )}
+
+      {/* ==========================================
+          5. RANKINGS MGL (Populares, Avaliados, Desejados)
+      ========================================== */}
+      <RankingsSection />
+
+      {/* ==========================================
+          6. BANNER DO CALENDÁRIO DE LANÇAMENTOS
+      ========================================== */}
+      <section className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-surface-100 to-indigo-950/40 border border-cyan-500/20 p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+        <div className="space-y-2 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
+            <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" /> Calendário Mensal
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Nunca perca a estreia de um grande jogo.
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
+            Acompanhe o dia a dia de lançamentos mês a mês, filtre por datas e adicione os títulos mais aguardados diretamente à sua lista de desejos.
+          </p>
         </div>
 
-        {/* Grid de Jogos ou Loading Skeleton */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <div
-                key={n}
-                className="h-64 rounded-2xl bg-surface-100/50 border border-gray-800 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {games.slice(0, 8).map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        )}
+        <Link
+          href="/calendar"
+          className="rounded-full bg-white hover:bg-gray-200 text-black font-bold px-8 py-3.5 text-sm transition-all shadow-xl hover:scale-105 flex-shrink-0"
+        >
+          Abrir Calendário de Lançamentos →
+        </Link>
       </section>
-
-      {/* Seção 2: Maiores Notas no Metacritic */}
-      {!loading && topMetacritic.length > 0 && (
-        <section className="space-y-5 pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Obras-Primas Aclamadas (85+)
-                </h2>
-                <p className="text-xs text-gray-400">
-                  Jogos com as pontuações mais altas da crítica especializada
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {topMetacritic.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Seção 3: RPGs Épicos e Campanhas Longas */}
-      {!loading && epicLongGames.length > 0 && (
-        <section className="space-y-5 pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Grandes Jornadas (50h+ de História)
-                </h2>
-                <p className="text-xs text-gray-400">
-                  Mundos imersivos com mais de 50 horas de campanha principal
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {epicLongGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

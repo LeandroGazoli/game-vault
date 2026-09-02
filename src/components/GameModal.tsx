@@ -59,6 +59,7 @@ export default function GameModal({
   const [startDate, setStartDate] = useState<string>("");
   const [completedDate, setCompletedDate] = useState<string>("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
+  const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
   const [review, setReview] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
@@ -607,6 +608,48 @@ export default function GameModal({
                         className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+
+                
+                {/* Conquistas & Desafios */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-xs font-medium text-gray-400">
+                    Conquistas & Desafios Concluídos
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "platina", label: "🏆 Platina / 100%" },
+                      { id: "ng_plus", label: "🔄 NG+" },
+                      { id: "all_endings", label: "🔀 Todos os finais" },
+                      { id: "max_diff", label: "🔥 Dificuldade máxima" },
+                      { id: "no_death", label: "🛡️ Sem mortes" },
+                      { id: "speedrun", label: "⚡ Speedrun" },
+                      { id: "pacifist", label: "☮️ Pacifista" },
+                    ].map((ch) => {
+                      const isSel = selectedChallenges.includes(ch.id);
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedChallenges((prev) =>
+                              prev.includes(ch.id)
+                                ? prev.filter((c) => c !== ch.id)
+                                : [...prev, ch.id]
+                            );
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                            isSel
+                              ? "bg-white/25 text-white border border-white/40 shadow-sm"
+                              : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent"
+                          }`}
+                        >
+                          {isSel && <Check className="w-3 h-3 inline mr-1" />}
+                          {ch.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
