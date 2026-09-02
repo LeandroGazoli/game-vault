@@ -15,6 +15,7 @@ import ManagePlanModal from "@/components/ManagePlanModal";
 import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GamerWrappedModal from "@/components/GamerWrappedModal";
+import ProfileToolsModal from "@/components/ProfileToolsModal";
 import MarkdownProfileBio from "@/components/MarkdownProfileBio";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
@@ -42,6 +43,7 @@ import {
   List,
   Smartphone,
   ArrowRight,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -62,6 +64,7 @@ export default function ProfilePage() {
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
 
   // Verificação e ativação automática se o usuário retornou do Stripe Checkout
@@ -208,56 +211,50 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Status e Detalhes da Assinatura */}
+              {/* Status e Detalhes da Assinatura (Limpo & Interativo) */}
               {user.plan === "vip" ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit">
-                    <Crown className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Membro Fundador VIP Vitalício</span>
-                  </div>
-                  <button
-                    onClick={() => setIsManagePlanOpen(true)}
-                    className="text-xs text-gray-300 hover:text-white px-3 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors font-medium"
-                  >
-                    Gerenciar Plano
-                  </button>
+                <div
+                  onClick={() => setIsManagePlanOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold cursor-pointer hover:bg-amber-500/20 active:scale-95 transition-all w-fit shadow-sm"
+                  title="Clique para gerenciar seu plano VIP"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Membro Fundador VIP Vitalício</span>
                 </div>
               ) : user.plan === "pro" ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit">
-                    <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>
-                      Assinante PRO Ativo
-                      {user.premiumUntil ? (
-                        <span className="text-gray-300 font-normal ml-1">
-                          • Válido até{" "}
-                          {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </span>
-                      ) : (
-                        <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
-                      )}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setIsManagePlanOpen(true)}
-                    className="text-xs text-gray-300 hover:text-white px-3 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors font-medium"
-                  >
-                    Gerenciar Plano
-                  </button>
+                <div
+                  onClick={() => setIsManagePlanOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all w-fit shadow-sm"
+                  title="Clique para gerenciar sua assinatura PRO"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                  <span>
+                    Assinante PRO Ativo
+                    {user.premiumUntil ? (
+                      <span className="text-gray-300 font-normal ml-1">
+                        • Válido até{" "}
+                        {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
+                    )}
+                  </span>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium w-fit">
-                  <span>Plano Gratuito</span>
-                  <button
-                    onClick={() => setIsUpgradeOpen(true)}
-                    className="text-[#00E5FF] hover:underline font-bold ml-1 inline-flex items-center gap-0.5"
-                  >
-                    Seja PRO <ArrowRight className="w-3 h-3" />
-                  </button>
+                <div
+                  onClick={() => setIsUpgradeOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white text-xs font-medium cursor-pointer hover:border-white/20 active:scale-95 transition-all w-fit shadow-sm"
+                  title="Conheça as vantagens do plano PRO"
+                >
+                  <User className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Conta Free</span>
+                  <span className="text-[#00E5FF] font-semibold ml-1 flex items-center gap-0.5">
+                    • Seja PRO <ArrowRight className="w-3 h-3" />
+                  </span>
                 </div>
               )}
 
@@ -277,107 +274,39 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-            {/* Ações Primárias */}
-            <div className="flex items-center gap-2">
-              <Link
-                href="/search"
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-5 py-2 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md active:scale-95"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Adicionar Jogos
-              </Link>
-              <button
-                onClick={() => {
-                  setBioInput(user.bio || "");
-                  setFavGameInput(user.favoriteGame || "");
-                  setIsEditingBio(true);
-                }}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 text-xs font-semibold text-gray-200 transition-colors"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-                Editar Perfil
-              </button>
-            </div>
+          {/* Tríade de Ações do Perfil (Mobile-First, Ergonômico e Sem Poluição) */}
+          <div className="w-full sm:w-auto flex flex-row items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
+            {/* Ação Primária: Adicionar Jogos */}
+            <Link
+              href="/search"
+              className="flex-1 sm:flex-initial min-h-[46px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-gray-200 text-black text-xs font-black transition-all shadow-xl shadow-white/10 active:scale-95"
+            >
+              <Plus className="w-4 h-4 text-black" />
+              <span>Adicionar Jogos</span>
+            </Link>
 
-            {/* Ações Secundárias e Ferramentas com Scroll Suave no Mobile */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-              {user.plan === "free" ? (
-                <button
-                  onClick={() => setIsUpgradeOpen(true)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-[#00E5FF]/40 text-xs font-bold text-[#00E5FF] transition-all shadow-md hover:scale-105"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  Seja PRO
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsManagePlanOpen(true)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-bold text-[#00E5FF] transition-all shadow-sm hover:bg-cyan-500/25 active:scale-95"
-                  title="Gerenciar detalhes do seu plano ativo"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  Gerenciar Plano
-                </button>
-              )}
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-xs font-bold text-amber-300 transition-all shadow-md"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  Admin
-                </Link>
-              )}
-              <button
-                onClick={() => setIsCustomizerOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-xs font-semibold text-purple-300 transition-colors shadow-sm"
-                title="Personalizar capa e tema do perfil"
-              >
-                <Palette className="w-3.5 h-3.5 text-purple-400" />
-                Personalizar
-              </button>
-              <button
-                onClick={() => setIsRouletteOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-colors shadow-sm"
-                title="Sortear o próximo jogo do seu backlog"
-              >
-                <Dices className="w-3.5 h-3.5 text-indigo-400" />
-                Roleta Backlog
-              </button>
-              <button
-                onClick={() => setIsWrappedOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors shadow-sm"
-                title="Ver sua retrospectiva gamer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                Retrospectiva
-              </button>
-              <button
-                onClick={() => setIsUpgradeOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold text-amber-300 transition-all shadow-sm"
-                title="Gerenciar plano e remover anúncios"
-              >
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                {user.plan === "pro" || user.plan === "vip" ? "Plano PRO" : "Seja PRO"}
-              </button>
-              <button
-                onClick={() => setIsExportOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-xs font-semibold text-[#00E5FF] transition-colors"
-                title="Exportar biblioteca em Excel, JSON ou link dinâmico"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Exportar
-              </button>
-              <button
-                onClick={triggerPwaInstall}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-300 transition-colors"
-                title="Instalar aplicativo mobile"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                App Mobile
-              </button>
-            </div>
+            {/* Ação Secundária: Editar Perfil */}
+            <button
+              onClick={() => {
+                setBioInput(user.bio || "");
+                setFavGameInput(user.favoriteGame || "");
+                setIsEditingBio(!isEditingBio);
+              }}
+              className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/25 text-xs font-semibold text-gray-200 transition-all active:scale-95"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-gray-400" />
+              <span>Editar</span>
+            </button>
+
+            {/* Central de Ações & Ferramentas (Abre Bottom Sheet no mobile ou modal no desktop) */}
+            <button
+              onClick={() => setIsToolsOpen(true)}
+              className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-[#00E5FF]/10 to-blue-500/15 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 hover:bg-[#00E5FF]/20 text-xs font-bold text-[#00E5FF] transition-all shadow-md shadow-[#00E5FF]/5 active:scale-95"
+              title="Ações e Ferramentas do Perfil"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
+              <span>Ferramentas</span>
+            </button>
           </div>
         </div>
 
@@ -437,43 +366,17 @@ export default function ProfilePage() {
         <MarkdownProfileBio content={user.customMarkdown || user.customHtml} />
       )}
 
-      {/* Card Promocional do App Mobile PWA */}
-      <div className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-surface-100 to-indigo-950/40 border border-[#00E5FF]/25 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] flex-shrink-0 shadow-lg shadow-cyan-500/10">
-            <Smartphone className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-white">Instale o GameVault no seu Celular</h4>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono bg-[#00E5FF]/20 text-[#00E5FF]">
-                PWA
-              </span>
-            </div>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Acesse sua biblioteca, backlog e estatísticas em tela cheia direto da tela de início, mesmo sem internet.
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={triggerPwaInstall}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#00E5FF] hover:bg-cyan-300 text-black text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 flex-shrink-0"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Instalar Aplicativo
-        </button>
-      </div>
 
       {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}
       {user.visibility?.showStats !== false && (
         <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />
       )}
 
-      {/* Abas de Navegação e Filtros */}
+      {/* Abas de Navegação e Filtros (Mobile-First & Touch-Friendly) */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
-          {/* Abas com rolagem suave horizontal no mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0 flex-nowrap sm:flex-wrap">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-white/10 pb-3.5">
+          {/* Abas com rolagem suave horizontal e alvos de toque ergonômicos */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 flex-nowrap">
             {[
               { id: "all", label: "Todos", count: stats.totalGames },
               { id: "completed", label: "Zerados 🏆", count: stats.completedCount },
@@ -484,16 +387,16 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 ${
+                className={`flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 select-none active:scale-95 ${
                   activeTab === tab.id
-                    ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/20"
+                    ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/25 font-black"
                     : "bg-[#18191c] text-gray-400 hover:text-gray-200 hover:bg-[#202126] border border-white/5"
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    activeTab === tab.id ? "bg-black/20 text-black font-bold" : "bg-white/10 text-gray-400"
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    activeTab === tab.id ? "bg-black/20 text-black" : "bg-white/10 text-gray-400"
                   }`}
                 >
                   {tab.count}
@@ -503,36 +406,46 @@ export default function ProfilePage() {
           </div>
 
           {/* Busca na Biblioteca e Modo de Visualização */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-2.5" />
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-initial">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Filtrar na biblioteca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 rounded-full bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] w-44 sm:w-56"
+                className="w-full md:w-56 h-11 md:h-10 pl-10 pr-8 rounded-2xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <XCircle className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center rounded-full bg-[#18191c] border border-white/10 p-0.5">
+            <div className="flex items-center rounded-2xl bg-[#18191c] border border-white/10 p-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-full ${
-                  viewMode === "grid" ? "bg-white text-black" : "text-gray-400 hover:text-white"
+                className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+                  viewMode === "grid" ? "bg-white text-black shadow-sm" : "text-gray-400 hover:text-white"
                 }`}
                 title="Modo Grade"
+                aria-label="Modo Grade"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-full ${
-                  viewMode === "list" ? "bg-white text-black" : "text-gray-400 hover:text-white"
+                className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+                  viewMode === "list" ? "bg-white text-black shadow-sm" : "text-gray-400 hover:text-white"
                 }`}
                 title="Modo Lista Detalhada"
+                aria-label="Modo Lista"
               >
-                <List className="w-3.5 h-3.5" />
+                <List className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -744,6 +657,22 @@ export default function ProfilePage() {
         onClose={() => setIsExportOpen(false)}
         games={library}
         username={user.username || user.uid}
+      />
+
+      {/* Modal / Bottom Sheet de Ações & Ferramentas do Perfil */}
+      <ProfileToolsModal
+        isOpen={isToolsOpen}
+        onClose={() => setIsToolsOpen(false)}
+        user={user}
+        isPremium={isPremium}
+        isAdmin={isAdmin}
+        onOpenManagePlan={() => setIsManagePlanOpen(true)}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
+        onOpenCustomizer={() => setIsCustomizerOpen(true)}
+        onOpenRoulette={() => setIsRouletteOpen(true)}
+        onOpenWrapped={() => setIsWrappedOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
+        onInstallPwa={triggerPwaInstall}
       />
 
       {/* Modal de Gerenciamento do Plano Ativo */}
