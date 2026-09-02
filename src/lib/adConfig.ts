@@ -7,7 +7,7 @@ export interface AdSlotConfig {
 }
 
 export const ADSENSE_PUB_ID =
-  process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || "ca-pub-0000000000000000";
+  process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || "ca-pub-9170433007408098";
 
 export const AD_SLOTS: Record<string, AdSlotConfig> = {
   HOME_TOP_LEADERBOARD: {
