@@ -10,30 +10,27 @@ import {
 import { fetchHLTBData } from "./hltbApi";
 import { translateToPortuguese } from "./translate";
 
-// Função auxiliar para enriquecer uma lista de jogos com dados reais do HowLongToBeat e tradução
-async function enrichWithHLTBAndTranslation(games: Game[], maxCount = 12): Promise<Game[]> {
+// Função auxiliar otimizada para enriquecer listas de jogos rapidamente com HowLongToBeat
+// OBS: Traduções de sinopse NÃO são executadas em listas para máxima velocidade e zero latência;
+// a tradução completa é realizada apenas na página detalhada do jogo (getGameDetailsApi).
+async function enrichWithHLTB(games: Game[], maxCount = 4): Promise<Game[]> {
   return await Promise.all(
     games.map(async (game, index) => {
       let hltb = game.hltb;
-      let description_raw = game.description_raw;
 
-      if (index < maxCount) {
-        if (!hltb) {
-          try {
-            hltb = await fetchHLTBData(game.name);
-          } catch {}
-        }
-        if (description_raw && description_raw.length > 0) {
-          try {
-            description_raw = await translateToPortuguese(description_raw);
-          } catch {}
-        }
+      // Enriquece apenas os primeiros jogos para exibição de horas no card (ex: Top 3)
+      if (index < maxCount && !hltb) {
+        try {
+          // Timeout de 500ms para nunca bloquear a renderização da página
+          const hltbPromise = fetchHLTBData(game.name);
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 500));
+          hltb = await Promise.race([hltbPromise, timeoutPromise]);
+        } catch {}
       }
 
       return {
         ...game,
         hltb: hltb || null,
-        description_raw: description_raw || game.description_raw,
       };
     })
   );
@@ -45,7 +42,7 @@ export async function searchGamesApi(
   pageSize = 24
 ): Promise<{ games: Game[]; count: number }> {
   const games = await searchGamesIGDB(query, pageSize);
-  const enriched = await enrichWithHLTBAndTranslation(games, 12);
+  const enriched = await enrichWithHLTB(games, 3);
   return {
     games: enriched,
     count: enriched.length,
@@ -54,12 +51,12 @@ export async function searchGamesApi(
 
 export async function getRecentReleasesApi(limit = 20): Promise<Game[]> {
   const games = await getRecentReleasesIGDB(limit);
-  return await enrichWithHLTBAndTranslation(games, 12);
+  return await enrichWithHLTB(games, 3);
 }
 
 export async function getUpcomingGamesApi(limit = 20): Promise<Game[]> {
   const games = await getUpcomingGamesIGDB(limit);
-  return await enrichWithHLTBAndTranslation(games, 12);
+  return await enrichWithHLTB(games, 3);
 }
 
 export async function getRankingsApi(
@@ -67,7 +64,7 @@ export async function getRankingsApi(
   limit = 20
 ): Promise<Game[]> {
   const games = await getRankingsIGDB(category, limit);
-  return await enrichWithHLTBAndTranslation(games, 12);
+  return await enrichWithHLTB(games, 3);
 }
 
 export async function getCalendarGamesApi(
@@ -79,7 +76,7 @@ export async function getCalendarGamesApi(
 
 export async function getPopularGamesApi(limit = 20): Promise<Game[]> {
   const games = await getRankingsIGDB("popular", limit);
-  return await enrichWithHLTBAndTranslation(games, 12);
+  return await enrichWithHLTB(games, 3);
 }
 
 export async function getGameDetailsApi(id: string | number): Promise<Game | null> {
