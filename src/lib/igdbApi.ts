@@ -293,11 +293,11 @@ async function fetchIGDB(endpoint: string, body: string, ttl = TTL_CONFIG.RECENT
 // CONSULTAS DE NEGÓCIO EXPORTADAS COM TTLs DEDICADOS
 // =========================================================================
 
-// 1. Busca Geral no IGDB (TTL: 45 min)
-export async function searchGamesIGDB(query: string, limit = 20): Promise<Game[]> {
+// 1. Busca Geral no IGDB com Paginação (TTL: 45 min)
+export async function searchGamesIGDB(query: string, limit = 50, offset = 0): Promise<Game[]> {
   const escapedQuery = query.replace(/"/g, "").trim();
   if (!escapedQuery) return [];
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; search "${escapedQuery}"; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; search "${escapedQuery}"; limit ${limit}; offset ${offset};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.SEARCH);
   return data.map(mapIGDBGameToGame);
 }

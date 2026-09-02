@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const pageSize = parseInt(searchParams.get("pageSize") || searchParams.get("limit") || "50", 10);
   const type = searchParams.get("type");
 
   try {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ games, count: games.length });
     }
 
-    const result = await searchGamesApi(q, page);
+    const result = await searchGamesApi(q, page, pageSize);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Erro na busca de jogos:", error);

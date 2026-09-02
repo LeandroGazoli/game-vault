@@ -40,13 +40,16 @@ async function enrichWithHLTB(games: Game[], maxCount = 4): Promise<Game[]> {
 export async function searchGamesApi(
   query: string,
   page = 1,
-  pageSize = 24
-): Promise<{ games: Game[]; count: number }> {
-  const games = await searchGamesIGDB(query, pageSize);
+  pageSize = 50
+): Promise<{ games: Game[]; count: number; page: number; hasMore: boolean }> {
+  const offset = Math.max(0, (page - 1) * pageSize);
+  const games = await searchGamesIGDB(query, pageSize, offset);
   const enriched = await enrichWithHLTB(games, 3);
   return {
     games: enriched,
     count: enriched.length,
+    page,
+    hasMore: games.length >= pageSize,
   };
 }
 

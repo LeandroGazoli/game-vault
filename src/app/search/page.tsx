@@ -45,6 +45,9 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState("Todos");
   const [selectedPlatform, setSelectedPlatform] = useState("Todas");
   const [minMetacritic, setMinMetacritic] = useState<number>(0);
@@ -57,14 +60,17 @@ function SearchContent() {
   useEffect(() => {
     async function fetchGames() {
       setLoading(true);
+      setPage(1);
       try {
         const url = query.trim()
-          ? `/api/games/search?q=${encodeURIComponent(query.trim())}`
-          : `/api/games/search`;
+          ? `/api/games/search?q=${encodeURIComponent(query.trim())}&page=1&pageSize=50`
+          : `/api/games/search?page=1&pageSize=50`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          setGames(data.games || []);
+          const items = data.games || [];
+          setGames(items);
+          setHasMore(Boolean(data.hasMore ?? (items.length >= 50)));
         }
       } catch (err) {
         console.error("Erro na busca:", err);
@@ -75,6 +81,33 @@ function SearchContent() {
 
     fetchGames();
   }, [query]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      const url = query.trim()
+        ? `/api/games/search?q=${encodeURIComponent(query.trim())}&page=${nextPage}&pageSize=50`
+        : `/api/games/search?page=${nextPage}&pageSize=50`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const newItems: Game[] = data.games || [];
+        setGames((prev) => {
+          const existingIds = new Set(prev.map((g) => g.id));
+          const uniqueNew = newItems.filter((g) => !existingIds.has(g.id));
+          return [...prev, ...uniqueNew];
+        });
+        setPage(nextPage);
+        setHasMore(Boolean(data.hasMore ?? (newItems.length >= 50)));
+      }
+    } catch (err) {
+      console.error("Erro ao carregar mais jogos:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Filtros de gênero, plataforma e nota
   const filteredGames = games.filter((g) => {
@@ -224,11 +257,36 @@ function SearchContent() {
             ))}
           </div>
         ) : filteredGames.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {filteredGames.map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+
+            {/* Botão para carregar mais jogos */}
+            {hasMore && (
+              <div className="pt-6 flex flex-col items-center gap-2">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-8 py-3.5 rounded-full bg-white/10 hover:bg-[#00E5FF] text-white hover:text-black font-bold text-sm transition-all border border-white/10 hover:border-[#00E5FF] shadow-xl disabled:opacity-50 flex items-center gap-2 active:scale-95 cursor-pointer"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Carregando mais jogos...
+                    </>
+                  ) : (
+                    "Carregar mais jogos..."
+                  )}
+                </button>
+                <span className="text-[11px] text-gray-500 font-mono">
+                  Mostrando {filteredGames.length} títulos
+                </span>
+              </div>
+            )}
+          </>
         ) : (
           <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-3">
             <Search className="w-12 h-12 text-gray-600 mx-auto" />

@@ -77,7 +77,7 @@ export default function LiveSearchInput({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/games/search?q=${encodeURIComponent(trimmed)}`, {
+        const res = await fetch(`/api/games/search?q=${encodeURIComponent(trimmed)}&limit=8`, {
           signal: abortController.signal,
         });
         if (res.ok) {
