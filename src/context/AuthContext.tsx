@@ -76,11 +76,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    if (result.user) {
+      const immediateProfile: UserProfile = {
+        uid: result.user.uid,
+        username: result.user.displayName
+          ? result.user.displayName.toLowerCase().replace(/\s+/g, "_")
+          : (result.user.email ? result.user.email.split("@")[0] : "jogador"),
+        displayName: result.user.displayName || "Jogador",
+        email: result.user.email || "",
+        photoURL: result.user.photoURL || null,
+        bio: "Apaixonado por games.",
+        createdAt: new Date().toISOString(),
+      };
+      setFirebaseUser(result.user);
+      setUser(immediateProfile);
+
+      getUserProfile(result.user.uid).then((prof) => {
+        if (prof) setUser(prof);
+        else saveUserProfile(result.user.uid, immediateProfile);
+      });
+    }
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass);
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    if (result.user) {
+      const immediateProfile: UserProfile = {
+        uid: result.user.uid,
+        username: email.split("@")[0],
+        displayName: email.split("@")[0],
+        email: result.user.email || email,
+        photoURL: null,
+        bio: "Apaixonado por games.",
+        createdAt: new Date().toISOString(),
+      };
+      setFirebaseUser(result.user);
+      setUser(immediateProfile);
+
+      getUserProfile(result.user.uid).then((prof) => {
+        if (prof) setUser(prof);
+        else saveUserProfile(result.user.uid, immediateProfile);
+      });
+    }
   };
 
   const signUpWithEmail = async (email: string, pass: string, username: string) => {
@@ -94,8 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       bio: "Novo jogador no GameVault!",
       createdAt: new Date().toISOString(),
     };
-    await saveUserProfile(cred.user.uid, newProfile);
+    setFirebaseUser(cred.user);
     setUser(newProfile);
+    await saveUserProfile(cred.user.uid, newProfile);
   };
 
   const logout = async () => {

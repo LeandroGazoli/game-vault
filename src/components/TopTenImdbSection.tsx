@@ -60,24 +60,34 @@ export default function TopTenImdbSection({
                 key={game.id}
                 className="group relative rounded-2xl bg-[#18191c] border border-white/10 hover:border-amber-400/40 p-4 flex gap-4 transition-all duration-300 hover:shadow-2xl hover:shadow-black/60"
               >
-                {/* Poster / Capa com botão + no topo esquerdo */}
+                {/* Poster / Capa com clique para página do jogo */}
                 <div className="relative w-28 sm:w-32 aspect-[2/3] rounded-xl overflow-hidden bg-neutral-900 flex-shrink-0 border border-white/10 shadow-lg">
-                  {game.background_image ? (
-                    <img
-                      src={game.background_image}
-                      alt={game.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                      Sem Capa
-                    </div>
-                  )}
+                  <Link
+                    href={`/game/${game.id}`}
+                    className="block w-full h-full cursor-pointer"
+                    title={`Ver detalhes de ${game.name}`}
+                  >
+                    {game.background_image ? (
+                      <img
+                        src={game.background_image}
+                        alt={game.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                        Sem Capa
+                      </div>
+                    )}
+                  </Link>
 
                   {/* Botão + Estilo IMDb no Canto Superior Esquerdo */}
                   <button
-                    onClick={() => setSelectedGame(game)}
-                    className="absolute top-1.5 left-1.5 p-1 rounded-lg bg-black/60 hover:bg-amber-500 text-white hover:text-black backdrop-blur-md transition-all z-10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedGame(game);
+                    }}
+                    className="absolute top-1.5 left-1.5 p-1 rounded-lg bg-black/60 hover:bg-amber-500 text-white hover:text-black backdrop-blur-md transition-all z-20"
                     title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                   >
                     {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -164,31 +174,41 @@ export default function TopTenImdbSection({
                   className="group relative rounded-xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="relative aspect-[2/3] w-full bg-neutral-900 overflow-hidden">
-                    {/* Badge de Posição (#4 a #10) */}
-                    <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#00E5FF] text-black font-extrabold text-[10px] shadow-md">
-                      #{rank}
-                    </div>
-
-                    {game.background_image ? (
-                      <img
-                        src={game.background_image}
-                        alt={game.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                        Sem Capa
+                    <Link
+                      href={`/game/${game.id}`}
+                      className="block w-full h-full cursor-pointer"
+                      title={`Ver detalhes de ${game.name}`}
+                    >
+                      {/* Badge de Posição (#4 a #10) */}
+                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#00E5FF] text-black font-extrabold text-[10px] shadow-md">
+                        #{rank}
                       </div>
-                    )}
+
+                      {game.background_image ? (
+                        <img
+                          src={game.background_image}
+                          alt={game.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                          Sem Capa
+                        </div>
+                      )}
+                    </Link>
 
                     {/* Botão de Ação Rápida no Hover */}
                     <button
-                      onClick={() => setSelectedGame(game)}
-                      className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedGame(game);
+                      }}
+                      className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20"
                       title="Adicionar à lista"
                     >
-                      {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                      {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                     </button>
                   </div>
 

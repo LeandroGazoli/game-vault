@@ -242,40 +242,46 @@ export default function CalendarView() {
                         return (
                           <div
                             key={game.id}
-                            onClick={() => setSelectedGame(game)}
-                            className="group relative rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden cursor-pointer flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/60"
+                            className="group relative rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/60"
                           >
-                            {/* Capa com Proporção de Poster de Cinema */}
+                            {/* Capa com Proporção de Poster - Clicar abre a página do jogo */}
                             <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                              {game.background_image ? (
-                                <img
-                                  src={game.background_image}
-                                  alt={game.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                                  Sem Capa
-                                </div>
-                              )}
+                              <Link
+                                href={`/game/${game.id}`}
+                                className="block w-full h-full cursor-pointer"
+                                title={`Ver detalhes de ${game.name}`}
+                              >
+                                {game.background_image ? (
+                                  <img
+                                    src={game.background_image}
+                                    alt={game.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                                    Sem Capa
+                                  </div>
+                                )}
+                              </Link>
 
                               {/* Efeito de Fogo / Hype no Canto Inferior Direito */}
-                              <div className="absolute bottom-2 right-2 p-1 rounded-full bg-black/60 backdrop-blur-md text-orange-400">
+                              <div className="absolute bottom-2 right-2 p-1 rounded-full bg-black/60 backdrop-blur-md text-orange-400 pointer-events-none">
                                 <Flame className="w-3 h-3 fill-orange-400" />
                               </div>
 
                               {/* Botão + no Hover */}
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   setSelectedGame(game);
                                 }}
-                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20"
                                 title="Adicionar à biblioteca"
                               >
                                 {userGame ? (
-                                  <Check className="w-3.5 h-3.5" />
+                                  <Check className="w-3.5 h-3.5 text-[#00E5FF]" />
                                 ) : (
                                   <Plus className="w-3.5 h-3.5" />
                                 )}
@@ -284,9 +290,11 @@ export default function CalendarView() {
 
                             {/* Título & Plataforma */}
                             <div className="p-2.5 flex-1 flex flex-col justify-between">
-                              <h3 className="text-xs font-semibold text-white group-hover:text-[#00E5FF] line-clamp-1 transition-colors">
-                                {game.name}
-                              </h3>
+                              <Link href={`/game/${game.id}`}>
+                                <h3 className="text-xs font-semibold text-white hover:text-[#00E5FF] line-clamp-1 transition-colors">
+                                  {game.name}
+                                </h3>
+                              </Link>
                               <div className="flex items-center justify-between text-[10px] text-gray-400 mt-1">
                                 <span className="truncate max-w-[90px]">
                                   {game.genres && game.genres[0] ? game.genres[0].name : "Game"}

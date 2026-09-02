@@ -24,45 +24,55 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
   return (
     <>
       <div className="group relative flex flex-col rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/70 hover:-translate-y-1.5">
-        {/* Capa do Jogo Vertical Estilo Poster */}
+        {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-900">
-          {game.background_image ? (
-            <img
-              src={game.background_image}
-              alt={game.name}
-              className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-neutral-900 text-gray-600 text-xs">
-              Sem Imagem
-            </div>
-          )}
+          <Link
+            href={`/game/${game.id}`}
+            className="block w-full h-full cursor-pointer"
+            title={`Ver detalhes de ${game.name}`}
+          >
+            {game.background_image ? (
+              <img
+                src={game.background_image}
+                alt={game.name}
+                className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-neutral-900 text-gray-600 text-xs">
+                Sem Imagem
+              </div>
+            )}
 
-          {/* Gradiente suave */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
+            {/* Gradiente suave */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
+          </Link>
 
           {/* Metacritic Badge (Canto Superior Esquerdo) */}
           {game.metacritic && (
-            <div className="absolute top-2.5 left-2.5 z-10">
+            <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
               <MetacriticBadge score={game.metacritic} size="sm" />
             </div>
           )}
 
           {/* Status do Usuário se na Biblioteca (Canto Superior Direito) */}
           {userGame && (
-            <div className="absolute top-2.5 right-2.5 z-10">
+            <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
               <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
             </div>
           )}
 
           {/* Botão de Adição Rápida no Hover */}
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-black/70 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 shadow-2xl backdrop-blur-md"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsModalOpen(true);
+            }}
+            className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/80 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-200 shadow-xl backdrop-blur-md z-20"
             title={userGame ? "Editar Status" : "Adicionar à Lista"}
           >
-            {userGame ? <Check className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+            {userGame ? <Check className="w-4 h-4 text-[#00E5FF]" /> : <Plus className="w-4 h-4" />}
           </button>
         </div>
 

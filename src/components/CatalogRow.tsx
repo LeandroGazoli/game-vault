@@ -108,43 +108,53 @@ export default function CatalogRow({
                 key={game.id}
                 className="group relative flex-shrink-0 w-36 sm:w-44 rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-black/70"
               >
-                {/* Poster / Capa Vertical de Filme */}
+                {/* Poster / Capa Vertical de Filme - Clicar abre a página do jogo */}
                 <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                  {/* Badge de Posição se showRank for ativo */}
-                  {showRank && (
-                    <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#00E5FF] text-black font-extrabold text-[10px] shadow-lg">
-                      #{rank}
-                    </div>
-                  )}
+                  <Link
+                    href={`/game/${game.id}`}
+                    className="block w-full h-full cursor-pointer"
+                    title={`Ver detalhes de ${game.name}`}
+                  >
+                    {/* Badge de Posição se showRank for ativo */}
+                    {showRank && (
+                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#00E5FF] text-black font-extrabold text-[10px] shadow-lg">
+                        #{rank}
+                      </div>
+                    )}
 
-                  {game.background_image ? (
-                    <img
-                      src={game.background_image}
-                      alt={game.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                      Sem Capa
-                    </div>
-                  )}
+                    {game.background_image ? (
+                      <img
+                        src={game.background_image}
+                        alt={game.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                        Sem Capa
+                      </div>
+                    )}
 
-                  {/* Gradiente sutil */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
+                    {/* Gradiente sutil */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-transparent to-transparent opacity-60" />
+                  </Link>
 
                   {/* Botão de Adição Rápida no Hover */}
                   <button
-                    onClick={() => setSelectedGame(game)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedGame(game);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20"
                     title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                   >
-                    {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                   </button>
 
                   {/* Badge de Metacritic no Rodapé da Capa */}
                   {game.metacritic && (
-                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-md bg-black/70 text-emerald-400 font-bold font-mono text-[10px] backdrop-blur-sm border border-emerald-500/30">
+                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-md bg-black/70 text-emerald-400 font-bold font-mono text-[10px] backdrop-blur-sm border border-emerald-500/30 pointer-events-none">
                       {game.metacritic}%
                     </div>
                   )}

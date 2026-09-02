@@ -82,8 +82,12 @@ export default function RankingsSection() {
                     >
                       {/* Esquerda: Capa + Posição + Nome */}
                       <div className="flex items-center gap-3.5 min-w-0">
-                        {/* Capa */}
-                        <div className="w-11 h-14 sm:w-12 sm:h-16 rounded-xl overflow-hidden bg-neutral-900 border border-white/10 flex-shrink-0">
+                        {/* Capa com link para a página do jogo */}
+                        <Link
+                          href={`/game/${game.id}`}
+                          className="w-11 h-14 sm:w-12 sm:h-16 rounded-xl overflow-hidden bg-neutral-900 border border-white/10 flex-shrink-0 cursor-pointer block"
+                          title={`Ver detalhes de ${game.name}`}
+                        >
                           {game.background_image ? (
                             <img
                               src={game.background_image}
@@ -95,7 +99,7 @@ export default function RankingsSection() {
                               --
                             </div>
                           )}
-                        </div>
+                        </Link>
 
                         {/* Posição Numérica */}
                         <div className="w-7 text-center font-mono font-bold text-sm sm:text-base text-gray-300 flex-shrink-0">
