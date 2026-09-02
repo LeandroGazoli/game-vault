@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getAllUsersForAdmin, updateUserPlanByAdmin } from "@/lib/firebase";
-import { UserProfile, UserPlan } from "@/lib/types";
+import { UserProfile, UserPlan, ADMIN_EMAILS } from "@/lib/types";
 import PlanBadge from "@/components/PlanBadge";
 import AuthModal from "@/components/AuthModal";
 import Link from "next/link";
@@ -115,10 +115,10 @@ export default function AdminPage() {
 
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            Área de Acesso Restrito
+            Acesso Restrito
           </h2>
           <p className="text-xs text-gray-400 leading-relaxed">
-            Este painel é exclusivo para o administrador da plataforma (<strong>leandro.gazolig@gmail.com</strong>).
+            Esta área é restrita a administradores autorizados.
           </p>
         </div>
 
@@ -363,7 +363,7 @@ export default function AdminPage() {
                 </tr>
               ) : (
                 filteredUsers.map((u) => {
-                  const isThisAdmin = u.email && u.email.toLowerCase() === "leandro.gazolig@gmail.com";
+                  const isThisAdmin = Boolean(u.email && ADMIN_EMAILS.includes(u.email.toLowerCase()));
                   const currentPlan = u.plan || "free";
 
                   return (
