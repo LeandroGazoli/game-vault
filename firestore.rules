@@ -25,5 +25,11 @@ service cloud.firestore {
         );
       }
     }
+
+    // Cache público de traduções de jogos (100% gratuito e permanente)
+    match /game_translations/{gameId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }
