@@ -15,7 +15,7 @@ export const STRIPE_PLANS = {
   PRO_MONTHLY: {
     id: "pro_monthly",
     name: "GameVault PRO (Mensal)",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || "price_1UBGD42Kf2AAuQLbjW9GBXPq",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || "price_1UBHDW2Kf2AAuQLblxkNUioG",
     price: 9.9,
     formattedPrice: "R$ 9,90",
     interval: "mês",
@@ -24,7 +24,7 @@ export const STRIPE_PLANS = {
   PRO_ANNUAL: {
     id: "pro_annual",
     name: "GameVault PRO (Anual)",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "price_1UBGDG2Kf2AAuQLbXp9jvmtM",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "price_1UBHDW2Kf2AAuQLblBdLv8op",
     price: 79.9,
     formattedPrice: "R$ 79,90",
     interval: "ano",
@@ -34,7 +34,7 @@ export const STRIPE_PLANS = {
   VIP_LIFETIME: {
     id: "vip_lifetime",
     name: "GameVault VIP (Membro Fundador)",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_VIP_LIFETIME || "price_1UBGDS2Kf2AAuQLbv7nrE1QJ",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_VIP_LIFETIME || "price_1UBHDX2Kf2AAuQLbsbuoD6ll",
     price: 149.9,
     formattedPrice: "R$ 149,90",
     interval: "vitalício",
