@@ -463,19 +463,33 @@ export async function getUpcomingGamesIGDB(limit = 24): Promise<Game[]> {
   return data.map(mapIGDBGameToGame);
 }
 
-// 4. Rankings MGL - Mais Populares, Bem Avaliados, Desejados (TTL: 36 horas)
-export async function getRankingsIGDB(category: "popular" | "top_rated" | "hyped" = "popular", limit = 20): Promise<Game[]> {
+// 4. Rankings MGL - Mais Populares, Bem Avaliados, Desejados, Dublados, Retrô e Curtos (TTL: 36 horas)
+export async function getRankingsIGDB(
+  category: "popular" | "top_rated" | "hyped" | "ptbr" | "retro" | "short" = "popular",
+  limit = 20
+): Promise<Game[]> {
+  const safeLimit = Math.min(Math.max(limit, 5), 100);
+
+  if (category === "ptbr") {
+    return await getPtBrDubbedGamesIGDB(safeLimit);
+  }
+  if (category === "short") {
+    return await getShortGamesIGDB(safeLimit);
+  }
+
   let body = "";
-  // Arredonda timestamp para blocos de 1 hora
   const nowSec = Math.floor(Date.now() / (1000 * 3600)) * 3600;
 
   if (category === "top_rated") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating; where aggregated_rating != null & total_rating_count > 40 & cover != null & parent_game = null; sort aggregated_rating desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating; where aggregated_rating != null & total_rating_count > 20 & cover != null & parent_game = null; sort aggregated_rating desc; limit ${safeLimit};`;
   } else if (category === "hyped") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, rating; where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & parent_game = null; sort hypes desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, rating; where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & parent_game = null; sort hypes desc; limit ${safeLimit};`;
+  } else if (category === "retro") {
+    // Clássicos retrô lançados antes de 2005 (era dourada dos games)
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where first_release_date < 1104537600 & total_rating_count > 25 & cover != null & parent_game = null; sort total_rating_count desc; limit ${safeLimit};`;
   } else {
     // Mais populares por contagem total de avaliações e relevância
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where total_rating_count > 100 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${safeLimit};`;
   }
 
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
@@ -589,7 +603,7 @@ export async function getGamesCountIGDB(query: string): Promise<number> {
 
 // 8. Jogos Dublados em Português Brasileiro (TTL: 36 horas)
 export async function getPtBrDubbedGamesIGDB(limit = 20): Promise<Game[]> {
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, language_supports.language.name, language_supports.language_support_type.name; where language_supports.language = 21 & language_supports.language_support_type = 1 & cover != null & total_rating_count > 50; sort total_rating_count desc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, language_supports.language.name, language_supports.language_support_type.name; where language_supports.language = 21 & language_supports.language_support_type = 1 & cover != null & total_rating_count > 10 & parent_game = null; sort total_rating_count desc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
   return data.map(mapIGDBGameToGame);
 }

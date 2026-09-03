@@ -69,11 +69,11 @@ export async function getUpcomingGamesApi(limit = 20): Promise<Game[]> {
 }
 
 export async function getRankingsApi(
-  category: "popular" | "top_rated" | "hyped" = "popular",
+  category: "popular" | "top_rated" | "hyped" | "ptbr" | "retro" | "short" = "popular",
   limit = 20
 ): Promise<Game[]> {
   const games = await getRankingsIGDB(category, limit);
-  return await enrichWithHLTB(games, 3);
+  return await enrichWithHLTB(games, Math.min(limit, 5));
 }
 
 export async function getCalendarGamesApi(
