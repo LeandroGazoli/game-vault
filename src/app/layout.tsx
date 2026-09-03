@@ -13,6 +13,7 @@ import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
@@ -301,6 +302,7 @@ export default function RootLayout({
           </GameLibraryProvider>
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
         <GoogleAnalytics gaId="G-G7QH1XG25C" />
       </body>
     </html>
