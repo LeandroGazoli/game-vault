@@ -21,7 +21,7 @@ export const CATEGORIES_DATA: CategoryItem[] = [
     accent: "from-red-900/80 via-red-950/60 to-[#101216]",
     borderAccent: "border-red-500/30 hover:border-red-400",
     glowColor: "rgba(239, 68, 68, 0.25)",
-    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/ar16q.jpg",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/ar1yf8.jpg",
     igdbGenreId: 4, // Fighting
     featuredTitles: ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear -Strive-"],
   },
