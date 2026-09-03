@@ -27,9 +27,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mygameslist.com.br"),
-  title: "GameVault • Plataforma de Perfil, Lançamentos & Rastreamento de Jogos",
+  title: "MGL • Meu Gamer Log | Catálogo, Lançamentos & Backlog Gamer",
   description:
-    "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos ao vivo.",
+    "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo em PT-BR.",
   verification: {
     google: "1DCEVYrBhAZ-w02hcc6ym1KKojqWyvoRHuEN9W6biyg",
   },
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "GameVault",
+    title: "MGL",
   },
   icons: {
     icon: [
