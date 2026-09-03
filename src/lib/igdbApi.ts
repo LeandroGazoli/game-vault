@@ -52,6 +52,12 @@ export function mapIGDBGameToGame(item: any): Game {
     ? getIGDBImageUrl(item.screenshots[0].image_id, "720p")
     : null;
 
+  const backdropUrl = (item.artworks && item.artworks[0]?.image_id)
+    ? getIGDBImageUrl(item.artworks[0].image_id, "1080p")
+    : (item.screenshots && item.screenshots[0]?.image_id)
+    ? getIGDBImageUrl(item.screenshots[0].image_id, "1080p")
+    : coverUrl;
+
   const genres: GenreItem[] = item.genres?.map((g: any) => ({
     id: g.id,
     name: g.name,
@@ -204,6 +210,7 @@ export function mapIGDBGameToGame(item: any): Game {
     name: item.name,
     released: releaseDate,
     background_image: coverUrl,
+    backdrop_image: backdropUrl,
     rating: scoreFormatted,
     metacritic: metacriticScore,
     playtime: item.total_rating_count || item.hypes || undefined,

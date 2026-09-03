@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Game, AgeRatingItem } from "@/lib/types";
@@ -32,13 +32,22 @@ import {
   Globe,
   Building2,
   X,
+  ChevronLeft,
   ChevronRight,
   Eye,
   Languages,
   Package,
+  Maximize2,
 } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { formatPlatformShort } from "@/lib/platformUtils";
+
+interface GalleryMediaItem {
+  url: string;
+  type: "artwork" | "screenshot";
+  label: string;
+  id: string;
+}
 
 // Helper para selo oficial de Classificação Indicativa (CLASS_IND Brasil, ESRB, PEGI)
 function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
@@ -161,14 +170,19 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Estados de Mídia Rica
+  // Estados de Mídia Rica & Galeria
   const [activeVideoId, setActiveVideoId] = useState<string | null>(
     initialGame?.videos && initialGame.videos.length > 0 ? initialGame.videos[0].video_id : null
   );
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [mediaFilter, setMediaFilter] = useState<"all" | "artworks" | "screenshots">("all");
   const [bannerError, setBannerError] = useState(false);
   const [posterError, setPosterError] = useState(false);
-  const [failedScreenshots, setFailedScreenshots] = useState<Set<number>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const galleryScrollRef = useRef<HTMLDivElement>(null);
+  const activeThumbnailRef = useRef<HTMLButtonElement>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const userGame = game ? getGameInLibrary(game.id) : undefined;
 
@@ -198,18 +212,118 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     loadGame();
   }, [id, initialGame]);
 
-  // Fechar lightbox com Esc
+  // Montar lista unificada de todas as mídias (Key Art 1080p + Screenshots 1080p)
+  const allMediaItems = useMemo<GalleryMediaItem[]>(() => {
+    if (!game) return [];
+    const items: GalleryMediaItem[] = [];
+
+    // 1. Artes Oficiais (Key Art em 1080p do IGDB)
+    if (game.artworks && game.artworks.length > 0) {
+      game.artworks.forEach((url, i) => {
+        items.push({
+          url,
+          type: "artwork",
+          label: `Arte Oficial #${i + 1}`,
+          id: `artwork-${i}`,
+        });
+      });
+    }
+
+    // 2. Capturas de Tela (Screenshots em 1080p do IGDB)
+    if (game.screenshots && game.screenshots.length > 0) {
+      game.screenshots.forEach((url, i) => {
+        items.push({
+          url,
+          type: "screenshot",
+          label: `Captura de Tela #${i + 1}`,
+          id: `screenshot-${i}`,
+        });
+      });
+    }
+
+    return items;
+  }, [game]);
+
+  const artworksCount = useMemo(() => {
+    return allMediaItems.filter((m) => m.type === "artwork").length;
+  }, [allMediaItems]);
+
+  const screenshotsCount = useMemo(() => {
+    return allMediaItems.filter((m) => m.type === "screenshot").length;
+  }, [allMediaItems]);
+
+  const displayedMediaItems = useMemo(() => {
+    if (mediaFilter === "artworks") {
+      return allMediaItems.filter((m) => m.type === "artwork");
+    }
+    if (mediaFilter === "screenshots") {
+      return allMediaItems.filter((m) => m.type === "screenshot");
+    }
+    return allMediaItems;
+  }, [allMediaItems, mediaFilter]);
+
+  const currentLightboxItem =
+    lightboxIndex !== null && displayedMediaItems[lightboxIndex]
+      ? displayedMediaItems[lightboxIndex]
+      : null;
+
+  const goToPrevImage = useCallback(() => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return null;
+      return prev > 0 ? prev - 1 : displayedMediaItems.length - 1;
+    });
+  }, [displayedMediaItems.length]);
+
+  const goToNextImage = useCallback(() => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return null;
+      return prev < displayedMediaItems.length - 1 ? prev + 1 : 0;
+    });
+  }, [displayedMediaItems.length]);
+
+  const scrollGallery = (direction: "left" | "right") => {
+    if (!galleryScrollRef.current) return;
+    const scrollAmount = galleryScrollRef.current.clientWidth * 0.75;
+    galleryScrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
+  // Navegação no lightbox com Teclado (←, →, Esc)
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setLightboxImage(null);
+        setLightboxIndex(null);
+      } else if (e.key === "ArrowLeft") {
+        goToPrevImage();
+      } else if (e.key === "ArrowRight") {
+        goToNextImage();
       }
     },
-    []
+    [goToPrevImage, goToNextImage]
   );
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 45) {
+      if (diff > 0) {
+        goToNextImage();
+      } else {
+        goToPrevImage();
+      }
+    }
+    setTouchStartX(null);
+  };
+
   useEffect(() => {
-    if (lightboxImage) {
+    if (lightboxIndex !== null) {
       window.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
     }
@@ -217,7 +331,25 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
     };
-  }, [lightboxImage, handleKeyDown]);
+  }, [lightboxIndex, handleKeyDown]);
+
+  // Auto-scroll da miniatura ativa no lightbox
+  useEffect(() => {
+    if (activeThumbnailRef.current) {
+      activeThumbnailRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [lightboxIndex]);
+
+  // Backdrop Banner: prioriza Key Art oficial (artwork em 1080p), fallback para screenshot 1080p e capa
+  const backdropImage =
+    game?.backdrop_image ||
+    (game?.artworks && game.artworks[0]) ||
+    (game?.screenshots && game.screenshots[0]) ||
+    game?.background_image;
 
   if (loading) {
     return (
@@ -244,11 +376,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       </div>
     );
   }
-
-  const allScreenshots = [
-    ...(game.screenshots || []),
-    ...(game.artworks || []),
-  ];
 
   const allDlcsRaw = [
     ...(game.dlcs || []),
@@ -303,10 +430,11 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
         {/* Backdrop Banner */}
         <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-neutral-950">
-          {game.background_image && !bannerError ? (
+          {backdropImage && !bannerError ? (
             <img
-              src={game.background_image}
+              src={backdropImage}
               alt=""
+              loading="eager"
               decoding="async"
               onError={() => setBannerError(true)}
               className="w-full h-full object-cover object-center filter brightness-[0.45] contrast-105"
@@ -530,52 +658,135 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       )}
 
       {/* =========================================================================
-          SEÇÃO DE GALERIA DE CAPTURAS DE TELA (SCREENSHOTS)
+          SEÇÃO DE GALERIA DE CAPTURAS DE TELA & ARTES OFICIAIS (SLIDER)
       ========================================================================= */}
-      {allScreenshots.length > 0 && (
+      {allMediaItems.length > 0 && (
         <section className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-6 shadow-2xl">
-          <div className="space-y-1 border-b border-white/5 pb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-cyan-400" /> Galeria de Imagens & Screenshots
-            </h3>
-            <p className="text-xs text-gray-400">
-              Capturas de tela em alta definição e artes oficiais do jogo. Clique em qualquer imagem para ampliar.
-            </p>
+          {/* Cabeçalho com Filtros e Controles de Rolagem */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+            <div className="space-y-1">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-cyan-400" /> Galeria de Imagens & Screenshots
+                <span className="text-xs font-mono font-normal text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                  {allMediaItems.length} mídias
+                </span>
+              </h3>
+              <p className="text-xs text-gray-400">
+                Artes oficiais (Key Art) e capturas de tela em alta definição. Clique para ampliar e navegar no slide.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 self-start sm:self-auto">
+              {/* Filtros de Categoria (se houver mais de um tipo) */}
+              {artworksCount > 0 && screenshotsCount > 0 && (
+                <div className="flex items-center gap-1 bg-[#121316] p-1 rounded-xl border border-white/10 text-xs">
+                  <button
+                    onClick={() => setMediaFilter("all")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                      mediaFilter === "all"
+                        ? "bg-cyan-500 text-black shadow-sm"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Todas ({allMediaItems.length})
+                  </button>
+                  <button
+                    onClick={() => setMediaFilter("artworks")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                      mediaFilter === "artworks"
+                        ? "bg-cyan-500 text-black shadow-sm"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Artes ({artworksCount})
+                  </button>
+                  <button
+                    onClick={() => setMediaFilter("screenshots")}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                      mediaFilter === "screenshots"
+                        ? "bg-cyan-500 text-black shadow-sm"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Screenshots ({screenshotsCount})
+                  </button>
+                </div>
+              )}
+
+              {/* Botões de Rolagem do Slider */}
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  onClick={() => scrollGallery("left")}
+                  className="p-2 rounded-xl bg-[#121316] hover:bg-neutral-800 text-gray-400 hover:text-white border border-white/10 transition-colors"
+                  title="Rolar para esquerda"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => scrollGallery("right")}
+                  className="p-2 rounded-xl bg-[#121316] hover:bg-neutral-800 text-gray-400 hover:text-white border border-white/10 transition-colors"
+                  title="Rolar para direita"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-            {allScreenshots
-              .slice(0, 8)
-              .map((imgUrl, idx) => {
-                if (failedScreenshots.has(idx)) return null;
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => setLightboxImage(imgUrl)}
-                    className="group relative aspect-video rounded-xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-md hover:border-cyan-500/50 transition-all hover:scale-[1.02]"
-                  >
-                    <img
-                      src={imgUrl}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => {
-                        setFailedScreenshots((prev) => {
-                          const next = new Set(prev);
-                          next.add(idx);
-                          return next;
-                        });
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 text-[10px] uppercase font-bold text-white tracking-wider bg-black/70 px-2.5 py-1 rounded-full border border-white/20 transition-opacity">
-                        Ampliar
+          {/* Slider Horizontal de Mídias */}
+          <div
+            ref={galleryScrollRef}
+            className="flex gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory py-2 -mx-2 px-2 sm:mx-0 sm:px-0"
+          >
+            {displayedMediaItems.map((item, idx) => {
+              if (failedImages.has(item.url)) return null;
+
+              return (
+                <div
+                  key={item.id || idx}
+                  onClick={() => setLightboxIndex(idx)}
+                  className="w-[270px] sm:w-[330px] md:w-[370px] flex-shrink-0 snap-start group relative aspect-video rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-lg hover:border-cyan-400/60 transition-all hover:scale-[1.01]"
+                >
+                  <img
+                    src={item.url}
+                    alt={item.label}
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => {
+                      setFailedImages((prev) => new Set(prev).add(item.url));
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+
+                  {/* Badge de Categoria */}
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
+                    {item.type === "artwork" ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 backdrop-blur-md shadow-sm">
+                        Arte Oficial
                       </span>
-                    </div>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-gray-300 border border-white/15 backdrop-blur-md shadow-sm">
+                        Screenshot
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+
+                  {/* Contador de Posição */}
+                  <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black/70 text-gray-300 border border-white/10 backdrop-blur-md">
+                      {idx + 1}/{displayedMediaItems.length}
+                    </span>
+                  </div>
+
+                  {/* Hover Overlay com Botão Ampliar */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-white bg-black/85 px-4 py-2 rounded-full border border-white/25 shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                      <Maximize2 className="w-3.5 h-3.5 text-cyan-400" /> Ampliar no Slide
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -1018,26 +1229,117 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         onClose={() => setIsModalOpen(false)}
       />
 
-      {/* Lightbox Modal para Screenshots Fullscreen */}
-      {lightboxImage && mounted && typeof document !== "undefined" && createPortal(
+      {/* Lightbox Modal Estilo Slide Fullscreen com Navegação e Miniaturas */}
+      {lightboxIndex !== null && currentLightboxItem && mounted && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-xl animate-fadeIn"
-          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-[999] !m-0 !mt-0 flex flex-col justify-between p-3 sm:p-6 bg-black/95 backdrop-blur-2xl animate-fadeIn select-none"
+          onClick={() => setLightboxIndex(null)}
         >
-          <div className="relative max-w-6xl max-h-[90vh] flex flex-col items-center justify-center">
+          {/* Barra Superior do Lightbox */}
+          <div
+            className="flex items-center justify-between w-full max-w-7xl mx-auto z-20 pb-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              {currentLightboxItem.type === "artwork" ? (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm">
+                  Arte Oficial (Key Art 1080p)
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-gray-200 border border-white/20 shadow-sm">
+                  Captura de Tela (1080p)
+                </span>
+              )}
+
+              <span className="text-xs font-mono font-medium text-gray-400">
+                {lightboxIndex + 1} de {displayedMediaItems.length}
+              </span>
+            </div>
+
             <button
-              onClick={() => setLightboxImage(null)}
-              className="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+              onClick={() => setLightboxIndex(null)}
+              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center gap-1.5 border border-white/10 hover:border-white/25"
               title="Fechar (Esc)"
             >
-              <X className="w-6 h-6" />
+              <span className="text-xs font-semibold hidden sm:inline">Fechar</span>
+              <X className="w-4 h-4" />
             </button>
-            <img
-              src={lightboxImage}
-              alt="Screenshot ampliada"
-              className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-white/20 shadow-2xl"
+          </div>
+
+          {/* Área Central de Visualização com Botões de Slide */}
+          <div
+            className="relative flex-1 flex items-center justify-center my-auto overflow-hidden px-2"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Botão Anterior */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevImage();
+              }}
+              className="absolute left-1 sm:left-4 z-30 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 hover:border-cyan-400/60 transition-all shadow-2xl hover:scale-110 active:scale-95"
+              title="Foto anterior (←)"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Imagem Principal em Alta Definição */}
+            <div
+              className="max-w-full max-h-[72vh] sm:max-h-[76vh] flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
-            />
+            >
+              <img
+                key={currentLightboxItem.url}
+                src={currentLightboxItem.url}
+                alt={currentLightboxItem.label}
+                loading="lazy"
+                decoding="async"
+                className="max-w-[94vw] max-h-[72vh] sm:max-h-[76vh] rounded-2xl object-contain border border-white/15 shadow-2xl transition-all duration-300 animate-fadeIn"
+              />
+            </div>
+
+            {/* Botão Próximo */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNextImage();
+              }}
+              className="absolute right-1 sm:right-4 z-30 p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 hover:border-cyan-400/60 transition-all shadow-2xl hover:scale-110 active:scale-95"
+              title="Próxima foto (→)"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          {/* Faixa Inferior de Miniaturas para Navegação Direta */}
+          <div
+            className="w-full max-w-5xl mx-auto z-20 pt-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto scrollbar-none py-2 px-3 bg-[#121316]/80 backdrop-blur-md rounded-2xl border border-white/10">
+              {displayedMediaItems.map((thumb, idx) => (
+                <button
+                  key={thumb.id || idx}
+                  ref={idx === lightboxIndex ? activeThumbnailRef : null}
+                  onClick={() => setLightboxIndex(idx)}
+                  className={`flex-shrink-0 w-14 sm:w-20 aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+                    idx === lightboxIndex
+                      ? "border-cyan-400 ring-2 ring-cyan-400/40 scale-105 opacity-100 shadow-md"
+                      : "border-transparent opacity-40 hover:opacity-80"
+                  }`}
+                  title={thumb.label}
+                >
+                  <img
+                    src={thumb.url}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </div>,
         document.body

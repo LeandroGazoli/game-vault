@@ -31,7 +31,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? game.description_raw.slice(0, 160).replace(/\s+/g, " ").trim() + "..."
     : `Confira notas do Metacritic, tempo de conclusão no HowLongToBeat, plataformas e ficha técnica de ${game.name} no MyGameList.`;
 
-  const coverImage = game.background_image || (game.screenshots && game.screenshots[0]) || `${SITE_URL}/og-image.jpg`;
+  const coverImage =
+    game.backdrop_image ||
+    (game.artworks && game.artworks[0]) ||
+    (game.screenshots && game.screenshots[0]) ||
+    game.background_image ||
+    `${SITE_URL}/og-image.jpg`;
   const canonicalUrl = `${SITE_URL}${getGameUrl(game)}`;
 
   return {

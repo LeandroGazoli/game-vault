@@ -202,6 +202,7 @@ export interface Game {
   name: string;
   slug: string;
   background_image: string | null;
+  backdrop_image?: string | null;
   metacritic: number | null;
   released: string | null;
   genres: { id: number; name: string }[];
