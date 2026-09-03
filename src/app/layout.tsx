@@ -13,6 +13,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
@@ -66,6 +67,7 @@ export default function RootLayout({
         <GoogleAdScript />
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
+        <SpaceDustCanvas />
         <AuthProvider>
           <GameLibraryProvider>
             <PwaRegister />

@@ -6,6 +6,8 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import MetacriticBadge from "./MetacriticBadge";
 import StatusBadge from "./StatusBadge";
 import Link from "next/link";
+import confetti from "canvas-confetti";
+import dynamic from "next/dynamic";
 import {
   X,
   Dices,
@@ -20,6 +22,10 @@ import {
   ArrowRight,
   Trophy,
 } from "lucide-react";
+
+const Roulette3D = dynamic(() => import("./3d/Roulette3D"), {
+  ssr: false,
+});
 
 interface GameRouletteModalProps {
   isOpen: boolean;
@@ -85,6 +91,13 @@ export default function GameRouletteModal({
         clearInterval(interval);
         setIsSpinning(false);
         setSpinCount((prev) => prev + 1);
+        try {
+          confetti({
+            particleCount: 60,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        } catch {}
       }
     }, 100);
   };
@@ -167,6 +180,15 @@ export default function GameRouletteModal({
           </div>
         </div>
 
+        {/* Centro 3D da Roleta */}
+        <div className="relative rounded-2xl bg-[#10131a] border border-[#242a36] p-4 flex flex-col items-center justify-center overflow-hidden">
+          <div className="absolute top-2 left-3 text-[10px] font-mono text-cyan-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+            <span>[3D CORE // DADO D20 ARCADE]</span>
+          </div>
+          <Roulette3D isSpinning={isSpinning} />
+        </div>
+
         {/* Card do Jogo Sorteado */}
         {selectedGame ? (
           <div
@@ -240,17 +262,7 @@ export default function GameRouletteModal({
               </div>
             </div>
           </div>
-        ) : (
-          <div className="rounded-3xl border-2 border-dashed border-white/10 p-12 text-center space-y-3 bg-white/[0.02]">
-            <Dices className="w-12 h-12 text-purple-400/60 mx-auto animate-bounce" />
-            <p className="text-sm text-gray-300 font-medium">
-              Pronto para a escolha do destino?
-            </p>
-            <p className="text-xs text-gray-500">
-              Clique no botão abaixo para girar a roleta gamer.
-            </p>
-          </div>
-        )}
+        ) : null}
 
         {/* Botão Principal de Girar */}
         <div className="flex justify-center pt-2">
