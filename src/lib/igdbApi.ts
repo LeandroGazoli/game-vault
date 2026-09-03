@@ -439,13 +439,112 @@ async function fetchIGDB(endpoint: string, body: string, ttl = TTL_CONFIG.RECENT
 // CONSULTAS DE NEGÓCIO EXPORTADAS COM TTLs DEDICADOS
 // =========================================================================
 
-// 1. Busca Geral no IGDB com Paginação (TTL: 45 min)
-export async function searchGamesIGDB(query: string, limit = 50, offset = 0): Promise<Game[]> {
+export interface SearchFilterOptions {
+  query?: string;
+  genreId?: number;
+  genreIds?: number[];
+  themeId?: number;
+  platformId?: number;
+  platformIds?: number[];
+  minRating?: number;
+  sort?: "popular" | "top_rated" | "recent" | "upcoming" | "name_asc" | string;
+  limit?: number;
+  offset?: number;
+}
+
+// 1. Busca Geral e Filtros Adaptativos no IGDB com Paginação (TTL: 45 min)
+export async function searchAndFilterGamesIGDB(
+  options: SearchFilterOptions
+): Promise<Game[]> {
+  const {
+    query = "",
+    genreId,
+    genreIds,
+    themeId,
+    platformId,
+    platformIds,
+    minRating,
+    sort = "popular",
+    limit = 36,
+    offset = 0,
+  } = options;
+
   const escapedQuery = query.replace(/"/g, "").trim();
-  if (!escapedQuery) return [];
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; search "${escapedQuery}"; limit ${limit}; offset ${offset};`;
+  const whereParts: string[] = ["cover != null", "parent_game = null"];
+
+  // Filtros de Plataforma
+  if (platformIds && platformIds.length > 0) {
+    whereParts.push(`platforms = (${platformIds.join(",")})`);
+  } else if (platformId) {
+    whereParts.push(`platforms = (${platformId})`);
+  }
+
+  // Filtros de Gênero / Tema
+  if (genreIds && genreIds.length > 0) {
+    whereParts.push(`genres = (${genreIds.join(",")})`);
+  } else if (genreId) {
+    whereParts.push(`genres = (${genreId})`);
+  }
+  if (themeId) {
+    whereParts.push(`themes = (${themeId})`);
+  }
+
+  // Filtro de Nota Mínima
+  if (minRating && minRating > 0) {
+    whereParts.push(`(aggregated_rating >= ${minRating} | rating >= ${minRating})`);
+  }
+
+  let body = "";
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  if (escapedQuery) {
+    // Busca Textual com Filtros opcionais (em buscas textuais, IGDB não aceita cláusula sort)
+    const whereClause = whereParts.length > 0 ? `where ${whereParts.join(" & ")};` : "";
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; search "${escapedQuery}"; ${whereClause} limit ${limit}; offset ${offset};`;
+  } else {
+    // Exploração Adaptativa (sem query textual, ordenação dinâmica permitida)
+    const isFiltered = Boolean(
+      (platformIds && platformIds.length > 0) ||
+      platformId ||
+      (genreIds && genreIds.length > 0) ||
+      genreId ||
+      themeId ||
+      (minRating && minRating > 0)
+    );
+
+    let sortClause = "sort total_rating_count desc;";
+    if (sort === "top_rated") {
+      whereParts.push("(aggregated_rating != null | rating != null)");
+      if (!isFiltered) {
+        whereParts.push("total_rating_count > 15");
+      }
+      sortClause = "sort aggregated_rating desc;";
+    } else if (sort === "recent") {
+      whereParts.push(`first_release_date != null & first_release_date <= ${nowSec}`);
+      sortClause = "sort first_release_date desc;";
+    } else if (sort === "upcoming") {
+      whereParts.push(`first_release_date != null & first_release_date > ${nowSec}`);
+      sortClause = "sort first_release_date asc;";
+    } else if (sort === "name_asc") {
+      sortClause = "sort name asc;";
+    } else {
+      // popular
+      if (!isFiltered) {
+        whereParts.push("total_rating_count > 25");
+      }
+      sortClause = "sort total_rating_count desc;";
+    }
+
+    const whereClause = whereParts.length > 0 ? `where ${whereParts.join(" & ")};` : "";
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; ${whereClause} ${sortClause} limit ${limit}; offset ${offset};`;
+  }
+
   const data = await fetchIGDB("games", body, TTL_CONFIG.SEARCH);
   return data.map(mapIGDBGameToGame);
+}
+
+export async function searchGamesIGDB(query: string, limit = 50, offset = 0): Promise<Game[]> {
+  return searchAndFilterGamesIGDB({ query, limit, offset });
 }
 
 // 2. Lançamentos Recentes - Últimos 60 dias (TTL: 6 horas) - Apenas jogos principais, remakes e remasters
@@ -569,11 +668,69 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
   return game;
 }
 
-// 7. Contador Total de Jogos para Busca ou Filtros (TTL: 45 min)
-export async function getGamesCountIGDB(query: string): Promise<number> {
+// 7. Contador Total de Jogos para Busca ou Filtros Adaptativos (TTL: 45 min)
+export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): Promise<number> {
+  const {
+    query = "",
+    genreId,
+    genreIds,
+    themeId,
+    platformId,
+    platformIds,
+    minRating,
+    sort = "popular",
+  } = options;
+
   const escapedQuery = query.replace(/"/g, "").trim();
-  if (!escapedQuery) return 0;
-  const cacheKey = `games_count:${escapedQuery}`;
+  const whereParts: string[] = ["cover != null", "parent_game = null"];
+
+  if (platformIds && platformIds.length > 0) {
+    whereParts.push(`platforms = (${platformIds.join(",")})`);
+  } else if (platformId) {
+    whereParts.push(`platforms = (${platformId})`);
+  }
+
+  if (genreIds && genreIds.length > 0) {
+    whereParts.push(`genres = (${genreIds.join(",")})`);
+  } else if (genreId) {
+    whereParts.push(`genres = (${genreId})`);
+  }
+  if (themeId) {
+    whereParts.push(`themes = (${themeId})`);
+  }
+
+  if (minRating && minRating > 0) {
+    whereParts.push(`(aggregated_rating >= ${minRating} | rating >= ${minRating})`);
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const isFiltered = Boolean(
+    (platformIds && platformIds.length > 0) ||
+    platformId ||
+    (genreIds && genreIds.length > 0) ||
+    genreId ||
+    themeId ||
+    (minRating && minRating > 0)
+  );
+
+  if (!escapedQuery) {
+    if (sort === "top_rated") {
+      whereParts.push("(aggregated_rating != null | rating != null)");
+      if (!isFiltered) whereParts.push("total_rating_count > 15");
+    } else if (sort === "recent") {
+      whereParts.push(`first_release_date != null & first_release_date <= ${nowSec}`);
+    } else if (sort === "upcoming") {
+      whereParts.push(`first_release_date != null & first_release_date > ${nowSec}`);
+    } else if (sort === "popular" && !isFiltered) {
+      whereParts.push("total_rating_count > 25");
+    }
+  }
+
+  const whereClause = whereParts.length > 0 ? `where ${whereParts.join(" & ")};` : "";
+  const body = escapedQuery ? `search "${escapedQuery}"; ${whereClause}` : whereClause;
+  if (!body) return 0;
+
+  const cacheKey = `games_count:${body}`;
   const cached = getFromCache<number>(cacheKey);
   if (cached && !cached.isStale) return cached.data;
 
@@ -588,7 +745,7 @@ export async function getGamesCountIGDB(query: string): Promise<number> {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "text/plain",
         },
-        body: `search "${escapedQuery}";`,
+        body,
       });
       if (!response.ok) return { count: 0 };
       return response.json();
@@ -603,6 +760,10 @@ export async function getGamesCountIGDB(query: string): Promise<number> {
     console.error("Erro ao obter contagem de jogos do IGDB:", err);
     return 0;
   }
+}
+
+export async function getGamesCountIGDB(query: string): Promise<number> {
+  return getFilteredGamesCountIGDB({ query });
 }
 
 // 8. Jogos Dublados em Português Brasileiro (TTL: 36 horas)

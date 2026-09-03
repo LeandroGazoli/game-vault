@@ -1,6 +1,9 @@
 import { Game } from "./types";
 import {
   searchGamesIGDB,
+  searchAndFilterGamesIGDB,
+  getFilteredGamesCountIGDB,
+  SearchFilterOptions,
   getRecentReleasesIGDB,
   getUpcomingGamesIGDB,
   getRankingsIGDB,
@@ -38,15 +41,51 @@ async function enrichWithHLTB(games: Game[], maxCount = 4): Promise<Game[]> {
   );
 }
 
+export interface SearchGamesApiOptions {
+  query?: string;
+  genreId?: number;
+  genreIds?: number[];
+  themeId?: number;
+  platformId?: number;
+  platformIds?: number[];
+  minRating?: number;
+  sort?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export async function searchGamesApi(
-  query: string,
-  page = 1,
-  pageSize = 50
+  queryOrOptions: string | SearchGamesApiOptions,
+  pageArg = 1,
+  pageSizeArg = 36
 ): Promise<{ games: Game[]; count: number; total: number; page: number; hasMore: boolean }> {
+  const options: SearchFilterOptions =
+    typeof queryOrOptions === "string"
+      ? { query: queryOrOptions }
+      : {
+          query: queryOrOptions.query || "",
+          genreId: queryOrOptions.genreId,
+          genreIds: queryOrOptions.genreIds,
+          themeId: queryOrOptions.themeId,
+          platformId: queryOrOptions.platformId,
+          platformIds: queryOrOptions.platformIds,
+          minRating: queryOrOptions.minRating,
+          sort: queryOrOptions.sort,
+        };
+
+  const page = typeof queryOrOptions === "string" ? pageArg : queryOrOptions.page || 1;
+  const pageSize = typeof queryOrOptions === "string" ? pageSizeArg : queryOrOptions.pageSize || 36;
   const offset = Math.max(0, (page - 1) * pageSize);
+
+  const filterOpts: SearchFilterOptions = {
+    ...options,
+    limit: pageSize,
+    offset,
+  };
+
   const [games, totalCount] = await Promise.all([
-    searchGamesIGDB(query, pageSize, offset),
-    page === 1 ? getGamesCountIGDB(query) : Promise.resolve(0),
+    searchAndFilterGamesIGDB(filterOpts),
+    page === 1 ? getFilteredGamesCountIGDB(filterOpts) : Promise.resolve(0),
   ]);
   const enriched = await enrichWithHLTB(games, 3);
   return {
