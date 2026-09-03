@@ -51,6 +51,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Ignora completamente scripts externos de terceiros (Google Ads, AdSense, Analytics, GTM, etc.)
+  const isSameOrigin = url.origin === self.location.origin;
+  const isAllowedImage = url.hostname.includes("images.igdb.com") || url.hostname.includes("unsplash.com");
+
+  if (!isSameOrigin && !isAllowedImage) {
+    return;
+  }
+
   // APIs do Next.js e IGDB: Network First com fallback de cache
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
@@ -62,15 +70,14 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request))
+        .catch(() => caches.match(request).then((cached) => cached || new Response(JSON.stringify({ error: "offline" }), { status: 503, headers: { "Content-Type": "application/json" } })))
     );
     return;
   }
 
   // Imagens do IGDB ou estáticos: Stale While Revalidate
   if (
-    url.hostname.includes("images.igdb.com") ||
-    url.hostname.includes("unsplash.com") ||
+    isAllowedImage ||
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".png") ||
     url.pathname.endsWith(".svg") ||
@@ -88,7 +95,7 @@ self.addEventListener("fetch", (event) => {
             }
             return response;
           })
-          .catch(() => cached);
+          .catch(() => cached || new Response("", { status: 408, statusText: "Offline" }));
 
         return cached || networkFetch;
       })
@@ -110,8 +117,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Padrão: Cache First
+  // Padrão: Cache First com fallback seguro
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    caches.match(request).then((cached) => {
+      return cached || fetch(request).catch(() => new Response("", { status: 404 }));
+    })
   );
 });
