@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Game, UserGame } from "@/lib/types";
-import TopTenImdbSection, { TopTenImdbSkeleton } from "@/components/TopTenImdbSection";
+import UnifiedRankingsSection from "@/components/UnifiedRankingsSection";
+import GamerDashboardWidget from "@/components/GamerDashboardWidget";
 import CatalogRow, { CatalogRowSkeleton } from "@/components/CatalogRow";
-import RankingsSection from "@/components/RankingsSection";
 import LiveSearchInput from "@/components/LiveSearchInput";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GameModal from "@/components/GameModal";
@@ -257,90 +257,18 @@ export default function HomePage() {
               ROLETA // O que jogar hoje?
             </button>
           </div>
-
-          {/* Mini resumo do usuário se autenticado */}
-          {user && (
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 sm:gap-6 text-xs text-neutral-400 border-t border-[#242a36] pt-5 font-mono w-full">
-              <span className="text-neutral-200 font-sans">
-                Jogador: <strong className="text-white font-mono">{user.displayName}</strong>
-              </span>
-              <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-                <span className="flex items-center gap-1.5 text-[#00E5FF]">
-                  <Trophy className="w-3.5 h-3.5 text-[#00E5FF]" /> <strong className="text-white tabular-nums">{stats.completedCount}</strong> zerados
-                </span>
-                <span className="flex items-center gap-1.5 text-blue-400">
-                  <Gamepad2 className="w-3.5 h-3.5 text-blue-400" /> <strong className="text-white tabular-nums">{stats.playingCount}</strong> jogando
-                </span>
-                <span className="flex items-center gap-1.5 text-amber-400">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" /> <strong className="text-white tabular-nums">{stats.totalPlaytimeHours}h</strong> registradas
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
       {/* ==========================================
-          CARD "CONTINUE SUA JORNADA" (Usuário Logado)
+          PAINEL GAMER / WIDGET GAMIFICADO DO USUÁRIO
       ========================================== */}
-      {user && currentlyPlaying && (
-        <section className="relative overflow-hidden rounded-2xl border border-[#242a36] bg-[#12151c] p-5 sm:p-6 shadow-xl">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              {currentlyPlaying.gameCover ? (
-                <div className="w-14 h-20 sm:w-16 sm:h-24 rounded-xl overflow-hidden shadow-lg border border-[#2a3140] flex-shrink-0 bg-neutral-900">
-                  <img
-                    src={currentlyPlaying.gameCover}
-                    alt={currentlyPlaying.gameTitle}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-20 rounded-xl bg-neutral-900 border border-[#2a3140] flex items-center justify-center text-xs text-neutral-500">
-                  Sem Capa
-                </div>
-              )}
-
-              <div className="space-y-1 min-w-0">
-                <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider">
-                  <Play className="w-3 h-3 fill-current text-cyan-400" />
-                  EM ANDAMENTO
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-white truncate max-w-md">
-                  {currentlyPlaying.gameTitle}
-                </h3>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-400 font-mono">
-                  <span className="flex items-center gap-1 text-neutral-200">
-                    <Clock className="w-3 h-3 text-amber-400" />
-                    <strong className="text-white tabular-nums">{currentlyPlaying.userPlaytimeHours || 0}h</strong> dedicadas
-                  </span>
-                  {currentlyPlaying.hltbData?.mainStory && (
-                    <span className="text-neutral-400">
-                      • Média HLTB: ~{currentlyPlaying.hltbData.mainStory}h
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-              <Link
-                href={`/game/${currentlyPlaying.gameId}`}
-                className="px-4 py-2.5 rounded-lg bg-[#181c25] hover:bg-[#202532] border border-[#2a3140] text-xs font-semibold text-neutral-200 hover:text-white transition-all"
-              >
-                Ver Detalhes
-              </Link>
-              {playingGameObj && (
-                <button
-                  onClick={() => setSelectedGameForModal(playingGameObj)}
-                  className="px-5 py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
-                >
-                  <Trophy className="w-3.5 h-3.5" /> Atualizar Progresso
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
+      {user && (
+        <GamerDashboardWidget
+          currentlyPlaying={currentlyPlaying}
+          playingGameObj={playingGameObj}
+          onOpenRoulette={() => setIsRouletteOpen(true)}
+        />
       )}
 
       {/* ==========================================
@@ -349,13 +277,9 @@ export default function HomePage() {
       <AdBanner slot="HOME_TOP_LEADERBOARD" />
 
       {/* ==========================================
-          2. TOP 10 NO GAMEVAULT (Estilo IMDb / Disney+)
+          2. RANKINGS OFICIAIS GAMEVAULT (UNIFICADO COM ABAS)
       ========================================== */}
-      {loading ? (
-        <TopTenImdbSkeleton />
-      ) : topTenGames.length > 0 ? (
-        <TopTenImdbSection games={topTenGames} />
-      ) : null}
+      <UnifiedRankingsSection initialGames={topTenGames} />
 
       {/* ==========================================
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
@@ -374,11 +298,11 @@ export default function HomePage() {
       ) : releases.length > 0 ? (
         <CatalogRow
           title="Lançamentos Recentes"
-          subtitle="Jogos recém-lançados disponíveis para jogar agora"
+          subtitle="Os 10 títulos recém-lançados mais relevantes para jogar agora"
           icon={Flame}
-          games={releases}
+          games={releases.slice(0, 10)}
           actionHref="/calendar"
-          actionText="Ver no Calendário →"
+          actionText="Ver Calendário Completo →"
         />
       ) : null}
 
@@ -396,7 +320,7 @@ export default function HomePage() {
           title="🇧🇷 Dublados em Português"
           subtitle="Títulos consagrados com dublagem oficial em português do Brasil"
           icon={Languages}
-          games={ptbrGames}
+          games={ptbrGames.slice(0, 10)}
           actionHref="/search?q=dublado"
           actionText="Explorar Catálogo →"
         />
@@ -416,7 +340,7 @@ export default function HomePage() {
           title="⏱️ Zere no Fim de Semana"
           subtitle="Obras-primas curtas de até 10 horas para você zerar sem enrolação"
           icon={Timer}
-          games={shortGames}
+          games={shortGames.slice(0, 10)}
           actionHref="/search"
           actionText="Ver mais jogos →"
         />
@@ -436,7 +360,7 @@ export default function HomePage() {
           title="Em Breve nos Games"
           subtitle="Títulos aguardados que serão lançados nos próximos meses"
           icon={CalendarIcon}
-          games={upcoming}
+          games={upcoming.slice(0, 10)}
           actionHref="/calendar"
           actionText="Calendário Completo →"
         />
@@ -489,10 +413,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==========================================
-          8. RANKINGS MGL (Populares, Avaliados, Desejados)
-      ========================================== */}
-      <RankingsSection />
 
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS

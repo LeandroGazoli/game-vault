@@ -1,14 +1,14 @@
-"use client";
-
-import React, { useState } from "react";
-import { Game } from "@/lib/types";
+import React, { useState, useRef, useEffect } from "react";
+import { Game, GameStatus } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
+import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
 import StatusBadge from "./StatusBadge";
 import GameModal from "./GameModal";
 import Link from "next/link";
-import { Clock, Plus, Check, Star } from "lucide-react";
+import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3 } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
+import { formatGameDuration } from "@/lib/gameUtils";
 
 interface GameCardProps {
   game: Game;
@@ -16,11 +16,54 @@ interface GameCardProps {
 }
 
 export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
-  const { getGameInLibrary } = useGameLibrary();
+  const { user } = useAuth();
+  const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const userGame = getGameInLibrary(game.id);
   const releaseYear = game.released ? game.released.substring(0, 4) : "";
+  const duration = formatGameDuration(game, userGame?.userPlaytimeHours);
+
+  // Fecha o menu ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isMenuOpen]);
+
+  const handleQuickStatus = async (status: GameStatus) => {
+    if (!user) {
+      setIsMenuOpen(false);
+      onOpenAuthModal?.();
+      return;
+    }
+    await addOrUpdateGame({
+      gameId: game.id,
+      gameSlug: game.slug || String(game.id),
+      gameTitle: game.name,
+      gameCover: game.background_image || "",
+      status,
+      platformsPlayed: game.platforms?.map((p) => p.platform?.name || "").filter(Boolean) || [],
+      genres: game.genres?.map((g) => g.name) || [],
+      metacritic: game.metacritic || null,
+      hltbData: game.hltb || null,
+    });
+    setIsMenuOpen(false);
+  };
+
+  const handleRemove = async () => {
+    if (!user) return;
+    await deleteGame(game.id);
+    setIsMenuOpen(false);
+  };
 
   return (
     <>
@@ -64,18 +107,111 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             </div>
           )}
 
-          {/* Botão de Adição Rápida no Hover */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsModalOpen(true);
-            }}
-            className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-lg bg-[#181c25]/90 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 shadow-md z-20 border border-[#2e3646] hover:border-white active:scale-95"
-            title={userGame ? "Editar Status" : "Adicionar à Lista"}
-          >
-            {userGame ? <Check className="w-4 h-4 text-[#00E5FF]" /> : <Plus className="w-4 h-4" />}
-          </button>
+          {/* Botão de Micro-Ações Rápidas (...) */}
+          <div ref={menuRef} className="absolute bottom-2.5 right-2.5 z-30">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className="w-8 h-8 rounded-lg bg-[#181c25]/95 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-95 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 shadow-md border border-[#2e3646] hover:border-white active:scale-95 cursor-pointer"
+              title="Ações rápidas no jogo"
+              aria-label="Ações rápidas"
+            >
+              {userGame ? (
+                <Check className="w-4 h-4 text-[#00E5FF] group-hover:text-black" />
+              ) : (
+                <MoreHorizontal className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* Dropdown de Micro-Ações Rápidas */}
+            {isMenuOpen && (
+              <div
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="absolute right-0 bottom-full mb-2 w-48 rounded-xl bg-[#14171f] border border-[#2b3342] shadow-2xl p-1.5 space-y-0.5 z-50 text-xs font-medium animate-fadeIn backdrop-blur-xl"
+              >
+                <div className="px-2 py-1 text-[10px] uppercase font-mono font-bold text-gray-400 border-b border-white/5 mb-1">
+                  Definir Status
+                </div>
+
+                <button
+                  onClick={() => handleQuickStatus("completed")}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    userGame?.status === "completed"
+                      ? "bg-emerald-500/20 text-emerald-300 font-bold"
+                      : "text-gray-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Já Zerei</span>
+                </button>
+
+                <button
+                  onClick={() => handleQuickStatus("playing")}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    userGame?.status === "playing"
+                      ? "bg-cyan-500/20 text-cyan-300 font-bold"
+                      : "text-gray-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Jogando Agora</span>
+                </button>
+
+                <button
+                  onClick={() => handleQuickStatus("backlog")}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    userGame?.status === "backlog"
+                      ? "bg-amber-500/20 text-amber-300 font-bold"
+                      : "text-gray-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Bookmark className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Quero Jogar</span>
+                </button>
+
+                <button
+                  onClick={() => handleQuickStatus("dropped")}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    userGame?.status === "dropped"
+                      ? "bg-rose-500/20 text-rose-300 font-bold"
+                      : "text-gray-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span>Abandonado</span>
+                </button>
+
+                <div className="pt-1 border-t border-white/5 mt-1 space-y-0.5">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span>Detalhes &amp; DLCs...</span>
+                  </button>
+
+                  {userGame && (
+                    <button
+                      onClick={handleRemove}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-rose-400 hover:bg-rose-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Remover da Lista</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Informações do Jogo */}
@@ -107,14 +243,13 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
           {/* Mini Info de Tempo HLTB ou Horas Registradas & Avaliação */}
           <div className="pt-2 border-t border-[#222834] flex items-center justify-between text-xs font-mono">
             {/* Tempos HLTB ou Horas do Jogador */}
-            <div className="flex items-center gap-1.5 text-neutral-400 text-[11px] tabular-nums">
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span>
-                {userGame?.userPlaytimeHours
-                  ? `${userGame.userPlaytimeHours}h`
-                  : game.hltb?.mainStory
-                  ? `${game.hltb.mainStory}h`
-                  : "30h"}
+            <div
+              className="flex items-center gap-1.5 text-neutral-400 text-[11px] tabular-nums"
+              title={duration.isEstimated ? (duration.isTbd ? "Lançamento futuro / Duração a definir" : "Média de duração no HowLongToBeat") : "Suas horas dedicadas"}
+            >
+              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className={duration.isTbd ? "text-neutral-400 font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-white/5 border border-white/10" : ""}>
+                {duration.text}
               </span>
             </div>
 
@@ -128,7 +263,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
               ) : (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="text-neutral-400 hover:text-white font-medium text-xs transition-colors"
+                  className="text-neutral-400 hover:text-white font-medium text-xs transition-colors cursor-pointer"
                 >
                   {userGame ? "Editar" : "+ Lista"}
                 </button>

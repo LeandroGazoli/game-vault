@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus, Check, Star, Sparkles, Flame, Clock } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Card3DTilt from "./3d/Card3DTilt";
+import { formatGameDuration } from "@/lib/gameUtils";
 
 interface CatalogRowProps {
   title: string;
@@ -184,10 +185,18 @@ export default function CatalogRow({
 
                     {/* Botão de Ação / Status */}
                     <div className="mt-2.5 pt-2 border-t border-[#222834] flex items-center justify-between font-mono">
-                      <div className="text-[10px] text-neutral-400 flex items-center gap-1 tabular-nums">
-                        <Clock className="w-3 h-3 text-cyan-400" />
-                        <span>{game.hltb?.mainStory ? `${game.hltb.mainStory}h` : "30h"}</span>
-                      </div>
+                      {(() => {
+                        const duration = formatGameDuration(game, userGame?.userPlaytimeHours);
+                        return (
+                          <div
+                            className="text-[10px] text-neutral-400 flex items-center gap-1 tabular-nums"
+                            title={duration.isEstimated ? (duration.isTbd ? "A definir" : "Média HLTB") : "Horas jogadas"}
+                          >
+                            <Clock className="w-3 h-3 text-cyan-400" />
+                            <span className={duration.isTbd ? "text-neutral-500 font-bold" : ""}>{duration.text}</span>
+                          </div>
+                        );
+                      })()}
 
                       <button
                         onClick={() => setSelectedGame(game)}
