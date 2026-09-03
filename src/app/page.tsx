@@ -34,6 +34,7 @@ import {
 import HomeHero from "@/components/HomeHero";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
+import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
 
 // Franquias consagradas para a seção de exploração
 const LEGENDARY_FRANCHISES = [
@@ -249,6 +250,11 @@ export default function HomePage() {
           1. HERO SECTION CINEMATOGRÁFICO & REFINADO
       ========================================== */}
       <HomeHero onOpenRoulette={() => setIsRouletteOpen(true)} />
+
+      {/* ==========================================
+          CARD FIXO DE ANÚNCIO DO NOVO RECURSO
+      ========================================== */}
+      <HomeFeatureAnnouncementCard />
 
       {/* ==========================================
           2. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)

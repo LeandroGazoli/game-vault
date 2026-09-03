@@ -568,3 +568,65 @@ export const DEFAULT_REWARD_TITLES = [
   "🚀 Arquiteto Comunitário",
 ];
 
+// ==========================================
+// SISTEMA DE NOTIFICAÇÕES (PUSH & IN-APP)
+// ==========================================
+
+export type NotificationCategory = "feature" | "content" | "update" | "reward" | "general";
+
+export interface SystemNotification {
+  id: string;
+  title: string;
+  message: string;
+  category: NotificationCategory;
+  linkUrl?: string | null;
+  linkLabel?: string | null;
+  imageUrl?: string | null;
+  isPinned?: boolean;
+  sendPush?: boolean;
+  createdAt: string;
+  createdBy?: string;
+}
+
+export const NOTIFICATION_CATEGORIES: Record<
+  NotificationCategory,
+  {
+    label: string;
+    iconName: "Sparkles" | "Gamepad2" | "Zap" | "Trophy" | "Bell";
+    badgeClass: string;
+    accentColor: string;
+  }
+> = {
+  feature: {
+    label: "Novo Recurso",
+    iconName: "Sparkles",
+    badgeClass: "bg-cyan-500/15 border-cyan-500/40 text-[#00E5FF]",
+    accentColor: "#00E5FF",
+  },
+  content: {
+    label: "Novo Conteúdo",
+    iconName: "Gamepad2",
+    badgeClass: "bg-emerald-500/15 border-emerald-500/40 text-emerald-400",
+    accentColor: "#34d399",
+  },
+  update: {
+    label: "Atualização",
+    iconName: "Zap",
+    badgeClass: "bg-amber-500/15 border-amber-500/40 text-amber-300",
+    accentColor: "#fbbf24",
+  },
+  reward: {
+    label: "Recompensa",
+    iconName: "Trophy",
+    badgeClass: "bg-yellow-500/15 border-yellow-500/40 text-yellow-300",
+    accentColor: "#facc15",
+  },
+  general: {
+    label: "Aviso Geral",
+    iconName: "Bell",
+    badgeClass: "bg-purple-500/15 border-purple-500/40 text-purple-300",
+    accentColor: "#c084fc",
+  },
+};
+
+

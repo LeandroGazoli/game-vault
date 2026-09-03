@@ -23,6 +23,7 @@ import {
   limit,
   runTransaction,
   orderBy,
+  onSnapshot,
   Firestore
 } from "firebase/firestore";
 import {
@@ -33,7 +34,8 @@ import {
   FeedbackStatus,
   FeedbackRewardType,
   FeedbackVote,
-  FeedbackComment
+  FeedbackComment,
+  SystemNotification
 } from "./types";
 
 const firebaseConfig = {
@@ -567,4 +569,93 @@ export async function deleteFeedbackItem(feedbackId: string): Promise<void> {
     throw e;
   }
 }
+
+// ==========================================
+// SISTEMA DE NOTIFICAÇÕES (PUSH & IN-APP)
+// ==========================================
+
+export async function createSystemNotification(
+  data: Omit<SystemNotification, "id" | "createdAt">
+): Promise<string> {
+  if (!db) throw new Error("Firestore não inicializado");
+
+  const notifColl = collection(db, "system_notifications");
+  const newDocRef = doc(notifColl);
+  const now = new Date().toISOString();
+
+  const notification: SystemNotification = {
+    ...data,
+    id: newDocRef.id,
+    createdAt: now,
+  };
+
+  await setDoc(newDocRef, notification);
+  return newDocRef.id;
+}
+
+export async function getSystemNotifications(limitCount = 30): Promise<SystemNotification[]> {
+  if (!db) return [];
+
+  try {
+    const notifColl = collection(db, "system_notifications");
+    const snapshot = await getDocs(notifColl);
+    const list: SystemNotification[] = [];
+
+    snapshot.forEach((docSnap) => {
+      list.push({ ...(docSnap.data() as SystemNotification), id: docSnap.id });
+    });
+
+    list.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return list.slice(0, limitCount);
+  } catch (e) {
+    console.error("Erro ao carregar notificações do sistema:", e);
+    return [];
+  }
+}
+
+export async function deleteSystemNotification(id: string): Promise<void> {
+  if (!id || !db) return;
+  try {
+    await deleteDoc(doc(db, "system_notifications", id));
+  } catch (e) {
+    console.error("Erro ao excluir notificação:", e);
+    throw e;
+  }
+}
+
+export function subscribeToSystemNotifications(
+  callback: (notifications: SystemNotification[]) => void
+): () => void {
+  if (!db) {
+    callback([]);
+    return () => {};
+  }
+
+  try {
+    const notifColl = collection(db, "system_notifications");
+    return onSnapshot(
+      notifColl,
+      (snapshot) => {
+        const list: SystemNotification[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ ...(docSnap.data() as SystemNotification), id: docSnap.id });
+        });
+        list.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        callback(list);
+      },
+      (error) => {
+        console.error("Erro no listener de notificações:", error);
+      }
+    );
+  } catch (err) {
+    console.error("Erro ao assinar notificações:", err);
+    return () => {};
+  }
+}
+
 

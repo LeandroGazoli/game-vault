@@ -25,13 +25,15 @@ import {
   ArrowUpRight,
   TrendingUp,
   Lightbulb,
+  Bell,
 } from "lucide-react";
 import AdminPlansManager from "@/components/AdminPlansManager";
 import AdminFeedbackManager from "@/components/AdminFeedbackManager";
+import AdminNotificationManager from "@/components/AdminNotificationManager";
 
 export default function AdminPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
-  const [adminTab, setAdminTab] = useState<"users" | "plans" | "feedback">("users");
+  const [adminTab, setAdminTab] = useState<"users" | "plans" | "feedback" | "notifications">("users");
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -235,12 +237,29 @@ export default function AdminPage() {
             BOUNTY
           </span>
         </button>
+
+        <button
+          onClick={() => setAdminTab("notifications")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+            adminTab === "notifications"
+              ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20"
+              : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>Notificações &amp; Push</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] bg-purple-950/60 text-purple-200 border border-purple-400/30 font-mono font-bold">
+            BROADCAST
+          </span>
+        </button>
       </div>
 
       {adminTab === "plans" ? (
         <AdminPlansManager adminEmail={user.email} />
       ) : adminTab === "feedback" ? (
         <AdminFeedbackManager />
+      ) : adminTab === "notifications" ? (
+        <AdminNotificationManager />
       ) : (
         <>
           {/* Toast de Sucesso */}

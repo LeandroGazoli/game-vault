@@ -13,6 +13,7 @@ import PlanBadge from "./PlanBadge";
 import UserAvatar from "./UserAvatar";
 import { triggerPwaInstall } from "./PwaInstallPrompt";
 import { openSpotlightSearch } from "./SpotlightSearchModal";
+import NotificationBell from "./notifications/NotificationBell";
 import { getProfileUrl } from "@/lib/routes";
 import {
   Gamepad2,
@@ -347,6 +348,9 @@ export default function Navbar() {
                 <span>PRO</span>
               </Link>
             )}
+
+            {/* Central de Notificações (Web Push & Cards In-App) */}
+            <NotificationBell />
 
             {user ? (
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">

@@ -118,5 +118,11 @@ service cloud.firestore {
         allow update, delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       }
     }
+
+    // Notificações e Avisos do Sistema (Push & In-App)
+    match /system_notifications/{notifId} {
+      allow read: if true;
+      allow write: if isVerifiedAdmin();
+    }
   }
 }
