@@ -1,4 +1,13 @@
+const MAX_TRANSLATION_CACHE = 1000;
 const translationCache = new Map<string, string>();
+
+function setTranslationCache(key: string, value: string) {
+  if (translationCache.size >= MAX_TRANSLATION_CACHE) {
+    const oldest = translationCache.keys().next().value;
+    if (oldest) translationCache.delete(oldest);
+  }
+  translationCache.set(key, value);
+}
 
 /**
  * Verifica se a tradução recebida é limpa e não contém mensagens de erro de APIs
@@ -116,7 +125,7 @@ async function translateChunk(chunk: string): Promise<string> {
       if (status === 200 && isCleanTranslation(translated)) {
         const sanitized = sanitizeTranslation(translated);
         if (sanitized) {
-          translationCache.set(trimmed, sanitized);
+          setTranslationCache(trimmed, sanitized);
           return sanitized;
         }
       }
@@ -159,7 +168,7 @@ export async function translateToPortuguese(text: string): Promise<string> {
 
     const fullResult = sanitizeTranslation(translatedParagraphs.join("\n\n"));
     if (isCleanTranslation(fullResult) && fullResult.length > 0) {
-      translationCache.set(trimmed, fullResult);
+      setTranslationCache(trimmed, fullResult);
       return fullResult;
     }
 

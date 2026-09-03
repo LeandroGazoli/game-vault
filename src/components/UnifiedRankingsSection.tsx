@@ -138,41 +138,44 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
           </div>
 
           {/* Abas Interativas de Seleção */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#14171f] border border-[#262c38] w-full sm:w-auto overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#14171f] border border-[#262c38] w-full sm:w-auto">
             <button
               onClick={() => setActiveTab("popular")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                 activeTab === "popular"
                   ? "bg-[#1f2533] text-white shadow-sm border border-[#343e54]"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
-              <Flame className="w-3.5 h-3.5 text-orange-400" />
-              <span>Mais Populares</span>
+              <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+              <span className="sm:hidden">Populares</span>
+              <span className="hidden sm:inline">Mais Populares</span>
             </button>
 
             <button
               onClick={() => setActiveTab("top_rated")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                 activeTab === "top_rated"
                   ? "bg-[#1f2533] text-white shadow-sm border border-[#343e54]"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
-              <span>Mais Bem Avaliados</span>
+              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30 shrink-0" />
+              <span className="sm:hidden">Avaliados</span>
+              <span className="hidden sm:inline">Mais Bem Avaliados</span>
             </button>
 
             <button
               onClick={() => setActiveTab("hyped")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                 activeTab === "hyped"
                   ? "bg-[#1f2533] text-white shadow-sm border border-[#343e54]"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Mais Desejados</span>
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="sm:hidden">Desejados</span>
+              <span className="hidden sm:inline">Mais Desejados</span>
             </button>
           </div>
         </div>

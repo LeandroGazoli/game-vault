@@ -279,6 +279,7 @@ class RequestDispatcher {
   private readonly maxConcurrency = 4;
   private readonly minIntervalMs = 340; // ~3 requisições por segundo
   private lastDispatchTime = 0;
+  private isTimerScheduled = false;
 
   async schedule<T>(task: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -294,14 +295,20 @@ class RequestDispatcher {
     });
   }
 
-  private async processNext() {
+  private processNext() {
     if (this.queue.length === 0) return;
     if (this.activeRequests >= this.maxConcurrency) return;
 
     const now = Date.now();
     const timeSinceLast = now - this.lastDispatchTime;
     if (timeSinceLast < this.minIntervalMs) {
-      setTimeout(() => this.processNext(), this.minIntervalMs - timeSinceLast);
+      if (!this.isTimerScheduled) {
+        this.isTimerScheduled = true;
+        setTimeout(() => {
+          this.isTimerScheduled = false;
+          this.processNext();
+        }, this.minIntervalMs - timeSinceLast);
+      }
       return;
     }
 
@@ -311,12 +318,14 @@ class RequestDispatcher {
     this.activeRequests++;
     this.lastDispatchTime = Date.now();
 
-    try {
-      await nextTask();
-    } finally {
-      this.activeRequests--;
-      this.processNext();
-    }
+    (async () => {
+      try {
+        await nextTask();
+      } finally {
+        this.activeRequests--;
+        this.processNext();
+      }
+    })();
   }
 }
 

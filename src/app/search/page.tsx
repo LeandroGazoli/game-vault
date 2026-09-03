@@ -112,35 +112,37 @@ function SearchContent() {
   };
 
   // Filtros de gênero, plataforma e nota
-  const filteredGames = games.filter((g) => {
-    if (selectedGenre !== "Todos") {
-      const hasGenre = g.genres?.some((genre) =>
-        genre.name.toLowerCase().includes(selectedGenre.toLowerCase().replace(/[^a-z]/g, ""))
-      );
-      if (!hasGenre) return false;
-    }
+  const filteredGames = useMemo(() => {
+    return games.filter((g) => {
+      if (selectedGenre !== "Todos") {
+        const hasGenre = g.genres?.some((genre) =>
+          genre.name.toLowerCase().includes(selectedGenre.toLowerCase().replace(/[^a-z]/g, ""))
+        );
+        if (!hasGenre) return false;
+      }
 
-    if (selectedPlatform !== "Todas") {
-      const target = selectedPlatform.toLowerCase();
-      const hasPlat = g.platforms?.some((p) => {
-        const pName = p.platform.name.toLowerCase();
-        if (target === "playstation") {
-          return pName === "playstation" || pName.includes("ps1");
-        }
-        if (target === "xbox") {
-          return pName === "xbox" || pName.includes("original");
-        }
-        return pName.includes(target);
-      });
-      if (!hasPlat) return false;
-    }
+      if (selectedPlatform !== "Todas") {
+        const target = selectedPlatform.toLowerCase();
+        const hasPlat = g.platforms?.some((p) => {
+          const pName = p.platform.name.toLowerCase();
+          if (target === "playstation") {
+            return pName === "playstation" || pName.includes("ps1");
+          }
+          if (target === "xbox") {
+            return pName === "xbox" || pName.includes("original");
+          }
+          return pName.includes(target);
+        });
+        if (!hasPlat) return false;
+      }
 
-    if (minMetacritic > 0) {
-      if (!g.metacritic || g.metacritic < minMetacritic) return false;
-    }
+      if (minMetacritic > 0) {
+        if (!g.metacritic || g.metacritic < minMetacritic) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [games, selectedGenre, selectedPlatform, minMetacritic]);
 
   return (
     <div className="space-y-8 pb-12">

@@ -20,7 +20,16 @@ export interface GameTranslations {
 }
 
 // Cache local em memória para evitar requisições repetidas ao Firestore na mesma sessão/instância
+const MAX_TRANSLATIONS_CACHE = 1000;
 const memoryCache = new Map<string, GameTranslations>();
+
+function setMemoryCache(key: string, data: GameTranslations) {
+  if (memoryCache.size >= MAX_TRANSLATIONS_CACHE) {
+    const oldestKey = memoryCache.keys().next().value;
+    if (oldestKey) memoryCache.delete(oldestKey);
+  }
+  memoryCache.set(key, data);
+}
 
 /**
  * Busca todas as traduções salvas de um jogo (Sinopse e Enredo) no Firestore.
@@ -56,7 +65,7 @@ export async function getStoredGameTranslations(
         storyline: cleanStoryline,
       };
 
-      memoryCache.set(key, result);
+      setMemoryCache(key, result);
       return result;
     }
   } catch (err) {
@@ -102,7 +111,7 @@ export async function saveGameTranslations(
 
   // Atualiza cache de memória imediatamente
   const currentCached = memoryCache.get(key) || { description: null, storyline: null };
-  memoryCache.set(key, {
+  setMemoryCache(key, {
     description: cleanDesc !== undefined ? cleanDesc : currentCached.description,
     storyline: cleanStoryline !== undefined ? cleanStoryline : currentCached.storyline,
   });

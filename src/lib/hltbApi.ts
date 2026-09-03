@@ -1,7 +1,16 @@
 import { HLTBData } from "./types";
 
+const MAX_HLTB_CACHE = 500;
 const cache = new Map<string, { data: HLTBData | null; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 horas
+
+function setHltbCache(key: string, data: HLTBData | null) {
+  if (cache.size >= MAX_HLTB_CACHE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) cache.delete(oldestKey);
+  }
+  cache.set(key, { data, timestamp: Date.now() });
+}
 
 let tokenCache: { token: string; hpKey: string; hpVal: string; timestamp: number } | null = null;
 
@@ -145,10 +154,11 @@ export async function fetchHLTBData(gameName: string): Promise<HLTBData | null> 
           source: "HowLongToBeat",
         };
 
-        cache.set(normalized, { data, timestamp: Date.now() });
+        setHltbCache(normalized, data);
         return data;
       }
     }
+    setHltbCache(normalized, null);
   } catch (error) {
     console.warn(`Aviso HLTB para "${gameName}":`, error);
   }
