@@ -67,7 +67,7 @@ export default function CatalogRow({
             {actionHref && (
               <Link
                 href={actionHref}
-                className="text-xs font-mono font-semibold text-neutral-400 hover:text-white transition-colors"
+                className="text-xs font-mono font-semibold text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-1 whitespace-nowrap shrink-0"
               >
                 {actionText}
               </Link>

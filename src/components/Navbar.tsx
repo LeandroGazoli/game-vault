@@ -47,12 +47,16 @@ export default function Navbar() {
   // Bloqueia scroll do body quando o menu drawer mobile estiver aberto
   useEffect(() => {
     if (isMobileMenuOpen) {
-      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
     }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
   }, [isMobileMenuOpen]);
 
   // Fecha o menu com a tecla ESC
@@ -155,16 +159,6 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Botão Visível de Instalar PWA no Mobile */}
-            <button
-              onClick={triggerPwaInstall}
-              className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] hover:bg-[#00E5FF]/20 active:scale-95 transition-all text-xs font-bold shadow-sm"
-              title="Instalar Aplicativo no Celular"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-[#00E5FF]" />
-              <span>App</span>
-            </button>
-
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3">
                 <Link
@@ -220,20 +214,27 @@ export default function Navbar() {
       </header>
 
       {/* =========================================================
-          MENU MOBILE MODERNO: DRAWER LATERAL COM PORTAL NO BODY
+          MENU MOBILE MODERNO: DRAWER LATERAL COM GPU ACCELERATION
       ========================================================= */}
-      {mounted && isMobileMenuOpen && typeof document !== "undefined" && createPortal(
-        <div className="lg:hidden fixed inset-0 z-[100] animate-fadeIn">
-          {/* Overlay com Backdrop Blur */}
+      {mounted && typeof document !== "undefined" && createPortal(
+        <div
+          className={`lg:hidden fixed inset-0 z-[100] transition-opacity duration-300 ease-out ${
+            isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          aria-hidden={!isMobileMenuOpen}
+        >
+          {/* Overlay escuro leve sem backdrop-blur (60 FPS garantido no mobile) */}
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/80 transition-opacity duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Painel Drawer Deslizante */}
+          {/* Painel Drawer Deslizante com aceleração por hardware GPU (transform-gpu) */}
           <aside
-            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#0c0e13] border-l border-[#242a36] px-5 pt-[max(env(safe-area-inset-top,0px)+12px,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,2rem)] flex flex-col justify-between overflow-y-auto shadow-2xl z-[101] animate-slideInRight"
+            className={`fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#0c0e13] border-l border-[#242a36] px-5 pt-[max(env(safe-area-inset-top,0px)+12px,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,2rem)] flex flex-col justify-between overflow-y-auto shadow-2xl z-[101] transform-gpu will-change-transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
             aria-label="Menu principal"
           >
               {/* Topo do Drawer: Logo & Fechar */}
@@ -347,7 +348,7 @@ export default function Navbar() {
                   <Link
                     href="/"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                       pathname === "/" ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -361,7 +362,7 @@ export default function Navbar() {
                   <Link
                     href="/search"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                       pathname === "/search" ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -375,7 +376,7 @@ export default function Navbar() {
                   <Link
                     href="/calendar"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                       pathname === "/calendar" ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -389,7 +390,7 @@ export default function Navbar() {
                   <Link
                     href="/rankings"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                       pathname === "/rankings" ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -403,7 +404,7 @@ export default function Navbar() {
                   <Link
                     href="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                       pathname === "/profile" ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
@@ -418,7 +419,7 @@ export default function Navbar() {
                     <Link
                       href="/planos"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
+                      className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
                         pathname === "/planos" ? "bg-amber-500/20 text-amber-300 font-bold" : "text-amber-300 hover:bg-amber-500/10"
                       }`}
                     >
@@ -436,7 +437,7 @@ export default function Navbar() {
                     <Link
                       href="/admin"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-amber-300 hover:bg-amber-500/10 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl text-xs font-semibold text-amber-300 hover:bg-amber-500/10 transition-colors active:scale-[0.98] min-h-[44px]"
                     >
                       <div className="flex items-center gap-2.5">
                         <ShieldCheck className="w-4 h-4 text-amber-400" />

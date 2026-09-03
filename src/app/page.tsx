@@ -26,6 +26,7 @@ import {
   Play,
   Layers,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 
 // Carregamento dinâmico e seguro do Three.js para o Hero (sem SSR)
@@ -496,7 +497,7 @@ export default function HomePage() {
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS
       ========================================== */}
-      <section className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-surface-100 to-indigo-950/40 border border-cyan-500/20 p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+      <section className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#11141a] to-indigo-950/40 border border-cyan-500/20 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
         <div className="space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
             <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" /> Calendário Mensal
@@ -511,9 +512,10 @@ export default function HomePage() {
 
         <Link
           href="/calendar"
-          className="rounded-full bg-white hover:bg-gray-200 text-black font-bold px-8 py-3.5 text-sm transition-all shadow-xl hover:scale-105 flex-shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full bg-white hover:bg-neutral-200 text-black font-bold px-6 sm:px-8 py-3.5 text-xs sm:text-sm transition-all shadow-xl active:scale-95 flex-shrink-0"
         >
-          Abrir Calendário de Lançamentos →
+          <span className="whitespace-nowrap">Abrir Calendário de Lançamentos</span>
+          <ArrowRight className="w-4 h-4 shrink-0 text-black" />
         </Link>
       </section>
 
