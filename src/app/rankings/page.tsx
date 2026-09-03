@@ -5,7 +5,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Rankings dos Melhores Jogos da História & Comunidade | GameVault",
+  title: "Rankings dos Melhores Jogos da História & Comunidade",
   description:
     "Descubra os jogos mais bem avaliados de todos os tempos, mais populares e hypados pela comunidade gamer com notas oficiais do Metacritic e tempos do HowLongToBeat.",
   alternates: {

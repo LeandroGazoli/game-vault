@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase";
 import { DEFAULT_PLANS_CONFIG, PlansConfig, PlanKey } from "@/lib/plans";
 import {
   X,
@@ -50,10 +51,12 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     setError(null);
 
     try {
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           planId,

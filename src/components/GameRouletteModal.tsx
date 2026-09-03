@@ -6,6 +6,7 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import MetacriticBadge from "./MetacriticBadge";
 import StatusBadge from "./StatusBadge";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import confetti from "canvas-confetti";
 import dynamic from "next/dynamic";
 import {
@@ -279,7 +280,7 @@ export default function GameRouletteModal({
                     </button>
 
                     <Link
-                      href={`/game/${selectedGame.gameId}`}
+                      href={getGameUrl({ id: selectedGame.gameId, name: selectedGame.gameTitle })}
                       className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors flex items-center gap-1"
                     >
                       Ver Detalhes <ArrowRight className="w-3.5 h-3.5" />

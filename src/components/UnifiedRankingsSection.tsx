@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Game, GameStatus } from "@/lib/types";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import {
   Trophy,
   Flame,
@@ -225,7 +226,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                   >
                     {/* Poster do Jogo */}
                     <div className="relative w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden bg-neutral-950 flex-shrink-0 border border-white/10 shadow-md">
-                      <Link href={`/game/${game.id}`} className="block w-full h-full">
+                      <Link href={getGameUrl(game)} className="block w-full h-full">
                         {game.background_image ? (
                           <img
                             src={game.background_image}
@@ -261,7 +262,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                           )}
                         </div>
 
-                        <Link href={`/game/${game.id}`}>
+                        <Link href={getGameUrl(game)}>
                           <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 leading-snug">
                             {game.name}
                           </h3>
@@ -319,7 +320,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                         </span>
 
                         <Link
-                          href={`/game/${game.id}`}
+                          href={getGameUrl(game)}
                           className="relative w-10 h-13 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/5 shrink-0 block"
                         >
                           {game.background_image ? (
@@ -333,7 +334,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                         </Link>
 
                         <div className="min-w-0">
-                          <Link href={`/game/${game.id}`}>
+                          <Link href={getGameUrl(game)}>
                             <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors truncate max-w-[180px] sm:max-w-xs">
                               {game.name}
                             </h4>

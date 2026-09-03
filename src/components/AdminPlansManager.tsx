@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { PlansConfig, PlanKey, DEFAULT_PLANS_CONFIG, savePlansConfig } from "@/lib/plans";
+import { auth } from "@/lib/firebase";
 import {
   CreditCard,
   RefreshCw,
@@ -51,6 +52,16 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper para obter token de autorização atualizado do administrador
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+      return {};
+    }
+  };
+
   // Modal para criar novo preço no Stripe
   const [isCreatePriceOpen, setIsCreatePriceOpen] = useState(false);
   const [createProductId, setCreateProductId] = useState("");
@@ -73,10 +84,11 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
         setPlansConfig((prev) => ({ ...prev, ...plansData }));
       }
 
-      // 2. Carrega produtos e preços reais do Stripe
-      const stripeRes = await fetch(
-        `/api/admin/stripe/prices?adminEmail=${encodeURIComponent(adminEmail)}`
-      );
+      // 2. Carrega produtos e preços reais do Stripe via rota autenticada
+      const authHeaders = await getAuthHeaders();
+      const stripeRes = await fetch("/api/admin/stripe/prices", {
+        headers: authHeaders,
+      });
       if (stripeRes.ok) {
         const stripeData = await stripeRes.json();
         setStripeProducts(stripeData.products || []);
@@ -152,11 +164,14 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
     } catch (err: any) {
       console.warn("Tentativa de salvar via cliente falhou, tentando rota da API...", err);
       try {
+        const authHeaders = await getAuthHeaders();
         const res = await fetch("/api/plans", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders,
+          },
           body: JSON.stringify({
-            adminEmail,
             config: plansConfig,
           }),
         });
@@ -191,11 +206,14 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
     }
 
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/admin/stripe/prices", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
         body: JSON.stringify({
-          adminEmail,
           productId: createProductId,
           amount: parsedAmount,
           type: createType,

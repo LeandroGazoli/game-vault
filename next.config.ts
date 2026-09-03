@@ -25,6 +25,22 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://adservice.google.com https://apis.google.com https://js.stripe.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.firebaseio.com https://api.stripe.com https://api.igdb.com https://id.twitch.tv https://api.mymemory.translated.net https://howlongtobeat.com https://*.google-analytics.com https://pagead2.googlesyndication.com",
+      "frame-src 'self' https://checkout.stripe.com https://billing.stripe.com https://*.google.com https://googleads.g.doubleclick.net",
+      "frame-ancestors 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://checkout.stripe.com",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {

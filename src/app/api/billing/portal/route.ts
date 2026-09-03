@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { getAuthenticatedUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    const authCheck = await getAuthenticatedUser(request);
+    if (!authCheck.authenticated || !authCheck.user) {
+      return NextResponse.json(
+        { error: authCheck.error || "Você precisa estar conectado para acessar o portal de assinaturas." },
+        { status: authCheck.status }
+      );
+    }
+
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: "STRIPE_SECRET_KEY não configurada no servidor." },
@@ -12,13 +21,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { customerId, userEmail, returnUrl } = await request.json();
+    const { user } = authCheck;
+    const { customerId } = await request.json().catch(() => ({}));
 
-    let targetCustomerId = customerId;
+    let targetCustomerId: string | null = null;
 
-    if (!targetCustomerId && userEmail) {
+    // Se o cliente informou um customerId, valida se pertence de fato ao usuário autenticado
+    if (customerId && typeof customerId === "string" && customerId.startsWith("cus_")) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (customer && !customer.deleted && "email" in customer && customer.email?.toLowerCase() === user.email.toLowerCase()) {
+          targetCustomerId = customer.id;
+        }
+      } catch (err) {
+        console.warn("[billing/portal] Erro ao validar customerId:", err);
+      }
+    }
+
+    // Se não encontrou ou não informou, busca na base de clientes pelo e-mail verificado do token
+    if (!targetCustomerId && user.email) {
       const customers = await stripe.customers.list({
-        email: userEmail,
+        email: user.email,
         limit: 1,
       });
       if (customers.data.length > 0) {
@@ -33,14 +56,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin =
-      returnUrl ||
-      request.headers.get("origin") ||
-      "https://mygameslist.com.br";
+    const requestOrigin = request.headers.get("origin");
+    const allowedOrigin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (requestOrigin && (requestOrigin.includes("localhost") || requestOrigin.includes("mygameslist.com.br") || requestOrigin.includes("gamevault")) ? requestOrigin : "https://www.mygameslist.com.br");
 
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${origin}/profile`,
+      customer: targetCustomerId,
+      return_url: `${allowedOrigin}/perfil`,
     });
 
     return NextResponse.json({ url: portalSession.url });

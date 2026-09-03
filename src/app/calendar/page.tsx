@@ -5,7 +5,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Calendário de Lançamentos de Jogos 2026 | GameVault",
+  title: "Calendário de Lançamentos de Jogos 2026",
   description:
     "Confira o calendário completo de lançamentos de jogos para PC, PlayStation 5, Xbox Series e Nintendo Switch. Datas de lançamento, novidades e contagem regressiva.",
   alternates: {

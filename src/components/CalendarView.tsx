@@ -5,6 +5,7 @@ import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
 import AdBanner from "./ads/AdBanner";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -252,7 +253,7 @@ export default function CalendarView() {
                             {/* Capa com Proporção de Poster - Clicar abre a página do jogo */}
                             <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
                               <Link
-                                href={`/game/${game.id}`}
+                                href={getGameUrl(game)}
                                 className="block w-full h-full cursor-pointer"
                                 title={`Ver detalhes de ${game.name}`}
                               >
@@ -295,7 +296,7 @@ export default function CalendarView() {
 
                             {/* Título & Plataforma */}
                             <div className="p-2.5 flex-1 flex flex-col justify-between">
-                              <Link href={`/game/${game.id}`}>
+                              <Link href={getGameUrl(game)}>
                                 <h3 className="text-xs font-semibold text-white hover:text-[#00E5FF] line-clamp-1 transition-colors">
                                   {game.name}
                                 </h3>

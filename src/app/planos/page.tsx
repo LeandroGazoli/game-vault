@@ -5,7 +5,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Planos PRO & VIP Fundador | GameVault",
+  title: "Planos PRO & VIP Fundador",
   description:
     "Evolua sua experiência no GameVault com os planos PRO e VIP Fundador. Insígnias exclusivas, temas personalizados, sem anúncios e suporte à comunidade gamer.",
   alternates: {

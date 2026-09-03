@@ -8,7 +8,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Política de Cookies • GameVault",
+  title: "Política de Cookies",
   description:
     "Saiba como o GameVault e o Google AdSense utilizam cookies e como você pode gerenciar suas preferências no seu navegador.",
   alternates: {

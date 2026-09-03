@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { ADMIN_EMAILS } from "@/lib/types";
+import { requireAdminUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const adminEmail = request.nextUrl.searchParams.get("adminEmail");
-
-    if (!adminEmail || !ADMIN_EMAILS.includes(adminEmail.toLowerCase().trim())) {
+    const authCheck = await requireAdminUser(request);
+    if (!authCheck.authenticated) {
       return NextResponse.json(
-        { error: "Acesso não autorizado. Apenas administradores podem gerenciar o Stripe." },
-        { status: 403 }
+        { error: authCheck.error || "Acesso não autorizado. Apenas administradores podem gerenciar o Stripe." },
+        { status: authCheck.status }
       );
     }
 
@@ -69,15 +68,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { adminEmail, productId, amount, type, interval } = body;
-
-    if (!adminEmail || !ADMIN_EMAILS.includes(adminEmail.toLowerCase().trim())) {
+    const authCheck = await requireAdminUser(request);
+    if (!authCheck.authenticated) {
       return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 403 }
+        { error: authCheck.error || "Acesso não autorizado." },
+        { status: authCheck.status }
       );
     }
+
+    const body = await request.json();
+    const { productId, amount, type, interval } = body;
 
     if (!productId || typeof amount !== "number" || amount <= 0) {
       return NextResponse.json(

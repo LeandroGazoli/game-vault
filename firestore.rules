@@ -2,34 +2,73 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validação estrita de Admin: requer autenticação, email na lista permitida E verificado
+    function isVerifiedAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email in ["leandro.gazolig@gmail.com"];
+    }
+
     // Regras para configurações do sistema e planos da plataforma
     match /system/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email in ["leandro.gazolig@gmail.com"];
+      allow write: if isVerifiedAdmin();
     }
 
     // Regras para perfis de usuário
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.token.email in ["leandro.gazolig@gmail.com"]
+      // Leitura individual permitida (para exibir perfis e bibliotecas públicas)
+      allow get: if true;
+      // Listagem em massa da coleção inteira restrita exclusivamente a administradores verificados (Prevenção de Enumeração/Vazamento PII)
+      allow list: if isVerifiedAdmin();
+
+      // Criação inicial de conta: usuário comum só pode criar conta gratuita e sem privilégios
+      allow create: if isVerifiedAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.plan == "free" &&
+        request.resource.data.isAdmin == false &&
+        request.resource.data.isPremium == false
       );
+
+      // Atualização de perfil: impede que o próprio usuário mude plano ou se promova a admin (Prevenção de BOPLA / Mass Assignment)
+      allow update: if isVerifiedAdmin() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid'
+        ])
+      );
+
+      // Deleção permitida apenas pelo próprio usuário ou admin verificado
+      allow delete: if isOwner(userId) || isVerifiedAdmin();
 
       // Regras para jogos do usuário
       match /games/{gameId} {
         allow read: if true;
-        allow write: if request.auth != null && (
-          request.auth.uid == userId ||
-          request.auth.token.email in ["leandro.gazolig@gmail.com"]
-        );
+        allow write: if isOwner(userId) || isVerifiedAdmin();
       }
     }
 
-    // Cache público de traduções de jogos (100% gratuito e permanente)
+    // Cache público de traduções de jogos: protegido contra DoS, injeção de campos e overflow de armazenamento
     match /game_translations/{gameId} {
       allow read: if true;
-      allow write: if true;
+      allow create, update: if
+        request.resource.data.source == "free_engine" &&
+        request.resource.data.keys().hasOnly([
+          'gameId', 'gameName', 'originalText', 'translatedText',
+          'originalStoryline', 'translatedStoryline', 'source', 'updatedAt', 'createdAt'
+        ]) &&
+        (!('translatedText' in request.resource.data) || (request.resource.data.translatedText is string && request.resource.data.translatedText.size() <= 25000)) &&
+        (!('translatedStoryline' in request.resource.data) || (request.resource.data.translatedStoryline is string && request.resource.data.translatedStoryline.size() <= 25000));
+      allow delete: if isVerifiedAdmin();
     }
   }
 }

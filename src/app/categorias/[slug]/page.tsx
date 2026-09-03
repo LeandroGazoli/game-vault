@@ -15,13 +15,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!category) {
     return {
-      title: "Categoria não encontrada | GameVault",
+      title: "Categoria não encontrada",
       description: "A categoria selecionada não foi encontrada no acervo do GameVault.",
       robots: { index: false, follow: false },
     };
   }
 
-  const title = `Jogos de ${category.name} | Catálogo GameVault`;
+  const title = `Jogos de ${category.name}`;
   const description = `${category.description} Explore os melhores títulos de ${category.name}, lançamentos, notas do Metacritic e tempos de zeramento no GameVault.`;
   const canonicalUrl = `${SITE_URL}/categorias/${slug}`;
 

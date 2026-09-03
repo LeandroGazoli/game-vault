@@ -1,7 +1,7 @@
 import { Game, GenreItem, PlatformItem } from "./types";
 
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "nn3y51ox7m6a7knczssqz8j593y7dd";
-const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "ggfnhzk9cjm0wc8lubdh31s7bl2ud6";
+const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "";
+const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
 const IGDB_API_URL = "https://api.igdb.com/v4";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;

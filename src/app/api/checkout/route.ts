@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getPlansConfig, PlanKey } from "@/lib/plans";
+import { getAuthenticatedUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +14,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { planId, userId, userEmail, returnUrl } = body;
+    const body = await request.json().catch(() => ({}));
+    const { planId, returnUrl } = body;
 
-    if (!userId) {
+    // Tenta obter o usuário autenticado via ID Token
+    let effectiveUserId: string = body.userId;
+    let effectiveUserEmail: string | undefined = body.userEmail;
+
+    const authCheck = await getAuthenticatedUser(request);
+    if (authCheck.authenticated && authCheck.user) {
+      effectiveUserId = authCheck.user.uid;
+      effectiveUserEmail = authCheck.user.email || effectiveUserEmail;
+    }
+
+    if (!effectiveUserId) {
       return NextResponse.json(
         { error: "Você precisa estar conectado à sua conta para assinar." },
         { status: 401 }
-      );
-    }
-
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error("STRIPE_SECRET_KEY não configurada.");
-      return NextResponse.json(
-        { error: "O gateway de pagamento está em manutenção. Por favor, tente novamente em alguns instantes." },
-        { status: 503 }
       );
     }
 
@@ -43,10 +46,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin =
-      returnUrl ||
-      request.headers.get("origin") ||
-      "https://mygameslist.com.br";
+    const requestOrigin = request.headers.get("origin");
+    const allowedOrigin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (requestOrigin && (requestOrigin.includes("localhost") || requestOrigin.includes("mygameslist.com.br") || requestOrigin.includes("gamevault"))
+        ? requestOrigin
+        : "https://www.mygameslist.com.br");
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -57,10 +62,10 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: selectedPlan.mode,
-      customer_email: userEmail || undefined,
-      client_reference_id: userId,
+      customer_email: effectiveUserEmail || undefined,
+      client_reference_id: effectiveUserId,
       metadata: {
-        userId,
+        userId: effectiveUserId,
         planId: selectedPlan.id,
         planName: selectedPlan.name,
       },
@@ -68,13 +73,13 @@ export async function POST(request: NextRequest) {
         selectedPlan.mode === "subscription"
           ? {
               metadata: {
-                userId,
+                userId: effectiveUserId,
                 planId: selectedPlan.id,
               },
             }
           : undefined,
-      success_url: `${origin}/profile?session_id={CHECKOUT_SESSION_ID}&upgraded=true&plan=${selectedPlan.id}`,
-      cancel_url: `${origin}/profile?canceled=true`,
+      success_url: `${allowedOrigin}/perfil?session_id={CHECKOUT_SESSION_ID}&upgraded=true&plan=${selectedPlan.id}`,
+      cancel_url: `${allowedOrigin}/perfil?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
     });

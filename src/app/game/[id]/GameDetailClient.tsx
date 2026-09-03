@@ -12,6 +12,7 @@ import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import {
   ArrowLeft,
   Calendar,
@@ -276,7 +277,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               <h4 className="text-sm font-bold text-white">
                 Este título é uma DLC/Expansão oficial de{" "}
                 <Link
-                  href={`/game/${game.parent_game.id}`}
+                  href={getGameUrl(game.parent_game)}
                   className="text-amber-400 hover:underline hover:text-amber-300 font-extrabold"
                 >
                   {game.parent_game.name}
@@ -286,7 +287,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           </div>
 
           <Link
-            href={`/game/${game.parent_game.id}`}
+            href={getGameUrl(game.parent_game)}
             className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0"
           >
             <span>Ver Jogo Base</span>
@@ -871,7 +872,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                       : "bg-white/5 border-white/10 hover:border-white/20"
                   }`}
                 >
-                  <Link href={`/game/${dlc.id}`} className="block">
+                  <Link href={getGameUrl(dlc)} className="block">
                     <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
                       {dlc.coverUrl ? (
                         <img
@@ -956,7 +957,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             {game.similar_games.slice(0, 6).map((sg) => (
               <Link
                 key={sg.id}
-                href={`/game/${sg.id}`}
+                href={getGameUrl(sg)}
                 className="group rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-cyan-500/40 transition-all hover:scale-[1.03] flex flex-col"
               >
                 <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">

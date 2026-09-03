@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { UserGame, Game } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
@@ -75,7 +76,7 @@ export default function GamerDashboardWidget({
               </div>
 
               <Link
-                href="/profile"
+                href="/perfil"
                 className="text-xs font-mono text-[#00E5FF] hover:underline flex items-center gap-1 shrink-0 font-semibold"
               >
                 <span>Ver Perfil</span>
@@ -179,7 +180,7 @@ export default function GamerDashboardWidget({
 
                 <div className="flex items-center gap-2 pt-1">
                   <Link
-                    href={`/game/${currentlyPlaying.gameId}`}
+                    href={getGameUrl({ id: currentlyPlaying.gameId, name: currentlyPlaying.gameTitle })}
                     className="flex-1 py-2 rounded-lg bg-[#1f2533] hover:bg-[#273042] border border-[#343e54] text-xs font-semibold text-neutral-200 hover:text-white text-center transition-all"
                   >
                     Ver Jogo

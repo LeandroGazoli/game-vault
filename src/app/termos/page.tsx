@@ -8,7 +8,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso • GameVault",
+  title: "Termos de Uso",
   description: "Leia os termos e condições de uso da plataforma GameVault.",
   alternates: {
     canonical: "/termos",

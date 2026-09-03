@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { UserProfile } from "@/lib/types";
+import { auth } from "@/lib/firebase";
 import {
   X,
   Sparkles,
@@ -32,7 +33,9 @@ export default function ManagePlanModal({
 
   if (!isOpen) return null;
 
-  const isVip = user.plan === "vip";
+  const currentPlan = user.plan || "free";
+  const isVip = currentPlan === "vip";
+  const isPro = currentPlan === "pro";
   const isSingleMonth = Boolean(user.premiumUntil);
 
   // Calcula dias restantes se houver premiumUntil
@@ -57,13 +60,15 @@ export default function ManagePlanModal({
     setPortalError(null);
 
     try {
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/billing/portal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          userEmail: user.email,
-          userId: user.uid,
-          returnUrl: window.location.origin,
+          customerId: (user as any).stripeCustomerId,
         }),
       });
 

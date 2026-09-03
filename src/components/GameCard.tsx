@@ -6,6 +6,7 @@ import MetacriticBadge from "./MetacriticBadge";
 import StatusBadge from "./StatusBadge";
 import GameModal from "./GameModal";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3 } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
 import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
@@ -72,7 +73,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
         {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
           <Link
-            href={`/game/${game.id}`}
+            href={getGameUrl(game)}
             className="block w-full h-full cursor-pointer"
             title={`Ver detalhes de ${game.name}`}
           >
@@ -236,7 +237,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
               ) : null}
             </div>
 
-            <Link href={`/game/${game.id}`} className="block">
+            <Link href={getGameUrl(game)} className="block">
               <h3
                 className="font-semibold text-xs sm:text-sm text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 h-8 sm:h-9 leading-snug"
                 title={game.name}

@@ -9,7 +9,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Categorias de Jogos | Catálogo GameVault",
+  title: "Categorias de Jogos",
   description:
     "Explore jogos organizados por categorias: Luta, Mundo Aberto, Boa Trama, RPG, Terror, Corrida, Tiro, Retrô e muito mais. Filtros temáticos e notas do Metacritic.",
   alternates: {

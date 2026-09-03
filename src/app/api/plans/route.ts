@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPlansConfig, savePlansConfig, PlansConfig } from "@/lib/plans";
-import { ADMIN_EMAILS } from "@/lib/types";
+import { requireAdminUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +16,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { adminEmail, config } = body;
-
-    if (!adminEmail || !ADMIN_EMAILS.includes(adminEmail.toLowerCase().trim())) {
+    const authCheck = await requireAdminUser(request);
+    if (!authCheck.authenticated) {
       return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 403 }
+        { error: authCheck.error || "Acesso não autorizado." },
+        { status: authCheck.status }
       );
     }
+
+    const body = await request.json();
+    const { config } = body;
 
     if (!config) {
       return NextResponse.json(

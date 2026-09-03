@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { Game } from "@/lib/types";
 import {
   Search,
@@ -160,7 +161,7 @@ export default function SpotlightSearchModal() {
 
   const handleSelectGame = (game: Game) => {
     setIsOpen(false);
-    router.push(`/game/${game.id}`);
+    router.push(getGameUrl(game));
   };
 
   if (!isOpen) return null;

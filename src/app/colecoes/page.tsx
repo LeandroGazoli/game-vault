@@ -9,7 +9,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Coleções Especiais de Jogos | Catálogo GameVault",
+  title: "Coleções Especiais de Jogos",
   description:
     "Explore coleções temáticas curadas: Hall da Fama (90+ Metacritic), Jogos Dublados em Português, Zere no Fim de Semana, Soulslike, Indie Gems e Retrô.",
   alternates: {

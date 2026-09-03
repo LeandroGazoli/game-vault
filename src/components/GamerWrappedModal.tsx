@@ -81,7 +81,7 @@ export default function GamerWrappedModal({
   if (!isOpen) return null;
 
   const handleShare = () => {
-    const shareText = `🎮 Minha Retrospectiva Gamer no GameVault!\n🏆 ${wrappedData.completedCount} jogos zerados\n⏱️ ${wrappedData.totalPlaytime} horas jogadas\n🔥 Gênero favorito: ${wrappedData.topGenre}\n⭐ Jogo do ano: ${wrappedData.highestRated?.gameTitle || "Vários"}\n\nConfira minha biblioteca: https://mygameslist.com.br/profile/${user.username}`;
+    const shareText = `🎮 Minha Retrospectiva Gamer no GameVault!\n🏆 ${wrappedData.completedCount} jogos zerados\n⏱️ ${wrappedData.totalPlaytime} horas jogadas\n🔥 Gênero favorito: ${wrappedData.topGenre}\n⭐ Jogo do ano: ${wrappedData.highestRated?.gameTitle || "Vários"}\n\nConfira minha biblioteca: https://mygameslist.com.br/perfil/${user.username}`;
     
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(shareText);

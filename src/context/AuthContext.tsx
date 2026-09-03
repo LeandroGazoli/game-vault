@@ -40,12 +40,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Somente leandro.gazolig@gmail.com é admin
+  // Somente leandro.gazolig@gmail.com com e-mail devidamente verificado no Firebase Auth é admin
   const isAdmin = Boolean(
-    user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
+    firebaseUser &&
+      firebaseUser.email &&
+      firebaseUser.emailVerified &&
+      ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase())
   );
 
-  // VIP / PRO baseado estritamente no plano atual (ou se for o Admin Master)
+  // VIP / PRO baseado estritamente no plano atual (ou se for o Admin Master verificado)
   const isPremium = Boolean(
     isAdmin || (user && (user.plan === "pro" || user.plan === "vip"))
   );
@@ -65,7 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (fbUser) {
           const userIsAdmin = Boolean(
-            fbUser.email && ADMIN_EMAILS.includes(fbUser.email.toLowerCase())
+            fbUser.email &&
+              fbUser.emailVerified &&
+              ADMIN_EMAILS.includes(fbUser.email.toLowerCase())
           );
 
           // Escuta alterações em tempo real no Firestore
@@ -145,7 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithEmail = async (email: string, pass: string, username: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const userIsAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    const userIsAdmin = Boolean(
+      cred.user.emailVerified && ADMIN_EMAILS.includes(email.toLowerCase())
+    );
     const newProfile: UserProfile = {
       uid: cred.user.uid,
       username,

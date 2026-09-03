@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { Game, GameStatus, CompletionType, HLTBData, DLCItem, UserGameDLC } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
@@ -464,7 +465,7 @@ export default function GameModal({
                   </span>
                 </div>
                 <Link
-                  href={`/game/${parentGameInfo.id}`}
+                  href={getGameUrl(parentGameInfo)}
                   onClick={onClose}
                   className="px-3 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-black font-bold text-[11px] transition-colors flex-shrink-0"
                 >

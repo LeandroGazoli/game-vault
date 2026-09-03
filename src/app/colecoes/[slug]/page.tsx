@@ -15,13 +15,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!collection) {
     return {
-      title: "Coleção não encontrada | GameVault",
+      title: "Coleção não encontrada",
       description: "A coleção temática selecionada não foi encontrada no acervo do GameVault.",
       robots: { index: false, follow: false },
     };
   }
 
-  const title = `${collection.title} | Coleções GameVault`;
+  const title = collection.title;
   const description = `${collection.subtitle} ${collection.description}`;
   const canonicalUrl = `${SITE_URL}/colecoes/${slug}`;
 

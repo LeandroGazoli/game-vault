@@ -33,13 +33,41 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           setLoading(false);
           return;
         }
+        if (password.length < 8) {
+          setError("A senha deve conter no mínimo 8 caracteres.");
+          setLoading(false);
+          return;
+        }
         await signUpWithEmail(email, password, username);
       } else {
         await signInWithEmail(email, password);
       }
       onClose();
     } catch (err: any) {
-      setError(err.message || "Falha na autenticação. Verifique os dados.");
+      const code = err?.code || "";
+      if (isSignUp) {
+        if (code === "auth/email-already-in-use") {
+          setError("Não foi possível concluir o cadastro com este e-mail.");
+        } else if (code === "auth/weak-password") {
+          setError("Senha muito fraca. Escolha uma senha mais segura com no mínimo 8 caracteres.");
+        } else {
+          setError("Falha ao criar conta. Verifique os dados informados.");
+        }
+      } else {
+        // Prevenção de enumeração de contas (User Enumeration Defense)
+        if (
+          code === "auth/user-not-found" ||
+          code === "auth/wrong-password" ||
+          code === "auth/invalid-credential" ||
+          code === "auth/invalid-email"
+        ) {
+          setError("E-mail ou senha incorretos. Por favor, tente novamente.");
+        } else if (code === "auth/too-many-requests") {
+          setError("Muitas tentativas consecutivas. Aguarde alguns instantes antes de tentar novamente.");
+        } else {
+          setError("Falha na autenticação. Verifique os dados e tente novamente.");
+        }
+      }
     } finally {
       setLoading(false);
     }

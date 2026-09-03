@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
+import { slugify } from "@/lib/routes";
 
 const POPULAR_FALLBACK_IDS = [
   1942,   // The Witcher 3
@@ -109,7 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // 4. Rotas Dinâmicas dos Jogos Mais Populares e Recentes
+  // 4. Rotas Dinâmicas dos Jogos Mais Populares e Recentes (com slug semântico)
   let gamePages: MetadataRoute.Sitemap = [];
   try {
     const [popularGames, recentGames] = await Promise.all([
@@ -118,19 +119,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const combinedGames = [...popularGames, ...recentGames];
-    const uniqueIds = new Set<number>();
+    const uniqueGames = new Map<number, { id: number; slug: string; name: string }>();
 
     combinedGames.forEach((g) => {
-      if (g && g.id) uniqueIds.add(g.id);
+      if (g && g.id && !uniqueGames.has(g.id)) {
+        uniqueGames.set(g.id, { id: g.id, slug: g.slug || slugify(g.name || String(g.id)), name: g.name });
+      }
     });
 
     // Se a API não responder no momento do build, garante os títulos consagrados
-    if (uniqueIds.size === 0) {
-      POPULAR_FALLBACK_IDS.forEach((id) => uniqueIds.add(id));
+    if (uniqueGames.size === 0) {
+      POPULAR_FALLBACK_IDS.forEach((id) => uniqueGames.set(id, { id, slug: String(id), name: String(id) }));
     }
 
-    gamePages = Array.from(uniqueIds).map((id) => ({
-      url: `${baseUrl}/game/${id}`,
+    gamePages = Array.from(uniqueGames.values()).map((g) => ({
+      url: `${baseUrl}/game/${g.id}/${g.slug}`,
       lastModified,
       changeFrequency: "weekly",
       priority: 0.7,

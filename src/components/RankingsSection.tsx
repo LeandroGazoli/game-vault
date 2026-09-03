@@ -6,6 +6,7 @@ import GameModal from "./GameModal";
 import AdBanner from "./ads/AdBanner";
 import MetacriticBadge from "./MetacriticBadge";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import {
   Trophy,
   Flame,
@@ -333,7 +334,7 @@ export default function RankingsSection() {
                     >
                       {/* Pôster */}
                       <div className="relative w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden bg-neutral-950 flex-shrink-0 border border-white/10 shadow-md">
-                        <Link href={`/game/${game.id}`} className="block w-full h-full">
+                        <Link href={getGameUrl(game)} className="block w-full h-full">
                           {game.background_image ? (
                             <img
                               src={game.background_image}
@@ -363,7 +364,7 @@ export default function RankingsSection() {
                             {rankTheme.label}
                           </span>
 
-                          <Link href={`/game/${game.id}`} className="block">
+                          <Link href={getGameUrl(game)} className="block">
                             <h3
                               className="font-bold text-sm sm:text-base text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 leading-snug"
                               title={game.name}
@@ -445,7 +446,7 @@ export default function RankingsSection() {
 
                           {/* Capa */}
                           <Link
-                            href={`/game/${game.id}`}
+                            href={getGameUrl(game)}
                             className="w-10 h-13 sm:w-11 sm:h-14 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0 block"
                           >
                             {game.background_image ? (
@@ -464,7 +465,7 @@ export default function RankingsSection() {
 
                           {/* Título & Detalhes */}
                           <div className="min-w-0 space-y-0.5">
-                            <Link href={`/game/${game.id}`} className="block">
+                            <Link href={getGameUrl(game)} className="block">
                               <h4
                                 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors truncate max-w-[180px] sm:max-w-xs md:max-w-md"
                                 title={game.name}

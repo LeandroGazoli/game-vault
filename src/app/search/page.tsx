@@ -5,7 +5,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Buscar Jogos no Acervo | Catálogo GameVault",
+  title: "Buscar Jogos no Acervo - Catálogo",
   description:
     "Pesquise milhares de jogos por título, gênero ou plataforma. Encontre notas do Metacritic, tempos do HowLongToBeat e informações completas para PC, PlayStation, Xbox e Nintendo Switch.",
   alternates: {

@@ -8,7 +8,7 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade • GameVault",
+  title: "Política de Privacidade",
   description:
     "Conheça como o GameVault coleta, utiliza e protege os dados dos usuários em conformidade com a LGPD e o Google AdSense.",
   alternates: {

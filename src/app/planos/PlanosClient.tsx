@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { DEFAULT_PLANS_CONFIG, PlansConfig, PlanKey } from "@/lib/plans";
 import AuthModal from "@/components/AuthModal";
@@ -31,7 +32,7 @@ export default function PlanosClient() {
 
   useEffect(() => {
     if (isPremium) {
-      router.replace("/profile");
+      router.replace("/perfil");
     }
   }, [isPremium, router]);
 
@@ -54,10 +55,12 @@ export default function PlanosClient() {
     setError(null);
 
     try {
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           planId,
@@ -95,7 +98,7 @@ export default function PlanosClient() {
           Sua conta já possui todos os recursos liberados. Redirecionando para o seu perfil para gerenciar seu plano...
         </p>
         <button
-          onClick={() => router.replace("/profile")}
+          onClick={() => router.replace("/perfil")}
           className="rounded-full bg-[#00E5FF] hover:bg-cyan-400 text-black font-bold px-6 py-2.5 text-xs transition-all shadow-md"
         >
           Ir para Meu Perfil

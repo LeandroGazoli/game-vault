@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { ChevronLeft, ChevronRight, Plus, Check, Star, Sparkles, Flame, Clock } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Card3DTilt from "./3d/Card3DTilt";
@@ -115,7 +116,7 @@ export default function CatalogRow({
                   {/* Poster / Capa Vertical - Clicar abre a página do jogo */}
                   <div className="relative aspect-[3/4] w-full bg-neutral-950 overflow-hidden">
                     <Link
-                      href={`/game/${game.id}`}
+                      href={getGameUrl(game)}
                       className="block w-full h-full cursor-pointer"
                       title={`Ver detalhes de ${game.name}`}
                     >
@@ -167,7 +168,7 @@ export default function CatalogRow({
                   {/* Informações do Jogo */}
                   <div className="p-3 flex-1 flex flex-col justify-between">
                     <div>
-                      <Link href={`/game/${game.id}`} className="block">
+                      <Link href={getGameUrl(game)} className="block">
                         <h3
                           className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 h-8 sm:h-9 leading-snug"
                           title={game.name}

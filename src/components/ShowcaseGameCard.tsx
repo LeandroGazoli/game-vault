@@ -5,6 +5,7 @@ import { UserGame } from "@/lib/types";
 import MetacriticBadge from "./MetacriticBadge";
 import StatusBadge from "./StatusBadge";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import {
   Trophy,
   Star,
@@ -50,7 +51,7 @@ export default function ShowcaseGameCard({
       <div className="relative z-10 flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-start">
         {/* Capa */}
         <Link
-          href={`/game/${game.gameId}`}
+          href={getGameUrl({ id: game.gameId, name: game.gameTitle })}
           className="relative w-28 sm:w-36 h-40 sm:h-52 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl flex-shrink-0 group hover:scale-105 transition-transform"
         >
           <img

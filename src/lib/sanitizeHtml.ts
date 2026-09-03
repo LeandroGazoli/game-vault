@@ -10,16 +10,16 @@ export function sanitizeCustomHtml(dirtyHtml: string): string {
       "ul", "ol", "li", "dl", "dt", "dd",
       "table", "thead", "tbody", "tfoot", "tr", "th", "td",
       "img", "a", "br", "hr", "blockquote", "code", "pre",
-      "figure", "figcaption", "center", "marquee", "style", "details", "summary",
+      "figure", "figcaption", "center", "marquee", "details", "summary",
       "sub", "sup", "small", "big", "font"
     ],
     ALLOWED_ATTR: [
-      "style", "class", "src", "href", "alt", "title", "target", "rel",
+      "class", "src", "href", "alt", "title", "target", "rel",
       "width", "height", "align", "valign", "color", "face", "size",
       "border", "cellspacing", "cellpadding", "colspan", "rowspan"
     ],
     FORBID_TAGS: [
-      "script", "iframe", "object", "embed", "form", "input",
+      "style", "script", "iframe", "object", "embed", "form", "input",
       "textarea", "button", "select", "option", "link", "meta",
       "base", "applet", "frame", "frameset"
     ],

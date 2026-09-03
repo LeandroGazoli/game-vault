@@ -157,9 +157,9 @@ export default function Navbar() {
                 Rankings
               </Link>
               <Link
-                href="/profile"
+                href="/perfil"
                 className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
-                  pathname === "/profile"
+                  pathname === "/perfil"
                     ? "bg-white/10 text-white border border-white/15"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
@@ -331,7 +331,7 @@ export default function Navbar() {
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Perfil: no mobile é apenas o avatar circular compacto (32px), sem empurrar o menu */}
                 <Link
-                  href="/profile"
+                  href="/perfil"
                   className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/10 border border-white/10 hover:border-white/30 transition-colors shrink-0"
                   title={`Perfil de ${user.displayName}`}
                 >
@@ -499,7 +499,7 @@ export default function Navbar() {
                   { href: "/calendar", label: "Calendário", icon: CalendarIcon, color: "text-[#00E5FF]" },
                   { href: "/rankings", label: "Rankings", icon: Sparkles, color: "text-amber-400" },
                   { href: "/search", label: "Explorar Catálogo", icon: Search, color: "text-cyan-400" },
-                  { href: "/profile", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
+                  { href: "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;

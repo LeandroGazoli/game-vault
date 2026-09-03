@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
 import Link from "next/link";
+import { getGameUrl } from "@/lib/routes";
 import { Search, Loader2, Plus, Check, Star, ArrowRight, X } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { formatPlatformShort } from "@/lib/platformUtils";
@@ -221,7 +222,7 @@ export default function LiveSearchInput({
                         className="group flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
                         onClick={() => {
                           setIsOpen(false);
-                          router.push(`/game/${game.id}`);
+                          router.push(getGameUrl(game));
                         }}
                         title={`Abrir página de ${game.name}`}
                       >
