@@ -12,6 +12,7 @@ import Logo from "./Logo";
 import PlanBadge from "./PlanBadge";
 import UserAvatar from "./UserAvatar";
 import { triggerPwaInstall } from "./PwaInstallPrompt";
+import { openSpotlightSearch } from "./SpotlightSearchModal";
 import {
   Gamepad2,
   Trophy,
@@ -258,15 +259,22 @@ export default function Navbar() {
             </nav>
           </div>
 
-          {/* Lado Direito: Barra de Pesquisa Destacada & Área do Usuário */}
+          {/* Lado Direito: Busca Spotlight & Área do Usuário */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
-            {/* Barra de Pesquisa Destacada com Autocomplete ao Vivo (Desktop) */}
-            <div className="hidden md:flex w-52 lg:w-64 xl:w-72 2xl:w-80 focus-within:w-72 lg:focus-within:w-80 xl:focus-within:w-96 transition-all duration-300">
-              <LiveSearchInput
-                variant="navbar"
-                placeholder="Buscar jogos (God of War, GTA...)"
-              />
-            </div>
+            {/* Botão de Busca Spotlight (Desktop - Cmd+K / Ctrl+K) */}
+            <button
+              onClick={() => openSpotlightSearch()}
+              className="hidden md:flex items-center justify-between w-48 lg:w-60 xl:w-72 px-3 py-1.5 rounded-xl bg-[#13161f] hover:bg-[#181c27] border border-[#242a36] hover:border-[#384255] text-xs text-neutral-400 transition-all shadow-inner group cursor-pointer"
+              title="Buscar jogos no GameVault (Atalho: ⌘K ou Ctrl+K)"
+            >
+              <div className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#00E5FF] transition-colors" />
+                <span className="truncate">Buscar jogos...</span>
+              </div>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-400">
+                ⌘K
+              </kbd>
+            </button>
 
             {!isPremium && (
               <Link
@@ -320,10 +328,20 @@ export default function Navbar() {
               </button>
             )}
 
+            {/* Botão de Busca Rápida Spotlight (Mobile) */}
+            <button
+              onClick={() => openSpotlightSearch()}
+              className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:text-white active:scale-95 transition-colors cursor-pointer"
+              title="Buscar jogos"
+              aria-label="Buscar jogos"
+            >
+              <Search className="w-4 h-4 text-cyan-400" />
+            </button>
+
             {/* Botão Hambúrguer para abrir Drawer Mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-white active:scale-95 transition-colors"
+              className="lg:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-white active:scale-95 transition-colors cursor-pointer"
               aria-label="Abrir menu de navegação"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

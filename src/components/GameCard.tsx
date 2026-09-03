@@ -8,7 +8,7 @@ import GameModal from "./GameModal";
 import Link from "next/link";
 import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3 } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
-import { formatGameDuration } from "@/lib/gameUtils";
+import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
 
 interface GameCardProps {
   game: Game;
@@ -227,14 +227,20 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
                   +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
                 </span>
               ) : game.genres && game.genres.length > 0 ? (
-                <span className="truncate max-w-[120px] text-right">
-                  {game.genres.slice(0, 1).map((g) => g.name).join(", ")}
+                <span
+                  className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase tracking-wider text-[9px] shrink-0"
+                  title={game.genres[0].name}
+                >
+                  {formatGenreName(game.genres[0].name)}
                 </span>
               ) : null}
             </div>
 
-            <Link href={`/game/${game.id}`}>
-              <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#00E5FF] transition-colors line-clamp-1">
+            <Link href={`/game/${game.id}`} className="block">
+              <h3
+                className="font-semibold text-xs sm:text-sm text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 h-8 sm:h-9 leading-snug"
+                title={game.name}
+              >
                 {game.name}
               </h3>
             </Link>

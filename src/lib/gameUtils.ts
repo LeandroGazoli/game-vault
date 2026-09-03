@@ -34,3 +34,30 @@ export function formatGameDuration(
 
   return { text: "N/D", isEstimated: true, isTbd: false };
 }
+
+/**
+ * Encurta e padroniza nomes de gêneros para evitar quebra de layout nos cards.
+ * Ex: "Role-playing (RPG)" -> "RPG"
+ */
+export function formatGenreName(name?: string | null): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  if (/role-playing/i.test(trimmed) || /rpg/i.test(trimmed)) return "RPG";
+  if (/action-adventure/i.test(trimmed)) return "Ação/Aventura";
+  if (/action/i.test(trimmed)) return "Ação";
+  if (/adventure/i.test(trimmed)) return "Aventura";
+  if (/shooter/i.test(trimmed) || /fps/i.test(trimmed)) return "Tiro";
+  if (/strategy/i.test(trimmed)) return "Estratégia";
+  if (/horror/i.test(trimmed)) return "Terror";
+  if (/platform/i.test(trimmed)) return "Plataforma";
+  if (/racing/i.test(trimmed)) return "Corrida";
+  if (/sport/i.test(trimmed)) return "Esporte";
+  if (/fighting/i.test(trimmed)) return "Luta";
+  if (/puzzle/i.test(trimmed)) return "Puzzle";
+  if (/hack and slash/i.test(trimmed)) return "Hack & Slash";
+  if (/simulator/i.test(trimmed)) return "Simulador";
+  // Remove parênteses se houver (ex: "Turn-based strategy (TBS)" -> "TBS")
+  const match = trimmed.match(/\(([^)]+)\)/);
+  if (match && match[1]) return match[1];
+  return trimmed.length > 14 ? trimmed.substring(0, 12) + "…" : trimmed;
+}

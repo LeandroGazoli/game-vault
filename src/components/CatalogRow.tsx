@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus, Check, Star, Sparkles, Flame, Clock } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Card3DTilt from "./3d/Card3DTilt";
-import { formatGameDuration } from "@/lib/gameUtils";
+import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
 
 interface CatalogRowProps {
   title: string;
@@ -167,17 +167,23 @@ export default function CatalogRow({
                   {/* Informações do Jogo */}
                   <div className="p-3 flex-1 flex flex-col justify-between">
                     <div>
-                      <Link href={`/game/${game.id}`}>
-                        <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-1">
+                      <Link href={`/game/${game.id}`} className="block">
+                        <h3
+                          className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 h-8 sm:h-9 leading-snug"
+                          title={game.name}
+                        >
                           {game.name}
                         </h3>
                       </Link>
 
-                      <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-1 font-mono">
-                        <span className="tabular-nums">{releaseYear}</span>
+                      <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-1.5 font-mono">
+                        <span className="tabular-nums font-semibold">{releaseYear}</span>
                         {game.genres && game.genres[0] && (
-                          <span className="truncate max-w-[80px] text-right">
-                            {game.genres[0].name}
+                          <span
+                            className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase tracking-wider text-[9px] shrink-0"
+                            title={game.genres[0].name}
+                          >
+                            {formatGenreName(game.genres[0].name)}
                           </span>
                         )}
                       </div>
