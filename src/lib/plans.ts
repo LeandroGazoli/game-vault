@@ -2,6 +2,7 @@ import { db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export type PlanKey = "pro_monthly" | "pro_single_month" | "pro_annual" | "vip_lifetime";
+export type PlanType = PlanKey;
 
 export interface PlanItemConfig {
   id: PlanKey;

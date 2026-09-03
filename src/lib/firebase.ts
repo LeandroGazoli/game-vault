@@ -19,6 +19,8 @@ import {
   getDocs,
   deleteDoc,
   query,
+  where,
+  limit,
   Firestore
 } from "firebase/firestore";
 import { UserGame, UserProfile } from "./types";
@@ -95,6 +97,26 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     }
   } catch (e) {
     console.error("Erro ao buscar perfil no Firestore:", e);
+  }
+  return null;
+}
+
+export async function getUserProfileByUsername(username: string): Promise<UserProfile | null> {
+  if (!username || !db) return null;
+
+  try {
+    const clean = username.toLowerCase().trim();
+    const q = query(
+      collection(db, "users"),
+      where("username", "==", clean),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      return snapshot.docs[0].data() as UserProfile;
+    }
+  } catch (e) {
+    console.error("Erro ao buscar perfil por username no Firestore:", e);
   }
   return null;
 }

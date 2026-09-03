@@ -19,6 +19,8 @@ import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
 import JsonLd from "@/components/seo/JsonLd";
 import CapacitorInit from "@/components/CapacitorInit";
+import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
+import ViewTransitionsProvider from "@/providers/ViewTransitionsProvider";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -165,14 +167,15 @@ export default function RootLayout({
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
         <SpaceDustCanvas />
-        <AuthProvider>
-          <CapacitorInit />
-          <GameLibraryProvider>
-            <PwaRegister />
-            <Navbar />
-            <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 pb-32 md:pb-8 overflow-x-clip">
-              {children}
-            </main>
+        <ViewTransitionsProvider>
+          <AuthProvider>
+            <CapacitorInit />
+            <GameLibraryProvider>
+              <PwaRegister />
+              <Navbar />
+              <main className="vt-main flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 pb-32 md:pb-8 overflow-x-clip">
+                {children}
+              </main>
 
             {/* Barra de Navegação Flutuante Mobile */}
             <MobileBottomNav />
@@ -306,9 +309,11 @@ export default function RootLayout({
             </footer>
           </GameLibraryProvider>
         </AuthProvider>
+      </ViewTransitionsProvider>
         <Analytics />
         <SpeedInsights />
         <GoogleAnalytics gaId="G-G7QH1XG25C" />
+        <SecurityTokenInterceptor />
       </body>
     </html>
   );

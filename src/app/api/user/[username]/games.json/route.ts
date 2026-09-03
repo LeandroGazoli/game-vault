@@ -80,8 +80,14 @@ export async function GET(
       user: {
         username: targetProfile?.username || username,
         displayName: targetProfile?.displayName || username,
+        photoURL: targetProfile?.photoURL || null,
+        bannerURL: targetProfile?.bannerURL || null,
         bio: targetProfile?.bio || null,
         favoriteGame: targetProfile?.favoriteGame || null,
+        plan: targetProfile?.plan || "free",
+        customTitles: targetProfile?.customTitles || (targetProfile?.customTitle ? [targetProfile.customTitle] : []),
+        theme: targetProfile?.theme || "cyan",
+        socialLinks: targetProfile?.socialLinks || null,
       },
       stats: {
         total: filteredGames.length,

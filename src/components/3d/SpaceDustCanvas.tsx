@@ -318,7 +318,7 @@ export default function SpaceDustCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none -z-10 w-full h-full will-change-transform opacity-75"
+      className="vt-background fixed inset-0 pointer-events-none -z-10 w-full h-full will-change-transform opacity-75"
       aria-hidden="true"
     />
   );

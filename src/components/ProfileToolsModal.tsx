@@ -15,6 +15,7 @@ import {
   ChevronRight,
   SlidersHorizontal,
   Settings,
+  Share2,
 } from "lucide-react";
 
 interface ProfileToolsModalProps {
@@ -30,6 +31,7 @@ interface ProfileToolsModalProps {
   onOpenRoulette: () => void;
   onOpenWrapped: () => void;
   onOpenExport: () => void;
+  onOpenShare?: () => void;
   onInstallPwa: () => void;
 }
 
@@ -46,6 +48,7 @@ export default function ProfileToolsModal({
   onOpenRoulette,
   onOpenWrapped,
   onOpenExport,
+  onOpenShare,
   onInstallPwa,
 }: ProfileToolsModalProps) {
   if (!isOpen) return null;
@@ -263,7 +266,30 @@ export default function ProfileToolsModal({
             <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
           </button>
 
-          {/* 6. Instalar PWA */}
+          {/* 6. Compartilhar Perfil */}
+          {onOpenShare && (
+            <button
+              onClick={() => handleAction(onOpenShare)}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group active:scale-[0.99] min-h-[52px]"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 flex-shrink-0">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-sky-300 transition-colors">
+                    Compartilhar Perfil
+                  </span>
+                  <p className="text-[11px] text-gray-400">
+                    Copie seu link, envie no WhatsApp ou gere QR Code
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+            </button>
+          )}
+
+          {/* 7. Instalar PWA */}
           <button
             onClick={() => handleAction(onInstallPwa)}
             className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group active:scale-[0.99] min-h-[52px]"

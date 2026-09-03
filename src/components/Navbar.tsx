@@ -13,6 +13,7 @@ import PlanBadge from "./PlanBadge";
 import UserAvatar from "./UserAvatar";
 import { triggerPwaInstall } from "./PwaInstallPrompt";
 import { openSpotlightSearch } from "./SpotlightSearchModal";
+import { getProfileUrl } from "@/lib/routes";
 import {
   Gamepad2,
   Trophy,
@@ -110,7 +111,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
+      <header className="vt-header sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Lado Esquerdo: Logo & Navegação Principal */}
           <div className="flex items-center gap-2.5 lg:gap-3 xl:gap-4 shrink-0">
@@ -157,9 +158,9 @@ export default function Navbar() {
                 Rankings
               </Link>
               <Link
-                href="/perfil"
+                href={user?.username ? getProfileUrl(user.username) : "/perfil"}
                 className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
-                  pathname === "/perfil"
+                  pathname?.startsWith("/perfil")
                     ? "bg-white/10 text-white border border-white/15"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
@@ -331,7 +332,7 @@ export default function Navbar() {
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Perfil: no mobile é apenas o avatar circular compacto (32px), sem empurrar o menu */}
                 <Link
-                  href="/perfil"
+                  href={user.username ? getProfileUrl(user.username) : "/perfil"}
                   className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/10 border border-white/10 hover:border-white/30 transition-colors shrink-0"
                   title={`Perfil de ${user.displayName}`}
                 >
@@ -501,10 +502,10 @@ export default function Navbar() {
                   { href: "/calendar", label: "Calendário", icon: CalendarIcon, color: "text-[#00E5FF]" },
                   { href: "/rankings", label: "Rankings", icon: Sparkles, color: "text-amber-400" },
                   { href: "/search", label: "Explorar Catálogo", icon: Search, color: "text-cyan-400" },
-                  { href: "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
+                  { href: user?.username ? getProfileUrl(user.username) : "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
                 ].map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || (item.label.includes("Perfil") && pathname?.startsWith("/perfil"));
                   return (
                     <Link
                       key={item.href}

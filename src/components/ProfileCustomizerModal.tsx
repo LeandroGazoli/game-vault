@@ -12,6 +12,7 @@ import {
   UserGame,
   DEFAULT_GAMER_TITLES,
   GAMER_EMOJI_SUGGESTIONS,
+  ProfileLayout,
 } from "@/lib/types";
 import MarkdownProfileBio from "./MarkdownProfileBio";
 import {
@@ -43,6 +44,7 @@ import {
   ArrowRight,
   AlertCircle,
   Plus,
+  LayoutGrid,
 } from "lucide-react";
 
 interface ProfileCustomizerModalProps {
@@ -59,6 +61,38 @@ const THEME_OPTIONS: { id: ProfileTheme; name: string; color: string; ring: stri
   { id: "purple", name: "Midnight Purple", color: "bg-purple-500", ring: "ring-purple-500", badge: "border-purple-500/40 text-purple-300 bg-purple-500/10" },
   { id: "crimson", name: "Crimson Matrix", color: "bg-rose-500", ring: "ring-rose-500", badge: "border-rose-500/40 text-rose-300 bg-rose-500/10" },
   { id: "emerald", name: "Emerald Forest", color: "bg-emerald-400", ring: "ring-emerald-400", badge: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
+];
+
+const LAYOUT_OPTIONS: {
+  id: ProfileLayout;
+  name: string;
+  badge: string;
+  desc: string;
+}[] = [
+  {
+    id: "default",
+    name: "Cyber Vault (Padrão)",
+    badge: "Equilibrado",
+    desc: "Hero clean, insígnias em 100% da largura e botões simétricos.",
+  },
+  {
+    id: "cinematic",
+    name: "Cinematic Pass",
+    badge: "Showcase Console",
+    desc: "Capa cinematográfica expansiva com avatar sobreposto estilo PlayStation/Steam.",
+  },
+  {
+    id: "gamer_id",
+    name: "Gamer ID Card",
+    badge: "Cyberpunk ID",
+    desc: "Estilo crachá holográfico com faixa de prestígio e chips de conquista sci-fi.",
+  },
+  {
+    id: "minimal",
+    name: "Editorial Minimal",
+    badge: "Clean & Puro",
+    desc: "Visual monocromático, linhas finas e foco absoluto nos jogos e estatísticas.",
+  },
 ];
 
 const GAMER_TITLES = DEFAULT_GAMER_TITLES;
@@ -78,6 +112,7 @@ export default function ProfileCustomizerModal({
   const [selectedBanner, setSelectedBanner] = useState<string>(user?.bannerURL || PRESET_BANNERS[0].url);
   const [customBannerUrl, setCustomBannerUrl] = useState<string>("");
   const [selectedTheme, setSelectedTheme] = useState<ProfileTheme>(user?.theme || "cyan");
+  const [selectedLayout, setSelectedLayout] = useState<ProfileLayout>(user?.profileLayout || "default");
 
   // Títulos e Insígnias
   const [equippedTitles, setEquippedTitles] = useState<string[]>(() => {
@@ -224,6 +259,7 @@ export default function ProfileCustomizerModal({
       await saveUserProfile(user.uid, {
         bannerURL: banner,
         theme: selectedTheme,
+        profileLayout: selectedLayout,
         customTitle: equippedTitles[0] || null, // Mantém compatibilidade com leitura legada
         customTitles: equippedTitles,
         createdCustomTitles: createdTitles,
@@ -407,6 +443,67 @@ export default function ProfileCustomizerModal({
                     <span className="text-xs font-bold text-white truncate">{t.name}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Estilo do Layout do Perfil (Exclusivo PRO / VIP) */}
+            <div className="space-y-3 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" /> Estilo do Layout do Perfil
+                  </label>
+                  <p className="text-[11px] text-gray-400">
+                    Escolha como seu perfil será exibido para você e para os visitantes.
+                  </p>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-500/30 text-amber-300 flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-amber-400" /> Exclusivo PRO
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {LAYOUT_OPTIONS.map((lo) => {
+                  const isSelected = selectedLayout === lo.id;
+                  const isLocked = !isPremium && lo.id !== "default";
+
+                  return (
+                    <button
+                      key={lo.id}
+                      type="button"
+                      onClick={() => {
+                        if (isLocked) {
+                          onClose();
+                          onOpenUpgrade();
+                          return;
+                        }
+                        setSelectedLayout(lo.id);
+                      }}
+                      className={`relative p-3.5 rounded-2xl border text-left transition-all ${
+                        isSelected
+                          ? "bg-cyan-500/15 border-[#00E5FF] ring-2 ring-[#00E5FF]/40 shadow-lg shadow-cyan-500/10"
+                          : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                      } ${isLocked ? "opacity-60" : ""}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white">{lo.name}</span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-white/10 text-gray-300">
+                            {lo.badge}
+                          </span>
+                        </div>
+                        {isLocked ? (
+                          <Lock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                        ) : isSelected ? (
+                          <Check className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                        {lo.desc}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

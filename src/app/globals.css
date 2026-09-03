@@ -199,4 +199,135 @@ div[class*="fixed"][class*="inset-0"] {
   margin-bottom: 0 !important;
 }
 
+/* ==========================================================================
+   View Transition API & Native App-Like Screen Transitions
+   ========================================================================== */
+@view-transition {
+  navigation: auto;
+}
+
+/* Base View Transition properties */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Fixed Landmark: Header stays fixed during page changes */
+.vt-header {
+  view-transition-name: app-header;
+}
+
+::view-transition-group(app-header) {
+  animation-duration: 0.15s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 50;
+}
+
+/* Fixed Landmark: Mobile Bottom Nav stays anchored */
+.vt-bottom-nav {
+  view-transition-name: app-bottom-nav;
+}
+
+::view-transition-group(app-bottom-nav) {
+  animation-duration: 0.15s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 50;
+}
+
+/* Persistent 3D canvas background */
+.vt-background {
+  view-transition-name: app-background;
+}
+
+::view-transition-group(app-background) {
+  animation-duration: 0s;
+}
+
+/* Main Content: Silky app-like screen transitions */
+.vt-main {
+  view-transition-name: app-main;
+}
+
+::view-transition-group(app-main) {
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(app-main) {
+  animation: 0.18s cubic-bezier(0.4, 0, 1, 1) both vt-page-out;
+}
+
+::view-transition-new(app-main) {
+  animation: 0.28s cubic-bezier(0.16, 1, 0.3, 1) both vt-page-in;
+}
+
+/* Root fallback transitions for cross-document & full transitions */
+::view-transition-old(root) {
+  animation: 0.18s cubic-bezier(0.4, 0, 1, 1) both vt-page-out;
+}
+
+::view-transition-new(root) {
+  animation: 0.28s cubic-bezier(0.16, 1, 0.3, 1) both vt-page-in;
+}
+
+@keyframes vt-page-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.994);
+  }
+}
+
+@keyframes vt-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.996);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile fine-tuning: faster response & touch-oriented feel */
+@media (max-width: 768px) {
+  ::view-transition-group(app-main) {
+    animation-duration: 0.24s;
+  }
+  
+  @keyframes vt-page-out {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes vt-page-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Accessibility: Honor reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+
 
