@@ -182,55 +182,57 @@ export default function HomePage() {
       {/* ==========================================
           1. HERO SECTION COM BUSCA E ATALHOS TÁTEIS
       ========================================== */}
-      <section className="relative z-30 rounded-2xl border border-[#242a36] bg-[#11141a] p-5 sm:p-10 text-center sm:text-left shadow-xl">
-        <div className="relative z-10 max-w-3xl">
+      <section className="relative z-30 rounded-2xl border border-[#242a36] bg-[#11141a] p-5 sm:p-10 text-center sm:text-left shadow-xl w-full">
+        <div className="relative z-10 w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#161a22] border border-[#262c38] text-neutral-300 text-xs font-mono font-medium mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
             <span>ACERVO GAMER // IGDB • METACRITIC • HOWLONGTOBEAT</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] font-display">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] font-display max-w-4xl lg:max-w-5xl">
             Descubra, Registre e Acompanhe <br className="hidden sm:inline" />
             <span className="text-neutral-400">Seus Jogos Favoritos.</span>
           </h1>
 
-          <p className="mt-4 text-xs sm:text-base text-neutral-300 max-w-2xl leading-relaxed">
+          <p className="mt-4 text-xs sm:text-base text-neutral-300 max-w-3xl leading-relaxed">
             Seu catálogo definitivo com <strong>jogos dublados em PT-BR</strong>, <strong>duração estimada para zerar</strong>, lançamentos ao vivo e estatísticas da comunidade.
           </p>
 
           {/* Barra de Busca no Hero com Autocomplete ao Vivo */}
-          <div className="mt-6 sm:mt-8 max-w-xl">
+          <div className="mt-6 sm:mt-8 w-full max-w-2xl">
             <LiveSearchInput
               variant="hero"
               placeholder="Busque por Elden Ring, GTA, God of War, Zelda..."
             />
           </div>
 
-          {/* Atalhos Táteis por Plataforma & Roleta Gamer */}
-          <div className="mt-6 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-            <span className="text-xs text-neutral-400 font-mono uppercase tracking-wider mr-1 flex items-center gap-1.5">
-              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Plataformas:
-            </span>
-            {[
-              { label: "PC", query: "PC" },
-              { label: "PlayStation 5", query: "PlayStation 5" },
-              { label: "Xbox Series", query: "Xbox Series" },
-              { label: "Nintendo Switch", query: "Nintendo Switch" },
-              { label: "Retrô & Clássicos", query: "Retro" },
-            ].map((p) => (
-              <Link
-                key={p.label}
-                href={`/search?platform=${encodeURIComponent(p.query)}`}
-                className="text-xs px-3 py-1.5 rounded-lg bg-[#181c25] hover:bg-[#202532] text-neutral-200 hover:text-white border border-[#2a3140] hover:border-neutral-400 transition-all font-medium active:scale-95"
-              >
-                {p.label}
-              </Link>
-            ))}
+          {/* Atalhos Táteis por Plataforma & Roleta Gamer em Largura Total */}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 w-full">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span className="text-xs text-neutral-400 font-mono uppercase tracking-wider mr-1 flex items-center gap-1.5">
+                <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Plataformas:
+              </span>
+              {[
+                { label: "PC", query: "PC" },
+                { label: "PlayStation 5", query: "PlayStation 5" },
+                { label: "Xbox Series", query: "Xbox Series" },
+                { label: "Nintendo Switch", query: "Nintendo Switch" },
+                { label: "Retrô & Clássicos", query: "Retro" },
+              ].map((p) => (
+                <Link
+                  key={p.label}
+                  href={`/search?platform=${encodeURIComponent(p.query)}`}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[#181c25] hover:bg-[#202532] text-neutral-200 hover:text-white border border-[#2a3140] hover:border-neutral-400 transition-all font-medium active:scale-95"
+                >
+                  {p.label}
+                </Link>
+              ))}
+            </div>
 
             {/* Botão Interativo: Roleta Gamer com Visual Arcade */}
             <button
               onClick={() => setIsRouletteOpen(true)}
-              className="inline-flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-lg bg-[#1a1e28] hover:bg-[#232936] text-amber-300 border border-amber-500/40 hover:border-amber-400 font-mono font-bold transition-all shadow-sm active:scale-95 cursor-pointer ml-auto sm:ml-2"
+              className="inline-flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-lg bg-[#1a1e28] hover:bg-[#232936] text-amber-300 border border-amber-500/40 hover:border-amber-400 font-mono font-bold transition-all shadow-sm active:scale-95 cursor-pointer flex-shrink-0"
               title="Gire a roleta e descubra um jogo surpresa para jogar hoje!"
             >
               <Dices className="w-3.5 h-3.5 text-pink-400" />
@@ -240,19 +242,21 @@ export default function HomePage() {
 
           {/* Mini resumo do usuário se autenticado */}
           {user && (
-            <div className="mt-8 flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-6 text-xs text-neutral-400 border-t border-[#242a36] pt-5 font-mono">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 sm:gap-6 text-xs text-neutral-400 border-t border-[#242a36] pt-5 font-mono w-full">
               <span className="text-neutral-200 font-sans">
                 Jogador: <strong className="text-white font-mono">{user.displayName}</strong>
               </span>
-              <span className="flex items-center gap-1.5 text-[#00E5FF]">
-                <Trophy className="w-3.5 h-3.5 text-[#00E5FF]" /> <strong className="text-white tabular-nums">{stats.completedCount}</strong> zerados
-              </span>
-              <span className="flex items-center gap-1.5 text-blue-400">
-                <Gamepad2 className="w-3.5 h-3.5 text-blue-400" /> <strong className="text-white tabular-nums">{stats.playingCount}</strong> jogando
-              </span>
-              <span className="flex items-center gap-1.5 text-amber-400">
-                <Clock className="w-3.5 h-3.5 text-amber-400" /> <strong className="text-white tabular-nums">{stats.totalPlaytimeHours}h</strong> registradas
-              </span>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+                <span className="flex items-center gap-1.5 text-[#00E5FF]">
+                  <Trophy className="w-3.5 h-3.5 text-[#00E5FF]" /> <strong className="text-white tabular-nums">{stats.completedCount}</strong> zerados
+                </span>
+                <span className="flex items-center gap-1.5 text-blue-400">
+                  <Gamepad2 className="w-3.5 h-3.5 text-blue-400" /> <strong className="text-white tabular-nums">{stats.playingCount}</strong> jogando
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-400">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" /> <strong className="text-white tabular-nums">{stats.totalPlaytimeHours}h</strong> registradas
+                </span>
+              </div>
             </div>
           )}
         </div>
