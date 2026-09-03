@@ -8,6 +8,7 @@ import StatusBadge from "./StatusBadge";
 import GameModal from "./GameModal";
 import Link from "next/link";
 import { Clock, Plus, Check, Star } from "lucide-react";
+import Card3DTilt from "./3d/Card3DTilt";
 
 interface GameCardProps {
   game: Game;
@@ -23,7 +24,8 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
 
   return (
     <>
-      <div className="group relative flex flex-col rounded-xl bg-[#12151c] border border-[#222834] hover:border-[#384255] hover:bg-[#151922] overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/70">
+      <Card3DTilt maxTilt={8} className="h-full">
+        <div className="group relative flex flex-col h-full rounded-xl bg-[#12151c] border border-[#222834] hover:border-[#384255] hover:bg-[#151922] overflow-hidden transition-colors duration-200 hover:shadow-2xl hover:shadow-black/70">
         {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
           <Link
@@ -134,7 +136,8 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </Card3DTilt>
 
       {/* Modal para configurar o jogo */}
       <GameModal
