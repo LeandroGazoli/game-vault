@@ -99,11 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
               setUser(profile);
             } else {
+              const cleanUsername = fbUser.displayName
+                ? fbUser.displayName
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9_]/g, "_")
+                    .replace(/_+/g, "_")
+                    .replace(/^_|_$/g, "")
+                : (fbUser.email ? fbUser.email.split("@")[0] : "jogador");
+
               const newProfile: UserProfile = {
                 uid: fbUser.uid,
-                username: fbUser.displayName
-                  ? fbUser.displayName.toLowerCase().replace(/\s+/g, "_")
-                  : (fbUser.email ? fbUser.email.split("@")[0] : "jogador"),
+                username: cleanUsername || "jogador",
                 displayName: fbUser.displayName || "Jogador",
                 email: fbUser.email || "",
                 photoURL: fbUser.photoURL || null,
@@ -158,31 +166,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    // Detecção se está rodando como PWA Standalone (iOS ou Android)
-    const isStandalone =
-      typeof window !== "undefined" &&
-      (Boolean((window.navigator as any).standalone) ||
-        window.matchMedia("(display-mode: standalone)").matches);
-
-    if (isStandalone) {
-      // No PWA standalone, popup abre em webview desconectada do window.opener.
-      // signInWithRedirect é o padrão recomendado e suportado oficialmente.
-      await signInWithRedirect(auth, provider);
-      return;
-    }
-
     try {
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
         setFirebaseUser(result.user);
       }
     } catch (err: any) {
-      // Se o popup foi bloqueado pelo navegador ou webview móvel, tenta redirect
+      const code = err?.code || "";
+      // Se o popup foi expressamente bloqueado pelo navegador ou dispositivo, usa redirect como fallback
       if (
-        err?.code === "auth/popup-blocked" ||
-        err?.code === "auth/operation-not-supported-in-this-environment"
+        code === "auth/popup-blocked" ||
+        code === "auth/operation-not-supported-in-this-environment"
       ) {
-        console.info("[Auth] Popup indisponível. Tentando redirect...");
+        console.warn("[Auth] Popup bloqueado ou não suportado. Tentando redirecionamento com proxy...");
         await signInWithRedirect(auth, provider);
         return;
       }
