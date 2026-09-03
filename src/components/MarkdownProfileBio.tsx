@@ -38,7 +38,7 @@ export default function MarkdownProfileBio({
       </div>
 
       {/* Renderização do Markdown */}
-      <div className="prose prose-invert max-w-none space-y-4 text-xs sm:text-sm text-gray-200 leading-relaxed break-words font-sans">
+      <div className="custom-profile-bio custom-profile-html prose prose-invert max-w-none space-y-4 text-xs sm:text-sm text-gray-200 leading-relaxed break-words font-sans">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
@@ -98,6 +98,9 @@ export default function MarkdownProfileBio({
             ),
             hr: ({ node, ...props }) => (
               <hr className="border-white/10 my-4" {...props} />
+            ),
+            style: ({ node, ...props }) => (
+              <style {...props} />
             ),
           }}
         >
