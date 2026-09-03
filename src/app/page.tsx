@@ -35,6 +35,18 @@ import HomeHero from "@/components/HomeHero";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 
+const ParallaxCharactersSection = dynamic(
+  () => import("@/components/3d/ParallaxCharactersSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-80 rounded-3xl bg-neutral-900/40 border border-white/10 animate-pulse flex items-center justify-center">
+        <span className="text-xs text-neutral-500 font-mono">Carregando Universo 3D Parallax...</span>
+      </div>
+    ),
+  }
+);
+
 // Franquias consagradas para a seção de exploração
 const LEGENDARY_FRANCHISES = [
   {
@@ -365,6 +377,11 @@ export default function HomePage() {
           actionText="Calendário Completo →"
         />
       ) : null}
+
+      {/* ==========================================
+          UNIVERSO GAMER • IMERSÃO 3D PARALLAX (PERSONAGENS)
+      ========================================== */}
+      <ParallaxCharactersSection />
 
       {/* ==========================================
           7. SEÇÃO: EXPLORAR POR FRANQUIAS LENDÁRIAS

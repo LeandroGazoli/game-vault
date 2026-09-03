@@ -19,16 +19,6 @@ import {
   Zap,
 } from "lucide-react";
 
-// Carregamento dinâmico seguro do componente 3D no cliente
-const HeroArcade3D = dynamic(() => import("./3d/HeroArcade3D"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[280px] sm:h-[320px] flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
-    </div>
-  ),
-});
-
 interface HomeHeroProps {
   onOpenRoulette: () => void;
 }
@@ -192,60 +182,55 @@ export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
           </div>
         </div>
 
-        {/* Lado Direito: Terminal Arcade 3D com Insígnia & Estatísticas da Plataforma */}
+        {/* Lado Direito: Card Oficial da Insígnia MGL (Sem 3D, com visual gamer premium) */}
         <div className="hero-3d hidden lg:flex lg:col-span-5 xl:col-span-5 items-center justify-center">
-          <div className="relative w-full max-w-[430px] rounded-3xl border border-emerald-500/25 bg-gradient-to-b from-[#131d1a]/85 via-[#0d1413]/90 to-[#080d0c] p-5 shadow-2xl backdrop-blur-2xl hover:border-emerald-400/40 transition-all group">
-            {/* Halos Neon Esmeralda e Ciano */}
+          <div className="relative w-full max-w-[420px] rounded-3xl border border-emerald-500/25 bg-gradient-to-b from-[#131d1a]/80 via-[#0d1413]/90 to-[#080d0c] p-6 shadow-2xl backdrop-blur-2xl hover:border-emerald-400/40 transition-all group">
+            {/* Halo Neon Esmeralda */}
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-cyan-500/15 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-teal-500/15 blur-3xl pointer-events-none" />
 
-            {/* Cabeçalho do Terminal 3D */}
-            <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10B981]" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 font-bold">
-                  HOLO-VAULT // 3D CORE
-                </span>
+            {/* Imagem do Logo MGL Oficial em Destaque */}
+            <div className="relative z-10 flex flex-col items-center justify-center py-4">
+              <div className="relative w-full aspect-[2.3/1] max-h-[160px] flex items-center justify-center">
+                <img
+                  src="/logo-mgl.png"
+                  alt="MGL Insígnia Oficial"
+                  className="max-h-[150px] w-auto object-contain filter drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] group-hover:drop-shadow-[0_0_35px_rgba(16,185,129,0.8)] transition-all duration-300 group-hover:scale-105"
+                />
               </div>
-              <span className="text-[10px] font-mono text-neutral-400">INTERATIVO</span>
-            </div>
 
-            {/* Elemento 3D Interativo Three.js */}
-            <div className="relative z-10 w-full overflow-hidden rounded-2xl my-1">
-              <HeroArcade3D />
-            </div>
-
-            {/* Destaques Rápidos da Plataforma */}
-            <div className="relative z-10 w-full grid grid-cols-2 gap-2 pt-3 border-t border-white/10 text-xs">
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Gamepad2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-white text-[11px]">150.000+</span>
-                  <span className="text-[10px] text-neutral-400">Jogos no Acervo</span>
+              {/* Destaques Rápidos da Plataforma */}
+              <div className="w-full grid grid-cols-2 gap-2.5 mt-6 pt-5 border-t border-white/10 text-xs">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
+                  <Gamepad2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-white text-[11px]">150.000+</span>
+                    <span className="text-[10px] text-neutral-400">Jogos no Acervo</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Languages className="w-4 h-4 text-teal-400 shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-white text-[11px]">PT-BR</span>
-                  <span className="text-[10px] text-neutral-400">Dublados Oficiais</span>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
+                  <Languages className="w-4 h-4 text-teal-400 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-white text-[11px]">PT-BR</span>
+                    <span className="text-[10px] text-neutral-400">Dublados Oficiais</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-white text-[11px]">HowLongToBeat</span>
-                  <span className="text-[10px] text-neutral-400">Horas para Zerar</span>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
+                  <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-white text-[11px]">HowLongToBeat</span>
+                    <span className="text-[10px] text-neutral-400">Horas para Zerar</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-white text-[11px]">Metacritic</span>
-                  <span className="text-[10px] text-neutral-400">Notas &amp; Rankings</span>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
+                  <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-white text-[11px]">Metacritic</span>
+                    <span className="text-[10px] text-neutral-400">Notas &amp; Rankings</span>
+                  </div>
                 </div>
               </div>
             </div>
