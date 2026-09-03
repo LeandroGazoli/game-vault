@@ -227,6 +227,11 @@ export default function RootLayout({
                           Buscar Jogos
                         </Link>
                       </li>
+                      <li>
+                        <Link href="/feedback" className="hover:text-[#00E5FF] transition-colors font-semibold text-amber-300">
+                          💡 Ideias &amp; Votação (Bugs)
+                        </Link>
+                      </li>
                     </ul>
                   </div>
 

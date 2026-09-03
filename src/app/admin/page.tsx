@@ -24,12 +24,14 @@ import {
   Layers,
   ArrowUpRight,
   TrendingUp,
+  Lightbulb,
 } from "lucide-react";
 import AdminPlansManager from "@/components/AdminPlansManager";
+import AdminFeedbackManager from "@/components/AdminFeedbackManager";
 
 export default function AdminPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
-  const [adminTab, setAdminTab] = useState<"users" | "plans">("users");
+  const [adminTab, setAdminTab] = useState<"users" | "plans" | "feedback">("users");
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -218,10 +220,27 @@ export default function AdminPage() {
             PRODUÇÃO
           </span>
         </button>
+
+        <button
+          onClick={() => setAdminTab("feedback")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+            adminTab === "feedback"
+              ? "bg-amber-400 text-black shadow-lg shadow-amber-400/20"
+              : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          <Lightbulb className="w-4 h-4" />
+          <span>Ideias &amp; Report de Bugs</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] bg-black/20 font-mono font-bold">
+            BOUNTY
+          </span>
+        </button>
       </div>
 
       {adminTab === "plans" ? (
         <AdminPlansManager adminEmail={user.email} />
+      ) : adminTab === "feedback" ? (
+        <AdminFeedbackManager />
       ) : (
         <>
           {/* Toast de Sucesso */}

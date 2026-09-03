@@ -70,5 +70,53 @@ service cloud.firestore {
         (!('translatedStoryline' in request.resource.data) || (request.resource.data.translatedStoryline is string && request.resource.data.translatedStoryline.size() <= 25000));
       allow delete: if isVerifiedAdmin();
     }
+
+    // Central Comunitária de Feedback, Ideias, Votação e Recompensas
+    match /feedback/{feedbackId} {
+      allow read: if true;
+
+      // Criação de feedback: usuário autenticado, autor correspondente, status inicial 'under_review' e contadores zerados
+      allow create: if isAuthenticated() &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.status == "under_review" &&
+        request.resource.data.score == 0 &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() >= 3 &&
+        request.resource.data.title.size() <= 150 &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() <= 5000;
+
+      // Atualização: Admin verificado tem controle total (status, notas da equipe e concessão de prêmios).
+      // Usuários autenticados podem atualizar contadores de votos ou o próprio autor pode editar seu texto
+      allow update: if isVerifiedAdmin() || (
+        isAuthenticated() && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'upvotesCount', 'downvotesCount', 'score', 'commentsCount', 'updatedAt'
+          ]) ||
+          (
+            resource.data.authorId == request.auth.uid &&
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'status', 'adminResponse', 'adminResponseAt', 'rewarded', 'rewardType', 'rewardTitle', 'rewardGrantedAt', 'authorId'
+            ])
+          )
+        )
+      );
+
+      // Deleção permitida apenas pelo autor da sugestão ou admin verificado
+      allow delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+
+      // Votação individual: cada usuário gerencia exclusivamente seu documento de voto
+      match /votes/{userId} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isVerifiedAdmin();
+      }
+
+      // Discussões e comentários da comunidade
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      }
+    }
   }
 }

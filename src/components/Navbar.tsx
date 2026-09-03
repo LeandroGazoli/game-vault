@@ -35,6 +35,7 @@ import {
   Heart,
   Layers,
   Bookmark,
+  Lightbulb,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -156,6 +157,17 @@ export default function Navbar() {
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 Rankings
+              </Link>
+              <Link
+                href="/feedback"
+                className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
+                  pathname === "/feedback"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-yellow-400" />
+                Ideias &amp; Bugs
               </Link>
               <Link
                 href={user?.username ? getProfileUrl(user.username) : "/perfil"}
@@ -284,6 +296,14 @@ export default function Navbar() {
                             className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
                           >
                             ⭐ Top Metacritic
+                          </Link>
+                          <Link
+                            href="/feedback"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-amber-300 hover:text-white hover:bg-amber-500/15 transition-colors truncate font-bold"
+                          >
+                            <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span>💡 Ideias &amp; Votação</span>
                           </Link>
                           <Link
                             href="/search"
@@ -501,6 +521,7 @@ export default function Navbar() {
                   { href: "/", label: "Início", icon: Flame, color: "text-orange-400" },
                   { href: "/calendar", label: "Calendário", icon: CalendarIcon, color: "text-[#00E5FF]" },
                   { href: "/rankings", label: "Rankings", icon: Sparkles, color: "text-amber-400" },
+                  { href: "/feedback", label: "Ideias & Votação (Bugs)", icon: Lightbulb, color: "text-yellow-400" },
                   { href: "/search", label: "Explorar Catálogo", icon: Search, color: "text-cyan-400" },
                   { href: user?.username ? getProfileUrl(user.username) : "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
                 ].map((item) => {

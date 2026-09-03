@@ -424,3 +424,147 @@ export interface LibraryStats {
   averageRating: number;
   topGenres: { name: string; count: number }[];
 }
+
+// ==========================================
+// SISTEMA DE FEEDBACK, IDEIAS & RECOMPENSAS
+// ==========================================
+
+export type FeedbackCategory = "idea" | "bug" | "improvement" | "feedback";
+
+export type FeedbackStatus =
+  | "under_review"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "declined";
+
+export type FeedbackRewardType = "vip" | "pro" | "badge" | "custom";
+
+export interface FeedbackItem {
+  id: string;
+  title: string;
+  description: string;
+  category: FeedbackCategory;
+  status: FeedbackStatus;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorPhoto: string | null;
+  authorPlan: UserPlan;
+  upvotesCount: number;
+  downvotesCount: number;
+  score: number;
+  commentsCount: number;
+  adminResponse?: string | null;
+  adminResponseAt?: string | null;
+  rewarded?: boolean;
+  rewardType?: FeedbackRewardType | null;
+  rewardTitle?: string | null;
+  rewardGrantedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeedbackVote {
+  feedbackId: string;
+  userId: string;
+  vote: 1 | -1;
+  updatedAt: string;
+}
+
+export interface FeedbackComment {
+  id: string;
+  feedbackId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorPhoto: string | null;
+  authorPlan: UserPlan;
+  content: string;
+  isAdmin: boolean;
+  createdAt: string;
+}
+
+export const FEEDBACK_CATEGORIES: {
+  id: FeedbackCategory;
+  label: string;
+  iconName: "Lightbulb" | "Bug" | "Zap" | "MessageSquare";
+  description: string;
+  badgeClass: string;
+}[] = [
+  {
+    id: "idea",
+    label: "Ideia / Recurso",
+    iconName: "Lightbulb",
+    description: "Sugira uma nova funcionalidade, ferramenta ou recurso para a plataforma.",
+    badgeClass: "bg-cyan-500/15 border-cyan-500/40 text-[#00E5FF]",
+  },
+  {
+    id: "bug",
+    label: "Bug / Erro",
+    iconName: "Bug",
+    description: "Relate uma falha técnica, erro de exibição ou comportamento inesperado.",
+    badgeClass: "bg-rose-500/15 border-rose-500/40 text-rose-400",
+  },
+  {
+    id: "improvement",
+    label: "Melhoria UX",
+    iconName: "Zap",
+    description: "Proponha aprimoramentos de velocidade, usabilidade ou design.",
+    badgeClass: "bg-amber-500/15 border-amber-500/40 text-amber-300",
+  },
+  {
+    id: "feedback",
+    label: "Feedback Geral",
+    iconName: "MessageSquare",
+    description: "Compartilhe sua opinião, elogio ou sugestão geral sobre a plataforma.",
+    badgeClass: "bg-purple-500/15 border-purple-500/40 text-purple-300",
+  },
+];
+
+export const FEEDBACK_STATUSES: Record<
+  FeedbackStatus,
+  { label: string; color: string; dotClass: string; desc: string }
+> = {
+  under_review: {
+    label: "Em Análise",
+    color: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
+    dotClass: "bg-yellow-400",
+    desc: "A equipe e a comunidade estão avaliando esta sugestão.",
+  },
+  planned: {
+    label: "Planejado",
+    color: "bg-purple-500/15 text-purple-300 border-purple-500/30",
+    dotClass: "bg-purple-400",
+    desc: "Aprovado! Entrou no planejamento de desenvolvimento.",
+  },
+  in_progress: {
+    label: "Em Desenvolvimento",
+    color: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+    dotClass: "bg-blue-400 animate-pulse",
+    desc: "Nossa equipe já está codificando e implementando.",
+  },
+  completed: {
+    label: "Implementado",
+    color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    dotClass: "bg-emerald-400",
+    desc: "Lançado no MyGameList! Já está disponível no site.",
+  },
+  declined: {
+    label: "Não Viável",
+    color: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    dotClass: "bg-rose-400",
+    desc: "Analisado pela equipe, porém não será possível implementar no momento.",
+  },
+};
+
+export const DEFAULT_REWARD_TITLES = [
+  "🐛 Bug Hunter Master",
+  "💡 Visionário do Vault",
+  "🛡️ Guardião da Plataforma",
+  "⚡ Otimizador de Elite",
+  "⭐ Contribuidor Master",
+  "💎 Caçador de Glitches",
+  "🚀 Arquiteto Comunitário",
+];
+
