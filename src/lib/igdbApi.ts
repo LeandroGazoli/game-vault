@@ -7,7 +7,10 @@ const IGDB_API_URL = "https://api.igdb.com/v4";
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 export async function getTwitchAccessToken(): Promise<string | null> {
-  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) return null;
+  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+    console.error("[Twitch/IGDB] TWITCH_CLIENT_ID ou TWITCH_CLIENT_SECRET não configurados nas variáveis de ambiente.");
+    return null;
+  }
 
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60000) {
     return cachedToken.token;
@@ -27,10 +30,11 @@ export async function getTwitchAccessToken(): Promise<string | null> {
       };
       return cachedToken.token;
     } else {
-      console.warn("Falha ao autenticar na Twitch:", await res.text());
+      const errorText = await res.text();
+      console.error("[Twitch/IGDB] Falha ao autenticar na Twitch OAuth:", res.status, errorText);
     }
   } catch (err) {
-    console.error("Erro na requisição OAuth da Twitch:", err);
+    console.error("[Twitch/IGDB] Erro de rede na requisição OAuth da Twitch:", err);
   }
 
   return null;
