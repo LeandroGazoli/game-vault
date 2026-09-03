@@ -16,13 +16,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) {
     return {
       title: "Categoria não encontrada",
-      description: "A categoria selecionada não foi encontrada no acervo do GameVault.",
+      description: "A categoria selecionada não foi encontrada no acervo do MyGameList.",
       robots: { index: false, follow: false },
     };
   }
 
   const title = `Jogos de ${category.name}`;
-  const description = `${category.description} Explore os melhores títulos de ${category.name}, lançamentos, notas do Metacritic e tempos de zeramento no GameVault.`;
+  const description = `${category.description} Explore os melhores títulos de ${category.name}, lançamentos, notas do Metacritic e tempos de zeramento no MyGameList.`;
   const canonicalUrl = `${SITE_URL}/categorias/${slug}`;
 
   return {
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       url: canonicalUrl,
-      siteName: "GameVault",
+      siteName: "MyGameList",
       type: "website",
       images: [
         {
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       images: [category.coverImage],
-      creator: "@gamevault",
+      creator: "@mygamelist",
     },
   };
 }

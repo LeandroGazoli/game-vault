@@ -34,8 +34,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
-    template: "%s | GameVault",
+    default: "MyGameList • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    template: "%s | MyGameList",
   },
   description:
     "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo completo de games em PT-BR.",
@@ -48,12 +48,14 @@ export const metadata: Metadata = {
     "jogos dublados",
     "catálogo de jogos",
     "meu gamer log",
-    "game vault",
+    "my game list",
+    "mygamelist",
+    "mgl",
     "organizador de jogos",
   ],
   authors: [{ name: "Leandro Gazoli" }],
   creator: "Leandro Gazoli",
-  publisher: "GameVault",
+  publisher: "MyGameList",
   formatDetection: {
     email: false,
     address: false,
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "GameVault",
+    title: "MyGameList",
   },
   icons: {
     icon: [
@@ -97,8 +99,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     url: SITE_URL,
-    siteName: "GameVault",
-    title: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    siteName: "MyGameList",
+    title: "MyGameList • Catálogo de Jogos, Lançamentos & Backlog Gamer",
     description:
       "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo de games em PT-BR.",
     images: [
@@ -106,17 +108,17 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "GameVault • Catálogo e Backlog Gamer",
+        alt: "MyGameList • Catálogo e Backlog Gamer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    title: "MyGameList • Catálogo de Jogos, Lançamentos & Backlog Gamer",
     description:
       "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo de games em PT-BR.",
     images: ["/og-image.jpg"],
-    creator: "@gamevault",
+    creator: "@mygamelist",
   },
 };
 
@@ -124,8 +126,8 @@ const globalStructuredData = [
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "GameVault",
-    alternateName: ["MGL", "Meu Gamer Log", "MyGameList"],
+    name: "MyGameList",
+    alternateName: ["MGL", "Meu Gamer Log", "My Game List"],
     url: SITE_URL,
     description:
       "Plataforma completa para registrar jogos zerados, acompanhar notas do Metacritic, tempos do HowLongToBeat e lançamentos.",
@@ -142,7 +144,8 @@ const globalStructuredData = [
   {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "GameVault",
+    name: "MyGameList",
+    alternateName: ["MGL", "Meu Gamer Log", "My Game List"],
     url: SITE_URL,
     logo: `${SITE_URL}/logo-mgl.png`,
     sameAs: [],
@@ -232,7 +235,7 @@ export default function RootLayout({
                     <ul className="space-y-2 text-xs">
                       <li>
                         <Link href="/sobre" className="hover:text-white transition-colors">
-                          Sobre o GameVault
+                          Sobre o MyGameList
                         </Link>
                       </li>
                       <li>
@@ -271,10 +274,10 @@ export default function RootLayout({
                 <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] text-gray-400">
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-300">
-                      © {new Date().getFullYear()} GameVault. Todos os direitos reservados.
+                      © {new Date().getFullYear()} MyGameList. Todos os direitos reservados.
                     </p>
                     <p className="text-gray-500">
-                      Design por <strong className="text-gray-300">GameVault Studio</strong> • Desenvolvido por <strong className="text-gray-300">Leandro Gazoli</strong>
+                      Design por <strong className="text-gray-300">MyGameList Studio</strong> • Desenvolvido por <strong className="text-gray-300">Leandro Gazoli</strong>
                     </p>
                     <p className="text-gray-500">
                       Game data: <span className="text-gray-400 font-mono">IGDB (Twitch), HowLongToBeat &amp; Metacritic</span>

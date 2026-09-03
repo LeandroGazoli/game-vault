@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${cleanUsername} - Perfil Gamer & Backlog`,
-    description: `Confira o perfil e a biblioteca gamer de ${cleanUsername} no GameVault. Jogos zerados, lista de desejos e estatísticas de gameplay.`,
+    description: `Confira o perfil e a biblioteca gamer de ${cleanUsername} no MyGameList. Jogos zerados, lista de desejos e estatísticas de gameplay.`,
     alternates: {
       canonical: getProfileUrl(cleanUsername),
     },
@@ -24,10 +24,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       follow: true,
     },
     openGraph: {
-      title: `${cleanUsername} • Perfil Gamer no GameVault`,
+      title: `${cleanUsername} • Perfil Gamer no MyGameList`,
       description: `Confira os jogos zerados, backlog e estatísticas de ${cleanUsername}.`,
       url: `${SITE_URL}${getProfileUrl(cleanUsername)}`,
-      siteName: "GameVault",
+      siteName: "MyGameList",
       type: "profile",
       images: [
         {
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${cleanUsername} • Perfil Gamer no GameVault`,
+      title: `${cleanUsername} • Perfil Gamer no MyGameList`,
       description: `Confira os jogos zerados, backlog e estatísticas de ${cleanUsername}.`,
       images: ["/og-image.jpg"],
     },

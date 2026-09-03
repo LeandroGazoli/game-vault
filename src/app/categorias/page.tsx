@@ -16,18 +16,18 @@ export const metadata: Metadata = {
     canonical: "/categorias",
   },
   openGraph: {
-    title: "Categorias de Jogos | Catálogo GameVault",
+    title: "Categorias de Jogos | Catálogo MyGameList",
     description:
       "Explore jogos organizados por categorias temáticas com notas, tempos de zeramento e lançamentos.",
     url: `${SITE_URL}/categorias`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: ["/og-image.jpg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Categorias de Jogos | Catálogo GameVault",
-    description: "Explore jogos organizados por categorias temáticas no GameVault.",
+    title: "Categorias de Jogos | Catálogo MyGameList",
+    description: "Explore jogos organizados por categorias temáticas no MyGameList.",
     images: ["/og-image.jpg"],
   },
 };

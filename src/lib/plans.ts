@@ -28,7 +28,7 @@ export interface PlansConfig {
 export const DEFAULT_PLANS_CONFIG: PlansConfig = {
   pro_monthly: {
     id: "pro_monthly",
-    name: "GameVault PRO (Mensal)",
+    name: "MyGameList PRO (Mensal)",
     description: "Acesso total a todos os recursos PRO com cobrança mensal automática. Cancele quando quiser.",
     price: 9.9,
     formattedPrice: "R$ 9,90",
@@ -49,7 +49,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
   },
   pro_single_month: {
     id: "pro_single_month",
-    name: "GameVault PRO (1 Mês Avulso)",
+    name: "MyGameList PRO (1 Mês Avulso)",
     description: "30 dias de acesso PRO sem renovação automática. Pague apenas 1 único mês e não se preocupe com cobranças futuras.",
     price: 9.9,
     formattedPrice: "R$ 9,90",
@@ -70,7 +70,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
   },
   pro_annual: {
     id: "pro_annual",
-    name: "GameVault PRO (Anual)",
+    name: "MyGameList PRO (Anual)",
     description: "Economize mais de 30% com o plano anual. O melhor custo-benefício para gamers assíduos.",
     price: 79.9,
     formattedPrice: "R$ 79,90",
@@ -90,8 +90,8 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
   },
   vip_lifetime: {
     id: "vip_lifetime",
-    name: "GameVault VIP (Membro Fundador)",
-    description: "Acesso vitalício para sempre. Um único pagamento e você é VIP eterno do GameVault.",
+    name: "MyGameList VIP (Membro Fundador)",
+    description: "Acesso vitalício para sempre. Um único pagamento e você é VIP eterno do MyGameList.",
     price: 149.9,
     formattedPrice: "R$ 149,90",
     intervalText: "vitalício",

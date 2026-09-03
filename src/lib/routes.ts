@@ -1,5 +1,6 @@
 /**
- * Utilitários centralizados para geração de URLs semânticas no GameVault.
+ * Utilitários centralizados para geração de URLs semânticas no MyGameList.
+ * Padroniza a estrutura de links amigáveis (slugs) para SEO.
  */
 
 /**

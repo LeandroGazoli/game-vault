@@ -16,7 +16,7 @@ interface TopTenImdbSectionProps {
 
 export default function TopTenImdbSection({
   games,
-  title = "Top 10 no GameVault esta semana",
+  title = "Top 10 no MyGameList esta semana",
 }: TopTenImdbSectionProps) {
   const { getGameInLibrary } = useGameLibrary();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);

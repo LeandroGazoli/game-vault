@@ -113,7 +113,7 @@ export default function PlanosClient() {
       <div className="text-center space-y-4 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-semibold">
           <Crown className="w-4 h-4 text-amber-400" />
-          Planos &amp; Assinaturas GameVault
+          Planos &amp; Assinaturas MyGameList
         </div>
         <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
           Sua Biblioteca Gamer no <span className="text-[#00E5FF]">Nível Máximo</span>

@@ -306,7 +306,7 @@ export default function Navbar() {
             <button
               onClick={() => openSpotlightSearch()}
               className="hidden md:flex items-center justify-between w-28 lg:w-36 xl:w-40 px-2.5 py-1.5 rounded-xl bg-[#13161f] hover:bg-[#181c27] border border-[#242a36] hover:border-[#384255] text-xs text-neutral-400 transition-all shadow-inner group cursor-pointer shrink-0"
-              title="Buscar jogos no GameVault (Atalho: ⌘K ou Ctrl+K)"
+              title="Buscar jogos no MyGameList (Atalho: ⌘K ou Ctrl+K)"
             >
               <div className="flex items-center gap-1.5 truncate">
                 <Search className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#00E5FF] transition-colors shrink-0" />

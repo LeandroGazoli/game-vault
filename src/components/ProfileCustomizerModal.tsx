@@ -695,7 +695,7 @@ export default function ProfileCustomizerModal({
                       <Lock className="w-4 h-4 text-amber-400" /> Criação Exclusiva para Assinantes PRO e VIP
                     </p>
                     <p className="text-xs text-gray-300 max-w-xl">
-                      Desbloqueie a criação de até 10 insígnias customizadas com seus próprios emojis e textos para se destacar no GameVault.
+                      Desbloqueie a criação de até 10 insígnias customizadas com seus próprios emojis e textos para se destacar no MyGameList.
                     </p>
                   </div>
                   <button
@@ -842,7 +842,7 @@ export default function ProfileCustomizerModal({
                 </div>
                 <div>
                   <h5 className="text-xs font-bold uppercase tracking-wider text-white">
-                    Insígnias Oficiais GameVault
+                    Insígnias Oficiais MyGameList
                   </h5>
                   <p className="text-[11px] text-gray-400">
                     Insígnias clássicas prontas para equipar. Clique para equipar ou desequipar (máximo 3 no perfil).
@@ -1120,7 +1120,7 @@ export default function ProfileCustomizerModal({
                 <label className="text-xs font-semibold text-rose-300">YouTube Channel</label>
                 <input
                   type="text"
-                  placeholder="ex: @GameVaultCanal"
+                  placeholder="ex: @MyGameListCanal"
                   value={socials.youtube || ""}
                   onChange={(e) => setSocials({ ...socials, youtube: e.target.value })}
                   className="w-full bg-[#101114] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-[#00E5FF]"

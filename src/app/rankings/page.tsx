@@ -12,24 +12,24 @@ export const metadata: Metadata = {
     canonical: "/rankings",
   },
   openGraph: {
-    title: "Rankings dos Melhores Jogos da História & Comunidade | GameVault",
+    title: "Rankings dos Melhores Jogos da História & Comunidade | MyGameList",
     description:
       "Confira a lista definitiva dos melhores jogos avaliados com nota máxima e aclamação crítica.",
     url: `${SITE_URL}/rankings`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Rankings de Jogos • GameVault",
+        alt: "Rankings de Jogos • MyGameList",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rankings dos Melhores Jogos da História & Comunidade | GameVault",
+    title: "Rankings dos Melhores Jogos da História & Comunidade | MyGameList",
     description: "Os melhores jogos da história reunidos em rankings dinâmicos e notas do Metacritic.",
     images: ["/og-image.jpg"],
   },

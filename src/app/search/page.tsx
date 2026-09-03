@@ -12,25 +12,25 @@ export const metadata: Metadata = {
     canonical: "/search",
   },
   openGraph: {
-    title: "Buscar Jogos no Acervo | Catálogo GameVault",
+    title: "Buscar Jogos no Acervo | Catálogo MyGameList",
     description:
       "Pesquise milhares de jogos por título, gênero ou plataforma com notas, tempos de zeramento e detalhes técnicos.",
     url: `${SITE_URL}/search`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Buscar Jogos • GameVault",
+        alt: "Buscar Jogos • MyGameList",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Buscar Jogos no Acervo | Catálogo GameVault",
-    description: "Pesquise milhares de jogos por título, gênero ou plataforma no GameVault.",
+    title: "Buscar Jogos no Acervo | Catálogo MyGameList",
+    description: "Pesquise milhares de jogos por título, gênero ou plataforma no MyGameList.",
     images: ["/og-image.jpg"],
   },
 };

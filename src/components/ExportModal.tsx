@@ -83,12 +83,12 @@ export default function ExportModal({
   };
 
   const handleExportExcel = () => {
-    const filename = `gamevault-${username || "jogos"}-${statusFilter}.csv`;
+    const filename = `mygamelist-${username || "jogos"}-${statusFilter}.csv`;
     downloadCsv(filteredGames, filename);
   };
 
   const handleExportJson = () => {
-    const filename = `gamevault-${username || "jogos"}-${statusFilter}.json`;
+    const filename = `mygamelist-${username || "jogos"}-${statusFilter}.json`;
     downloadJson(filteredGames, filename);
   };
 

@@ -10,23 +10,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 export const metadata: Metadata = {
   title: "Política de Privacidade",
   description:
-    "Conheça como o GameVault coleta, utiliza e protege os dados dos usuários em conformidade com a LGPD e o Google AdSense.",
+    "Conheça como o MyGameList coleta, utiliza e protege os dados dos usuários em conformidade com a LGPD e o Google AdSense.",
   alternates: {
     canonical: "/privacidade",
   },
   openGraph: {
-    title: "Política de Privacidade • GameVault",
+    title: "Política de Privacidade • MyGameList",
     description:
-      "Conheça as práticas de privacidade, tratamento de dados e conformidade com a LGPD no GameVault.",
+      "Conheça as práticas de privacidade, tratamento de dados e conformidade com a LGPD no MyGameList.",
     url: `${SITE_URL}/privacidade`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: ["/og-image.jpg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Política de Privacidade • GameVault",
-    description: "Conheça como o GameVault protege seus dados e respeita a LGPD.",
+    title: "Política de Privacidade • MyGameList",
+    description: "Conheça como o MyGameList protege seus dados e respeita a LGPD.",
     images: ["/og-image.jpg"],
   },
 };
@@ -57,6 +57,7 @@ export default function PrivacidadePage() {
     <>
       <JsonLd data={structuredData} />
       <div className="max-w-4xl mx-auto space-y-8 pb-16">
+      {/* Botão Voltar */}
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
@@ -64,6 +65,7 @@ export default function PrivacidadePage() {
         <ArrowLeft className="w-4 h-4" /> Voltar ao Início
       </Link>
 
+      {/* Header */}
       <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-8 sm:p-12 shadow-2xl space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF]">
@@ -83,7 +85,7 @@ export default function PrivacidadePage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">1. Visão Geral</h2>
             <p>
-              A sua privacidade é fundamental para o <strong>GameVault</strong>. Esta Política de Privacidade descreve de forma clara e transparente quais informações coletamos, como as utilizamos, como as protegemos e quais são os seus direitos como titular dos dados.
+              A sua privacidade é fundamental para o <strong>MyGameList</strong>. Esta Política de Privacidade descreve de forma clara e transparente quais informações coletamos, como as utilizamos, como as protegemos e quais são os seus direitos como titular dos dados.
             </p>
           </section>
 
@@ -120,7 +122,7 @@ export default function PrivacidadePage() {
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>
-                O Google utiliza cookies para veicular anúncios com base em visitas anteriores dos usuários ao GameVault ou a outros sites na internet.
+                O Google utiliza cookies para veicular anúncios com base em visitas anteriores dos usuários ao MyGameList ou a outros sites na internet.
               </li>
               <li>
                 O uso de cookies de publicidade pelo Google permite que ele e seus parceiros veiculem anúncios para nossos usuários com base em sua navegação na Web.
@@ -148,7 +150,7 @@ export default function PrivacidadePage() {
           <section className="space-y-2">
             <h2 className="text-base sm:text-lg font-bold text-white">7. Contato do Encarregado de Dados</h2>
             <p>
-              Caso tenha dúvidas sobre esta política ou queira exercer seus direitos de titular dos dados, entre em contato com nosso time pelo e-mail: <a href="mailto:privacidade@mygameslist.com.br" className="text-[#00E5FF] underline">privacidade@gamevault.app</a>.
+              Caso tenha dúvidas sobre esta política ou queira exercer seus direitos de titular dos dados, entre em contato com nosso time pelo e-mail: <a href="mailto:privacidade@mygameslist.com.br" className="text-[#00E5FF] underline">privacidade@mygameslist.com.br</a>.
             </p>
           </section>
         </div>

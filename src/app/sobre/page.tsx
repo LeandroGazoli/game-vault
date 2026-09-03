@@ -19,25 +19,25 @@ import JsonLd from "@/components/seo/JsonLd";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
 export const metadata: Metadata = {
-  title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
+  title: "Sobre o MyGameList • Plataforma de Rastreamento de Jogos",
   description:
-    "Conheça o GameVault, o seu acervo gamer definitivo com catálogo em tempo real, notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos.",
+    "Conheça o MyGameList, o seu acervo gamer definitivo com catálogo em tempo real, notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos.",
   alternates: {
     canonical: "/sobre",
   },
   openGraph: {
-    title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
+    title: "Sobre o MyGameList • Plataforma de Rastreamento de Jogos",
     description:
-      "Conheça a história, recursos e missão do GameVault para a comunidade gamer brasileira.",
+      "Conheça a história, recursos e missão do MyGameList para a comunidade gamer brasileira.",
     url: `${SITE_URL}/sobre`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: ["/og-image.jpg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
-    description: "Conheça o GameVault, o seu acervo definitivo de jogos.",
+    title: "Sobre o MyGameList • Plataforma de Rastreamento de Jogos",
+    description: "Conheça o MyGameList, o seu acervo definitivo de jogos.",
     images: ["/og-image.jpg"],
   },
 };
@@ -56,7 +56,7 @@ const structuredData = [
       {
         "@type": "ListItem",
         position: 2,
-        name: "Sobre o GameVault",
+        name: "Sobre o MyGameList",
         item: `${SITE_URL}/sobre`,
       },
     ],
@@ -65,18 +65,9 @@ const structuredData = [
 
 export default function SobrePage() {
   return (
-    <>
+    <div className="max-w-4xl mx-auto space-y-10 py-6 px-4">
       <JsonLd data={structuredData} />
-      <div className="max-w-4xl mx-auto space-y-10 pb-16">
-      {/* Botão Voltar */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Voltar ao Início
-      </Link>
-
-      {/* Header Principal */}
+      {/* Hero / Apresentação */}
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-8 sm:p-12 shadow-2xl space-y-6">
         <div className="flex items-center gap-3">
           <Logo size="lg" />
@@ -88,7 +79,7 @@ export default function SobrePage() {
         </h1>
 
         <p className="text-sm sm:text-base text-gray-300 leading-relaxed max-w-2xl">
-          O <strong>GameVault</strong> nasceu com a missão de oferecer aos jogadores de todas as plataformas uma experiência centralizada, rápida e visualmente incrível para registrar seus jogos zerados, acompanhar lançamentos e descobrir novos títulos.
+          O <strong>MyGameList</strong> nasceu com a missão de oferecer aos jogadores de todas as plataformas uma experiência centralizada, rápida e visualmente incrível para registrar seus jogos zerados, acompanhar lançamentos e descobrir novos títulos.
         </p>
       </div>
 
@@ -145,7 +136,7 @@ export default function SobrePage() {
           </li>
           <li className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-white/5 border border-white/5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span><strong>PWA Instalável:</strong> Instale o GameVault no seu celular ou computador como um app nativo com suporte offline.</span>
+            <span><strong>PWA Instalável:</strong> Instale o MyGameList no seu celular ou computador como um app nativo com suporte offline.</span>
           </li>
           <li className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-white/5 border border-white/5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -170,6 +161,5 @@ export default function SobrePage() {
         </a>
       </div>
     </div>
-    </>
   );
 }

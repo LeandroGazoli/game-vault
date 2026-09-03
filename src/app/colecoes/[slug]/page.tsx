@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!collection) {
     return {
       title: "Coleção não encontrada",
-      description: "A coleção temática selecionada não foi encontrada no acervo do GameVault.",
+      description: "A coleção temática selecionada não foi encontrada no acervo do MyGameList.",
       robots: { index: false, follow: false },
     };
   }
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       url: canonicalUrl,
-      siteName: "GameVault",
+      siteName: "MyGameList",
       type: "website",
       images: [
         {
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       images: [collection.coverImage],
-      creator: "@gamevault",
+      creator: "@mygamelist",
     },
   };
 }

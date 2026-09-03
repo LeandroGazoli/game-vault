@@ -131,7 +131,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
           <div>
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-bold mb-1">
               <Trophy className="w-3.5 h-3.5" />
-              <span>Rankings Oficiais GameVault</span>
+              <span>Rankings Oficiais MyGameList</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
               <span>Top 10 da Comunidade</span>

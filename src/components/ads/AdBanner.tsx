@@ -89,7 +89,7 @@ export default function AdBanner({
         <span className="flex items-center gap-1">
           <Megaphone className="w-3 h-3 text-[#00E5FF]" /> Publicidade
         </span>
-        <span>GameVault</span>
+        <span>MyGameList</span>
       </div>
 
       {/* Bloco Oficial do Google AdSense */}

@@ -140,7 +140,7 @@ export default function PwaInstallPrompt() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-extrabold text-white tracking-tight">
-                      GameVault App
+                      MyGameList App
                     </h3>
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30">
                       OFICIAL
@@ -247,7 +247,7 @@ export default function PwaInstallPrompt() {
                             3
                           </span>
                           <span>
-                            Toque em <strong className="text-[#00E5FF]">&ldquo;Adicionar&rdquo;</strong> no canto superior direito. Pronto! O GameVault aparecerá junto aos seus outros aplicativos.
+                            Toque em <strong className="text-[#00E5FF]">&ldquo;Adicionar&rdquo;</strong> no canto superior direito. Pronto! O MyGameList aparecerá junto aos seus outros aplicativos.
                           </span>
                         </li>
                       </ol>
@@ -256,7 +256,7 @@ export default function PwaInstallPrompt() {
                     /* Para Android / Chrome / Computador */
                     <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
                       <p className="text-xs text-gray-300 leading-relaxed">
-                        Toque no botão abaixo para adicionar o GameVault instantaneamente à sua tela inicial sem precisar da Play Store.
+                        Toque no botão abaixo para adicionar o MyGameList instantaneamente à sua tela inicial sem precisar da Play Store.
                       </p>
                     </div>
                   )}

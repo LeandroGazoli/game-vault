@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!game) {
     return {
       title: "Jogo não encontrado",
-      description: "As informações deste título não foram encontradas no acervo do GameVault.",
+      description: "As informações deste título não foram encontradas no acervo do MyGameList.",
       robots: {
         index: false,
         follow: false,
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = `${game.name} - Avaliação, Duração & Detalhes`;
   const cleanDescription = game.description_raw
     ? game.description_raw.slice(0, 160).replace(/\s+/g, " ").trim() + "..."
-    : `Confira notas do Metacritic, tempo de conclusão no HowLongToBeat, plataformas e ficha técnica de ${game.name} no GameVault.`;
+    : `Confira notas do Metacritic, tempo de conclusão no HowLongToBeat, plataformas e ficha técnica de ${game.name} no MyGameList.`;
 
   const coverImage = game.background_image || (game.screenshots && game.screenshots[0]) || `${SITE_URL}/og-image.jpg`;
   const canonicalUrl = `${SITE_URL}${getGameUrl(game)}`;
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `${title} | GameVault`,
+      title: `${title} | MyGameList`,
       description: cleanDescription,
       url: canonicalUrl,
       type: "website",
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} | GameVault`,
+      title: `${title} | MyGameList`,
       description: cleanDescription,
       images: [coverImage],
     },

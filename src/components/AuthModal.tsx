@@ -218,7 +218,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             disabled={loading}
             className="w-full mt-2 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm transition-all shadow-xl hover:scale-[1.01] disabled:opacity-50"
           >
-            {loading ? "Carregando..." : isSignUp ? "Criar Conta" : "Entrar no GameVault"}
+            {loading ? "Carregando..." : isSignUp ? "Criar Conta" : "Entrar no MyGameList"}
           </button>
         </form>
 

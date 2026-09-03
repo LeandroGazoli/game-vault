@@ -7,30 +7,30 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 export const metadata: Metadata = {
   title: "Planos PRO & VIP Fundador",
   description:
-    "Evolua sua experiência no GameVault com os planos PRO e VIP Fundador. Insígnias exclusivas, temas personalizados, sem anúncios e suporte à comunidade gamer.",
+    "Evolua sua experiência no MyGameList com os planos PRO e VIP Fundador. Insígnias exclusivas, temas personalizados, sem anúncios e suporte à comunidade gamer.",
   alternates: {
     canonical: "/planos",
   },
   openGraph: {
-    title: "Planos PRO & VIP Fundador | GameVault",
+    title: "Planos PRO & VIP Fundador | MyGameList",
     description:
-      "Desbloqueie personalização avançada, insígnias, temas exclusivos e apoie o acervo GameVault.",
+      "Desbloqueie personalização avançada, insígnias, temas exclusivos e apoie o acervo MyGameList.",
     url: `${SITE_URL}/planos`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Planos GameVault PRO & VIP",
+        alt: "Planos MyGameList PRO & VIP",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Planos PRO & VIP Fundador | GameVault",
-    description: "Desbloqueie personalização avançada, insígnias e temas exclusivos no GameVault.",
+    title: "Planos PRO & VIP Fundador | MyGameList",
+    description: "Desbloqueie personalização avançada, insígnias e temas exclusivos no MyGameList.",
     images: ["/og-image.jpg"],
   },
 };

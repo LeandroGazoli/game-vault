@@ -47,7 +47,7 @@ export default function CookieConsent() {
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-white">Privacidade &amp; Cookies</h4>
             <p className="text-xs text-gray-300 leading-relaxed">
-              Utilizamos cookies e tecnologias semelhantes para personalizar conteúdo, veicular anúncios relevantes do Google AdSense e melhorar sua experiência no GameVault.
+              Utilizamos cookies e tecnologias semelhantes para personalizar conteúdo, veicular anúncios relevantes do Google AdSense e melhorar sua experiência no MyGameList.
             </p>
           </div>
         </div>

@@ -124,7 +124,7 @@ export default function ManagePlanModal({
                 </span>
               </div>
               <p className="text-xs text-gray-400">
-                Informações e status da sua conta no GameVault
+                Informações e status da sua conta no MyGameList
               </p>
             </div>
           </div>
@@ -162,10 +162,10 @@ export default function ManagePlanModal({
               </span>
               <h4 className="text-lg font-black text-white mt-1">
                 {isVip
-                  ? "GameVault VIP Fundador"
+                  ? "MyGameList VIP Fundador"
                   : isSingleMonth
-                  ? "GameVault PRO (1 Mês Avulso)"
-                  : "GameVault PRO Mensal"}
+                  ? "MyGameList PRO (1 Mês Avulso)"
+                  : "MyGameList PRO Mensal"}
               </h4>
             </div>
 

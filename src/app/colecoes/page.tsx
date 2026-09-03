@@ -16,18 +16,18 @@ export const metadata: Metadata = {
     canonical: "/colecoes",
   },
   openGraph: {
-    title: "Coleções Especiais de Jogos | Catálogo GameVault",
+    title: "Coleções Especiais de Jogos | Catálogo MyGameList",
     description:
       "Explore seleções exclusivas e coleções temáticas de jogos recomendados pela comunidade e crítica.",
     url: `${SITE_URL}/colecoes`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: ["/og-image.jpg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Coleções Especiais de Jogos | Catálogo GameVault",
-    description: "Explore coleções temáticas curadas de jogos no GameVault.",
+    title: "Coleções Especiais de Jogos | Catálogo MyGameList",
+    description: "Explore coleções temáticas curadas de jogos no MyGameList.",
     images: ["/og-image.jpg"],
   },
 };
@@ -66,7 +66,7 @@ export default function ColecoesPage() {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono font-bold text-amber-300">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>CURADORIA EXCLUSIVA GAME VAULT</span>
+            <span>CURADORIA EXCLUSIVA MYGAMELIST</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight font-display">

@@ -93,7 +93,7 @@ export function mapGameToExportRow(game: UserGame) {
 /**
  * Exporta a lista de jogos para um arquivo CSV formatado com UTF-8 BOM para abrir direto no Excel
  */
-export function downloadCsv(games: UserGame[], filename = "gamevault-jogos.csv") {
+export function downloadCsv(games: UserGame[], filename = "mygamelist-jogos.csv") {
   if (!games || games.length === 0) return;
 
   const rows = games.map(mapGameToExportRow);
@@ -123,11 +123,11 @@ export function downloadCsv(games: UserGame[], filename = "gamevault-jogos.csv")
 /**
  * Exporta a lista de jogos para um arquivo JSON estruturado
  */
-export function downloadJson(games: UserGame[], filename = "gamevault-jogos.json") {
+export function downloadJson(games: UserGame[], filename = "mygamelist-jogos.json") {
   if (!games) return;
 
   const exportPayload = {
-    source: "GameVault",
+    source: "MyGameList",
     exportedAt: new Date().toISOString(),
     totalGames: games.length,
     games: games,

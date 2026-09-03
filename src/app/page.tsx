@@ -277,7 +277,7 @@ export default function HomePage() {
       <CollectionsSection />
 
       {/* ==========================================
-          2. RANKINGS OFICIAIS GAMEVAULT (UNIFICADO COM ABAS)
+          2. RANKINGS OFICIAIS MYGAMELIST (UNIFICADO COM ABAS)
       ========================================== */}
       <UnifiedRankingsSection initialGames={topTenGames} />
 

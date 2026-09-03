@@ -217,7 +217,7 @@ export default function RankingsSection() {
         <div className="rounded-3xl border border-[#242a36] bg-[#11141a] p-5 sm:p-8 space-y-4 shadow-xl text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#161a22] border border-[#262c38] text-amber-300 text-xs font-mono font-medium">
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>RANKINGS OFICIAIS // GAMEVAULT HALL DA FAMA</span>
+            <span>RANKINGS OFICIAIS // MYGAMELIST HALL DA FAMA</span>
           </div>
 
           <div className="space-y-2">

@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       plan,
       isPremium: true,
       premiumUntil,
-      planName: session.metadata?.planName || (plan === "vip" ? "GameVault VIP" : "GameVault PRO"),
+      planName: session.metadata?.planName || (plan === "vip" ? "MyGameList VIP" : "MyGameList PRO"),
     });
   } catch (error: any) {
     console.error("[checkout/verify] Erro ao verificar sessão do Stripe:", error);

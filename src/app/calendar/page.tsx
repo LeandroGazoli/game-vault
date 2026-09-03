@@ -12,24 +12,24 @@ export const metadata: Metadata = {
     canonical: "/calendar",
   },
   openGraph: {
-    title: "Calendário de Lançamentos de Jogos 2026 | GameVault",
+    title: "Calendário de Lançamentos de Jogos 2026 | MyGameList",
     description:
       "Acompanhe as datas oficiais de lançamento dos jogos mais esperados para PC, consoles e portáteis.",
     url: `${SITE_URL}/calendar`,
-    siteName: "GameVault",
+    siteName: "MyGameList",
     type: "website",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Calendário de Lançamentos de Jogos • GameVault",
+        alt: "Calendário de Lançamentos de Jogos • MyGameList",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Calendário de Lançamentos de Jogos 2026 | GameVault",
+    title: "Calendário de Lançamentos de Jogos 2026 | MyGameList",
     description: "Fique por dentro das datas de lançamento dos jogos mais aguardados.",
     images: ["/og-image.jpg"],
   },

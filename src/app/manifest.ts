@@ -2,8 +2,8 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "GameVault • MyGameList",
-    short_name: "GameVault",
+    name: "MyGameList • Meu Gamer Log",
+    short_name: "MyGameList",
     description:
       "Seu perfil gamer definitivo: organize jogos zerados, acompanhe lançamentos, notas do Metacritic e HowLongToBeat.",
     start_url: "/",

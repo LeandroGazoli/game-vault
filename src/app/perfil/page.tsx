@@ -81,7 +81,7 @@ export default function ProfilePage() {
         .then((data) => {
           if (data?.success) {
             setCelebrationBanner(
-              `🎉 Parabéns! Seu plano ${data.planName || "GameVault PRO"} foi ativado com sucesso! Aproveite todos os benefícios.`
+              `🎉 Parabéns! Seu plano ${data.planName || "MyGameList PRO"} foi ativado com sucesso! Aproveite todos os benefícios.`
             );
           }
         })

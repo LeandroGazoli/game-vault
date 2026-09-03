@@ -102,7 +102,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         <div className="text-center space-y-2 max-w-lg mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-semibold">
             <Crown className="w-3.5 h-3.5" />
-            GameVault PRO &amp; VIP
+            MyGameList PRO &amp; VIP
           </div>
           <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Eleve sua Experiência Gamer
