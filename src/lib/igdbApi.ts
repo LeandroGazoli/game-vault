@@ -454,6 +454,8 @@ export interface SearchFilterOptions {
   platformId?: number;
   platformIds?: number[];
   minRating?: number;
+  perspectiveId?: number;
+  gameModeId?: number;
   sort?: "popular" | "top_rated" | "recent" | "upcoming" | "name_asc" | string;
   limit?: number;
   offset?: number;
@@ -471,6 +473,8 @@ export async function searchAndFilterGamesIGDB(
     platformId,
     platformIds,
     minRating,
+    perspectiveId,
+    gameModeId,
     sort = "popular",
     limit = 36,
     offset = 0,
@@ -496,6 +500,14 @@ export async function searchAndFilterGamesIGDB(
     whereParts.push(`themes = (${themeId})`);
   }
 
+  // Filtro de Perspectiva e Modos de Jogo
+  if (perspectiveId && perspectiveId > 0) {
+    whereParts.push(`player_perspectives = (${perspectiveId})`);
+  }
+  if (gameModeId && gameModeId > 0) {
+    whereParts.push(`game_modes = (${gameModeId})`);
+  }
+
   // Filtro de Nota Mínima
   if (minRating && minRating > 0) {
     whereParts.push(`(aggregated_rating >= ${minRating} | rating >= ${minRating})`);
@@ -516,6 +528,8 @@ export async function searchAndFilterGamesIGDB(
       (genreIds && genreIds.length > 0) ||
       genreId ||
       themeId ||
+      (perspectiveId && perspectiveId > 0) ||
+      (gameModeId && gameModeId > 0) ||
       (minRating && minRating > 0)
     );
 
@@ -685,6 +699,8 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     platformId,
     platformIds,
     minRating,
+    perspectiveId,
+    gameModeId,
     sort = "popular",
   } = options;
 
@@ -706,6 +722,13 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     whereParts.push(`themes = (${themeId})`);
   }
 
+  if (perspectiveId && perspectiveId > 0) {
+    whereParts.push(`player_perspectives = (${perspectiveId})`);
+  }
+  if (gameModeId && gameModeId > 0) {
+    whereParts.push(`game_modes = (${gameModeId})`);
+  }
+
   if (minRating && minRating > 0) {
     whereParts.push(`(aggregated_rating >= ${minRating} | rating >= ${minRating})`);
   }
@@ -717,6 +740,8 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     (genreIds && genreIds.length > 0) ||
     genreId ||
     themeId ||
+    (perspectiveId && perspectiveId > 0) ||
+    (gameModeId && gameModeId > 0) ||
     (minRating && minRating > 0)
   );
 

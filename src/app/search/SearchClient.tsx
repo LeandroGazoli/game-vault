@@ -19,6 +19,8 @@ import {
   Flame,
   Calendar,
   Layers,
+  Eye,
+  Users,
 } from "lucide-react";
 import {
   GENRE_FILTER_OPTIONS,
@@ -27,8 +29,12 @@ import {
   RATING_FILTER_OPTIONS,
   SORT_FILTER_OPTIONS,
   DISCOVERY_PRESETS,
+  PERSPECTIVE_FILTER_OPTIONS,
+  GAME_MODE_FILTER_OPTIONS,
   findPlatformFilter,
   findGenreFilter,
+  findPerspectiveFilter,
+  findGameModeFilter,
 } from "@/lib/filterConstants";
 
 function SearchContent() {
@@ -44,6 +50,14 @@ function SearchContent() {
   const [selectedPlatform, setSelectedPlatform] = useState(() => {
     const p = searchParams.get("platform") || searchParams.get("console");
     return p ? findPlatformFilter(p)?.id || "all" : "all";
+  });
+  const [selectedPerspective, setSelectedPerspective] = useState(() => {
+    const p = searchParams.get("perspective");
+    return p ? findPerspectiveFilter(p)?.id || "all" : "all";
+  });
+  const [selectedGameMode, setSelectedGameMode] = useState(() => {
+    const m = searchParams.get("gameMode") || searchParams.get("mode");
+    return m ? findGameModeFilter(m)?.id || "all" : "all";
   });
   const [minRating, setMinRating] = useState<number>(() => {
     const r = searchParams.get("minRating") || searchParams.get("rating");
@@ -75,6 +89,12 @@ function SearchContent() {
     const p = searchParams.get("platform") || searchParams.get("console");
     setSelectedPlatform(p ? findPlatformFilter(p)?.id || "all" : "all");
 
+    const persp = searchParams.get("perspective");
+    setSelectedPerspective(persp ? findPerspectiveFilter(persp)?.id || "all" : "all");
+
+    const mode = searchParams.get("gameMode") || searchParams.get("mode");
+    setSelectedGameMode(mode ? findGameModeFilter(mode)?.id || "all" : "all");
+
     const r = searchParams.get("minRating") || searchParams.get("rating");
     setMinRating(r ? parseInt(r, 10) || 0 : 0);
 
@@ -84,10 +104,20 @@ function SearchContent() {
 
   // Atualiza os parâmetros na URL de forma limpa (sem scroll e sem recarregar a página)
   const updateUrlParams = useCallback(
-    (newParams: { q?: string; genre?: string; platform?: string; minRating?: number; sort?: string }) => {
+    (newParams: {
+      q?: string;
+      genre?: string;
+      platform?: string;
+      perspective?: string;
+      gameMode?: string;
+      minRating?: number;
+      sort?: string;
+    }) => {
       const qVal = newParams.q !== undefined ? newParams.q : query;
       const gVal = newParams.genre !== undefined ? newParams.genre : selectedGenre;
       const pVal = newParams.platform !== undefined ? newParams.platform : selectedPlatform;
+      const perspVal = newParams.perspective !== undefined ? newParams.perspective : selectedPerspective;
+      const modeVal = newParams.gameMode !== undefined ? newParams.gameMode : selectedGameMode;
       const rVal = newParams.minRating !== undefined ? newParams.minRating : minRating;
       const sVal = newParams.sort !== undefined ? newParams.sort : selectedSort;
 
@@ -95,6 +125,8 @@ function SearchContent() {
       if (qVal.trim()) params.set("q", qVal.trim());
       if (gVal && gVal !== "all") params.set("genre", gVal);
       if (pVal && pVal !== "all") params.set("platform", pVal);
+      if (perspVal && perspVal !== "all") params.set("perspective", perspVal);
+      if (modeVal && modeVal !== "all") params.set("gameMode", modeVal);
       if (rVal > 0) params.set("minRating", String(rVal));
       if (sVal && sVal !== "popular") params.set("sort", sVal);
 
@@ -102,7 +134,7 @@ function SearchContent() {
       const targetUrl = queryString ? `/search?${queryString}` : "/search";
       window.history.replaceState(null, "", targetUrl);
     },
-    [query, selectedGenre, selectedPlatform, minRating, selectedSort]
+    [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort]
   );
 
   // Busca adaptativa acionada ao alterar qualquer filtro ou termo de busca
@@ -121,6 +153,8 @@ function SearchContent() {
       if (query.trim()) params.set("q", query.trim());
       if (selectedGenre && selectedGenre !== "all") params.set("genre", selectedGenre);
       if (selectedPlatform && selectedPlatform !== "all") params.set("platform", selectedPlatform);
+      if (selectedPerspective && selectedPerspective !== "all") params.set("perspective", selectedPerspective);
+      if (selectedGameMode && selectedGameMode !== "all") params.set("gameMode", selectedGameMode);
       if (minRating > 0) params.set("minRating", String(minRating));
       if (selectedSort && selectedSort !== "popular") params.set("sort", selectedSort);
       params.set("page", "1");
@@ -153,7 +187,7 @@ function SearchContent() {
     return () => {
       controller.abort();
     };
-  }, [query, selectedGenre, selectedPlatform, minRating, selectedSort]);
+  }, [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort]);
 
   // Carregar mais jogos mantendo todos os filtros ativos
   const loadMore = async () => {
@@ -165,6 +199,8 @@ function SearchContent() {
     if (query.trim()) params.set("q", query.trim());
     if (selectedGenre && selectedGenre !== "all") params.set("genre", selectedGenre);
     if (selectedPlatform && selectedPlatform !== "all") params.set("platform", selectedPlatform);
+    if (selectedPerspective && selectedPerspective !== "all") params.set("perspective", selectedPerspective);
+    if (selectedGameMode && selectedGameMode !== "all") params.set("gameMode", selectedGameMode);
     if (minRating > 0) params.set("minRating", String(minRating));
     if (selectedSort && selectedSort !== "popular") params.set("sort", selectedSort);
     params.set("page", String(nextPage));
@@ -201,6 +237,16 @@ function SearchContent() {
     updateUrlParams({ platform: platformId });
   };
 
+  const handleSelectPerspective = (perspectiveId: string) => {
+    setSelectedPerspective(perspectiveId);
+    updateUrlParams({ perspective: perspectiveId });
+  };
+
+  const handleSelectGameMode = (modeId: string) => {
+    setSelectedGameMode(modeId);
+    updateUrlParams({ gameMode: modeId });
+  };
+
   const handleSelectRating = (ratingValue: number) => {
     setMinRating(ratingValue);
     updateUrlParams({ minRating: ratingValue });
@@ -221,11 +267,15 @@ function SearchContent() {
       setSelectedPlatform("all");
     }
     setSelectedGenre("all");
+    setSelectedPerspective("all");
+    setSelectedGameMode("all");
     setQuery("");
     updateUrlParams({
       q: "",
       genre: "all",
       platform: preset.platform || "all",
+      perspective: "all",
+      gameMode: "all",
       minRating: preset.minRating,
       sort: preset.sort,
     });
@@ -236,12 +286,16 @@ function SearchContent() {
     setQuery("");
     setSelectedGenre("all");
     setSelectedPlatform("all");
+    setSelectedPerspective("all");
+    setSelectedGameMode("all");
     setMinRating(0);
     setSelectedSort("popular");
     updateUrlParams({
       q: "",
       genre: "all",
       platform: "all",
+      perspective: "all",
+      gameMode: "all",
       minRating: 0,
       sort: "popular",
     });
@@ -252,12 +306,16 @@ function SearchContent() {
     query.trim() ||
     selectedGenre !== "all" ||
     selectedPlatform !== "all" ||
+    selectedPerspective !== "all" ||
+    selectedGameMode !== "all" ||
     minRating > 0 ||
     selectedSort !== "popular"
   );
 
   const activePlatformOption = findPlatformFilter(selectedPlatform);
   const activeGenreOption = findGenreFilter(selectedGenre);
+  const activePerspectiveOption = findPerspectiveFilter(selectedPerspective);
+  const activeGameModeOption = findGameModeFilter(selectedGameMode);
 
   return (
     <div className="space-y-8 pb-12">
@@ -420,6 +478,60 @@ function SearchContent() {
           </div>
 
           {/* ========================================================
+              FILTRO POR PERSPECTIVA DE CÂMERA
+          ======================================================== */}
+          <div className="pt-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
+                <Eye className="w-3.5 h-3.5 text-amber-400" /> Câmera / Visão:
+              </span>
+              {PERSPECTIVE_FILTER_OPTIONS.map((p) => {
+                const isSelected = selectedPerspective === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => handleSelectPerspective(p.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                      isSelected
+                        ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
+                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    {p.shortName || p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ========================================================
+              FILTRO POR MODO DE JOGO
+          ======================================================== */}
+          <div className="pt-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
+                <Users className="w-3.5 h-3.5 text-emerald-400" /> Modo de Jogo:
+              </span>
+              {GAME_MODE_FILTER_OPTIONS.map((mode) => {
+                const isSelected = selectedGameMode === mode.id;
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => handleSelectGameMode(mode.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                      isSelected
+                        ? "bg-emerald-400 text-black font-bold shadow-md shadow-emerald-400/20"
+                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    {mode.shortName || mode.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ========================================================
               NOTA MÍNIMA & ORDENAÇÃO DINÂMICA
           ======================================================== */}
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -508,6 +620,30 @@ function SearchContent() {
                   Gênero: {activeGenreOption.shortName || activeGenreOption.name}
                   <button
                     onClick={() => handleSelectGenre("all")}
+                    className="hover:text-white cursor-pointer ml-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {selectedPerspective !== "all" && activePerspectiveOption && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  Visão: {activePerspectiveOption.shortName || activePerspectiveOption.name}
+                  <button
+                    onClick={() => handleSelectPerspective("all")}
+                    className="hover:text-white cursor-pointer ml-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {selectedGameMode !== "all" && activeGameModeOption && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                  Modo: {activeGameModeOption.shortName || activeGameModeOption.name}
+                  <button
+                    onClick={() => handleSelectGameMode("all")}
                     className="hover:text-white cursor-pointer ml-0.5"
                   >
                     <X className="w-3 h-3" />

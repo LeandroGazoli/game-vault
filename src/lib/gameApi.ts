@@ -49,6 +49,8 @@ export interface SearchGamesApiOptions {
   platformId?: number;
   platformIds?: number[];
   minRating?: number;
+  perspectiveId?: number;
+  gameModeId?: number;
   sort?: string;
   page?: number;
   pageSize?: number;
@@ -70,6 +72,8 @@ export async function searchGamesApi(
           platformId: queryOrOptions.platformId,
           platformIds: queryOrOptions.platformIds,
           minRating: queryOrOptions.minRating,
+          perspectiveId: queryOrOptions.perspectiveId,
+          gameModeId: queryOrOptions.gameModeId,
           sort: queryOrOptions.sort,
         };
 

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchGamesApi } from "@/lib/gameApi";
-import { findGenreFilter, findPlatformFilter } from "@/lib/filterConstants";
+import {
+  findGenreFilter,
+  findPlatformFilter,
+  findPerspectiveFilter,
+  findGameModeFilter,
+} from "@/lib/filterConstants";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,6 +15,8 @@ export async function GET(request: NextRequest) {
   const genreParam = searchParams.get("genre") || "";
   const platformParam = searchParams.get("platform") || searchParams.get("console") || "";
   const minRatingParam = searchParams.get("minRating") || searchParams.get("rating") || "0";
+  const perspectiveParam = searchParams.get("perspective") || "";
+  const gameModeParam = searchParams.get("gameMode") || searchParams.get("mode") || "";
   const sort = searchParams.get("sort") || "popular";
 
   try {
@@ -41,6 +48,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    let perspectiveId: number | undefined;
+    if (perspectiveParam && perspectiveParam !== "all") {
+      const pFilter = findPerspectiveFilter(perspectiveParam);
+      if (pFilter && pFilter.igdbId > 0) {
+        perspectiveId = pFilter.igdbId;
+      } else if (!isNaN(Number(perspectiveParam))) {
+        perspectiveId = parseInt(perspectiveParam, 10);
+      }
+    }
+
+    let gameModeId: number | undefined;
+    if (gameModeParam && gameModeParam !== "all") {
+      const mFilter = findGameModeFilter(gameModeParam);
+      if (mFilter && mFilter.igdbId > 0) {
+        gameModeId = mFilter.igdbId;
+      } else if (!isNaN(Number(gameModeParam))) {
+        gameModeId = parseInt(gameModeParam, 10);
+      }
+    }
+
     const minRating = parseInt(minRatingParam, 10) || 0;
 
     const result = await searchGamesApi({
@@ -51,6 +78,8 @@ export async function GET(request: NextRequest) {
       platformId,
       platformIds,
       minRating,
+      perspectiveId,
+      gameModeId,
       sort,
       page,
       pageSize,

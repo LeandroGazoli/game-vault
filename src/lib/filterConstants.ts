@@ -175,3 +175,52 @@ export function findGenreFilter(idOrSlug: string): FilterOption | undefined {
 
   return undefined;
 }
+
+export interface PerspectiveFilterOption {
+  id: string;
+  name: string;
+  shortName?: string;
+  igdbId: number;
+}
+
+export const PERSPECTIVE_FILTER_OPTIONS: PerspectiveFilterOption[] = [
+  { id: "all", name: "Todas as Perspectivas", shortName: "Todas", igdbId: 0 },
+  { id: "third-person", name: "Terceira Pessoa (3ª Pessoa)", shortName: "3ª Pessoa", igdbId: 2 },
+  { id: "first-person", name: "Primeira Pessoa (1ª Pessoa / FPS)", shortName: "1ª Pessoa", igdbId: 1 },
+  { id: "isometric", name: "Visão Isométrica / Superior", shortName: "Isométrico", igdbId: 3 },
+  { id: "side-view", name: "Visão Lateral (2D / Plataforma)", shortName: "2D Lateral", igdbId: 4 },
+  { id: "vr", name: "Realidade Virtual (VR)", shortName: "VR", igdbId: 7 },
+];
+
+export interface GameModeFilterOption {
+  id: string;
+  name: string;
+  shortName?: string;
+  igdbId: number;
+}
+
+export const GAME_MODE_FILTER_OPTIONS: GameModeFilterOption[] = [
+  { id: "all", name: "Todos os Modos", shortName: "Todos", igdbId: 0 },
+  { id: "single-player", name: "Um Jogador (Single-player)", shortName: "Single-player", igdbId: 1 },
+  { id: "multiplayer", name: "Multiplayer Online", shortName: "Multiplayer", igdbId: 2 },
+  { id: "co-op", name: "Cooperativo (Co-op)", shortName: "Co-op", igdbId: 3 },
+  { id: "split-screen", name: "Tela Dividida / Co-op Local", shortName: "Split-screen", igdbId: 4 },
+  { id: "mmo", name: "MMO", shortName: "MMO", igdbId: 5 },
+  { id: "battle-royale", name: "Battle Royale", shortName: "Battle Royale", igdbId: 6 },
+];
+
+export function findPerspectiveFilter(idOrSlug: string): PerspectiveFilterOption | undefined {
+  if (!idOrSlug || idOrSlug === "all" || idOrSlug === "Todas") return undefined;
+  const lower = idOrSlug.toLowerCase().trim();
+  return PERSPECTIVE_FILTER_OPTIONS.find(
+    (p) => p.id === lower || p.name.toLowerCase() === lower || p.shortName?.toLowerCase() === lower
+  );
+}
+
+export function findGameModeFilter(idOrSlug: string): GameModeFilterOption | undefined {
+  if (!idOrSlug || idOrSlug === "all" || idOrSlug === "Todos") return undefined;
+  const lower = idOrSlug.toLowerCase().trim();
+  return GAME_MODE_FILTER_OPTIONS.find(
+    (m) => m.id === lower || m.name.toLowerCase() === lower || m.shortName?.toLowerCase() === lower
+  );
+}

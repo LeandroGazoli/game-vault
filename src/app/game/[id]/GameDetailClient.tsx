@@ -38,6 +38,9 @@ import {
   Languages,
   Package,
   Maximize2,
+  ShoppingCart,
+  Plus,
+  MessageSquare,
 } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { formatPlatformShort } from "@/lib/platformUtils";
@@ -118,40 +121,59 @@ function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
   return null;
 }
 
+// Helper para verificar se a URL é de uma loja digital
+function isStoreWebsite(url: string) {
+  const u = url.toLowerCase();
+  return (
+    u.includes("steampowered.com") ||
+    u.includes("playstation.com") ||
+    u.includes("xbox.com") ||
+    u.includes("nintendo.com") ||
+    u.includes("epicgames.com") ||
+    u.includes("gog.com")
+  );
+}
+
 // Helper para estilizar links oficiais e lojas de acordo com o domínio
 function getWebsiteMeta(url: string) {
   const u = url.toLowerCase();
   if (u.includes("steampowered.com")) {
-    return { label: "Steam", color: "bg-[#171a21] hover:bg-[#202530] text-white border-white/20" };
+    return { label: "Steam", color: "bg-[#171a21] hover:bg-[#202530] text-[#66c0f4] border-[#66c0f4]/40 hover:border-[#66c0f4] shadow-md", isStore: true };
   }
   if (u.includes("playstation.com")) {
-    return { label: "PlayStation Store", color: "bg-[#003791] hover:bg-[#004bb5] text-white border-blue-400/30" };
+    return { label: "PlayStation Store", color: "bg-[#003791] hover:bg-[#004bb5] text-white border-blue-400/40 hover:border-blue-400 shadow-md", isStore: true };
   }
   if (u.includes("xbox.com")) {
-    return { label: "Xbox Store", color: "bg-[#107c10] hover:bg-[#159a15] text-white border-green-400/30" };
+    return { label: "Xbox Store", color: "bg-[#107c10] hover:bg-[#159a15] text-white border-green-400/40 hover:border-green-400 shadow-md", isStore: true };
   }
   if (u.includes("nintendo.com")) {
-    return { label: "Nintendo eShop", color: "bg-[#e60012] hover:bg-[#ff1a2d] text-white border-red-400/30" };
+    return { label: "Nintendo eShop", color: "bg-[#e60012] hover:bg-[#ff1a2d] text-white border-red-400/40 hover:border-red-400 shadow-md", isStore: true };
   }
   if (u.includes("epicgames.com")) {
-    return { label: "Epic Games", color: "bg-[#2a2a2a] hover:bg-[#383838] text-white border-white/20" };
+    return { label: "Epic Games Store", color: "bg-[#2a2a2a] hover:bg-[#383838] text-white border-white/30 hover:border-white shadow-md", isStore: true };
   }
   if (u.includes("gog.com")) {
-    return { label: "GOG", color: "bg-[#6c2c8f] hover:bg-[#8537b0] text-white border-purple-400/30" };
+    return { label: "GOG.com", color: "bg-[#6c2c8f] hover:bg-[#8537b0] text-white border-purple-400/40 hover:border-purple-400 shadow-md", isStore: true };
   }
   if (u.includes("discord")) {
-    return { label: "Discord Oficial", color: "bg-[#5865F2] hover:bg-[#6975f5] text-white border-indigo-400/30" };
+    return { label: "Discord Oficial", color: "bg-[#5865F2]/20 hover:bg-[#5865F2]/35 text-[#818cf8] border-[#5865F2]/40", isStore: false };
   }
   if (u.includes("reddit.com")) {
-    return { label: "Reddit", color: "bg-[#ff4500] hover:bg-[#ff5719] text-white border-orange-400/30" };
+    return { label: "Subreddit (Reddit)", color: "bg-[#ff4500]/20 hover:bg-[#ff4500]/35 text-[#fb923c] border-[#ff4500]/40", isStore: false };
+  }
+  if (u.includes("twitch.tv")) {
+    return { label: "Lives na Twitch", color: "bg-[#9146FF]/20 hover:bg-[#9146FF]/35 text-[#c084fc] border-[#9146FF]/40", isStore: false };
+  }
+  if (u.includes("fandom.com") || u.includes("wiki")) {
+    return { label: "Wiki & Guias de Troféus", color: "bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border-amber-500/40", isStore: false };
   }
   if (u.includes("wikipedia.org")) {
-    return { label: "Wikipédia", color: "bg-white/10 hover:bg-white/20 text-white border-white/20" };
+    return { label: "Artigo na Wikipédia", color: "bg-white/10 hover:bg-white/20 text-gray-200 border-white/20", isStore: false };
   }
   if (u.includes("youtube.com")) {
-    return { label: "Canal no YouTube", color: "bg-[#ff0000] hover:bg-[#ff2626] text-white border-red-400/30" };
+    return { label: "Canal no YouTube", color: "bg-[#ff0000]/20 hover:bg-[#ff0000]/35 text-red-300 border-red-500/40", isStore: false };
   }
-  return { label: "Site Oficial", color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40" };
+  return { label: "Site Oficial", color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false };
 }
 
 interface GameDetailClientProps {
@@ -168,7 +190,17 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const [game, setGame] = useState<Game | null>(initialGame || null);
   const [loading, setLoading] = useState(!initialGame);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalGame, setModalGame] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Filtros de Websites por Categoria
+  const storeWebsites = useMemo(() => {
+    return (game?.websites || []).filter((w) => isStoreWebsite(w.url));
+  }, [game?.websites]);
+
+  const communityWebsites = useMemo(() => {
+    return (game?.websites || []).filter((w) => !isStoreWebsite(w.url));
+  }, [game?.websites]);
 
   // Estados de Mídia Rica & Galeria
   const [activeVideoId, setActiveVideoId] = useState<string | null>(
@@ -517,19 +549,39 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               {game.name}
             </h1>
 
-            {/* Desenvolvedoras e Distribuidoras */}
+            {/* Desenvolvedoras e Distribuidoras Clicáveis */}
             {(game.developers?.length || game.publishers?.length) ? (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400 font-medium">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-400 font-medium">
                 {game.developers && game.developers.length > 0 && (
                   <span className="flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-                    Dev: <strong className="text-gray-200">{game.developers.join(", ")}</strong>
+                    Dev:{" "}
+                    {game.developers.map((dev, idx) => (
+                      <Link
+                        key={dev}
+                        href={`/search?q=${encodeURIComponent(dev)}`}
+                        className="text-gray-200 hover:text-cyan-300 hover:underline font-bold transition-colors"
+                        title={`Buscar todos os jogos desenvolvidos por ${dev}`}
+                      >
+                        {dev}{idx < game.developers!.length - 1 ? ", " : ""}
+                      </Link>
+                    ))}
                   </span>
                 )}
                 {game.publishers && game.publishers.length > 0 && (
                   <span className="flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-purple-400" />
-                    Pub: <strong className="text-gray-200">{game.publishers.join(", ")}</strong>
+                    Pub:{" "}
+                    {game.publishers.map((pub, idx) => (
+                      <Link
+                        key={pub}
+                        href={`/search?q=${encodeURIComponent(pub)}`}
+                        className="text-gray-200 hover:text-purple-300 hover:underline font-bold transition-colors"
+                        title={`Buscar todos os jogos publicados por ${pub}`}
+                      >
+                        {pub}{idx < game.publishers!.length - 1 ? ", " : ""}
+                      </Link>
+                    ))}
                   </span>
                 )}
               </div>
@@ -793,7 +845,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
       {/* Seção HowLongToBeat */}
       <section className="space-y-3">
-        <HltbCard hltb={game.hltb} />
+        <HltbCard hltb={game.hltb} userPlaytimeHours={userGame?.userPlaytimeHours} />
       </section>
 
       {/* Banner de Anúncio / Patrocínio no Jogo */}
@@ -931,14 +983,41 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               </div>
             )}
 
-            {/* Lojas & Links Oficiais */}
-            {game.websites && game.websites.length > 0 && (
+            {/* Seção 1: Onde Jogar & Lojas Digitais Oficiais */}
+            {storeWebsites.length > 0 && (
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <ShoppingCart className="w-4 h-4 text-cyan-400" /> Onde Jogar &amp; Lojas Oficiais:
+                </span>
+                <div className="flex flex-wrap gap-2.5">
+                  {storeWebsites.map((w) => {
+                    const meta = getWebsiteMeta(w.url);
+                    return (
+                      <a
+                        key={w.id}
+                        href={w.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${meta.color}`}
+                        title={`Visitar página oficial do jogo em ${meta.label}`}
+                      >
+                        <span>{meta.label}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-75" />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Seção 2: Comunidades, Wikis & Redes Oficiais */}
+            {communityWebsites.length > 0 && (
               <div className="pt-4 border-t border-white/10 space-y-2.5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-emerald-400" /> Lojas & Comunidade Oficial:
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-emerald-400" /> Comunidades, Guias &amp; Redes:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {game.websites.slice(0, 8).map((w) => {
+                  {communityWebsites.map((w) => {
                     const meta = getWebsiteMeta(w.url);
                     return (
                       <a
@@ -947,8 +1026,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${meta.color}`}
+                        title={`Acessar ${meta.label}`}
                       >
-                        {meta.label}
+                        <span>{meta.label}</span>
                         <ExternalLink className="w-3 h-3 opacity-70" />
                       </a>
                     );
@@ -1173,6 +1253,35 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       )}
 
       {/* =========================================================================
+          SEÇÃO DE FRANQUIA & UNIVERSO DA SAGA
+      ========================================================================= */}
+      {(game.franchises?.[0] || game.collections?.[0]) && (
+        <section className="rounded-[32px] border border-amber-500/25 bg-gradient-to-r from-amber-950/20 via-[#18191c] to-black p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> Universo &amp; Linha do Tempo
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Saga {game.franchises?.[0] || game.collections?.[0]}
+              </h3>
+              <p className="text-xs text-gray-300 max-w-2xl leading-relaxed">
+                Quer mergulhar na cronologia completa? Encontre todos os títulos, edições e expansões desta franquia no acervo.
+              </p>
+            </div>
+
+            <Link
+              href={`/search?q=${encodeURIComponent(game.franchises?.[0] || game.collections?.[0] || "")}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-lg self-start sm:self-auto flex-shrink-0"
+            >
+              <span>Ver Todos os Jogos da Saga</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* =========================================================================
           SEÇÃO DE JOGOS SEMELHANTES / RECOMENDAÇÕES
       ========================================================================= */}
       {game.similar_games && game.similar_games.length > 0 && (
@@ -1187,36 +1296,63 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-            {game.similar_games.slice(0, 6).map((sg) => (
-              <Link
+            {game.similar_games.slice(0, 12).map((sg) => (
+              <div
                 key={sg.id}
-                href={getGameUrl(sg)}
-                className="group rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-cyan-500/40 transition-all hover:scale-[1.03] flex flex-col"
+                className="group rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-cyan-500/40 transition-all hover:scale-[1.03] flex flex-col justify-between"
               >
-                <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                  {sg.coverUrl ? (
-                    <img
-                      src={sg.coverUrl}
-                      alt={sg.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
-                      Sem Capa
-                    </div>
-                  )}
-                  {sg.rating && (
-                    <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold font-mono text-amber-400 border border-amber-400/30">
-                      ★ {sg.rating.toFixed(1)}
-                    </div>
-                  )}
+                <Link
+                  href={getGameUrl(sg)}
+                  className="block flex-1 flex flex-col"
+                >
+                  <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
+                    {sg.coverUrl ? (
+                      <img
+                        src={sg.coverUrl}
+                        alt={sg.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
+                        Sem Capa
+                      </div>
+                    )}
+                    {sg.rating && (
+                      <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold font-mono text-amber-400 border border-amber-400/30">
+                        ★ {sg.rating.toFixed(1)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <h4 className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2">
+                      {sg.name}
+                    </h4>
+                  </div>
+                </Link>
+
+                <div className="p-2 pt-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setModalGame({
+                        id: sg.id,
+                        name: sg.name,
+                        background_image: sg.coverUrl,
+                        slug: String(sg.id),
+                        rating: sg.rating ? Number((sg.rating * 10).toFixed(0)) : undefined,
+                      });
+                      setIsModalOpen(true);
+                    }}
+                    className="w-full py-1.5 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black text-[10px] font-bold text-gray-200 transition-all flex items-center justify-center gap-1 border border-white/10 shadow-sm active:scale-95"
+                    title="Salvar ou registrar este jogo no seu perfil"
+                  >
+                    <Plus className="w-3 h-3 text-cyan-400 group-hover:text-black" />
+                    <span>+ Salvar</span>
+                  </button>
                 </div>
-                <div className="p-2.5 flex-1 flex flex-col justify-between">
-                  <h4 className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2">
-                    {sg.name}
-                  </h4>
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
@@ -1224,9 +1360,12 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
       {/* Modal de Registro / Atualização */}
       <GameModal
-        game={game}
+        game={modalGame || game}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setModalGame(null);
+        }}
       />
 
       {/* Lightbox Modal Estilo Slide Fullscreen com Navegação e Miniaturas */}
