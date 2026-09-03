@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useCallback, useEffect } from "react";
+import { gsap } from "@/lib/gsap";
 
 interface Card3DTiltProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface Card3DTiltProps {
 export default function Card3DTilt({
   children,
   className = "",
-  maxTilt = 12,
+  maxTilt = 10,
 }: Card3DTiltProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
@@ -39,8 +40,8 @@ export default function Card3DTilt({
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
 
-      const rotateX = ((y - 0.5) * -maxTilt).toFixed(2);
-      const rotateY = ((x - 0.5) * maxTilt).toFixed(2);
+      const rotateX = (y - 0.5) * -maxTilt;
+      const rotateY = (x - 0.5) * maxTilt;
 
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
@@ -48,10 +49,16 @@ export default function Card3DTilt({
 
       rafRef.current = requestAnimationFrame(() => {
         if (cardRef.current) {
-          cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(12px) scale3d(1.03, 1.03, 1.03)`;
-          cardRef.current.style.boxShadow =
-            "0 20px 35px -10px rgba(0, 229, 255, 0.25), 0 0 15px rgba(0, 0, 0, 0.8)";
-          cardRef.current.style.transition = "transform 0.08s ease-out, box-shadow 0.2s ease";
+          gsap.to(cardRef.current, {
+            rotateX,
+            rotateY,
+            scale: 1.03,
+            transformPerspective: 1000,
+            duration: 0.15,
+            ease: "power1.out",
+            overwrite: "auto",
+            boxShadow: "0 20px 35px -10px rgba(0, 229, 255, 0.25), 0 0 15px rgba(0, 0, 0, 0.8)",
+          });
         }
 
         if (glareRef.current) {
@@ -71,11 +78,15 @@ export default function Card3DTilt({
     }
 
     if (cardRef.current) {
-      cardRef.current.style.transform =
-        "perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px) scale3d(1, 1, 1)";
-      cardRef.current.style.boxShadow = "none";
-      cardRef.current.style.transition =
-        "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease";
+      gsap.to(cardRef.current, {
+        rotateX: 0,
+        rotateY: 0,
+        scale: 1,
+        duration: 0.55,
+        ease: "power2.out",
+        overwrite: "auto",
+        boxShadow: "0 0 0 rgba(0, 0, 0, 0)",
+      });
     }
 
     if (glareRef.current) {
@@ -88,13 +99,8 @@ export default function Card3DTilt({
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{
-        transform:
-          "perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px) scale3d(1, 1, 1)",
-        transition:
-          "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease",
-      }}
       className={`relative will-change-transform transform-gpu group/tilt ${className}`}
+      style={{ transformStyle: "preserve-3d" }}
     >
       {children}
 
@@ -109,3 +115,4 @@ export default function Card3DTilt({
     </div>
   );
 }
+

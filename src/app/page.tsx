@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Game, UserGame } from "@/lib/types";
 import UnifiedRankingsSection from "@/components/UnifiedRankingsSection";
 import GamerDashboardWidget from "@/components/GamerDashboardWidget";
@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { gsap, useGSAP } from "@/lib/gsap";
 import {
   Flame,
   Trophy,
@@ -83,6 +84,7 @@ const LEGENDARY_FRANCHISES = [
 export default function HomePage() {
   const { user } = useAuth();
   const { stats, library } = useGameLibrary();
+  const pageRef = useRef<HTMLDivElement>(null);
   
   const [topTenGames, setTopTenGames] = useState<Game[]>([]);
   const [releases, setReleases] = useState<Game[]>([]);
@@ -94,6 +96,63 @@ export default function HomePage() {
   // Estados dos modais interativos
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [selectedGameForModal, setSelectedGameForModal] = useState<Game | null>(null);
+
+  // Animações acionadas pelo Scroll (ScrollTrigger)
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+
+    mm.add({
+      reduceMotion: "(prefers-reduced-motion: reduce)",
+      allowMotion: "(prefers-reduced-motion: no-preference)",
+    }, (context) => {
+      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+      if (reduceMotion) {
+        gsap.set([".franchises-title", ".franchise-card", ".calendar-banner"], {
+          autoAlpha: 1,
+          y: 0,
+        });
+        return;
+      }
+
+      // Franquias Lendárias
+      const franchiseTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".franchises-section",
+          start: "top 85%",
+          once: true,
+        },
+        defaults: { ease: "power2.out" },
+      });
+
+      franchiseTl
+        .fromTo(".franchises-title", { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.5 })
+        .fromTo(
+          ".franchise-card",
+          { autoAlpha: 0, y: 30, scale: 0.94 },
+          { autoAlpha: 1, y: 0, scale: 1, stagger: 0.06, duration: 0.45 },
+          "-=0.2"
+        );
+
+      // Banner do Calendário de Lançamentos
+      gsap.fromTo(
+        ".calendar-banner",
+        { autoAlpha: 0, y: 35, scale: 0.97 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.7,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: ".calendar-banner",
+            start: "top 88%",
+            once: true,
+          },
+        }
+      );
+    });
+  }, { scope: pageRef });
 
   useEffect(() => {
     async function loadData() {
@@ -185,7 +244,7 @@ export default function HomePage() {
   }, [library, topTenGames]);
 
   return (
-    <div className="space-y-12 pb-12">
+    <div ref={pageRef} className="space-y-12 pb-12">
       {/* ==========================================
           1. HERO SECTION CINEMATOGRÁFICO & REFINADO
       ========================================== */}
@@ -310,8 +369,8 @@ export default function HomePage() {
       {/* ==========================================
           7. SEÇÃO: EXPLORAR POR FRANQUIAS LENDÁRIAS
       ========================================== */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
+      <section className="franchises-section space-y-4">
+        <div className="franchises-title flex items-center justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
               <Layers className="w-5 h-5 text-cyan-400" /> Explorar por Franquias Lendárias
@@ -327,7 +386,7 @@ export default function HomePage() {
             <Link
               key={f.name}
               href={`/search?q=${encodeURIComponent(f.query)}`}
-              className={`group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-end min-h-[160px] sm:min-h-[190px] shadow-lg transition-all hover:scale-[1.03] hover:shadow-2xl bg-gradient-to-b ${f.accent}`}
+              className={`franchise-card group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-end min-h-[160px] sm:min-h-[190px] shadow-lg transition-all hover:scale-[1.03] hover:shadow-2xl bg-gradient-to-b ${f.accent}`}
             >
               {/* Imagem de Fundo Desfocada */}
               <div className="absolute inset-0 -z-0 overflow-hidden opacity-30 group-hover:opacity-40 transition-opacity">
@@ -358,7 +417,7 @@ export default function HomePage() {
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS
       ========================================== */}
-      <section className="rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#11141a] to-indigo-950/40 border border-cyan-500/20 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+      <section className="calendar-banner rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#11141a] to-indigo-950/40 border border-cyan-500/20 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
         <div className="space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
             <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" /> Calendário Mensal

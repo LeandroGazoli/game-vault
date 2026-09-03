@@ -9,6 +9,7 @@ import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
 import confetti from "canvas-confetti";
 import dynamic from "next/dynamic";
+import { gsap } from "@/lib/gsap";
 import {
   X,
   Dices,
@@ -126,6 +127,13 @@ export default function GameRouletteModal({
             origin: { y: 0.6 },
           });
         } catch {}
+        setTimeout(() => {
+          gsap.fromTo(
+            ".roulette-winner-card",
+            { scale: 0.9, y: 15 },
+            { scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)", overwrite: "auto" }
+          );
+        }, 50);
       }
     }, 100);
   };
@@ -220,7 +228,7 @@ export default function GameRouletteModal({
         {/* Card do Jogo Sorteado */}
         {selectedGame ? (
           <div
-            className={`relative rounded-3xl overflow-hidden border p-5 sm:p-6 transition-all duration-300 ${
+            className={`roulette-winner-card relative rounded-3xl overflow-hidden border p-5 sm:p-6 transition-all duration-300 ${
               isSpinning
                 ? "border-[#00E5FF] bg-[#00E5FF]/10 scale-95 blur-[0.5px]"
                 : "border-purple-500/40 bg-gradient-to-b from-purple-950/30 via-[#18191c] to-black shadow-2xl shadow-purple-500/10 scale-100"

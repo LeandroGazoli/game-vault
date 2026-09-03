@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { gsap } from "@/lib/gsap";
 
 interface Roulette3DProps {
   isSpinning: boolean;
@@ -11,9 +12,42 @@ interface Roulette3DProps {
 export default function Roulette3D({ isSpinning }: Roulette3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isSpinningRef = useRef(isSpinning);
+  const velocityRef = useRef({ val: 0.8 });
+  const meshRef = useRef<THREE.Mesh | null>(null);
+  const light1Ref = useRef<THREE.PointLight | null>(null);
+  const light2Ref = useRef<THREE.PointLight | null>(null);
 
   useEffect(() => {
     isSpinningRef.current = isSpinning;
+
+    if (isSpinning) {
+      // Aceleração rápida ao girar
+      gsap.to(velocityRef.current, {
+        val: 14.0,
+        duration: 0.35,
+        ease: "power2.in",
+        overwrite: true,
+      });
+      if (light1Ref.current) gsap.to(light1Ref.current, { intensity: 10, duration: 0.3 });
+      if (light2Ref.current) gsap.to(light2Ref.current, { intensity: 8, duration: 0.3 });
+    } else {
+      // Desaceleração dramática com suspense cinemático ("slow-mo")
+      gsap.to(velocityRef.current, {
+        val: 0.8,
+        duration: 1.4,
+        ease: "power4.out",
+        overwrite: true,
+      });
+      if (light1Ref.current) gsap.to(light1Ref.current, { intensity: 5, duration: 0.8, ease: "power2.out" });
+      if (light2Ref.current) gsap.to(light2Ref.current, { intensity: 4, duration: 0.8, ease: "power2.out" });
+      if (meshRef.current) {
+        gsap.fromTo(
+          meshRef.current.scale,
+          { x: 1.25, y: 1.25, z: 1.25 },
+          { x: 1, y: 1, z: 1, duration: 0.5, ease: "back.out(2)" }
+        );
+      }
+    }
   }, [isSpinning]);
 
   useEffect(() => {
@@ -58,6 +92,7 @@ export default function Roulette3D({ isSpinning }: Roulette3DProps) {
     });
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
+    meshRef.current = mesh;
 
     // Wireframe Neon Dourado sobre o D20
     const edgeGeo = new THREE.EdgesGeometry(geometry);
@@ -93,40 +128,34 @@ export default function Roulette3D({ isSpinning }: Roulette3DProps) {
     const light1 = new THREE.PointLight(0x00e5ff, 5, 10);
     light1.position.set(3, 3, 3);
     scene.add(light1);
+    light1Ref.current = light1;
 
     const light2 = new THREE.PointLight(0xec4899, 4, 10);
     light2.position.set(-3, -2, 2);
     scene.add(light2);
+    light2Ref.current = light2;
 
     let animationFrameId: number;
     let clock = new THREE.Clock();
-    let spinVelocity = 0.5;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
+      const speed = velocityRef.current.val;
 
-      if (isSpinningRef.current) {
-        spinVelocity = 12.0;
-      } else if (spinVelocity > 0.8) {
-        spinVelocity *= 0.95;
-      } else {
-        spinVelocity = 0.8;
-      }
-
-      mesh.rotation.x += spinVelocity * delta;
-      mesh.rotation.y += spinVelocity * 1.3 * delta;
+      mesh.rotation.x += speed * delta;
+      mesh.rotation.y += speed * 1.3 * delta;
 
       wireframe.rotation.x = mesh.rotation.x;
       wireframe.rotation.y = mesh.rotation.y;
 
-      innerMesh.rotation.y -= spinVelocity * 2 * delta;
+      innerMesh.rotation.y -= speed * 2 * delta;
       const pulse = Math.sin(time * 6) * 0.15 + 0.7;
       innerMesh.scale.set(pulse, pulse, pulse);
 
       ring.rotation.x = Math.PI / 2 + Math.sin(time * 2) * 0.3;
-      ring.rotation.y = time * 1.5;
+      ring.rotation.y = time * Math.max(1.5, speed * 0.5);
 
       renderer.render(scene, camera);
     };
@@ -156,6 +185,9 @@ export default function Roulette3D({ isSpinning }: Roulette3DProps) {
       ringMat.dispose();
       renderer.forceContextLoss?.();
       renderer.dispose();
+      meshRef.current = null;
+      light1Ref.current = null;
+      light2Ref.current = null;
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }

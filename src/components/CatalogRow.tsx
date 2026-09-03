@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Plus, Check, Star, Sparkles, Flame, Clock } 
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Card3DTilt from "./3d/Card3DTilt";
 import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 interface CatalogRowProps {
   title: string;
@@ -29,9 +30,48 @@ export default function CatalogRow({
   actionHref,
   actionText = "Ver todos →",
 }: CatalogRowProps) {
+  const sectionRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const { getGameInLibrary } = useGameLibrary();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+
+  // Revelação fluida dos cards ao rolar via ScrollTrigger
+  useGSAP(() => {
+    if (!sectionRef.current || games.length === 0) return;
+
+    const mm = gsap.matchMedia();
+    mm.add({
+      reduceMotion: "(prefers-reduced-motion: reduce)",
+      allowMotion: "(prefers-reduced-motion: no-preference)",
+    }, (context) => {
+      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+      if (reduceMotion) {
+        gsap.set([".catalog-header", ".catalog-card"], { autoAlpha: 1, y: 0 });
+        return;
+      }
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 88%",
+          once: true,
+        },
+        defaults: { ease: "power2.out" },
+      });
+
+      tl.fromTo(
+        ".catalog-header",
+        { autoAlpha: 0, y: 20 },
+        { autoAlpha: 1, y: 0, duration: 0.5 }
+      ).fromTo(
+        ".catalog-card",
+        { autoAlpha: 0, y: 30, scale: 0.96 },
+        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.05, duration: 0.45 },
+        "-=0.25"
+      );
+    });
+  }, { scope: sectionRef, dependencies: [games] });
 
   const scroll = (direction: "left" | "right") => {
     if (rowRef.current) {
@@ -48,9 +88,9 @@ export default function CatalogRow({
 
   return (
     <>
-      <section className="space-y-3.5 relative group/row">
+      <section ref={sectionRef} className="space-y-3.5 relative group/row">
         {/* Cabeçalho da Linha */}
-        <div className="flex items-center justify-between">
+        <div className="catalog-header flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {Icon && (
               <div className="w-8 h-8 rounded-lg bg-[#151820] border border-[#262c38] text-neutral-300 flex items-center justify-center">
@@ -110,7 +150,7 @@ export default function CatalogRow({
               <Card3DTilt
                 key={game.id}
                 maxTilt={6}
-                className="flex-shrink-0 w-36 sm:w-44"
+                className="catalog-card flex-shrink-0 w-36 sm:w-44"
               >
                 <div className="group relative w-full h-full rounded-xl bg-[#12151c] border border-[#222834] hover:border-[#384255] hover:bg-[#151922] overflow-hidden flex flex-col transition-colors duration-200 hover:shadow-xl hover:shadow-black/70">
                   {/* Poster / Capa Vertical - Clicar abre a página do jogo */}

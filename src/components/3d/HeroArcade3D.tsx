@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { gsap } from "@/lib/gsap";
 
 export default function HeroArcade3D() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +49,18 @@ export default function HeroArcade3D() {
     // 3. Grupo Principal: Cartucho Gamer 3D + Elementos Orbitais
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
+
+    // Entrada cinematográfica orquestrada com GSAP
+    gsap.fromTo(
+      camera.position,
+      { z: 12, y: -1.2 },
+      { z: 7.8, y: 0, duration: 1.5, ease: "power3.out" }
+    );
+    gsap.fromTo(
+      mainGroup.rotation,
+      { y: Math.PI * 1.2, x: 0.4 },
+      { y: -0.25, x: 0.15, duration: 1.6, ease: "power2.out" }
+    );
 
     // --- A. Chassis do Cartucho (Titânio Grafite com Emissive Neon) ---
     const bodyGeo = new THREE.BoxGeometry(2.3, 3.1, 0.42);
@@ -244,8 +257,9 @@ export default function HeroArcade3D() {
     };
 
     const handleClick = () => {
-      // Impulso arcade 720° ao clicar
+      // Impulso arcade 720° ao clicar com pulso de luz dinâmica
       spinVelocity = Math.PI * 5;
+      gsap.to(mouseLight, { intensity: 12, duration: 0.2, yoyo: true, repeat: 1 });
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -376,7 +390,7 @@ export default function HeroArcade3D() {
       ref={containerRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative w-full h-[320px] sm:h-[360px] lg:h-[400px] flex items-center justify-center cursor-pointer select-none"
+      className="relative w-full h-[280px] sm:h-[320px] lg:h-[340px] flex items-center justify-center cursor-pointer select-none"
       title="Clique para girar o cartucho 3D do GameVault"
       aria-label="Cena 3D interativa do GameVault"
     >
