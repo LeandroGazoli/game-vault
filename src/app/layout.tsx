@@ -16,6 +16,10 @@ import { Analytics } from "@vercel/analytics/next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
   width: "device-width",
@@ -26,10 +30,47 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.mygameslist.com.br"),
-  title: "MGL • Meu Gamer Log | Catálogo, Lançamentos & Backlog Gamer",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    template: "%s | GameVault",
+  },
   description:
-    "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo em PT-BR.",
+    "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo completo de games em PT-BR.",
+  keywords: [
+    "jogos",
+    "backlog gamer",
+    "howlongtobeat pt-br",
+    "metacritic jogos",
+    "lançamentos games 2026",
+    "jogos dublados",
+    "catálogo de jogos",
+    "meu gamer log",
+    "game vault",
+    "organizador de jogos",
+  ],
+  authors: [{ name: "Leandro Gazoli" }],
+  creator: "Leandro Gazoli",
+  publisher: "GameVault",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: "./",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   verification: {
     google: "1DCEVYrBhAZ-w02hcc6ym1KKojqWyvoRHuEN9W6biyg",
   },
@@ -37,7 +78,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "MGL",
+    title: "GameVault",
   },
   icons: {
     icon: [
@@ -51,11 +92,60 @@ export const metadata: Metadata = {
     shortcut: "/favicon.svg",
   },
   openGraph: {
-    title: "GameVault • Plataforma de Jogos",
-    description: "Seu acervo gamer com lançamentos, rankings e catálogo ao vivo.",
+    type: "website",
+    locale: "pt_BR",
+    url: SITE_URL,
+    siteName: "GameVault",
+    title: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    description:
+      "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo de games em PT-BR.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "GameVault • Catálogo e Backlog Gamer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GameVault • Catálogo de Jogos, Lançamentos & Backlog Gamer",
+    description:
+      "Organize seus jogos zerados, lista de desejos e acompanhe notas do Metacritic, tempos do HowLongToBeat e catálogo de games em PT-BR.",
     images: ["/og-image.jpg"],
+    creator: "@gamevault",
   },
 };
+
+const globalStructuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "GameVault",
+    alternateName: ["MGL", "Meu Gamer Log", "MyGameList"],
+    url: SITE_URL,
+    description:
+      "Plataforma completa para registrar jogos zerados, acompanhar notas do Metacritic, tempos do HowLongToBeat e lançamentos.",
+    inLanguage: "pt-BR",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "GameVault",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo-mgl.png`,
+    sameAs: [],
+  },
+];
 
 export default function RootLayout({
   children,
@@ -66,6 +156,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark">
       <head>
         <GoogleAdScript />
+        <JsonLd data={globalStructuredData} />
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
         <SpaceDustCanvas />

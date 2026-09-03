@@ -86,10 +86,10 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pl-[max(env(safe-area-inset-left,0px),0.875rem)] pr-[max(env(safe-area-inset-right,0px),0.875rem)] h-16 flex items-center justify-between gap-3 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Lado Esquerdo: Logo & Navegação Principal */}
-          <div className="flex items-center gap-4 xl:gap-6 flex-shrink-0">
-            <Link href="/" className="flex-shrink-0">
+          <div className="flex items-center gap-2.5 lg:gap-3 xl:gap-4 shrink-0">
+            <Link href="/" className="shrink-0">
               <Logo size="md" />
             </Link>
 
@@ -132,28 +132,6 @@ export default function Navbar() {
                 Rankings
               </Link>
               <Link
-                href="/categorias"
-                className={`hidden xl:flex px-2.5 py-1.5 rounded-lg transition-all items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
-                  pathname.startsWith("/categorias")
-                    ? "bg-white/10 text-white border border-white/15"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                Categorias
-              </Link>
-              <Link
-                href="/colecoes"
-                className={`hidden xl:flex px-2.5 py-1.5 rounded-lg transition-all items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
-                  pathname.startsWith("/colecoes")
-                    ? "bg-white/10 text-white border border-white/15"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
-                }`}
-              >
-                <Bookmark className="w-3.5 h-3.5 text-purple-400" />
-                Coleções
-              </Link>
-              <Link
                 href="/profile"
                 className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
                   pathname === "/profile"
@@ -165,7 +143,7 @@ export default function Navbar() {
                 Meus Jogos
               </Link>
 
-              {/* Mega-Menu Explorar por Taxonomia (Plataformas, Gêneros, Especiais) */}
+              {/* Mega-Menu Explorar por Taxonomia (Categorias, Coleções, Plataformas, Gêneros) */}
               <div
                 className="relative"
                 onMouseEnter={() => setIsExploreMenuOpen(true)}
@@ -174,7 +152,7 @@ export default function Navbar() {
                 <button
                   onClick={() => setIsExploreMenuOpen(!isExploreMenuOpen)}
                   className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap text-xs font-semibold cursor-pointer ${
-                    isExploreMenuOpen || pathname === "/search"
+                    isExploreMenuOpen || pathname === "/search" || pathname.startsWith("/categorias") || pathname.startsWith("/colecoes")
                       ? "bg-white/10 text-white border border-white/15"
                       : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
@@ -190,7 +168,7 @@ export default function Navbar() {
 
                 {/* Dropdown Estruturado em 3 Colunas */}
                 {isExploreMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-[500px] rounded-2xl bg-[#0f1218]/98 border border-[#262d3a] shadow-2xl p-4 grid grid-cols-3 gap-4 backdrop-blur-2xl animate-fadeIn z-50">
+                  <div className="absolute top-full left-0 mt-2 w-[520px] rounded-2xl bg-[#0f1218]/98 border border-[#262d3a] shadow-2xl p-4 grid grid-cols-3 gap-4 backdrop-blur-2xl animate-fadeIn z-50">
                     {/* Coluna 1: Plataformas */}
                     <div className="space-y-1.5">
                       <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5 pb-1">
@@ -241,12 +219,28 @@ export default function Navbar() {
                       </div>
                     </div>
 
-                    {/* Coluna 3: Coleções & Destaques */}
+                    {/* Coluna 3: Coleções & Hubs Principais */}
                     <div className="space-y-1.5">
                       <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 border-b border-white/5 pb-1">
-                        Coleções Especiais
+                        Hubs &amp; Coleções
                       </div>
                       <div className="space-y-0.5">
+                        <Link
+                          href="/categorias"
+                          onClick={() => setIsExploreMenuOpen(false)}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate font-medium"
+                        >
+                          <Layers className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          <span>Todas as Categorias</span>
+                        </Link>
+                        <Link
+                          href="/colecoes"
+                          onClick={() => setIsExploreMenuOpen(false)}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate font-medium"
+                        >
+                          <Bookmark className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          <span>Coleções do Acervo</span>
+                        </Link>
                         <Link
                           href="/search?q=dublado"
                           onClick={() => setIsExploreMenuOpen(false)}
@@ -260,13 +254,6 @@ export default function Navbar() {
                           className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
                         >
                           ⭐ Top Metacritic
-                        </Link>
-                        <Link
-                          href="/calendar"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
-                        >
-                          📅 Lançamentos 2026
                         </Link>
                         <Link
                           href="/search"
@@ -284,14 +271,14 @@ export default function Navbar() {
           </div>
 
           {/* Lado Direito: Busca Spotlight & Área do Usuário */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end">
             {/* Botão de Busca Spotlight (Desktop - Cmd+K / Ctrl+K) */}
             <button
               onClick={() => openSpotlightSearch()}
-              className="hidden md:flex items-center justify-between w-36 lg:w-44 xl:w-56 px-2.5 py-1.5 rounded-xl bg-[#13161f] hover:bg-[#181c27] border border-[#242a36] hover:border-[#384255] text-xs text-neutral-400 transition-all shadow-inner group cursor-pointer shrink-0"
+              className="hidden md:flex items-center justify-between w-28 lg:w-36 xl:w-40 px-2.5 py-1.5 rounded-xl bg-[#13161f] hover:bg-[#181c27] border border-[#242a36] hover:border-[#384255] text-xs text-neutral-400 transition-all shadow-inner group cursor-pointer shrink-0"
               title="Buscar jogos no GameVault (Atalho: ⌘K ou Ctrl+K)"
             >
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-1.5 truncate">
                 <Search className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#00E5FF] transition-colors shrink-0" />
                 <span className="truncate">Buscar...</span>
               </div>
@@ -303,7 +290,7 @@ export default function Navbar() {
             {!isPremium && (
               <Link
                 href="/planos"
-                className="hidden xl:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm flex-shrink-0"
+                className="hidden 2xl:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm flex-shrink-0"
               >
                 <Crown className="w-3.5 h-3.5 text-amber-400" />
                 <span>PRO</span>
