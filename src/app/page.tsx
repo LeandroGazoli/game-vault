@@ -189,7 +189,7 @@ export default function HomePage() {
       {/* ==========================================
           1. HERO SECTION COM BUSCA E ATALHOS TÁTEIS + THREE.JS 3D
       ========================================== */}
-      <section className="relative z-30 rounded-2xl border border-[#242a36] bg-[#11141a] p-5 sm:p-10 text-center sm:text-left shadow-xl w-full overflow-hidden">
+      <section className="relative z-30 rounded-2xl border border-[#242a36] bg-[#11141a] p-4 sm:p-10 text-left shadow-xl w-full overflow-hidden">
         <div className="relative z-10 w-full">
           {/* Grid Principal do Hero: Conteúdo à Esquerda + Cartucho 3D Interativo à Direita */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
@@ -199,7 +199,7 @@ export default function HomePage() {
                 <span>ACERVO GAMER // IGDB • METACRITIC • HOWLONGTOBEAT</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.08] font-display">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1] font-display break-words">
                 Descubra, Registre e Acompanhe <br className="hidden sm:inline" />
                 <span className="text-neutral-400">Seus Jogos Favoritos.</span>
               </h1>
@@ -225,7 +225,7 @@ export default function HomePage() {
 
           {/* Atalhos Táteis por Plataforma & Roleta Gamer em Largura Total */}
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 w-full border-t border-[#242a36]/60 pt-5">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            <div className="flex flex-wrap items-center justify-start gap-1.5 sm:gap-2">
               <span className="text-xs text-neutral-400 font-mono uppercase tracking-wider mr-1 flex items-center gap-1.5">
                 <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Plataformas:
               </span>

@@ -35,7 +35,7 @@ export default function UserAvatar({
         src={photoURL}
         alt={name}
         onError={() => setImgError(true)}
-        className={`rounded-2xl object-cover border border-white/10 ${sizeClasses} ${className}`}
+        className={`rounded-2xl object-cover border border-white/10 shrink-0 aspect-square ${sizeClasses} ${className}`}
       />
     );
   }

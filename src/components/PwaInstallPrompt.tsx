@@ -47,15 +47,15 @@ export default function PwaInstallPrompt() {
       (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
     setIsIos(isAppleIos);
 
-    // Verifica se o banner já foi dispensado nesta sessão
-    const dismissed = sessionStorage.getItem("gamevault_pwa_dismissed");
+    // Verifica se o banner já foi dispensado anteriormente
+    const dismissed = localStorage.getItem("gamevault_pwa_dismissed");
     if (dismissed) {
       setIsDismissed(true);
     } else if (!standaloneMode) {
-      // Pequeno delay para uma entrada suave e não agressiva
+      // Delay de 6 segundos para não ser invasivo
       const timer = setTimeout(() => {
         setIsBannerVisible(true);
-      }, 3000);
+      }, 6000);
       return () => clearTimeout(timer);
     }
 
@@ -103,38 +103,38 @@ export default function PwaInstallPrompt() {
     setIsBannerVisible(false);
     setIsDismissed(true);
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("gamevault_pwa_dismissed", "true");
+      localStorage.setItem("gamevault_pwa_dismissed", Date.now().toString());
     }
   };
 
   return (
     <>
       {/* =========================================================
-          1. BANNER FLUTUANTE DISCRETO (Acima da Barra Inferior)
+          1. BANNER FLUTUANTE DISCRETO (Compacto e não intrusivo)
       ========================================================= */}
       {isBannerVisible && !isDismissed && !isStandalone && (
         <aside
           aria-label="Instalar Aplicativo GameVault"
-          className="fixed bottom-[max(env(safe-area-inset-bottom,0px)+5.5rem,6.5rem)] sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 animate-fadeIn"
+          className="fixed bottom-[max(env(safe-area-inset-bottom,0px)+4.75rem,5.5rem)] sm:bottom-6 left-2.5 right-2.5 sm:left-auto sm:right-6 sm:max-w-md z-40 animate-fadeIn"
         >
-          <div className="relative rounded-3xl bg-[#14161b]/95 border border-cyan-500/30 p-4 shadow-2xl backdrop-blur-2xl flex items-center justify-between gap-3.5 shadow-cyan-950/40">
+          <div className="relative rounded-2xl bg-[#14161b]/95 border border-cyan-500/30 p-2.5 sm:p-3.5 shadow-2xl backdrop-blur-2xl flex items-center justify-between gap-2.5 shadow-cyan-950/40">
             {/* Ícone e Textos */}
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative flex-shrink-0">
                 <Logo size="sm" showText={false} />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#00E5FF] animate-ping" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#00E5FF]" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#00E5FF] animate-ping" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#00E5FF]" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs sm:text-sm font-bold text-white truncate">
+                  <h4 className="text-xs font-bold text-white truncate">
                     Instalar App Mobile
                   </h4>
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono bg-[#00E5FF]/20 text-[#00E5FF]">
                     PWA
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-400 truncate">
+                <p className="text-[10px] text-gray-400 truncate">
                   Tela cheia, mais rápido e suporte offline.
                 </p>
               </div>
@@ -144,14 +144,14 @@ export default function PwaInstallPrompt() {
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1"
               >
                 <Download className="w-3 h-3" />
                 Instalar
               </button>
               <button
                 onClick={handleDismissBanner}
-                className="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 title="Fechar"
               >
                 <X className="w-3.5 h-3.5" />

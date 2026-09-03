@@ -188,7 +188,7 @@ export default function ProfilePage() {
         )}
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
-            <div className="relative">
+            <div className="relative shrink-0">
               <UserAvatar
                 photoURL={user.photoURL}
                 name={user.displayName}

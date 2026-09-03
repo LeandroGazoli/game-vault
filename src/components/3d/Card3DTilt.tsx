@@ -27,6 +27,11 @@ export default function Card3DTilt({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      // No mobile / touchscreen, não aplica tilt 3D para evitar layout shift durante o scroll
+      if (typeof window !== "undefined" && window.matchMedia("(hover: none)").matches) {
+        return;
+      }
+
       const card = cardRef.current;
       if (!card) return;
 
