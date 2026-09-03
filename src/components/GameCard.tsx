@@ -72,7 +72,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-lg bg-[#181c25]/90 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 shadow-md z-20 border border-[#2e3646] hover:border-white active:scale-95"
             title={userGame ? "Editar Status" : "Adicionar à Lista"}
           >
-            {userGame ? <Check className="w-4 h-4 text-emerald-400" /> : <Plus className="w-4 h-4" />}
+            {userGame ? <Check className="w-4 h-4 text-[#00E5FF]" /> : <Plus className="w-4 h-4" />}
           </button>
         </div>
 
@@ -83,7 +83,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
               <span className="tabular-nums">{releaseYear}</span>
               {userGame?.dlcs && userGame.dlcs.length > 0 ? (
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-neutral-300 font-mono border border-white/10 font-bold"
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
                   title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
                 >
                   +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
@@ -96,7 +96,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             </div>
 
             <Link href={`/game/${game.id}`}>
-              <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-neutral-200 transition-colors line-clamp-1">
+              <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#00E5FF] transition-colors line-clamp-1">
                 {game.name}
               </h3>
             </Link>
@@ -106,7 +106,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
           <div className="pt-2 border-t border-[#222834] flex items-center justify-between text-xs font-mono">
             {/* Tempos HLTB ou Horas do Jogador */}
             <div className="flex items-center gap-1.5 text-neutral-400 text-[11px] tabular-nums">
-              <Clock className="w-3.5 h-3.5 text-neutral-400" />
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
               <span>
                 {userGame?.userPlaytimeHours
                   ? `${userGame.userPlaytimeHours}h`

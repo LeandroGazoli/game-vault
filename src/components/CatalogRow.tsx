@@ -149,7 +149,7 @@ export default function CatalogRow({
                     className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#181c25]/90 hover:bg-white text-white hover:text-black border border-[#2a3140] hover:border-white opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-md z-20 active:scale-95"
                     title={userGame ? "Editar na biblioteca" : "Adicionar à lista"}
                   >
-                    {userGame ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Plus className="w-3.5 h-3.5" />}
+                    {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                   </button>
 
                   {/* Badge de Metacritic no Rodapé da Capa */}
@@ -164,7 +164,7 @@ export default function CatalogRow({
                 <div className="p-3 flex-1 flex flex-col justify-between">
                   <div>
                     <Link href={`/game/${game.id}`}>
-                      <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-neutral-200 transition-colors line-clamp-1">
+                      <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-1">
                         {game.name}
                       </h3>
                     </Link>
@@ -182,7 +182,7 @@ export default function CatalogRow({
                   {/* Botão de Ação / Status */}
                   <div className="mt-2.5 pt-2 border-t border-[#222834] flex items-center justify-between font-mono">
                     <div className="text-[10px] text-neutral-400 flex items-center gap-1 tabular-nums">
-                      <Clock className="w-3 h-3 text-neutral-400" />
+                      <Clock className="w-3 h-3 text-cyan-400" />
                       <span>{game.hltb?.mainStory ? `${game.hltb.mainStory}h` : "30h"}</span>
                     </div>
 
@@ -190,7 +190,7 @@ export default function CatalogRow({
                       onClick={() => setSelectedGame(game)}
                       className={`text-[10px] font-semibold transition-colors ${
                         userGame
-                          ? "text-emerald-400"
+                          ? "text-[#00E5FF]"
                           : "text-neutral-400 hover:text-white"
                       }`}
                     >

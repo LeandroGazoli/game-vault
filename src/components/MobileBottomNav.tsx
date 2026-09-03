@@ -19,13 +19,13 @@ export default function MobileBottomNav() {
   const { user, isPremium } = useAuth();
 
   const navItems = [
-    { href: "/", label: "Início", icon: Flame },
-    { href: "/search", label: "Buscar", icon: Search },
-    { href: "/calendar", label: "Lançamentos", icon: CalendarIcon },
-    { href: "/profile", label: "Meus Jogos", icon: Trophy },
+    { href: "/", label: "Início", icon: Flame, color: "text-orange-400" },
+    { href: "/search", label: "Buscar", icon: Search, color: "text-[#00E5FF]" },
+    { href: "/calendar", label: "Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
+    { href: "/profile", label: "Meus Jogos", icon: Trophy, color: "text-emerald-400" },
     ...(isPremium
-      ? [{ href: "/rankings", label: "Rankings", icon: Star }]
-      : [{ href: "/planos", label: "PRO", icon: Crown }]),
+      ? [{ href: "/rankings", label: "Rankings", icon: Star, color: "text-yellow-400" }]
+      : [{ href: "/planos", label: "PRO", icon: Crown, color: "text-amber-400" }]),
   ];
 
   return (
@@ -50,7 +50,7 @@ export default function MobileBottomNav() {
             >
               <Icon
                 className={`w-5 h-5 transition-transform ${
-                  isActive ? "text-white scale-105" : "text-neutral-400"
+                  isActive ? `${item.color} scale-110 drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]` : "text-neutral-400"
                 }`}
               />
               <span
@@ -62,7 +62,7 @@ export default function MobileBottomNav() {
               </span>
 
               {isActive && (
-                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_#ffffff]" />
+                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
               )}
             </Link>
           );

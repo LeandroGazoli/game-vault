@@ -209,7 +209,7 @@ export default function HomePage() {
           {/* Atalhos Táteis por Plataforma & Roleta Gamer */}
           <div className="mt-6 flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span className="text-xs text-neutral-400 font-mono uppercase tracking-wider mr-1 flex items-center gap-1.5">
-              <Gamepad2 className="w-3.5 h-3.5 text-neutral-400" /> Plataformas:
+              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Plataformas:
             </span>
             {[
               { label: "PC", query: "PC" },
@@ -233,7 +233,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-lg bg-[#1a1e28] hover:bg-[#232936] text-amber-300 border border-amber-500/40 hover:border-amber-400 font-mono font-bold transition-all shadow-sm active:scale-95 cursor-pointer ml-auto sm:ml-2"
               title="Gire a roleta e descubra um jogo surpresa para jogar hoje!"
             >
-              <Dices className="w-3.5 h-3.5 text-amber-400" />
+              <Dices className="w-3.5 h-3.5 text-pink-400" />
               ROLETA // O que jogar hoje?
             </button>
           </div>
@@ -244,14 +244,14 @@ export default function HomePage() {
               <span className="text-neutral-200 font-sans">
                 Jogador: <strong className="text-white font-mono">{user.displayName}</strong>
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-400">
-                <Trophy className="w-3.5 h-3.5" /> <strong className="text-white tabular-nums">{stats.completedCount}</strong> zerados
+              <span className="flex items-center gap-1.5 text-[#00E5FF]">
+                <Trophy className="w-3.5 h-3.5 text-[#00E5FF]" /> <strong className="text-white tabular-nums">{stats.completedCount}</strong> zerados
               </span>
-              <span className="flex items-center gap-1.5 text-cyan-400">
-                <Gamepad2 className="w-3.5 h-3.5" /> <strong className="text-white tabular-nums">{stats.playingCount}</strong> jogando
+              <span className="flex items-center gap-1.5 text-blue-400">
+                <Gamepad2 className="w-3.5 h-3.5 text-blue-400" /> <strong className="text-white tabular-nums">{stats.playingCount}</strong> jogando
               </span>
               <span className="flex items-center gap-1.5 text-amber-400">
-                <Clock className="w-3.5 h-3.5" /> <strong className="text-white tabular-nums">{stats.totalPlaytimeHours}h</strong> registradas
+                <Clock className="w-3.5 h-3.5 text-amber-400" /> <strong className="text-white tabular-nums">{stats.totalPlaytimeHours}h</strong> registradas
               </span>
             </div>
           )}
@@ -280,8 +280,8 @@ export default function HomePage() {
               )}
 
               <div className="space-y-1 min-w-0">
-                <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider">
+                  <Play className="w-3 h-3 fill-current text-cyan-400" />
                   EM ANDAMENTO
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-white truncate max-w-md">

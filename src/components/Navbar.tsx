@@ -96,7 +96,7 @@ export default function Navbar() {
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Flame className="w-3.5 h-3.5 text-neutral-300" />
+                <Flame className="w-4 h-4 text-orange-400" />
                 Início
               </Link>
               <Link
@@ -107,7 +107,7 @@ export default function Navbar() {
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <CalendarIcon className="w-3.5 h-3.5 text-neutral-300" />
+                <CalendarIcon className="w-4 h-4 text-[#00E5FF]" />
                 Calendário
               </Link>
               <Link
@@ -118,7 +118,7 @@ export default function Navbar() {
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-neutral-300" />
+                <Sparkles className="w-4 h-4 text-amber-400" />
                 Rankings
               </Link>
               <Link
@@ -129,7 +129,7 @@ export default function Navbar() {
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Trophy className="w-3.5 h-3.5 text-neutral-300" />
+                <Trophy className="w-4 h-4 text-emerald-400" />
                 Meus Jogos
               </Link>
             </nav>
@@ -286,7 +286,7 @@ export default function Navbar() {
                 ) : (
                   <div className="p-4 rounded-xl bg-[#14171e] border border-[#242a36] space-y-3">
                     <div className="flex items-center gap-2 text-white text-xs font-bold">
-                      <Gamepad2 className="w-4 h-4 text-neutral-300" />
+                      <Gamepad2 className="w-4 h-4 text-[#00E5FF]" />
                       <span>Crie seu Perfil Gamer</span>
                     </div>
                     <p className="text-[11px] text-neutral-400 leading-snug">
@@ -308,10 +308,10 @@ export default function Navbar() {
                 <div className="p-3.5 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-neutral-300" />
+                      <Smartphone className="w-4 h-4 text-[#00E5FF]" />
                       <span className="text-xs font-bold text-white">App Mobile (PWA)</span>
                     </div>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-white/10 text-neutral-300 border border-white/10">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/20">
                       RÁPIDO
                     </span>
                   </div>
