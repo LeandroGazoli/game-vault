@@ -35,7 +35,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Navegação móvel"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-[#0c0e13]/95 backdrop-blur-2xl border-t border-[#242a36] shadow-[0_-8px_30px_rgba(0,0,0,0.7)] pt-1.5 pb-[max(env(safe-area-inset-bottom,0px)+4px,14px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
+      className="vt-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-[#0c0e13]/95 backdrop-blur-2xl border-t border-[#242a36] shadow-[0_-8px_30px_rgba(0,0,0,0.7)] pt-1.5 pb-[max(env(safe-area-inset-bottom,0px)+4px,14px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
     >
       <div className="max-w-md mx-auto px-1.5 flex items-center justify-around">
         {navItems.map((item) => {

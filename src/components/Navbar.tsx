@@ -111,7 +111,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
+      <header className="vt-header sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Lado Esquerdo: Logo & Navegação Principal */}
           <div className="flex items-center gap-2.5 lg:gap-3 xl:gap-4 shrink-0">
