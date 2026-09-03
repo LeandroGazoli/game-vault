@@ -1,9 +1,26 @@
 import DOMPurify from "isomorphic-dompurify";
 
+/**
+ * Normaliza SVGs não codificados dentro de data URIs no CSS (ex: cursores e backgrounds),
+ * convertendo caracteres literais como '<', '>', '#' e '"' para formato seguro URL-encoded
+ * (%3C, %3E, %23, %22) para impedir que o parser de HTML descarte o bloco <style> inteiro.
+ */
+function normalizeSvgDataUris(input: string): string {
+  return input.replace(/data:image\/svg\+xml;[^\"\'\)]*?(<svg[\s\S]*?<\/svg>)/gi, (fullMatch, svgXml) => {
+    const encoded = svgXml
+      .replace(/</g, "%3C")
+      .replace(/>/g, "%3E")
+      .replace(/#/g, "%23")
+      .replace(/\"/g, "%22");
+    return fullMatch.replace(svgXml, encoded);
+  });
+}
+
 export function sanitizeCustomHtml(dirtyHtml: string): string {
   if (!dirtyHtml || typeof dirtyHtml !== "string") return "";
 
-  const clean = DOMPurify.sanitize(dirtyHtml, {
+  const preprocessed = normalizeSvgDataUris(dirtyHtml);
+  const clean = DOMPurify.sanitize(preprocessed, {
     FORCE_BODY: true,
     ALLOWED_TAGS: [
       "div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6",
