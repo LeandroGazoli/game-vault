@@ -80,7 +80,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signInWithGoogle();
       onClose();
     } catch (err: any) {
-      setError(err.message || "Erro ao conectar com o Google");
+      if (err?.code === "auth/popup-closed-by-user") {
+        return;
+      }
+      if (err?.code === "auth/popup-blocked") {
+        setError("O popup foi bloqueado pelo seu navegador. Por favor, permita popups para este site.");
+      } else {
+        setError("Não foi possível conectar com o Google. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
