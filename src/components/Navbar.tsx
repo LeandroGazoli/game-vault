@@ -44,6 +44,31 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isExploreMenuOpen, setIsExploreMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const exploreTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenExplore = () => {
+    if (exploreTimeoutRef.current) {
+      clearTimeout(exploreTimeoutRef.current);
+    }
+    setIsExploreMenuOpen(true);
+  };
+
+  const handleCloseExplore = () => {
+    if (exploreTimeoutRef.current) {
+      clearTimeout(exploreTimeoutRef.current);
+    }
+    exploreTimeoutRef.current = setTimeout(() => {
+      setIsExploreMenuOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (exploreTimeoutRef.current) {
+        clearTimeout(exploreTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -146,8 +171,8 @@ export default function Navbar() {
               {/* Mega-Menu Explorar por Taxonomia (Categorias, Coleções, Plataformas, Gêneros) */}
               <div
                 className="relative"
-                onMouseEnter={() => setIsExploreMenuOpen(true)}
-                onMouseLeave={() => setIsExploreMenuOpen(false)}
+                onMouseEnter={handleOpenExplore}
+                onMouseLeave={handleCloseExplore}
               >
                 <button
                   onClick={() => setIsExploreMenuOpen(!isExploreMenuOpen)}
@@ -166,105 +191,107 @@ export default function Navbar() {
                   />
                 </button>
 
-                {/* Dropdown Estruturado em 3 Colunas com Fundo 100% Sólido */}
+                {/* Dropdown Estruturado em 3 Colunas com Fundo 100% Sólido e Hover Bridge Sem Falhas */}
                 {isExploreMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2.5 w-[530px] rounded-2xl bg-[#0c0e14] border border-[#2a3242] shadow-[0_25px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 p-4 grid grid-cols-3 gap-4 z-50">
-                    {/* Coluna 1: Plataformas */}
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
-                        <Gamepad2 className="w-3.5 h-3.5" />
-                        <span>Plataformas</span>
+                  <div className="absolute top-full left-0 pt-2 w-[530px] z-50 animate-fadeIn">
+                    <div className="rounded-2xl bg-[#0c0e14] border border-[#2a3242] shadow-[0_25px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 p-4 grid grid-cols-3 gap-4">
+                      {/* Coluna 1: Plataformas */}
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                          <Gamepad2 className="w-3.5 h-3.5" />
+                          <span>Plataformas</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {[
+                            { label: "💻 PC Gamer", href: "/search?platform=PC" },
+                            { label: "🎮 PlayStation 5", href: "/search?platform=PlayStation%205" },
+                            { label: "🟢 Xbox Series", href: "/search?platform=Xbox%20Series" },
+                            { label: "🔴 Nintendo Switch", href: "/search?platform=Nintendo%20Switch" },
+                            { label: "🕹️ Clássicos Retrô", href: "/search?platform=Retro" },
+                          ].map((p) => (
+                            <Link
+                              key={p.label}
+                              href={p.href}
+                              onClick={() => setIsExploreMenuOpen(false)}
+                              className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
+                            >
+                              {p.label}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        {[
-                          { label: "💻 PC Gamer", href: "/search?platform=PC" },
-                          { label: "🎮 PlayStation 5", href: "/search?platform=PlayStation%205" },
-                          { label: "🟢 Xbox Series", href: "/search?platform=Xbox%20Series" },
-                          { label: "🔴 Nintendo Switch", href: "/search?platform=Nintendo%20Switch" },
-                          { label: "🕹️ Clássicos Retrô", href: "/search?platform=Retro" },
-                        ].map((p) => (
-                          <Link
-                            key={p.label}
-                            href={p.href}
-                            onClick={() => setIsExploreMenuOpen(false)}
-                            className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
-                          >
-                            {p.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Coluna 2: Principais Gêneros */}
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
-                        <Flame className="w-3.5 h-3.5" />
-                        <span>Gêneros</span>
+                      {/* Coluna 2: Principais Gêneros */}
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                          <Flame className="w-3.5 h-3.5" />
+                          <span>Gêneros</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {[
+                            { label: "⚔️ RPG & Aventura", href: "/search?genre=Role-playing%20(RPG)" },
+                            { label: "💥 Ação & Tiro", href: "/search?genre=Action" },
+                            { label: "🧩 Puzzle & Estratégia", href: "/search?genre=Puzzle" },
+                            { label: "👻 Terror & Horror", href: "/search?genre=Horror" },
+                            { label: "🎨 Jogos Indies", href: "/search?genre=Indie" },
+                          ].map((g) => (
+                            <Link
+                              key={g.label}
+                              href={g.href}
+                              onClick={() => setIsExploreMenuOpen(false)}
+                              className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
+                            >
+                              {g.label}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        {[
-                          { label: "⚔️ RPG & Aventura", href: "/search?genre=Role-playing%20(RPG)" },
-                          { label: "💥 Ação & Tiro", href: "/search?genre=Action" },
-                          { label: "🧩 Puzzle & Estratégia", href: "/search?genre=Puzzle" },
-                          { label: "👻 Terror & Horror", href: "/search?genre=Horror" },
-                          { label: "🎨 Jogos Indies", href: "/search?genre=Indie" },
-                        ].map((g) => (
-                          <Link
-                            key={g.label}
-                            href={g.href}
-                            onClick={() => setIsExploreMenuOpen(false)}
-                            className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
-                          >
-                            {g.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Coluna 3: Coleções & Hubs Principais */}
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Hubs &amp; Coleções</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        <Link
-                          href="/categorias"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
-                        >
-                          <Layers className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span>Todas Categorias</span>
-                        </Link>
-                        <Link
-                          href="/colecoes"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
-                        >
-                          <Bookmark className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                          <span>Coleções do Acervo</span>
-                        </Link>
-                        <Link
-                          href="/search?q=dublado"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
-                        >
-                          🇧🇷 Dublados em PT-BR
-                        </Link>
-                        <Link
-                          href="/rankings"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
-                        >
-                          ⭐ Top Metacritic
-                        </Link>
-                        <Link
-                          href="/search"
-                          onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2.5 py-1.5 rounded-lg text-xs text-[#00E5FF] font-bold hover:bg-[#00E5FF]/10 transition-colors mt-1"
-                        >
-                          Ver Catálogo →
-                        </Link>
+                      {/* Coluna 3: Coleções & Hubs Principais */}
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Hubs &amp; Coleções</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          <Link
+                            href="/categorias"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
+                          >
+                            <Layers className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span>Todas Categorias</span>
+                          </Link>
+                          <Link
+                            href="/colecoes"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
+                          >
+                            <Bookmark className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                            <span>Coleções do Acervo</span>
+                          </Link>
+                          <Link
+                            href="/search?q=dublado"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
+                          >
+                            🇧🇷 Dublados em PT-BR
+                          </Link>
+                          <Link
+                            href="/rankings"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
+                          >
+                            ⭐ Top Metacritic
+                          </Link>
+                          <Link
+                            href="/search"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="block px-2.5 py-1.5 rounded-lg text-xs text-[#00E5FF] font-bold hover:bg-[#00E5FF]/10 transition-colors mt-1"
+                          >
+                            Ver Catálogo →
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>

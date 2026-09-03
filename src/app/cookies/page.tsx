@@ -2,15 +2,61 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Cookie, Info, CheckCircle2 } from "lucide-react";
 
-export const metadata = {
+import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
+export const metadata: Metadata = {
   title: "Política de Cookies • GameVault",
   description:
     "Saiba como o GameVault e o Google AdSense utilizam cookies e como você pode gerenciar suas preferências no seu navegador.",
+  alternates: {
+    canonical: "/cookies",
+  },
+  openGraph: {
+    title: "Política de Cookies • GameVault",
+    description:
+      "Saiba como o GameVault e serviços integrados utilizam cookies para navegação e personalização.",
+    url: `${SITE_URL}/cookies`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Política de Cookies • GameVault",
+    description: "Saiba como o GameVault utiliza cookies e como gerenciar preferências.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Política de Cookies",
+        item: `${SITE_URL}/cookies`,
+      },
+    ],
+  },
+];
 
 export default function CookiesPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="max-w-4xl mx-auto space-y-8 pb-16">
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
@@ -105,5 +151,6 @@ export default function CookiesPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

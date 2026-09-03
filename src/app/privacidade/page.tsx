@@ -2,15 +2,61 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Shield, Lock, Eye, CheckCircle2 } from "lucide-react";
 
-export const metadata = {
+import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
+export const metadata: Metadata = {
   title: "Política de Privacidade • GameVault",
   description:
     "Conheça como o GameVault coleta, utiliza e protege os dados dos usuários em conformidade com a LGPD e o Google AdSense.",
+  alternates: {
+    canonical: "/privacidade",
+  },
+  openGraph: {
+    title: "Política de Privacidade • GameVault",
+    description:
+      "Conheça as práticas de privacidade, tratamento de dados e conformidade com a LGPD no GameVault.",
+    url: `${SITE_URL}/privacidade`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Política de Privacidade • GameVault",
+    description: "Conheça como o GameVault protege seus dados e respeita a LGPD.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Política de Privacidade",
+        item: `${SITE_URL}/privacidade`,
+      },
+    ],
+  },
+];
 
 export default function PrivacidadePage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="max-w-4xl mx-auto space-y-8 pb-16">
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
@@ -108,5 +154,6 @@ export default function PrivacidadePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

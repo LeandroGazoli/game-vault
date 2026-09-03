@@ -2,14 +2,59 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, FileText, ShieldAlert } from "lucide-react";
 
-export const metadata = {
+import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
+export const metadata: Metadata = {
   title: "Termos de Uso • GameVault",
   description: "Leia os termos e condições de uso da plataforma GameVault.",
+  alternates: {
+    canonical: "/termos",
+  },
+  openGraph: {
+    title: "Termos de Uso • GameVault",
+    description: "Leia os termos e condições de uso da plataforma GameVault.",
+    url: `${SITE_URL}/termos`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Termos de Uso • GameVault",
+    description: "Termos e condições de uso da plataforma GameVault.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Termos de Uso",
+        item: `${SITE_URL}/termos`,
+      },
+    ],
+  },
+];
 
 export default function TermosPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="max-w-4xl mx-auto space-y-8 pb-16">
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
@@ -91,5 +136,6 @@ export default function TermosPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
