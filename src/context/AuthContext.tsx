@@ -9,6 +9,8 @@ import {
 } from "@/lib/firebase";
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -133,11 +135,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Captura o resultado de redirecionamento no caso de login via redirect no PWA móvel
+  useEffect(() => {
+    if (auth) {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            setFirebaseUser(result.user);
+          }
+        })
+        .catch((err) => {
+          const code = err?.code || "";
+          if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
+            console.warn("[Auth] Informação ao processar redirect:", err);
+          }
+        });
+    }
+  }, []);
+
   const signInWithGoogle = async () => {
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    if (result.user) {
-      setFirebaseUser(result.user);
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    // Detecção se está rodando como PWA Standalone (iOS ou Android)
+    const isStandalone =
+      typeof window !== "undefined" &&
+      (Boolean((window.navigator as any).standalone) ||
+        window.matchMedia("(display-mode: standalone)").matches);
+
+    if (isStandalone) {
+      // No PWA standalone, popup abre em webview desconectada do window.opener.
+      // signInWithRedirect é o padrão recomendado e suportado oficialmente.
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        setFirebaseUser(result.user);
+      }
+    } catch (err: any) {
+      // Se o popup foi bloqueado pelo navegador ou webview móvel, tenta redirect
+      if (
+        err?.code === "auth/popup-blocked" ||
+        err?.code === "auth/operation-not-supported-in-this-environment"
+      ) {
+        console.info("[Auth] Popup indisponível. Tentando redirect...");
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw err;
     }
   };
 

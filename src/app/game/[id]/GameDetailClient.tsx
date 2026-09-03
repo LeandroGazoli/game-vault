@@ -166,6 +166,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     initialGame?.videos && initialGame.videos.length > 0 ? initialGame.videos[0].video_id : null
   );
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [bannerError, setBannerError] = useState(false);
+  const [posterError, setPosterError] = useState(false);
+  const [failedScreenshots, setFailedScreenshots] = useState<Set<number>>(new Set());
 
   const userGame = game ? getGameInLibrary(game.id) : undefined;
 
@@ -300,10 +303,12 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
         {/* Backdrop Banner */}
         <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-neutral-950">
-          {game.background_image ? (
+          {game.background_image && !bannerError ? (
             <img
               src={game.background_image}
-              alt={game.name}
+              alt=""
+              decoding="async"
+              onError={() => setBannerError(true)}
               className="w-full h-full object-cover object-center filter brightness-[0.45] contrast-105"
             />
           ) : (
@@ -317,15 +322,18 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         <div className="relative -mt-28 sm:-mt-36 p-6 sm:p-8 flex flex-col md:flex-row items-start gap-6 sm:gap-8">
           {/* Capa Poster */}
           <div className="w-36 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 bg-neutral-900 flex-shrink-0 group">
-            {game.background_image ? (
+            {game.background_image && !posterError ? (
               <img
                 src={game.background_image}
-                alt={game.name}
+                alt=""
+                decoding="async"
+                onError={() => setPosterError(true)}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                Sem Capa
+              <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500">
+                <Sparkles className="w-8 h-8 text-[#00E5FF]/40 mb-2" />
+                <span className="text-xs font-semibold text-gray-300 line-clamp-2">{game.name}</span>
               </div>
             )}
           </div>
@@ -536,24 +544,38 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-            {allScreenshots.slice(0, 8).map((imgUrl, idx) => (
-              <div
-                key={idx}
-                onClick={() => setLightboxImage(imgUrl)}
-                className="group relative aspect-video rounded-xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-md hover:border-cyan-500/50 transition-all hover:scale-[1.02]"
-              >
-                <img
-                  src={imgUrl}
-                  alt={`${game.name} screenshot ${idx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <span className="opacity-0 group-hover:opacity-100 text-[10px] uppercase font-bold text-white tracking-wider bg-black/70 px-2.5 py-1 rounded-full border border-white/20 transition-opacity">
-                    Ampliar
-                  </span>
-                </div>
-              </div>
-            ))}
+            {allScreenshots
+              .slice(0, 8)
+              .map((imgUrl, idx) => {
+                if (failedScreenshots.has(idx)) return null;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setLightboxImage(imgUrl)}
+                    className="group relative aspect-video rounded-xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-md hover:border-cyan-500/50 transition-all hover:scale-[1.02]"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => {
+                        setFailedScreenshots((prev) => {
+                          const next = new Set(prev);
+                          next.add(idx);
+                          return next;
+                        });
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 text-[10px] uppercase font-bold text-white tracking-wider bg-black/70 px-2.5 py-1 rounded-full border border-white/20 transition-opacity">
+                        Ampliar
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </section>
       )}

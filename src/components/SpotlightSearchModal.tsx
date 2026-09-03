@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
 import { Game } from "@/lib/types";
@@ -37,7 +38,9 @@ const TRENDING_SUGGESTIONS = [
 
 export default function SpotlightSearchModal() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +49,27 @@ export default function SpotlightSearchModal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fecha o modal automaticamente ao navegar para qualquer página
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Trava o scroll do body quando o modal de busca estiver ativo
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   // Escuta atalhos globais (Cmd+K / Ctrl+K / "/") e evento customizado
   useEffect(() => {
@@ -164,11 +188,11 @@ export default function SpotlightSearchModal() {
     router.push(getGameUrl(game));
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[max(env(safe-area-inset-top,0px)+10px,1rem)] sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-md animate-fadeIn"
       onClick={() => setIsOpen(false)}
     >
       <div
@@ -176,7 +200,7 @@ export default function SpotlightSearchModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra Superior de Busca */}
-        <div className="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-[#222834] bg-[#141721]">
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-3.5 border-b border-[#222834] bg-[#141721]">
           <Search className="w-5 h-5 text-cyan-400 shrink-0" />
           <input
             ref={inputRef}
@@ -184,24 +208,40 @@ export default function SpotlightSearchModal() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Buscar por título de jogo, franquia, saga..."
-            className="flex-1 bg-transparent text-white placeholder:text-neutral-500 text-sm sm:text-base outline-none font-medium"
+            placeholder="Buscar por jogo, franquia, saga..."
+            className="flex-1 bg-transparent text-white placeholder:text-neutral-500 text-sm sm:text-base outline-none font-medium min-w-0"
           />
 
           {loading && <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />}
 
           {query && !loading && (
             <button
-              onClick={() => setQuery("")}
-              className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+              title="Limpar busca"
+              aria-label="Limpar busca"
             >
               <X className="w-4 h-4" />
             </button>
           )}
 
-          <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-400">
+          <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-400 shrink-0">
             ESC
           </kbd>
+
+          {/* Botão Fechar Modal Dedicado (Sempre visível no mobile e desktop) */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-200 hover:text-white transition-all text-xs font-semibold shrink-0 cursor-pointer active:scale-95"
+            title="Fechar busca"
+            aria-label="Fechar busca"
+          >
+            <X className="w-4 h-4 text-neutral-300" />
+            <span className="sm:hidden text-xs">Fechar</span>
+          </button>
         </div>
 
         {/* Lista de Conteúdo / Resultados */}
@@ -358,6 +398,7 @@ export default function SpotlightSearchModal() {
           </Link>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

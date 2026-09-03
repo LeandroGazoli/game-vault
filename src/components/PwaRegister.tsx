@@ -14,6 +14,8 @@ export default function PwaRegister() {
           .register("/sw.js")
           .then((reg) => {
             console.log("GameVault PWA Service Worker registrado:", reg.scope);
+            // Garante verificação imediata de nova versão
+            reg.update();
           })
           .catch((err) => {
             console.warn("Falha no registro do Service Worker:", err);

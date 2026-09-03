@@ -412,26 +412,28 @@ export default function Navbar() {
             aria-hidden="true"
           />
 
-          {/* Painel Drawer Deslizante Compacto (w-[82vw] max-w-[310px]) */}
+          {/* Painel Drawer Deslizante Estruturado e Confiável */}
           <aside
-            className={`fixed top-0 right-0 bottom-0 w-[82vw] max-w-[310px] h-full max-h-[100dvh] bg-[#0c0e13] border-l border-[#242a36] px-4 pt-[max(env(safe-area-inset-top,0px)+12px,1rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,1.5rem)] flex flex-col justify-between overflow-y-auto overflow-x-hidden no-scrollbar shadow-2xl z-[101] transform-gpu will-change-transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`fixed top-0 right-0 bottom-0 w-[85vw] max-w-[340px] h-[100dvh] bg-[#0c0e13] border-l border-[#242a36] flex flex-col shadow-2xl z-[101] transform-gpu will-change-transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
             }`}
             aria-label="Menu principal"
           >
-            {/* Topo do Drawer: Logo & Fechar */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-[#242a36]">
-                <Logo size="sm" />
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors border border-transparent hover:border-white/10"
-                  title="Fechar menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Topo do Drawer: Fixo com Safe Area Superior e Botão Fechar */}
+            <div className="shrink-0 px-4 pt-[max(env(safe-area-inset-top,0px)+10px,1rem)] pb-3 border-b border-[#242a36] flex items-center justify-between bg-[#0e1015]">
+              <Logo size="sm" />
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-neutral-300 hover:text-white transition-all flex items-center justify-center border border-white/10 cursor-pointer"
+                title="Fechar menu"
+                aria-label="Fechar menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Corpo Central Rolável com Suporte a Momentum Scrolling */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 space-y-3.5 no-scrollbar [-webkit-overflow-scrolling:touch]">
               {/* Perfil Compacto no Drawer */}
               {user ? (
                 <div className="p-3 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2">
@@ -439,7 +441,7 @@ export default function Navbar() {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate max-w-[120px]">
+                        <h4 className="text-xs font-bold text-white truncate max-w-[130px]">
                           {user.displayName}
                         </h4>
                         <span className="text-[10px] text-neutral-400 font-mono block truncate">
@@ -465,7 +467,7 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false);
                     setIsAuthOpen(true);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md cursor-pointer"
                 >
                   <User className="w-4 h-4" />
                   <span>Entrar ou Cadastrar</span>
@@ -478,7 +480,7 @@ export default function Navbar() {
                   setIsMobileMenuOpen(false);
                   openSpotlightSearch();
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#14171e] border border-[#242a36] text-xs text-neutral-400 hover:text-white transition-all active:scale-95"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#14171e] border border-[#242a36] text-xs text-neutral-400 hover:text-white transition-all active:scale-95 cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Search className="w-3.5 h-3.5 text-cyan-400" />
@@ -524,25 +526,25 @@ export default function Navbar() {
                 })}
               </div>
 
-              {/* Plataformas e Filtros Rápidos */}
+              {/* Plataformas e Filtros Rápidos (Grade de 2 Colunas Legível) */}
               <div className="pt-1">
                 <span className="text-[9px] uppercase font-mono font-bold text-neutral-400 tracking-wider px-2 block mb-1">
-                  Plataformas
+                  Plataformas &amp; Hubs
                 </span>
-                <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+                <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px]">
                   {[
-                    { label: "💻 PC", href: "/search?platform=PC" },
-                    { label: "🎮 PS5", href: "/search?platform=PlayStation%205" },
-                    { label: "🟢 Xbox", href: "/search?platform=Xbox%20Series" },
+                    { label: "💻 PC Gamer", href: "/search?platform=PC" },
+                    { label: "🎮 PlayStation 5", href: "/search?platform=PlayStation%205" },
+                    { label: "🟢 Xbox Series", href: "/search?platform=Xbox%20Series" },
                     { label: "🔴 Switch", href: "/search?platform=Nintendo%20Switch" },
-                    { label: "🕹️ Retrô", href: "/search?platform=Retro" },
-                    { label: "🇧🇷 Dublados", href: "/search?q=dublado" },
+                    { label: "🕹️ Clássicos Retrô", href: "/search?platform=Retro" },
+                    { label: "🇧🇷 Dublados PT-BR", href: "/search?q=dublado" },
                   ].map((cat) => (
                     <Link
                       key={cat.label}
                       href={cat.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/5 transition-colors active:scale-95 text-center text-xs truncate"
+                      className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/5 transition-colors active:scale-95 text-left text-xs truncate"
                     >
                       {cat.label}
                     </Link>
@@ -556,7 +558,7 @@ export default function Navbar() {
                   setIsMobileMenuOpen(false);
                   triggerPwaInstall();
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-300 text-xs font-medium flex items-center justify-between transition-colors active:scale-95"
+                className="w-full py-2 px-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-300 text-xs font-medium flex items-center justify-between transition-colors active:scale-95 cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
@@ -568,8 +570,8 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Rodapé do Drawer */}
-            <div className="pt-3 border-t border-white/10 space-y-2">
+            {/* Rodapé Fixo do Drawer com Proteção de Safe Area Inferior */}
+            <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,1rem)] border-t border-white/10 bg-[#0a0c10] space-y-2">
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -597,7 +599,7 @@ export default function Navbar() {
                 </button>
               )}
 
-              <div className="flex items-center justify-center gap-3 text-[10px] text-neutral-400 pt-1">
+              <div className="flex items-center justify-center gap-3 text-[10px] text-neutral-400 pt-0.5">
                 <Link href="/sobre" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
                   Sobre
                 </Link>

@@ -21,6 +21,7 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
   const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const userGame = getGameInLibrary(game.id);
@@ -77,16 +78,21 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             className="block w-full h-full cursor-pointer"
             title={`Ver detalhes de ${game.name}`}
           >
-            {game.background_image ? (
+            {game.background_image && !imgError ? (
               <img
                 src={game.background_image}
-                alt={game.name}
+                alt=""
                 className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
+                decoding="async"
+                onError={() => setImgError(true)}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-neutral-950 text-neutral-600 text-xs">
-                Sem Imagem
+              <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#181c25] to-[#0d0f14] text-neutral-500">
+                <Clock className="w-6 h-6 mb-1.5 text-neutral-600 opacity-60" />
+                <span className="text-[11px] font-semibold text-neutral-400 line-clamp-2 px-1">
+                  {game.name}
+                </span>
               </div>
             )}
 
