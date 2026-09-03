@@ -162,6 +162,38 @@ export function mapIGDBGameToGame(item: any): Game {
     interface: ptbrItems.some((ls: any) => ls.language_support_type?.name === "Interface" || ls.language_support_type?.id === 3),
   } : undefined;
 
+  // Mapear DLCs, Expansões e Jogo Pai
+  const dlcs = item.dlcs
+    ? (item.dlcs.map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        slug: d.slug,
+        coverUrl: d.cover?.image_id ? getIGDBImageUrl(d.cover.image_id, "cover_big") : null,
+        releaseDate: d.first_release_date ? new Date(d.first_release_date * 1000).toISOString().split("T")[0] : null,
+        category: d.category,
+      })).filter((d: any) => Boolean(d.name)))
+    : [];
+
+  const expansions = item.expansions
+    ? (item.expansions.map((e: any) => ({
+        id: e.id,
+        name: e.name,
+        slug: e.slug,
+        coverUrl: e.cover?.image_id ? getIGDBImageUrl(e.cover.image_id, "cover_big") : null,
+        releaseDate: e.first_release_date ? new Date(e.first_release_date * 1000).toISOString().split("T")[0] : null,
+        category: e.category,
+      })).filter((e: any) => Boolean(e.name)))
+    : [];
+
+  const parent_game = item.parent_game
+    ? {
+        id: item.parent_game.id,
+        name: item.parent_game.name,
+        slug: item.parent_game.slug,
+        coverUrl: item.parent_game.cover?.image_id ? getIGDBImageUrl(item.parent_game.cover.image_id, "cover_big") : null,
+      }
+    : null;
+
   return {
     id: item.id,
     slug: item.slug || String(item.id),
@@ -190,6 +222,10 @@ export function mapIGDBGameToGame(item: any): Game {
     collections,
     player_perspectives,
     ptbrSupport,
+    dlcs,
+    expansions,
+    parent_game,
+    category: item.category,
   };
 }
 
@@ -394,7 +430,7 @@ async function fetchIGDB(endpoint: string, body: string, ttl = TTL_CONFIG.RECENT
 export async function searchGamesIGDB(query: string, limit = 50, offset = 0): Promise<Game[]> {
   const escapedQuery = query.replace(/"/g, "").trim();
   if (!escapedQuery) return [];
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; search "${escapedQuery}"; limit ${limit}; offset ${offset};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; search "${escapedQuery}"; limit ${limit}; offset ${offset};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.SEARCH);
   return data.map(mapIGDBGameToGame);
 }
@@ -470,7 +506,7 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
   const [gameData, hltbData] = await Promise.all([
     fetchIGDB(
       "games",
-      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name; where id = ${numId}; limit 1;`,
+      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id; where id = ${numId}; limit 1;`,
       TTL_CONFIG.GAME_DETAILS
     ),
     fetchIGDB(

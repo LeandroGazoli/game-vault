@@ -115,7 +115,7 @@ export default function PwaInstallPrompt() {
       {isBannerVisible && !isDismissed && !isStandalone && (
         <aside
           aria-label="Instalar Aplicativo GameVault"
-          className="fixed bottom-20 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 animate-fadeIn"
+          className="fixed bottom-[max(env(safe-area-inset-bottom,0px)+5.5rem,6.5rem)] sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 animate-fadeIn"
         >
           <div className="relative rounded-3xl bg-[#14161b]/95 border border-cyan-500/30 p-4 shadow-2xl backdrop-blur-2xl flex items-center justify-between gap-3.5 shadow-cyan-950/40">
             {/* Ícone e Textos */}
@@ -166,7 +166,7 @@ export default function PwaInstallPrompt() {
       ========================================================= */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn pt-[max(env(safe-area-inset-top,0px)+1rem,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+1rem,1.5rem)]"
           onClick={() => setIsModalOpen(false)}
         >
           <div

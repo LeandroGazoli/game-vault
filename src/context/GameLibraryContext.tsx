@@ -86,6 +86,10 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       hltbData: gameData.hltbData ?? null,
       genres: gameData.genres || [],
       releaseYear: gameData.releaseYear || "",
+      dlcs: gameData.dlcs !== undefined ? gameData.dlcs : (existingIndex >= 0 ? library[existingIndex].dlcs : undefined),
+      parentGameId: gameData.parentGameId !== undefined ? gameData.parentGameId : (existingIndex >= 0 ? library[existingIndex].parentGameId : undefined),
+      parentGameTitle: gameData.parentGameTitle !== undefined ? gameData.parentGameTitle : (existingIndex >= 0 ? library[existingIndex].parentGameTitle : undefined),
+      includeDlcHoursInTotal: gameData.includeDlcHoursInTotal !== undefined ? gameData.includeDlcHoursInTotal : (existingIndex >= 0 ? (library[existingIndex].includeDlcHoursInTotal ?? true) : true),
     };
 
     const nextList = [...library];

@@ -34,6 +34,7 @@ import {
   ChevronRight,
   Eye,
   Languages,
+  Package,
 } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { formatPlatformShort } from "@/lib/platformUtils";
@@ -240,6 +241,12 @@ export default function GameDetailPage() {
     ...(game.artworks || []),
   ];
 
+  const allDlcsRaw = [
+    ...(game.dlcs || []),
+    ...(game.expansions || []),
+  ];
+  const uniqueDlcs = Array.from(new Map(allDlcsRaw.map((d) => [d.id, d])).values());
+
   return (
     <div className="space-y-8 pb-16">
       {/* Botão Voltar */}
@@ -249,6 +256,39 @@ export default function GameDetailPage() {
       >
         <ArrowLeft className="w-4 h-4" /> Voltar
       </button>
+
+      {/* Banner Informativo se o título for uma DLC / Expansão Oficial */}
+      {game.parent_game && (
+        <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] text-amber-300/80 font-bold uppercase tracking-wider">
+                Conteúdo Adicional / Expansão Oficial
+              </p>
+              <h4 className="text-sm font-bold text-white">
+                Este título é uma DLC/Expansão oficial de{" "}
+                <Link
+                  href={`/game/${game.parent_game.id}`}
+                  className="text-amber-400 hover:underline hover:text-amber-300 font-extrabold"
+                >
+                  {game.parent_game.name}
+                </Link>
+              </h4>
+            </div>
+          </div>
+
+          <Link
+            href={`/game/${game.parent_game.id}`}
+            className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0"
+          >
+            <span>Ver Jogo Base</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Hero Header do Jogo */}
       <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
@@ -732,6 +772,38 @@ export default function GameDetailPage() {
                   </div>
                 )}
 
+                {/* DLCs Concluídas ou Vinculadas */}
+                {userGame.dlcs && userGame.dlcs.length > 0 && (
+                  <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 space-y-1.5 font-sans">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400">
+                      <span className="flex items-center gap-1">
+                        <Package className="w-3.5 h-3.5" /> DLCs Vinculadas
+                      </span>
+                      <span className="font-mono">
+                        {userGame.dlcs.filter((d) => d.status === "completed").length}/{userGame.dlcs.length} Zeradas
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {userGame.dlcs.map((d) => (
+                        <span
+                          key={d.id}
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
+                            d.status === "completed"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : d.status === "playing"
+                              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                              : "bg-white/5 text-gray-300 border border-white/10"
+                          }`}
+                          title={`${d.name} (${d.status})`}
+                        >
+                          {d.name.length > 22 ? `${d.name.substring(0, 20)}...` : d.name}
+                          {d.playtimeHours ? ` (${d.playtimeHours}h)` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <button
                   onClick={() => setIsModalOpen(true)}
                   className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-colors mt-2"
@@ -756,6 +828,110 @@ export default function GameDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* =========================================================================
+          SEÇÃO DE EXPANSÕES & DLCS OFICIAIS
+      ========================================================================= */}
+      {uniqueDlcs.length > 0 && (
+        <section className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-6 shadow-2xl animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+            <div className="space-y-1">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <Package className="w-5 h-5 text-[#00E5FF]" /> Expansões &amp; DLCs Oficiais ({uniqueDlcs.length})
+              </h3>
+              <p className="text-xs text-gray-400">
+                Conteúdos adicionais, expansões de história e DLCs lançadas para {game.name}.
+              </p>
+            </div>
+
+            {userGame?.dlcs && userGame.dlcs.length > 0 && (
+              <span className="px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-[#00E5FF] font-mono font-bold w-fit">
+                {userGame.dlcs.filter((d) => d.status === "completed").length} de {uniqueDlcs.length} DLCs Zeradas
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            {uniqueDlcs.map((dlc) => {
+              const userDlc = userGame?.dlcs?.find((d) => d.id === dlc.id);
+
+              return (
+                <div
+                  key={dlc.id}
+                  className={`group rounded-2xl border transition-all hover:scale-[1.02] flex flex-col justify-between overflow-hidden ${
+                    userDlc?.status === "completed"
+                      ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500"
+                      : userDlc?.status === "playing"
+                      ? "bg-cyan-950/20 border-cyan-500/40 hover:border-cyan-500"
+                      : "bg-white/5 border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <Link href={`/game/${dlc.id}`} className="block">
+                    <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
+                      {dlc.coverUrl ? (
+                        <img
+                          src={dlc.coverUrl}
+                          alt={dlc.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 font-mono">
+                          DLC
+                        </div>
+                      )}
+
+                      {/* Selo se o usuário já jogou */}
+                      {userDlc && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono shadow-md ${
+                              userDlc.status === "completed"
+                                ? "bg-emerald-500 text-black"
+                                : userDlc.status === "playing"
+                                ? "bg-cyan-500 text-black"
+                                : "bg-amber-500 text-black"
+                            }`}
+                          >
+                            {userDlc.status === "completed"
+                              ? "Zerada"
+                              : userDlc.status === "playing"
+                              ? "Jogando"
+                              : "Quero"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-2.5 space-y-1">
+                      <h4
+                        className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2"
+                        title={dlc.name}
+                      >
+                        {dlc.name}
+                      </h4>
+                      <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
+                        <span>{dlc.releaseDate ? dlc.releaseDate.substring(0, 4) : "DLC"}</span>
+                        {userDlc?.playtimeHours && (
+                          <span className="text-cyan-300 font-bold">{userDlc.playtimeHours}h</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+
+                  <div className="p-2 pt-0">
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="w-full py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-[10px] font-semibold text-gray-300 hover:text-white transition-all border border-white/5"
+                    >
+                      {userDlc ? "Editar no Jogo" : "+ Anexar / Registrar"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* =========================================================================
           SEÇÃO DE JOGOS SEMELHANTES / RECOMENDAÇÕES

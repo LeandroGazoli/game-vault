@@ -506,6 +506,7 @@ export default function ProfilePage() {
                 metacritic: userGame.metacritic,
                 genres: userGame.genres?.map((name, i) => ({ id: i, name, slug: name })) || [],
                 hltb: userGame.hltbData,
+                dlcs: userGame.dlcs?.map((d) => ({ id: d.id, name: d.name, coverUrl: d.coverUrl })),
               };
 
               return (
@@ -542,11 +543,21 @@ export default function ProfilePage() {
                     <div>
                       <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1 font-mono">
                         <span>{userGame.releaseYear || userGame.platformPlayed}</span>
-                        {userGame.isFavorite && (
-                          <span className="text-pink-400 flex items-center gap-0.5">
-                            <Heart className="w-3 h-3 fill-pink-400" />
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {userGame.dlcs && userGame.dlcs.length > 0 && (
+                            <span
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
+                              title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
+                            >
+                              +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {userGame.isFavorite && (
+                            <span className="text-pink-400 flex items-center gap-0.5">
+                              <Heart className="w-3 h-3 fill-pink-400" />
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <Link href={`/game/${userGame.gameId}`}>
@@ -602,6 +613,7 @@ export default function ProfilePage() {
                 metacritic: userGame.metacritic,
                 genres: userGame.genres?.map((name, i) => ({ id: i, name, slug: name })) || [],
                 hltb: userGame.hltbData,
+                dlcs: userGame.dlcs?.map((d) => ({ id: d.id, name: d.name, coverUrl: d.coverUrl })),
               };
 
               return (
@@ -619,6 +631,14 @@ export default function ProfilePage() {
                     <div className="space-y-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+                        {userGame.dlcs && userGame.dlcs.length > 0 && (
+                          <span
+                            className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
+                            title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
+                          >
+                            +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
+                          </span>
+                        )}
                         {userGame.metacritic && (
                           <MetacriticBadge score={userGame.metacritic} size="sm" />
                         )}

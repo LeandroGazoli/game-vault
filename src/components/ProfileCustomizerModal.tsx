@@ -50,6 +50,7 @@ interface ProfileCustomizerModalProps {
   onClose: () => void;
   onOpenUpgrade: () => void;
   games?: UserGame[];
+  initialTab?: "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility";
 }
 
 const THEME_OPTIONS: { id: ProfileTheme; name: string; color: string; ring: string; badge: string; isVip?: boolean }[] = [
@@ -67,10 +68,11 @@ export default function ProfileCustomizerModal({
   onClose,
   onOpenUpgrade,
   games = [],
+  initialTab,
 }: ProfileCustomizerModalProps) {
   const { user, isPremium } = useAuth();
 
-  const [activeSection, setActiveSection] = useState<"appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">("appearance");
+  const [activeSection, setActiveSection] = useState<"appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">(initialTab || "titles");
 
   // Estados de Personalização
   const [selectedBanner, setSelectedBanner] = useState<string>(user?.bannerURL || PRESET_BANNERS[0].url);
@@ -118,6 +120,11 @@ export default function ProfileCustomizerModal({
 
   // Sincroniza dados sempre que o modal abre ou o usuário atualiza
   React.useEffect(() => {
+    if (isOpen) {
+      if (initialTab) {
+        setActiveSection(initialTab);
+      }
+    }
     if (user && isOpen) {
       setSelectedBanner(user.bannerURL || PRESET_BANNERS[0].url);
       setSelectedTheme(user.theme || "cyan");
@@ -134,7 +141,7 @@ export default function ProfileCustomizerModal({
       setShowcaseGameId(user.showcaseGameId || null);
       if (user.visibility) setVisibility(user.visibility);
     }
-  }, [user, isOpen]);
+  }, [user, isOpen, initialTab]);
 
   if (!isOpen || !user) return null;
 
@@ -211,12 +218,6 @@ export default function ProfileCustomizerModal({
   };
 
   const handleSave = async () => {
-    if (!isPremium) {
-      onClose();
-      onOpenUpgrade();
-      return;
-    }
-
     setIsSaving(true);
     try {
       const banner = customBannerUrl.trim() || selectedBanner;
@@ -409,37 +410,121 @@ export default function ProfileCustomizerModal({
               </div>
             </div>
 
-            {/* Resumo de Insígnias Equipadas */}
-            <div className="space-y-3 pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Insígnias Equipadas no Perfil ({equippedTitles.length}/3)
-                </label>
+            {/* TÍTULOS & INSÍGNIAS NO PERFIL (Acesso Direto) */}
+            <div className="space-y-4 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" /> Títulos &amp; Insígnias no Perfil ({equippedTitles.length}/3)
+                  </label>
+                  <p className="text-[11px] text-gray-400">
+                    Equipe até 3 insígnias e troque a ordem com 1 clique.
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setActiveSection("titles")}
-                  className="text-xs font-bold text-[#00E5FF] hover:underline flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                 >
-                  <span>Gerenciar &amp; Criar Customizadas</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Criar Customizadas (PRO/VIP)</span>
+                  <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {equippedTitles.map((t, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/15 border border-cyan-500/40 text-[#00E5FF] flex items-center gap-1.5 shadow-sm"
-                  >
-                    <span>{t}</span>
-                    <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded font-mono text-cyan-300">
-                      #{idx + 1}
-                    </span>
-                  </span>
-                ))}
-                {equippedTitles.length === 0 && (
-                  <span className="text-xs text-gray-400 italic">Nenhuma insígnia selecionada.</span>
+              {/* Slots Ativos com Reordenação */}
+              <div className="p-3.5 rounded-2xl bg-[#121316] border border-white/10 space-y-2.5">
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span className="font-semibold text-gray-300">Ordem de exibição no perfil:</span>
+                  <span className="text-[11px]">Setas trocam a ordem sem digitar</span>
+                </div>
+
+                {equippedTitles.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic py-2">
+                    Nenhuma insígnia equipada. Clique nas opções abaixo para equipar!
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {equippedTitles.map((t, idx) => (
+                      <div
+                        key={t + idx}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 ${
+                          idx === 0
+                            ? "bg-cyan-500/15 border-cyan-500/40 text-[#00E5FF]"
+                            : "bg-white/5 border-white/10 text-gray-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="text-[10px] font-black bg-black/50 px-1.5 py-0.5 rounded font-mono">
+                            #{idx + 1}
+                          </span>
+                          <span className="text-xs font-bold truncate">{t}</span>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => moveEquippedTitle(idx, "left")}
+                            disabled={idx === 0}
+                            className="p-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white text-xs"
+                            title="Mover para a esquerda"
+                          >
+                            <ArrowLeft className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveEquippedTitle(idx, "right")}
+                            disabled={idx === equippedTitles.length - 1}
+                            className="p-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white text-xs"
+                            title="Mover para a direita"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => unequipTitle(t)}
+                            className="p-1 rounded text-gray-400 hover:text-rose-400 hover:bg-rose-500/10"
+                            title="Remover do perfil"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
+              </div>
+
+              {/* Insígnias Oficiais para Equipar com 1 Clique */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Clique para equipar ou desequipar:
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {DEFAULT_GAMER_TITLES.map((title) => {
+                    const isEquipped = equippedTitles.includes(title);
+                    const equippedIndex = equippedTitles.indexOf(title);
+                    return (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => toggleEquipTitle(title)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                          isEquipped
+                            ? "bg-white text-black font-bold shadow-md scale-105"
+                            : "bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/5 hover:border-white/15"
+                        }`}
+                      >
+                        <span>{title}</span>
+                        {isEquipped && (
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-cyan-500 text-black">
+                            #{equippedIndex + 1}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -1161,25 +1246,26 @@ export default function ProfileCustomizerModal({
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {isPremium ? (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#00E5FF] hover:bg-cyan-400 text-black font-bold text-xs transition-all shadow-lg hover:scale-105 flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {isSaving ? "Salvando..." : successToast ? "Salvo com Sucesso!" : "Salvar Toda a Personalização"}
+            </button>
+
+            {!isPremium && (
               <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#00E5FF] hover:bg-cyan-400 text-black font-bold text-xs transition-all shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
-              >
-                <Save className="w-3.5 h-3.5" />
-                {isSaving ? "Salvando..." : successToast ? "Salvo com Sucesso!" : "Salvar Toda a Personalização"}
-              </button>
-            ) : (
-              <button
+                type="button"
                 onClick={() => {
                   onClose();
                   onOpenUpgrade();
                 }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-extrabold text-xs transition-all shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs transition-all shadow-md hover:scale-105 flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <Crown className="w-3.5 h-3.5" />
-                Desbloquear com o PRO
+                Seja PRO
               </button>
             )}
           </div>

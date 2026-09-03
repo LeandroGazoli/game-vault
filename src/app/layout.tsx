@@ -20,6 +20,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export const metadata: Metadata = {
@@ -81,7 +82,7 @@ export default function RootLayout({
             <CookieConsent />
 
             {/* Footer Completo e Institucional */}
-            <footer className="border-t border-white/10 bg-[#0a0b0d] pt-12 pb-10 text-xs text-gray-400">
+            <footer className="border-t border-white/10 bg-[#0a0b0d] pt-12 pb-[max(env(safe-area-inset-bottom,0px)+6.5rem,7.5rem)] md:pb-12 text-xs text-gray-400">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   {/* Coluna 1: Marca e Resumo */}

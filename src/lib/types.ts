@@ -181,6 +181,22 @@ export interface PTBRSupport {
   interface: boolean;
 }
 
+export interface DLCItem {
+  id: number;
+  name: string;
+  slug?: string;
+  coverUrl?: string | null;
+  releaseDate?: string | null;
+  category?: number;
+}
+
+export interface ParentGameItem {
+  id: number;
+  name: string;
+  slug?: string;
+  coverUrl?: string | null;
+}
+
 export interface Game {
   id: number;
   name: string;
@@ -213,6 +229,20 @@ export interface Game {
   language_supports?: LanguageSupportItem[];
   ptbrSupport?: PTBRSupport;
   total_results_count?: number;
+  dlcs?: DLCItem[];
+  expansions?: DLCItem[];
+  parent_game?: ParentGameItem | null;
+  category?: number;
+}
+
+export interface UserGameDLC {
+  id: number;
+  name: string;
+  coverUrl?: string | null;
+  status: GameStatus;
+  playtimeHours?: number | null;
+  rating?: number | null;
+  completedAt?: string | null;
 }
 
 export interface UserGame {
@@ -238,6 +268,10 @@ export interface UserGame {
   hltbData?: HLTBData | null;
   genres?: string[];
   releaseYear?: string;
+  dlcs?: UserGameDLC[];
+  parentGameId?: number | null;
+  parentGameTitle?: string | null;
+  includeDlcHoursInTotal?: boolean;
 }
 
 export interface UserProfile {

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Game, GameStatus, CompletionType, HLTBData } from "@/lib/types";
+import Link from "next/link";
+import { Game, GameStatus, CompletionType, HLTBData, DLCItem, UserGameDLC } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
@@ -26,6 +27,7 @@ import {
   Lock,
   User,
   Monitor,
+  Package,
 } from "lucide-react";
 import { CONSOLE_CATEGORIES, POPULAR_CONSOLES } from "@/lib/platformUtils";
 
@@ -58,6 +60,14 @@ export default function GameModal({
   const [hltb, setHltb] = useState<HLTBData | null>(game?.hltb || null);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
+  // Estados de Expansões & DLCs
+  const [availableDlcs, setAvailableDlcs] = useState<DLCItem[]>([]);
+  const [userDlcs, setUserDlcs] = useState<UserGameDLC[]>([]);
+  const [includeDlcHours, setIncludeDlcHours] = useState<boolean>(true);
+  const [isDlcsExpanded, setIsDlcsExpanded] = useState<boolean>(false);
+  const [parentGameInfo, setParentGameInfo] = useState<{ id: number; name: string } | null>(null);
+  const [isLoadingDlcs, setIsLoadingDlcs] = useState<boolean>(false);
+
   // Controle de expansão do acordeão "Detalhes"
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [showAllConsoles, setShowAllConsoles] = useState(false);
@@ -69,6 +79,51 @@ export default function GameModal({
   }, []);
 
   const existingInLibrary = game ? getGameInLibrary(game.id) : undefined;
+
+  // Carrega lista de DLCs disponíveis e dados do jogo pai
+  useEffect(() => {
+    if (!game || !isOpen) return;
+
+    const directDlcs: DLCItem[] = [
+      ...(game.dlcs || []),
+      ...(game.expansions || []),
+    ];
+
+    if (directDlcs.length > 0) {
+      const unique = Array.from(new Map(directDlcs.map((item) => [item.id, item])).values());
+      setAvailableDlcs(unique);
+    } else {
+      setIsLoadingDlcs(true);
+      fetch(`/api/games/${game.id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: Game | null) => {
+          if (data) {
+            const combined: DLCItem[] = [
+              ...(data.dlcs || []),
+              ...(data.expansions || []),
+            ];
+            const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+            setAvailableDlcs(unique);
+            if (data.parent_game) {
+              setParentGameInfo(data.parent_game);
+            }
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsLoadingDlcs(false));
+    }
+
+    if (game.parent_game) {
+      setParentGameInfo(game.parent_game);
+    } else {
+      const existing = getGameInLibrary(game.id);
+      if (existing?.parentGameId && existing?.parentGameTitle) {
+        setParentGameInfo({ id: existing.parentGameId, name: existing.parentGameTitle });
+      } else {
+        setParentGameInfo(null);
+      }
+    }
+  }, [game, isOpen, getGameInLibrary]);
 
   // Carrega os dados existentes do jogo ao abrir o modal
   useEffect(() => {
@@ -92,7 +147,28 @@ export default function GameModal({
         setStatus(existing.status);
         setCompletionType(existing.completionType || (existing.status === "completed" ? "main_story" : null));
         setRating(existing.userRating ?? null);
-        setPlaytime(existing.userPlaytimeHours ? String(existing.userPlaytimeHours) : "");
+        
+        const existingDlcs = existing.dlcs || [];
+        setUserDlcs(existingDlcs);
+        const incDlcs = existing.includeDlcHoursInTotal ?? true;
+        setIncludeDlcHours(incDlcs);
+        if (existingDlcs.length > 0) {
+          setIsDlcsExpanded(true);
+        }
+
+        // Calcula tempo do jogo base sem somar repetidamente as DLCs
+        const dlcHoursSum = existingDlcs.reduce((acc, d) => acc + (d.playtimeHours && d.playtimeHours > 0 ? d.playtimeHours : 0), 0);
+        if (existing.userPlaytimeHours) {
+          if (incDlcs && dlcHoursSum > 0 && existing.userPlaytimeHours >= dlcHoursSum) {
+            const base = existing.userPlaytimeHours - dlcHoursSum;
+            setPlaytime(base > 0 ? String(base) : "");
+          } else {
+            setPlaytime(String(existing.userPlaytimeHours));
+          }
+        } else {
+          setPlaytime("");
+        }
+
         setStartDate(existing.startedAt ? existing.startedAt.split("T")[0] : "");
         setCompletedDate(existing.completedAt ? existing.completedAt.split("T")[0] : "");
         
@@ -114,6 +190,9 @@ export default function GameModal({
         setPlaytime("");
         setStartDate("");
         setCompletedDate("");
+        setUserDlcs([]);
+        setIncludeDlcHours(true);
+        setIsDlcsExpanded(false);
         const defaultPlat = game.platforms && game.platforms.length > 0
           ? [game.platforms[0].platform.name]
           : ["PC"];
@@ -124,7 +203,7 @@ export default function GameModal({
         setIsDetailsExpanded(false);
       }
     }
-  }, [game, isOpen]);
+  }, [game, isOpen, getGameInLibrary]);
 
   // Fecha o modal ao pressionar a tecla Esc
   const handleKeyDown = useCallback(
@@ -187,6 +266,71 @@ export default function GameModal({
 
   const reaction = getRatingReaction(rating);
 
+  // Manipuladores de DLCs
+  const handleToggleDlcStatus = (dlc: DLCItem, nextStatus: GameStatus | null) => {
+    setUserDlcs((prev) => {
+      if (!nextStatus) {
+        return prev.filter((d) => d.id !== dlc.id);
+      }
+      const existingIdx = prev.findIndex((d) => d.id === dlc.id);
+      if (existingIdx >= 0) {
+        const copy = [...prev];
+        copy[existingIdx] = {
+          ...copy[existingIdx],
+          status: nextStatus,
+          completedAt: nextStatus === "completed" ? (copy[existingIdx].completedAt || new Date().toISOString()) : null,
+        };
+        return copy;
+      } else {
+        return [
+          ...prev,
+          {
+            id: dlc.id,
+            name: dlc.name,
+            coverUrl: dlc.coverUrl || null,
+            status: nextStatus,
+            playtimeHours: null,
+            completedAt: nextStatus === "completed" ? new Date().toISOString() : null,
+          },
+        ];
+      }
+    });
+  };
+
+  const handleUpdateDlcHours = (dlcId: number, hoursStr: string) => {
+    const val = hoursStr ? parseFloat(hoursStr) : null;
+    setUserDlcs((prev) =>
+      prev.map((d) => (d.id === dlcId ? { ...d, playtimeHours: val && val > 0 ? val : null } : d))
+    );
+  };
+
+  const handleMarkAllDlcs = (allStatus: GameStatus) => {
+    const updated: UserGameDLC[] = availableDlcs.map((d) => {
+      const existing = userDlcs.find((u) => u.id === d.id);
+      return {
+        id: d.id,
+        name: d.name,
+        coverUrl: d.coverUrl || null,
+        status: allStatus,
+        playtimeHours: existing?.playtimeHours || null,
+        completedAt: allStatus === "completed" ? (existing?.completedAt || new Date().toISOString()) : null,
+      };
+    });
+    setUserDlcs(updated);
+  };
+
+  const handleClearAllDlcs = () => {
+    setUserDlcs([]);
+  };
+
+  // Horas consolidadas
+  const dlcHoursTotal = userDlcs.reduce(
+    (acc, d) => acc + (d.playtimeHours && d.playtimeHours > 0 ? d.playtimeHours : 0),
+    0
+  );
+  const baseHoursVal = playtime ? parseFloat(playtime) || 0 : 0;
+  const effectiveTotalPlaytime = includeDlcHours ? baseHoursVal + dlcHoursTotal : baseHoursVal;
+
   // Salva no banco de dados / biblioteca
   const handleSave = async () => {
     if (!user) {
@@ -196,6 +340,8 @@ export default function GameModal({
 
     setIsSaving(true);
     try {
+      const calculatedTotal = effectiveTotalPlaytime > 0 ? Number(effectiveTotalPlaytime.toFixed(1)) : null;
+
       await addOrUpdateGame({
         gameId: game.id,
         gameSlug: game.slug,
@@ -204,7 +350,7 @@ export default function GameModal({
         status,
         completionType: status === "completed" ? (completionType || "main_story") : null,
         userRating: rating !== null ? rating : null,
-        userPlaytimeHours: playtime ? parseFloat(playtime) : null,
+        userPlaytimeHours: calculatedTotal,
         userReview: review.trim(),
         platformPlayed: selectedPlatforms[0] || "PC",
         platformsPlayed: selectedPlatforms,
@@ -215,6 +361,10 @@ export default function GameModal({
         hltbData: game.hltb,
         genres: game.genres?.map((g) => g.name) || [],
         releaseYear: game.released ? game.released.substring(0, 4) : "",
+        dlcs: userDlcs.length > 0 ? userDlcs : undefined,
+        parentGameId: parentGameInfo?.id || game.parent_game?.id || existingInLibrary?.parentGameId || null,
+        parentGameTitle: parentGameInfo?.name || game.parent_game?.name || existingInLibrary?.parentGameTitle || null,
+        includeDlcHoursInTotal: includeDlcHours,
       });
       onClose();
     } catch (err) {
@@ -235,7 +385,7 @@ export default function GameModal({
   const modalContent = (
     <>
       <div
-        className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn"
+        className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn pt-[max(env(safe-area-inset-top,0px)+8px,0.75rem)] pb-[max(env(safe-area-inset-bottom,0px)+8px,0.75rem)]"
         onClick={onClose}
       >
         <div
@@ -303,6 +453,25 @@ export default function GameModal({
                 </div>
               </div>
             </div>
+
+            {/* Aviso se este jogo for uma DLC/Expansão oficial */}
+            {parentGameInfo && (
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-200 animate-fadeIn">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <span className="truncate">
+                    Esta é uma DLC/Expansão oficial de <strong>{parentGameInfo.name}</strong>.
+                  </span>
+                </div>
+                <Link
+                  href={`/game/${parentGameInfo.id}`}
+                  onClick={onClose}
+                  className="px-3 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-black font-bold text-[11px] transition-colors flex-shrink-0"
+                >
+                  Ver Jogo Base
+                </Link>
+              </div>
+            )}
 
             {/* ==========================================
                 2. SESSÃO DE AVALIAÇÃO (Range Slider)
@@ -532,6 +701,202 @@ export default function GameModal({
             )}
 
             {/* ==========================================
+                4.5 EXPANSÕES & DLCS DISPONÍVEIS
+            ========================================== */}
+            {(availableDlcs.length > 0 || isLoadingDlcs) && (
+              <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-b from-cyan-950/20 via-neutral-900/60 to-[#18191c] p-3.5 sm:p-4 space-y-3 shadow-lg">
+                <div
+                  className="flex items-center justify-between cursor-pointer select-none"
+                  onClick={() => setIsDlcsExpanded(!isDlcsExpanded)}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-cyan-500/20 text-[#00E5FF] border border-cyan-500/30">
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                        Expansões &amp; DLCs Oficiais
+                        {availableDlcs.length > 0 && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-[#00E5FF] border border-cyan-500/30 font-bold">
+                            {userDlcs.filter((d) => d.status === "completed").length}/{availableDlcs.length} Zeradas
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[11px] text-gray-400">
+                        Anexe suas DLCs e consolide as horas de jogo diretamente neste título
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-all"
+                  >
+                    {isDlcsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {isDlcsExpanded && (
+                  <div className="space-y-3 pt-3 border-t border-white/10 animate-fadeIn">
+                    {/* Botões Rápidos e Opção de Somar Horas */}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleMarkAllDlcs("completed")}
+                          className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold transition-all flex items-center gap-1 active:scale-95"
+                        >
+                          <Trophy className="w-3 h-3" />
+                          Marcar Todas como Zeradas
+                        </button>
+                        {userDlcs.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleClearAllDlcs}
+                            className="text-[11px] px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 transition-all active:scale-95"
+                          >
+                            Desmarcar Todas
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Toggle de Consolidação de Horas */}
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-cyan-300 font-medium select-none">
+                        <input
+                          type="checkbox"
+                          checked={includeDlcHours}
+                          onChange={(e) => setIncludeDlcHours(e.target.checked)}
+                          className="rounded border-cyan-500/40 text-[#00E5FF] focus:ring-0 focus:ring-offset-0 bg-white/10"
+                        />
+                        Somar horas das DLCs no tempo total
+                      </label>
+                    </div>
+
+                    {/* Lista de DLCs */}
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {availableDlcs.map((dlc) => {
+                        const userDlc = userDlcs.find((d) => d.id === dlc.id);
+                        const curStatus = userDlc?.status || null;
+
+                        return (
+                          <div
+                            key={dlc.id}
+                            className={`p-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                              curStatus === "completed"
+                                ? "bg-emerald-950/30 border-emerald-500/40"
+                                : curStatus === "playing"
+                                ? "bg-cyan-950/30 border-cyan-500/40"
+                                : curStatus === "backlog"
+                                ? "bg-amber-950/30 border-amber-500/40"
+                                : "bg-white/[0.03] border-white/5 hover:border-white/15"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-10 h-12 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 flex-shrink-0">
+                                {dlc.coverUrl ? (
+                                  <img src={dlc.coverUrl} alt={dlc.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-[9px] text-gray-500 font-mono">
+                                    DLC
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-white truncate" title={dlc.name}>
+                                  {dlc.name}
+                                </p>
+                                {dlc.releaseDate && (
+                                  <span className="text-[10px] text-gray-400 font-mono">
+                                    {dlc.releaseDate.substring(0, 4)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                              {/* Seletor de Status da DLC */}
+                              <div className="flex items-center gap-0.5 bg-black/50 p-0.5 rounded-lg border border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDlcStatus(dlc, null)}
+                                  className={`text-[10px] px-2 py-0.5 rounded transition-all ${
+                                    !curStatus ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-gray-200"
+                                  }`}
+                                  title="Não joguei"
+                                >
+                                  Não
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDlcStatus(dlc, "backlog")}
+                                  className={`text-[10px] px-2 py-0.5 rounded transition-all ${
+                                    curStatus === "backlog" ? "bg-amber-500 text-black font-bold" : "text-gray-400 hover:text-gray-200"
+                                  }`}
+                                  title="Quero Jogar"
+                                >
+                                  Quero
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDlcStatus(dlc, "playing")}
+                                  className={`text-[10px] px-2 py-0.5 rounded transition-all ${
+                                    curStatus === "playing" ? "bg-cyan-500 text-black font-bold" : "text-gray-400 hover:text-gray-200"
+                                  }`}
+                                  title="Jogando"
+                                >
+                                  Jogando
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDlcStatus(dlc, "completed")}
+                                  className={`text-[10px] px-2 py-0.5 rounded transition-all ${
+                                    curStatus === "completed" ? "bg-emerald-500 text-black font-bold" : "text-gray-400 hover:text-gray-200"
+                                  }`}
+                                  title="Zerada"
+                                >
+                                  Zerada
+                                </button>
+                              </div>
+
+                              {/* Input de Horas da DLC (opcional) */}
+                              {curStatus && (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.5"
+                                    placeholder="h"
+                                    value={userDlc?.playtimeHours ?? ""}
+                                    onChange={(e) => handleUpdateDlcHours(dlc.id, e.target.value)}
+                                    className="w-12 rounded-md bg-white/10 border border-white/10 px-1 py-0.5 text-[11px] text-white text-center font-mono focus:outline-none focus:border-cyan-400"
+                                    title="Horas jogadas nesta DLC"
+                                  />
+                                  <span className="text-[10px] text-gray-400 font-mono">h</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Resumo Consolidado de Horas */}
+                    {dlcHoursTotal > 0 && (
+                      <div className="p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs font-mono flex items-center justify-between text-gray-300">
+                        <span>Horas Consolidadas:</span>
+                        <span className="text-cyan-300">
+                          Base ({playtime || 0}h) + DLCs ({dlcHoursTotal}h) ={" "}
+                          <strong className="text-white text-sm font-bold">
+                            {effectiveTotalPlaytime}h Total
+                          </strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ==========================================
                 5. SEÇÃO DE DETALHES (Acordeão Expansível)
             ========================================== */}
             <div className="border-t border-white/10 pt-3">
@@ -656,7 +1021,7 @@ export default function GameModal({
                     {/* Horas Totais */}
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1">
-                        Horas Jogadas
+                        {availableDlcs.length > 0 ? "Horas (Jogo Base)" : "Horas Jogadas"}
                       </label>
                       <div className="relative">
                         <input
@@ -670,6 +1035,12 @@ export default function GameModal({
                         />
                         <Clock className="w-3.5 h-3.5 text-gray-500 absolute right-3.5 top-2.5" />
                       </div>
+                      {dlcHoursTotal > 0 && (
+                        <p className="text-[10px] text-cyan-300 font-mono mt-1 px-1">
+                          Base: {playtime || "0"}h + DLCs: {dlcHoursTotal}h ={" "}
+                          <strong>{effectiveTotalPlaytime}h Total</strong>
+                        </p>
+                      )}
                     </div>
 
                     {/* Data de Início */}

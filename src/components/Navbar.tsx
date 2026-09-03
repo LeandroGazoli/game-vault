@@ -75,8 +75,8 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#121316]/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-4">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#121316]/95 backdrop-blur-xl pt-safe">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pl-[max(env(safe-area-inset-left,0px),0.875rem)] pr-[max(env(safe-area-inset-right,0px),0.875rem)] h-16 flex items-center justify-between gap-3 sm:gap-4">
           {/* Lado Esquerdo: Logo & Navegação Principal */}
           <div className="flex items-center gap-4 xl:gap-6 flex-shrink-0">
             <Link href="/" className="flex-shrink-0">
@@ -225,7 +225,7 @@ export default function Navbar() {
 
           {/* Painel Drawer Deslizante */}
           <aside
-            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#111317] border-l border-white/15 p-5 flex flex-col justify-between overflow-y-auto pb-safe shadow-2xl z-[101] animate-slideInRight"
+            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#111317] border-l border-white/15 px-5 pt-[max(env(safe-area-inset-top,0px)+12px,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,2rem)] flex flex-col justify-between overflow-y-auto shadow-2xl z-[101] animate-slideInRight"
             aria-label="Menu principal"
           >
               {/* Topo do Drawer: Logo & Fechar */}

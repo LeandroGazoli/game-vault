@@ -66,7 +66,7 @@ export default function ProfileToolsModal({
 
       {/* Modal / Bottom Sheet Container */}
       <div
-        className="relative z-10 w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] bg-[#14161a] border border-white/15 p-5 sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
+        className="relative z-10 w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] bg-[#14161a] border border-white/15 p-5 pb-[max(env(safe-area-inset-bottom,0px)+1.25rem,1.5rem)] sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
         role="dialog"
         aria-modal="true"
       >

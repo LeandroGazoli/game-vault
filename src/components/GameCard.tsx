@@ -81,11 +81,18 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
           <div>
             <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1 font-mono">
               <span>{releaseYear}</span>
-              {game.genres && game.genres.length > 0 && (
+              {userGame?.dlcs && userGame.dlcs.length > 0 ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
+                  title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
+                >
+                  +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
+                </span>
+              ) : game.genres && game.genres.length > 0 ? (
                 <span className="truncate max-w-[120px] text-right">
                   {game.genres.slice(0, 1).map((g) => g.name).join(", ")}
                 </span>
-              )}
+              ) : null}
             </div>
 
             <Link href={`/game/${game.id}`}>
@@ -95,12 +102,18 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
             </Link>
           </div>
 
-          {/* Mini Info de Tempo HLTB & Avaliação */}
+          {/* Mini Info de Tempo HLTB ou Horas Registradas & Avaliação */}
           <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-            {/* Tempos HLTB */}
+            {/* Tempos HLTB ou Horas do Jogador */}
             <div className="flex items-center gap-1.5 text-gray-400 text-[11px] font-mono">
               <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{game.hltb?.mainStory ? `${game.hltb.mainStory}h` : "30h"}</span>
+              <span>
+                {userGame?.userPlaytimeHours
+                  ? `${userGame.userPlaytimeHours}h`
+                  : game.hltb?.mainStory
+                  ? `${game.hltb.mainStory}h`
+                  : "30h"}
+              </span>
             </div>
 
             {/* Avaliação do Usuário ou Botão */}

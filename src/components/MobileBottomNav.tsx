@@ -29,11 +29,11 @@ export default function MobileBottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pt-1 pb-[max(env(safe-area-inset-bottom,0px)+8px,12px)] pointer-events-none">
-      <nav
-        aria-label="Navegação móvel"
-        className="pointer-events-auto max-w-md mx-auto rounded-3xl bg-[#121316]/95 backdrop-blur-2xl border border-white/15 px-2 py-1.5 shadow-2xl shadow-black/90 flex items-center justify-around"
-      >
+    <nav
+      aria-label="Navegação móvel"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-[#111317]/95 backdrop-blur-2xl border-t border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pt-1.5 pb-[max(env(safe-area-inset-bottom,0px)+4px,14px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
+    >
+      <div className="max-w-md mx-auto px-1 flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -42,7 +42,7 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex flex-col items-center justify-center min-h-[48px] min-w-[54px] px-2 py-1 rounded-2xl transition-all active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center min-h-[50px] flex-1 py-1 px-1 rounded-2xl transition-all active:scale-95 touch-manipulation ${
                 isActive
                   ? "text-white font-bold bg-white/10"
                   : "text-gray-400 hover:text-gray-200"
@@ -67,7 +67,7 @@ export default function MobileBottomNav() {
             </Link>
           );
         })}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
