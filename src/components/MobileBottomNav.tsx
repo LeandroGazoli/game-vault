@@ -13,6 +13,7 @@ import {
   Star,
   User,
 } from "lucide-react";
+import { triggerSelectionHaptic } from "@/lib/capacitor";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -42,6 +43,7 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => triggerSelectionHaptic()}
               className={`relative flex flex-col items-center justify-center min-h-[50px] flex-1 py-1 px-1 rounded-xl transition-all active:scale-95 touch-manipulation ${
                 isActive
                   ? "text-white font-bold bg-[#181c25] border border-[#2b3342]"

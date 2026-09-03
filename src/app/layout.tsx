@@ -18,6 +18,7 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
 import JsonLd from "@/components/seo/JsonLd";
+import CapacitorInit from "@/components/CapacitorInit";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -162,6 +163,7 @@ export default function RootLayout({
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
         <SpaceDustCanvas />
         <AuthProvider>
+          <CapacitorInit />
           <GameLibraryProvider>
             <PwaRegister />
             <Navbar />

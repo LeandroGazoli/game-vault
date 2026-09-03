@@ -5,6 +5,7 @@ import { UserGame, GameStatus, LibraryStats } from "@/lib/types";
 import { useAuth } from "./AuthContext";
 import { getUserLibrary, saveUserGame, removeUserGame } from "@/lib/firebase";
 import confetti from "canvas-confetti";
+import { triggerSuccessHaptic } from "@/lib/capacitor";
 
 interface GameLibraryContextType {
   library: UserGame[];
@@ -50,6 +51,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
   const triggerZeradoConfetti = useCallback(() => {
     try {
+      triggerSuccessHaptic();
       confetti({
         particleCount: 80,
         spread: 70,
