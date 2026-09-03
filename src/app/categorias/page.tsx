@@ -4,15 +4,60 @@ import { Metadata } from "next";
 import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { Layers, ArrowRight, Sparkles, Gamepad2 } from "lucide-react";
 
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
 export const metadata: Metadata = {
-  title: "Categorias de Jogos | Game Vault",
+  title: "Categorias de Jogos | Catálogo GameVault",
   description:
-    "Explore jogos organizados por categorias: Luta, Mundo Aberto, Boa Trama, RPG, Terror, Corrida, Tiro e muito mais.",
+    "Explore jogos organizados por categorias: Luta, Mundo Aberto, Boa Trama, RPG, Terror, Corrida, Tiro, Retrô e muito mais. Filtros temáticos e notas do Metacritic.",
+  alternates: {
+    canonical: "/categorias",
+  },
+  openGraph: {
+    title: "Categorias de Jogos | Catálogo GameVault",
+    description:
+      "Explore jogos organizados por categorias temáticas com notas, tempos de zeramento e lançamentos.",
+    url: `${SITE_URL}/categorias`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Categorias de Jogos | Catálogo GameVault",
+    description: "Explore jogos organizados por categorias temáticas no GameVault.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Categorias",
+        item: `${SITE_URL}/categorias`,
+      },
+    ],
+  },
+];
 
 export default function CategoriasPage() {
   return (
-    <div className="space-y-10 pb-16 pt-2">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="space-y-10 pb-16 pt-2">
       {/* Hero da Página de Categorias */}
       <section className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-[#141824] via-[#0d1017] to-[#090b0f] p-8 sm:p-12 overflow-hidden shadow-2xl">
         <div className="pointer-events-none absolute -top-24 -right-10 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
@@ -86,6 +131,7 @@ export default function CategoriasPage() {
           </Link>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

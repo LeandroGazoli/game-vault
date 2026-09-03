@@ -166,13 +166,14 @@ export default function Navbar() {
                   />
                 </button>
 
-                {/* Dropdown Estruturado em 3 Colunas */}
+                {/* Dropdown Estruturado em 3 Colunas com Fundo 100% Sólido */}
                 {isExploreMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-[520px] rounded-2xl bg-[#0f1218]/98 border border-[#262d3a] shadow-2xl p-4 grid grid-cols-3 gap-4 backdrop-blur-2xl animate-fadeIn z-50">
+                  <div className="absolute top-full left-0 mt-2.5 w-[530px] rounded-2xl bg-[#0c0e14] border border-[#2a3242] shadow-[0_25px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 p-4 grid grid-cols-3 gap-4 z-50">
                     {/* Coluna 1: Plataformas */}
-                    <div className="space-y-1.5">
-                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5 pb-1">
-                        Plataformas
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                        <Gamepad2 className="w-3.5 h-3.5" />
+                        <span>Plataformas</span>
                       </div>
                       <div className="space-y-0.5">
                         {[
@@ -186,7 +187,7 @@ export default function Navbar() {
                             key={p.label}
                             href={p.href}
                             onClick={() => setIsExploreMenuOpen(false)}
-                            className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
+                            className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
                           >
                             {p.label}
                           </Link>
@@ -195,9 +196,10 @@ export default function Navbar() {
                     </div>
 
                     {/* Coluna 2: Principais Gêneros */}
-                    <div className="space-y-1.5">
-                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 border-b border-white/5 pb-1">
-                        Gêneros Populares
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5" />
+                        <span>Gêneros</span>
                       </div>
                       <div className="space-y-0.5">
                         {[
@@ -211,7 +213,7 @@ export default function Navbar() {
                             key={g.label}
                             href={g.href}
                             onClick={() => setIsExploreMenuOpen(false)}
-                            className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
+                            className="block px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate"
                           >
                             {g.label}
                           </Link>
@@ -220,23 +222,24 @@ export default function Navbar() {
                     </div>
 
                     {/* Coluna 3: Coleções & Hubs Principais */}
-                    <div className="space-y-1.5">
-                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 border-b border-white/5 pb-1">
-                        Hubs &amp; Coleções
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 border-b border-white/10 pb-1.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Hubs &amp; Coleções</span>
                       </div>
                       <div className="space-y-0.5">
                         <Link
                           href="/categorias"
                           onClick={() => setIsExploreMenuOpen(false)}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate font-medium"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
                         >
                           <Layers className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span>Todas as Categorias</span>
+                          <span>Todas Categorias</span>
                         </Link>
                         <Link
                           href="/colecoes"
                           onClick={() => setIsExploreMenuOpen(false)}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate font-medium"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
                         >
                           <Bookmark className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                           <span>Coleções do Acervo</span>
@@ -244,21 +247,21 @@ export default function Navbar() {
                         <Link
                           href="/search?q=dublado"
                           onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
+                          className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
                         >
                           🇧🇷 Dublados em PT-BR
                         </Link>
                         <Link
                           href="/rankings"
                           onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2 py-1 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/5 transition-colors truncate"
+                          className="block px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
                         >
                           ⭐ Top Metacritic
                         </Link>
                         <Link
                           href="/search"
                           onClick={() => setIsExploreMenuOpen(false)}
-                          className="block px-2 py-1 rounded-lg text-xs text-[#00E5FF] font-bold hover:bg-[#00E5FF]/10 transition-colors mt-1"
+                          className="block px-2.5 py-1.5 rounded-lg text-xs text-[#00E5FF] font-bold hover:bg-[#00E5FF]/10 transition-colors mt-1"
                         >
                           Ver Catálogo →
                         </Link>

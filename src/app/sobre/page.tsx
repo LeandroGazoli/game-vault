@@ -13,15 +13,61 @@ import {
   Heart,
 } from "lucide-react";
 
-export const metadata = {
+import type { Metadata } from "next";
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
+export const metadata: Metadata = {
   title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
   description:
     "Conheça o GameVault, o seu acervo gamer definitivo com catálogo em tempo real, notas do Metacritic, tempos do HowLongToBeat e calendário de lançamentos.",
+  alternates: {
+    canonical: "/sobre",
+  },
+  openGraph: {
+    title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
+    description:
+      "Conheça a história, recursos e missão do GameVault para a comunidade gamer brasileira.",
+    url: `${SITE_URL}/sobre`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sobre o GameVault • Plataforma de Rastreamento de Jogos",
+    description: "Conheça o GameVault, o seu acervo definitivo de jogos.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Sobre o GameVault",
+        item: `${SITE_URL}/sobre`,
+      },
+    ],
+  },
+];
 
 export default function SobrePage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-10 pb-16">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="max-w-4xl mx-auto space-y-10 pb-16">
       {/* Botão Voltar */}
       <Link
         href="/"
@@ -124,5 +170,6 @@ export default function SobrePage() {
         </a>
       </div>
     </div>
+    </>
   );
 }

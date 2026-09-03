@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Game } from "@/lib/types";
 import GameCard from "@/components/GameCard";
@@ -35,10 +35,12 @@ const SORT_OPTIONS = [
   { id: "recent", label: "Lançamentos", icon: Clock },
 ];
 
-export default function CategoryDetailPage() {
-  const params = useParams();
+interface CategoryDetailClientProps {
+  slug: string;
+}
+
+export default function CategoryDetailClient({ slug }: CategoryDetailClientProps) {
   const router = useRouter();
-  const slug = (params?.slug as string) || "mundo-aberto";
   const category = getCategoryBySlug(slug);
 
   const [games, setGames] = useState<Game[]>([]);

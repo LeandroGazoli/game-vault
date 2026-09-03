@@ -4,15 +4,60 @@ import { Metadata } from "next";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
 import { Sparkles, ArrowRight, Bookmark, Trophy, Gamepad2 } from "lucide-react";
 
+import JsonLd from "@/components/seo/JsonLd";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
 export const metadata: Metadata = {
-  title: "Coleções Especiais | Game Vault",
+  title: "Coleções Especiais de Jogos | Catálogo GameVault",
   description:
-    "Explore coleções temáticas curadas: Hall da Fama (90+ Metacritic), 100% Dublados em Português, Zere no Fim de Semana, Soulslike e mais.",
+    "Explore coleções temáticas curadas: Hall da Fama (90+ Metacritic), Jogos Dublados em Português, Zere no Fim de Semana, Soulslike, Indie Gems e Retrô.",
+  alternates: {
+    canonical: "/colecoes",
+  },
+  openGraph: {
+    title: "Coleções Especiais de Jogos | Catálogo GameVault",
+    description:
+      "Explore seleções exclusivas e coleções temáticas de jogos recomendados pela comunidade e crítica.",
+    url: `${SITE_URL}/colecoes`,
+    siteName: "GameVault",
+    type: "website",
+    images: ["/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Coleções Especiais de Jogos | Catálogo GameVault",
+    description: "Explore coleções temáticas curadas de jogos no GameVault.",
+    images: ["/og-image.jpg"],
+  },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Coleções",
+        item: `${SITE_URL}/colecoes`,
+      },
+    ],
+  },
+];
 
 export default function ColecoesPage() {
   return (
-    <div className="space-y-10 pb-16 pt-2">
+    <>
+      <JsonLd data={structuredData} />
+      <div className="space-y-10 pb-16 pt-2">
       {/* Hero da Página de Coleções */}
       <section className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-[#181524] via-[#100f1a] to-[#0a0a10] p-8 sm:p-12 overflow-hidden shadow-2xl">
         <div className="pointer-events-none absolute -top-24 -right-10 h-72 w-72 rounded-full bg-amber-500/15 blur-3xl" />
@@ -89,5 +134,6 @@ export default function ColecoesPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }
