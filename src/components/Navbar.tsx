@@ -75,7 +75,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#121316]/95 backdrop-blur-xl pt-safe">
+      <header className="sticky top-0 z-50 w-full border-b border-[#242a36] bg-[#0c0e13]/95 backdrop-blur-xl pt-safe">
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pl-[max(env(safe-area-inset-left,0px),0.875rem)] pr-[max(env(safe-area-inset-right,0px),0.875rem)] h-16 flex items-center justify-between gap-3 sm:gap-4">
           {/* Lado Esquerdo: Logo & Navegação Principal */}
           <div className="flex items-center gap-4 xl:gap-6 flex-shrink-0">
@@ -83,45 +83,53 @@ export default function Navbar() {
               <Logo size="md" />
             </Link>
 
-            {/* Divisor vertical elegante entre logo e navegação */}
-            <div className="hidden lg:block h-5 w-px bg-white/15" />
+            {/* Divisor vertical mecânico entre logo e navegação */}
+            <div className="hidden lg:block h-5 w-px bg-[#242a36]" />
 
             {/* Links de Navegação (Desktop) */}
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-sm font-medium">
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-medium">
               <Link
                 href="/"
-                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  pathname === "/" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname === "/"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Flame className="w-4 h-4 text-orange-400" />
+                <Flame className="w-3.5 h-3.5 text-neutral-300" />
                 Início
               </Link>
               <Link
                 href="/calendar"
-                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  pathname === "/calendar" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname === "/calendar"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <CalendarIcon className="w-4 h-4 text-[#00E5FF]" />
+                <CalendarIcon className="w-3.5 h-3.5 text-neutral-300" />
                 Calendário
               </Link>
               <Link
                 href="/rankings"
-                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  pathname === "/rankings" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname === "/rankings"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-neutral-300" />
                 Rankings
               </Link>
               <Link
                 href="/profile"
-                className={`transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                  pathname === "/profile" ? "text-white font-bold" : "text-gray-300 hover:text-white"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname === "/profile"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Trophy className="w-4 h-4 text-emerald-400" />
+                <Trophy className="w-3.5 h-3.5 text-neutral-300" />
                 Meus Jogos
               </Link>
             </nav>
@@ -225,16 +233,16 @@ export default function Navbar() {
 
           {/* Painel Drawer Deslizante */}
           <aside
-            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#111317] border-l border-white/15 px-5 pt-[max(env(safe-area-inset-top,0px)+12px,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,2rem)] flex flex-col justify-between overflow-y-auto shadow-2xl z-[101] animate-slideInRight"
+            className="fixed top-0 right-0 bottom-0 w-[86%] max-w-sm h-full max-h-[100dvh] bg-[#0c0e13] border-l border-[#242a36] px-5 pt-[max(env(safe-area-inset-top,0px)+12px,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+16px,2rem)] flex flex-col justify-between overflow-y-auto shadow-2xl z-[101] animate-slideInRight"
             aria-label="Menu principal"
           >
               {/* Topo do Drawer: Logo & Fechar */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center justify-between pb-3 border-b border-[#242a36]">
                   <Logo size="sm" />
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 rounded-full bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white transition-colors"
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors border border-transparent hover:border-white/10"
                     title="Fechar menu"
                   >
                     <X className="w-5 h-5" />
@@ -243,7 +251,7 @@ export default function Navbar() {
 
                 {/* Card de Perfil do Usuário no Drawer */}
                 {user ? (
-                  <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-3">
+                  <div className="p-3.5 rounded-xl bg-[#14171e] border border-[#242a36] space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <UserAvatar photoURL={user.photoURL} name={user.displayName} size="md" />
@@ -251,7 +259,7 @@ export default function Navbar() {
                           <h4 className="text-xs font-bold text-white truncate max-w-[140px]">
                             {user.displayName}
                           </h4>
-                          <span className="text-[11px] text-[#00E5FF] font-mono block">
+                          <span className="text-[11px] text-neutral-400 font-mono block">
                             @{user.username || "gamer"}
                           </span>
                         </div>
@@ -260,28 +268,28 @@ export default function Navbar() {
                     </div>
 
                     {/* Resumo Rápido de Estatísticas */}
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-center font-mono">
-                      <div className="p-1.5 rounded-xl bg-white/5">
-                        <div className="text-[10px] text-gray-400">Total</div>
-                        <div className="text-xs font-bold text-white">{stats.totalGames}</div>
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#242a36] text-center font-mono">
+                      <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
+                        <div className="text-[10px] text-neutral-400">Total</div>
+                        <div className="text-xs font-bold text-white tabular-nums">{stats.totalGames}</div>
                       </div>
-                      <div className="p-1.5 rounded-xl bg-cyan-500/10 text-[#00E5FF]">
-                        <div className="text-[10px] text-cyan-300">Zerados</div>
-                        <div className="text-xs font-bold">{stats.completedCount}</div>
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                        <div className="text-[10px] text-emerald-300">Zerados</div>
+                        <div className="text-xs font-bold tabular-nums">{stats.completedCount}</div>
                       </div>
-                      <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-300">
+                      <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">
                         <div className="text-[10px] text-amber-200">Horas</div>
-                        <div className="text-xs font-bold">{stats.totalPlaytimeHours}h</div>
+                        <div className="text-xs font-bold tabular-nums">{stats.totalPlaytimeHours}h</div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-950/40 via-surface-100 to-[#18191c] border border-cyan-500/30 space-y-3">
-                    <div className="flex items-center gap-2 text-cyan-300 text-xs font-bold">
-                      <Gamepad2 className="w-4 h-4 text-[#00E5FF]" />
+                  <div className="p-4 rounded-xl bg-[#14171e] border border-[#242a36] space-y-3">
+                    <div className="flex items-center gap-2 text-white text-xs font-bold">
+                      <Gamepad2 className="w-4 h-4 text-neutral-300" />
                       <span>Crie seu Perfil Gamer</span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-snug">
+                    <p className="text-[11px] text-neutral-400 leading-snug">
                       Salve seus jogos zerados, backlog e compartilhe suas notas com a comunidade.
                     </p>
                     <button
@@ -289,7 +297,7 @@ export default function Navbar() {
                         setIsMobileMenuOpen(false);
                         setIsAuthOpen(true);
                       }}
-                      className="w-full py-2.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold shadow-md transition-all active:scale-95"
+                      className="w-full py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-bold transition-all active:scale-95"
                     >
                       Entrar ou Cadastrar
                     </button>
@@ -297,17 +305,17 @@ export default function Navbar() {
                 )}
 
                 {/* Card de Instalação PWA no Mobile Drawer */}
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 to-indigo-950/40 border border-[#00E5FF]/30 space-y-2.5">
+                <div className="p-3.5 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-[#00E5FF]" />
+                      <Smartphone className="w-4 h-4 text-neutral-300" />
                       <span className="text-xs font-bold text-white">App Mobile (PWA)</span>
                     </div>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono bg-[#00E5FF]/20 text-[#00E5FF]">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-white/10 text-neutral-300 border border-white/10">
                       RÁPIDO
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-300 leading-tight">
+                  <p className="text-[11px] text-neutral-400 leading-tight">
                     Tenha o GameVault direto na tela de início com tela cheia e offline.
                   </p>
                   <button
@@ -315,7 +323,7 @@ export default function Navbar() {
                       setIsMobileMenuOpen(false);
                       triggerPwaInstall();
                     }}
-                    className="w-full py-2 rounded-full bg-[#00E5FF] hover:bg-cyan-300 text-black text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95"
+                    className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Instalar Aplicativo

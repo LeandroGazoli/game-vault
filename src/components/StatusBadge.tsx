@@ -17,30 +17,30 @@ export const STATUS_CONFIG: Record<
 > = {
   completed: {
     label: "Zerado",
-    bg: "bg-[#00E5FF]/15",
-    text: "text-[#00E5FF]",
-    border: "border-[#00E5FF]/30",
+    bg: "bg-[#0c1f17]/90",
+    text: "text-emerald-300",
+    border: "border-emerald-500/40",
     icon: Trophy,
   },
   playing: {
     label: "Jogando",
-    bg: "bg-blue-500/15",
-    text: "text-blue-400",
-    border: "border-blue-500/30",
+    bg: "bg-[#0b1b24]/90",
+    text: "text-cyan-300",
+    border: "border-cyan-500/40",
     icon: Gamepad2,
   },
   dropped: {
     label: "Dropado",
-    bg: "bg-rose-500/15",
-    text: "text-rose-400",
-    border: "border-rose-500/30",
+    bg: "bg-[#230f14]/90",
+    text: "text-rose-300",
+    border: "border-rose-500/40",
     icon: XCircle,
   },
   backlog: {
     label: "Quero Jogar",
-    bg: "bg-amber-500/15",
-    text: "text-amber-400",
-    border: "border-amber-500/30",
+    bg: "bg-[#241a0b]/90",
+    text: "text-amber-300",
+    border: "border-amber-500/40",
     icon: Clock,
   },
 };
@@ -70,14 +70,14 @@ export default function StatusBadge({
   }
 
   const sizeClasses = {
-    sm: "text-[11px] px-2.5 py-0.5 gap-1 font-semibold",
-    md: "text-xs font-bold px-3 py-1 gap-1.5",
-    lg: "text-sm font-bold px-3.5 py-1.5 gap-2",
+    sm: "text-[10px] px-2 py-0.5 gap-1 font-bold",
+    md: "text-xs font-bold px-2.5 py-1 gap-1.5",
+    lg: "text-sm font-bold px-3 py-1.5 gap-2",
   }[size];
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border backdrop-blur-md ${config.bg} ${config.text} ${config.border} ${sizeClasses}`}
+      className={`inline-flex items-center rounded-md border font-mono tracking-tight shadow-sm ${config.bg} ${config.text} ${config.border} ${sizeClasses}`}
     >
       {showIcon && <Icon className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />}
       {label}
