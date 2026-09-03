@@ -18,7 +18,7 @@ import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
-import MarkdownProfileBio from "@/components/MarkdownProfileBio";
+import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
 import PlanBadge from "@/components/PlanBadge";
@@ -394,9 +394,12 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         />
       )}
 
-      {/* Showcase / Bio em Markdown Rico & GIFs */}
+      {/* Showcase / Bio Gamer Customizada (Markdown & GIFs ou HTML5 & CSS3 Puro) */}
       {(activeUser.customMarkdown || activeUser.customHtml) && (
-        <MarkdownProfileBio content={activeUser.customMarkdown || activeUser.customHtml} />
+        <ProfileBioRenderer
+          content={activeUser.customMarkdown || activeUser.customHtml}
+          mode={activeUser.customBioMode}
+        />
       )}
 
       {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}

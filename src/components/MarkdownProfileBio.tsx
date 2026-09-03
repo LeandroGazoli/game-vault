@@ -102,6 +102,18 @@ export default function MarkdownProfileBio({
             style: ({ node, ...props }) => (
               <style {...props} />
             ),
+            button: ({ node, ...props }: any) => (
+              <button type="button" {...props} />
+            ),
+            input: ({ node, checked, ...props }: any) => {
+              if (checked !== undefined) {
+                return <input defaultChecked={Boolean(checked)} {...props} />;
+              }
+              return <input {...props} />;
+            },
+            svg: ({ node, ...props }: any) => (
+              <svg {...props} />
+            ),
           }}
         >
           {sanitizedContent}

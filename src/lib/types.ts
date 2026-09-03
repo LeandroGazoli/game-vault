@@ -128,6 +128,114 @@ export const MARKDOWN_PRESETS = [
   }
 ];
 
+export const HTML_BIO_PRESETS = [
+  {
+    id: "interactive_tabs",
+    name: "⚡ Abas Interativas (Radio + CSS)",
+    html: `<style>
+.gv-card {
+  background: linear-gradient(135deg, #121316 0%, #1a1c23 100%);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 20px;
+  padding: 24px;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.gv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 229, 255, 0.1);
+  color: #00E5FF;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.gv-btn {
+  background: #00E5FF;
+  color: #000;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.gv-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.4);
+}
+</style>
+
+<div class="gv-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Showcase Interativo do Jogador
+    </h3>
+    <span class="gv-badge">HTML5 + CSS3</span>
+  </div>
+
+  <p style="color: #bbb; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+    Personalize seus cards com cores neon, botões estilizados, elementos gráficos SVG e estilização total via CSS!
+  </p>
+
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button type="button" class="gv-btn">🏆 100% Conquistas</button>
+    <button type="button" class="gv-btn" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);">🎮 Setup Gamer</button>
+  </div>
+</div>`
+  },
+  {
+    id: "svg_badges",
+    name: "🏆 Insígnias SVG & Neon",
+    html: `<style>
+.neon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.neon-item {
+  background: rgba(20, 21, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.neon-item:hover {
+  transform: translateY(-2px);
+  border-color: #00E5FF;
+  box-shadow: 0 8px 24px rgba(0, 229, 255, 0.2);
+}
+</style>
+
+<div class="neon-grid">
+  <div class="neon-item">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#00E5FF"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <div>
+      <div style="font-weight: 800; font-size: 13px; color: #fff;">Platinador Master</div>
+      <div style="font-size: 11px; color: #888;">50+ Jogos 100%</div>
+    </div>
+  </div>
+
+  <div class="neon-item">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#a855f7"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+    <div>
+      <div style="font-weight: 800; font-size: 13px; color: #fff;">Console & PC</div>
+      <div style="font-size: 11px; color: #888;">Multiplataforma</div>
+    </div>
+  </div>
+</div>`
+  }
+];
+
 export interface HLTBData {
   gameTitle?: string;
   mainStory: number | null;
@@ -297,6 +405,7 @@ export interface UserProfile {
   createdCustomTitles?: string[];
   customHtml?: string | null;
   customMarkdown?: string | null;
+  customBioMode?: "markdown" | "html" | null;
   socialLinks?: SocialLinks;
   showcaseGameId?: number | null;
   visibility?: ProfileVisibility;

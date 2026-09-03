@@ -7,6 +7,7 @@ import {
   PRESET_BANNERS,
   ProfileTheme,
   MARKDOWN_PRESETS,
+  HTML_BIO_PRESETS,
   SocialLinks,
   ProfileVisibility,
   UserGame,
@@ -14,7 +15,8 @@ import {
   GAMER_EMOJI_SUGGESTIONS,
   ProfileLayout,
 } from "@/lib/types";
-import MarkdownProfileBio from "./MarkdownProfileBio";
+import ProfileBioRenderer from "./ProfileBioRenderer";
+import { isPureHtmlBio } from "@/lib/sanitizeHtml";
 import {
   X,
   Palette,
@@ -42,9 +44,12 @@ import {
   Table,
   ArrowLeft,
   ArrowRight,
-  AlertCircle,
   Plus,
   LayoutGrid,
+  Radio,
+  MousePointer,
+  FileText,
+  AlertCircle,
 } from "lucide-react";
 
 interface ProfileCustomizerModalProps {
@@ -133,6 +138,11 @@ export default function ProfileCustomizerModal({
 
   const [markdownContent, setMarkdownContent] = useState<string>(user?.customMarkdown || user?.customHtml || "");
   const [markdownTab, setMarkdownTab] = useState<"edit" | "preview">("edit");
+  const [bioMode, setBioMode] = useState<"markdown" | "html">(() => {
+    if (user?.customBioMode) return user.customBioMode;
+    const initialBio = user?.customMarkdown || user?.customHtml || "";
+    return isPureHtmlBio(initialBio) ? "html" : "markdown";
+  });
 
   // Redes Sociais / Gamertags
   const [socials, setSocials] = useState<SocialLinks>(user?.socialLinks || {});
@@ -171,7 +181,9 @@ export default function ProfileCustomizerModal({
         setEquippedTitles([DEFAULT_GAMER_TITLES[0]]);
       }
       setCreatedTitles(Array.isArray(user.createdCustomTitles) ? user.createdCustomTitles : []);
-      setMarkdownContent(user.customMarkdown || user.customHtml || "");
+      const bioContent = user.customMarkdown || user.customHtml || "";
+      setMarkdownContent(bioContent);
+      setBioMode(user.customBioMode || (isPureHtmlBio(bioContent) ? "html" : "markdown"));
       setSocials(user.socialLinks || {});
       setShowcaseGameId(user.showcaseGameId || null);
       if (user.visibility) setVisibility(user.visibility);
@@ -182,6 +194,10 @@ export default function ProfileCustomizerModal({
 
   const insertMarkdown = (prefix: string, suffix = "") => {
     setMarkdownContent((prev) => `${prev}\n${prefix}Texto${suffix}\n`);
+  };
+
+  const insertHtmlSnippet = (snippet: string) => {
+    setMarkdownContent((prev) => (prev ? `${prev}\n${snippet}\n` : `${snippet}\n`));
   };
 
   // Reordenação Direcional Instantânea (Sem Digitar Números)
@@ -265,6 +281,7 @@ export default function ProfileCustomizerModal({
         createdCustomTitles: createdTitles,
         customMarkdown: markdownContent.trim(),
         customHtml: markdownContent.trim(), // Compatibilidade retroativa
+        customBioMode: bioMode,
         socialLinks: socials,
         showcaseGameId: showcaseGameId,
         visibility: visibility,
@@ -976,21 +993,22 @@ export default function ProfileCustomizerModal({
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA 2: MARKDOWN & GIFS */}
+        {/* CONTEÚDO DA ABA 2: BIO & SHOWCASE (MARKDOWN OU HTML5/CSS) */}
         {activeSection === "markdown" && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
+            {/* Topo: Título + Seletor de Modo (Markdown vs HTML) + Toggle Editor/Preview */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
+              <div className="space-y-1">
                 <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                  <Code2 className="w-4 h-4 text-[#00E5FF]" /> Editor de Bio em Markdown &amp; GIFs
+                  <Palette className="w-4 h-4 text-[#00E5FF]" /> Personalização da Bio &amp; Showcase
                 </h4>
                 <p className="text-xs text-gray-400">
-                  Escreva textos formatados, metas, tabelas de conquistas e adicione GIFs animados no seu perfil.
+                  Escolha como prefere estilizar seu perfil: usando Markdown leve com GIFs ou HTML5 &amp; CSS3 completo.
                 </p>
               </div>
 
               {/* Toggle Editor vs Prévia */}
-              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 self-start">
+              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => setMarkdownTab("edit")}
@@ -1016,99 +1034,208 @@ export default function ProfileCustomizerModal({
               </div>
             </div>
 
-            {/* Barra de Ferramentas de Markdown */}
-            <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-2xl bg-[#121316] border border-white/10">
+            {/* SELETOR EXCLUSIVO DE FORMATO: MARKDOWN vs HTML5 & CSS */}
+            <div className="flex items-center gap-2 p-1 bg-[#101114] rounded-2xl border border-white/10 w-fit">
               <button
                 type="button"
-                onClick={() => insertMarkdown("**", "**")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Negrito"
+                onClick={() => setBioMode("markdown")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  bioMode === "markdown"
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
               >
-                <Bold className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5" /> Modo Markdown &amp; GIFs
               </button>
               <button
                 type="button"
-                onClick={() => insertMarkdown("*", "*")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Itálico"
+                onClick={() => setBioMode("html")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  bioMode === "html"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md shadow-purple-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
               >
-                <Italic className="w-3.5 h-3.5" />
+                <Code2 className="w-3.5 h-3.5" /> Modo HTML5 &amp; CSS3 Puro
               </button>
-              <button
-                type="button"
-                onClick={() => insertMarkdown("### ")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Título"
-              >
-                <Heading className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => insertMarkdown("- ")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Lista com marcadores"
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => insertMarkdown("> ")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Citação"
-              >
-                <Quote className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => insertMarkdown("| Jogo | Platina |\n| --- | :---: |\n| Elden Ring | 🥇 |")}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
-                title="Tabela"
-              >
-                <Table className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => insertMarkdown("![GIF Gamer](https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif)")}
-                className="px-2 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00E5FF] text-[11px] font-bold transition-colors"
-                title="Inserir GIF animado"
-              >
-                + GIF / Imagem
-              </button>
-
-              <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
-
-              {/* Modelos Prontos */}
-              <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-[10px] text-gray-500 uppercase font-mono">Modelos:</span>
-                {MARKDOWN_PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setMarkdownContent(p.markdown);
-                      setMarkdownTab("preview");
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 font-mono transition-colors"
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
             </div>
 
-            {/* Área de Edição ou Prévia */}
+            {/* BARRA DE FERRAMENTAS DO MODO MARKDOWN */}
+            {bioMode === "markdown" && (
+              <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-2xl bg-[#121316] border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("**", "**")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Negrito"
+                >
+                  <Bold className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("*", "*")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Itálico"
+                >
+                  <Italic className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("### ")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Título"
+                >
+                  <Heading className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("- ")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Lista com marcadores"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("> ")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Citação"
+                >
+                  <Quote className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("| Jogo | Platina |\n| --- | :---: |\n| Elden Ring | 🥇 |")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-colors"
+                  title="Tabela"
+                >
+                  <Table className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMarkdown("![GIF Gamer](https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif)")}
+                  className="px-2 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00E5FF] text-[11px] font-bold transition-colors"
+                  title="Inserir GIF animado"
+                >
+                  + GIF / Imagem
+                </button>
+
+                <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
+
+                {/* Modelos Prontos Markdown */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="text-[10px] text-gray-500 uppercase font-mono">Modelos:</span>
+                  {MARKDOWN_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setMarkdownContent(p.markdown);
+                        setMarkdownTab("preview");
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 font-mono transition-colors"
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* BARRA DE FERRAMENTAS DO MODO HTML5 & CSS */}
+            {bioMode === "html" && (
+              <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-2xl bg-[#121316] border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet("<style>\n.custom-box {\n  background: #18191c;\n  border: 1px solid #00E5FF;\n  border-radius: 16px;\n  padding: 16px;\n}\n</style>")}
+                  className="px-2 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 text-[11px] font-mono font-bold transition-colors"
+                  title="Inserir bloco de estilo CSS"
+                >
+                  + &lt;style&gt;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet('<button type="button" style="cursor: pointer; background: #00E5FF; color: #000; padding: 8px 18px; border-radius: 999px; font-weight: bold; border: none; transition: transform 0.2s;">Clique Aqui</button>')}
+                  className="px-2 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00E5FF] text-[11px] font-bold transition-colors"
+                  title="Inserir botão estilizado"
+                >
+                  + &lt;button&gt;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet('<div style="display: flex; gap: 8px; align-items: center;">\n  <input type="radio" id="tab1" name="tabs" checked style="cursor: pointer;">\n  <label for="tab1" style="cursor: pointer; color: #00E5FF; font-size: 12px; font-weight: bold;">Aba 1</label>\n  <input type="radio" id="tab2" name="tabs" style="cursor: pointer;">\n  <label for="tab2" style="cursor: pointer; color: #aaa; font-size: 12px; font-weight: bold;">Aba 2</label>\n</div>')}
+                  className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                  title="Inserir inputs de rádio para abas/seletores"
+                >
+                  <Radio className="w-3 h-3" /> + Radio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet('<svg width="24" height="24" viewBox="0 0 24 24" fill="#00E5FF"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke="#000" stroke-width="2"/></svg>')}
+                  className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[11px] font-mono font-bold transition-colors"
+                  title="Inserir elemento SVG"
+                >
+                  + SVG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet('<div style="cursor: pointer; padding: 12px; border: 1px dashed rgba(0, 229, 255, 0.4); border-radius: 12px; text-align: center; color: #00E5FF;">\n  Passe o mouse (Cursor Pointer Ativo)\n</div>')}
+                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                  title="Inserir elemento com cursor interativo"
+                >
+                  <MousePointer className="w-3 h-3" /> + Cursor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertHtmlSnippet('<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Pixel Art Base64" style="border-radius: 8px; width: 32px; height: 32px;">')}
+                  className="px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[11px] font-bold transition-colors"
+                  title="Inserir imagem Base64 (protocolo data:)"
+                >
+                  + Imagem data:
+                </button>
+
+                <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
+
+                {/* Modelos Prontos HTML5 */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="text-[10px] text-purple-400 uppercase font-mono">Modelos:</span>
+                  {HTML_BIO_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setMarkdownContent(p.html);
+                        setMarkdownTab("preview");
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-[11px] text-purple-300 font-mono transition-colors"
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ÁREA DE EDIÇÃO OU PRÉVIA */}
             {markdownTab === "edit" ? (
               <div className="space-y-1.5">
                 <textarea
                   value={markdownContent}
                   onChange={(e) => setMarkdownContent(e.target.value)}
-                  placeholder="Escreva sua bio gamer em Markdown ou use os modelos acima... Você pode incluir formatação, listas, tabelas e links para GIFs!"
-                  rows={8}
+                  placeholder={
+                    bioMode === "html"
+                      ? "Escreva ou cole seu código HTML5 e CSS3 personalizado com <style>, <button>, <input type='radio'>, <svg>, imagens data: e cursores. O Markdown não interferirá no seu layout!"
+                      : "Escreva sua bio gamer em Markdown (# títulos, **negrito**, listas, tabelas e links para GIFs)..."
+                  }
+                  rows={9}
                   className="w-full bg-[#101114] border border-white/15 rounded-2xl p-4 font-mono text-xs text-cyan-100 placeholder:text-gray-600 focus:outline-none focus:border-[#00E5FF] leading-relaxed resize-y selection:bg-cyan-500/30"
                 />
                 <div className="flex items-center justify-between text-[11px] text-gray-400">
                   <span className="flex items-center gap-1 text-emerald-400">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Markdown &amp; HTML Híbrido com GIFs permitidos (Scripts bloqueados).
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {bioMode === "html"
+                      ? "Modo HTML5 & CSS3 Puro ativo: botões, inputs, radios, svgs, imagens base64 e cursores liberados. Scripts bloqueados."
+                      : "Modo Markdown ativo: tabelas, formatação e GIFs liberados. Scripts bloqueados."}
                   </span>
                   <span>{markdownContent.length} caracteres</span>
                 </div>
@@ -1116,10 +1243,10 @@ export default function ProfileCustomizerModal({
             ) : (
               <div className="rounded-2xl border border-white/10 bg-[#101114] p-4 min-h-[160px]">
                 {markdownContent ? (
-                  <MarkdownProfileBio content={markdownContent} />
+                  <ProfileBioRenderer content={markdownContent} mode={bioMode} />
                 ) : (
                   <div className="py-8 text-center text-xs text-gray-500">
-                    Nenhum conteúdo em Markdown digitado. Alterne para a aba &quot;Editor&quot; para começar.
+                    Nenhum conteúdo digitado. Alterne para a aba &quot;Editor&quot; para começar.
                   </div>
                 )}
               </div>

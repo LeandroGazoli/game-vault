@@ -31,7 +31,7 @@ export default function CustomHtmlBio({ html, className = "" }: CustomHtmlBioPro
 
       {/* Conteúdo HTML/CSS Sanitizado */}
       <div
-        className="custom-profile-html space-y-3 leading-relaxed break-words"
+        className="custom-profile-bio custom-profile-html leading-normal break-words"
         dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
       />
     </div>
