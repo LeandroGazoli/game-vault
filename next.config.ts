@@ -34,7 +34,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://fonts.gstatic.com data:",
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://accounts.google.com https://api.stripe.com https://api.igdb.com https://id.twitch.tv https://api.mymemory.translated.net https://howlongtobeat.com https://*.google-analytics.com https://pagead2.googlesyndication.com",
-      "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://accounts.google.com https://checkout.stripe.com https://billing.stripe.com https://googleads.g.doubleclick.net",
+      "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://accounts.google.com https://checkout.stripe.com https://billing.stripe.com https://googleads.g.doubleclick.net https://www.youtube.com https://www.youtube-nocookie.com",
       "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",
