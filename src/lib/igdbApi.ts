@@ -643,3 +643,105 @@ export async function getShortGamesIGDB(limit = 20): Promise<Game[]> {
   });
 }
 
+// 10. Jogos por Categoria (Gênero / Tema) com Ordenação e Filtro por Plataforma (TTL: 12 horas)
+export async function getGamesByCategoryIGDB(
+  categorySlug: string,
+  sort = "popular",
+  platform?: string,
+  limit = 40,
+  offset = 0
+): Promise<Game[]> {
+  const { getCategoryBySlug } = await import("./categoriesData");
+  const category = getCategoryBySlug(categorySlug);
+  if (!category) return [];
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  let filterParts = ["cover != null", "parent_game = null"];
+
+  if (category.slug === "luta") {
+    filterParts.push("genres = (4)", "genres != (5)");
+  } else if (category.igdbGenreId) {
+    filterParts.push(`genres = (${category.igdbGenreId})`);
+  } else if (category.igdbThemeId) {
+    filterParts.push(`themes = (${category.igdbThemeId})`);
+  }
+
+  // Filtro de Plataforma (se informado)
+  if (platform) {
+    const pLower = platform.toLowerCase();
+    if (pLower.includes("pc") || pLower.includes("windows")) {
+      filterParts.push("platforms = (6)");
+    } else if (pLower.includes("ps5") || pLower.includes("playstation 5")) {
+      filterParts.push("platforms = (167)");
+    } else if (pLower.includes("ps4") || pLower.includes("playstation 4")) {
+      filterParts.push("platforms = (48)");
+    } else if (pLower.includes("xbox") || pLower.includes("series")) {
+      filterParts.push("platforms = (169)");
+    } else if (pLower.includes("switch") || pLower.includes("nintendo")) {
+      filterParts.push("platforms = (130)");
+    } else if (pLower.includes("retro") || pLower.includes("retrô")) {
+      filterParts.push(`first_release_date <= 978307200`); // Lançados até o ano 2000
+    }
+  }
+
+  // Ordenação
+  let sortClause = "sort total_rating_count desc;";
+  if (sort === "top_rated") {
+    filterParts.push("aggregated_rating != null", "total_rating_count > 20");
+    sortClause = "sort aggregated_rating desc;";
+  } else if (sort === "recent") {
+    filterParts.push(`first_release_date != null & first_release_date <= ${nowSec}`);
+    sortClause = "sort first_release_date desc;";
+  } else {
+    // popular
+    filterParts.push("total_rating_count > 15");
+    sortClause = "sort total_rating_count desc;";
+  }
+
+  const whereClause = `where ${filterParts.join(" & ")};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; ${whereClause} ${sortClause} limit ${limit}; offset ${offset};`;
+
+  const data = await fetchIGDB("games", body, TTL_CONFIG.RECENT_RELEASES);
+  return data.map(mapIGDBGameToGame);
+}
+
+// 11. Jogos por Coleção Curada (TTL: 24 horas)
+export async function getGamesByCollectionIGDB(
+  collectionSlug: string,
+  limit = 40
+): Promise<Game[]> {
+  const { getCollectionBySlug } = await import("./collectionsData");
+  const collection = getCollectionBySlug(collectionSlug);
+  if (!collection) return [];
+
+  if (collection.gameQueryType === "ptbr") {
+    return getPtBrDubbedGamesIGDB(limit);
+  }
+
+  if (collection.gameQueryType === "short") {
+    return getShortGamesIGDB(limit);
+  }
+
+  let body = "";
+  if (collection.gameQueryType === "goty") {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where aggregated_rating >= 90 & total_rating_count > 200 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else if (collection.gameQueryType === "soulslike") {
+    // Soulslike principais conhecidos
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where (name ~ *"Dark Souls"* | name ~ *"Elden Ring"* | name ~ *"Bloodborne"* | name ~ *"Sekiro"* | name ~ *"Lies of P"* | name ~ *"Nioh"* | name ~ *"Lords of the Fallen"*) & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else if (collection.gameQueryType === "indie") {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where genres = (32) & (aggregated_rating >= 85 | rating >= 85) & total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else if (collection.gameQueryType === "scifi") {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where themes = (18) & total_rating_count > 50 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else if (collection.gameQueryType === "horror") {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where themes = (19) & total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else if (collection.gameQueryType === "retro") {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where first_release_date <= 978307200 & total_rating_count > 25 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  } else {
+    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where total_rating_count > 80 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  }
+
+  const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
+  return data.map(mapIGDBGameToGame);
+}
+
+

@@ -383,14 +383,14 @@ export default function HeroArcade3D() {
       {/* Halo de luz neon sob o cartucho */}
       <div className="absolute inset-0 bg-gradient-radial from-cyan-500/15 via-transparent to-transparent pointer-events-none rounded-full blur-2xl" />
 
-      {/* Rótulo de instrução tátil */}
+      {/* Indicador discreto e elegante */}
       <div
-        className={`absolute bottom-3 right-4 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-[#0c0e13]/90 backdrop-blur text-[11px] font-mono text-cyan-300 transition-all duration-300 pointer-events-none shadow-lg shadow-cyan-950/40 flex items-center gap-1.5 ${
-          isHovered ? "opacity-100 scale-105 border-cyan-400" : "opacity-70"
+        className={`absolute bottom-2 right-4 px-2.5 py-1 rounded-full border border-cyan-500/20 bg-[#0c0e13]/80 backdrop-blur-md text-[10px] font-medium text-cyan-300/80 transition-all duration-300 pointer-events-none flex items-center gap-1.5 ${
+          isHovered ? "opacity-100 border-cyan-400/50 text-cyan-200" : "opacity-40"
         }`}
       >
-        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-        <span>[3D INTERATIVO // CLIQUE PARA GIRAR]</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
+        <span>Gire com o mouse</span>
       </div>
     </div>
   );

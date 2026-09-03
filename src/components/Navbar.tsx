@@ -32,6 +32,8 @@ import {
   ChevronDown,
   Clock,
   Heart,
+  Layers,
+  Bookmark,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -117,6 +119,28 @@ export default function Navbar() {
               >
                 <CalendarIcon className="w-4 h-4 text-[#00E5FF]" />
                 Calendário
+              </Link>
+              <Link
+                href="/categorias"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname.startsWith("/categorias")
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <Layers className="w-4 h-4 text-cyan-400" />
+                Categorias
+              </Link>
+              <Link
+                href="/colecoes"
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-xs font-semibold ${
+                  pathname.startsWith("/colecoes")
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <Bookmark className="w-4 h-4 text-purple-400" />
+                Coleções
               </Link>
               <Link
                 href="/rankings"
@@ -506,6 +530,34 @@ export default function Navbar() {
                     <div className="flex items-center gap-2.5">
                       <Search className="w-4 h-4 text-[#00E5FF]" />
                       <span>Explorar Catálogo Completo</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+                  </Link>
+
+                  <Link
+                    href="/categorias"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
+                      pathname.startsWith("/categorias") ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Layers className="w-4 h-4 text-cyan-400" />
+                      <span>Categorias de Jogos</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+                  </Link>
+
+                  <Link
+                    href="/colecoes"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center justify-between p-3 rounded-xl text-xs font-medium transition-all active:scale-[0.98] min-h-[44px] ${
+                      pathname.startsWith("/colecoes") ? "bg-white/10 text-white font-bold" : "text-gray-300 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bookmark className="w-4 h-4 text-purple-400" />
+                      <span>Coleções do Acervo</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
                   </Link>
