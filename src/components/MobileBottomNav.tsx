@@ -14,16 +14,19 @@ import {
   User,
 } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { getProfileUrl } from "@/lib/routes";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { user, isPremium } = useAuth();
 
+  const profileHref = user?.username ? getProfileUrl(user.username) : "/perfil";
+
   const navItems = [
     { href: "/", label: "Início", icon: Flame, color: "text-orange-400" },
     { href: "/search", label: "Buscar", icon: Search, color: "text-[#00E5FF]" },
     { href: "/calendar", label: "Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
-    { href: "/perfil", label: "Meus Jogos", icon: Trophy, color: "text-emerald-400" },
+    { href: profileHref, label: "Meus Jogos", icon: Trophy, color: "text-emerald-400" },
     ...(isPremium
       ? [{ href: "/rankings", label: "Rankings", icon: Star, color: "text-yellow-400" }]
       : [{ href: "/planos", label: "PRO", icon: Crown, color: "text-amber-400" }]),
@@ -37,7 +40,11 @@ export default function MobileBottomNav() {
       <div className="max-w-md mx-auto px-1.5 flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href ||
+                (item.label === "Meus Jogos" && pathname?.startsWith("/perfil"));
 
           return (
             <Link

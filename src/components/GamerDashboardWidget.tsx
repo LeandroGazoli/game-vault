@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { getGameUrl } from "@/lib/routes";
+import { getGameUrl, getProfileUrl } from "@/lib/routes";
 import { UserGame, Game } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
@@ -76,7 +76,7 @@ export default function GamerDashboardWidget({
               </div>
 
               <Link
-                href="/perfil"
+                href={user.username ? getProfileUrl(user.username) : "/perfil"}
                 className="text-xs font-mono text-[#00E5FF] hover:underline flex items-center gap-1 shrink-0 font-semibold"
               >
                 <span>Ver Perfil</span>

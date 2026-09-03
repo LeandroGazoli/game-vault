@@ -19,6 +19,7 @@ import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
 
 import JsonLd from "@/components/seo/JsonLd";
 import CapacitorInit from "@/components/CapacitorInit";
+import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -309,6 +310,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <GoogleAnalytics gaId="G-G7QH1XG25C" />
+        <SecurityTokenInterceptor />
       </body>
     </html>
   );

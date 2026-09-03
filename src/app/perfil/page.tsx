@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { GameStatus, UserGame } from "@/lib/types";
+import { GameStatus, UserGame, UserProfile, LibraryStats } from "@/lib/types";
 import StatsOverview from "@/components/StatsOverview";
 import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
@@ -16,6 +16,8 @@ import ProfileCustomizerModal from "@/components/ProfileCustomizerModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
+import ShareProfileModal from "@/components/ShareProfileModal";
+import ProfileHeroCard from "@/components/ProfileHeroCard";
 import MarkdownProfileBio from "@/components/MarkdownProfileBio";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
@@ -23,7 +25,8 @@ import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import { triggerPwaInstall } from "@/components/PwaInstallPrompt";
 import Link from "next/link";
-import { getGameUrl } from "@/lib/routes";
+import { useRouter, useParams } from "next/navigation";
+import { getGameUrl, getProfileUrl } from "@/lib/routes";
 import {
   Trophy,
   Gamepad2,
@@ -45,18 +48,138 @@ import {
   Smartphone,
   ArrowRight,
   SlidersHorizontal,
+  Share2,
 } from "lucide-react";
 
-export default function ProfilePage() {
-  const { user, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
-  const { library, stats, isLoading: libraryLoading } = useGameLibrary();
+function computeLibraryStats(games: UserGame[]): LibraryStats {
+  let totalPlaytime = 0;
+  let ratingSum = 0;
+  let ratedCount = 0;
+  const genreMap: Record<string, number> = {};
+
+  let completed = 0;
+  let playing = 0;
+  let dropped = 0;
+  let backlog = 0;
+
+  for (const g of games) {
+    if (g.status === "completed") completed++;
+    else if (g.status === "playing") playing++;
+    else if (g.status === "dropped") dropped++;
+    else if (g.status === "backlog") backlog++;
+
+    if (g.userPlaytimeHours && g.userPlaytimeHours > 0) {
+      totalPlaytime += g.userPlaytimeHours;
+    }
+
+    if (g.userRating !== null && g.userRating !== undefined) {
+      ratingSum += g.userRating;
+      ratedCount++;
+    }
+
+    if (g.genres) {
+      for (const genre of g.genres) {
+        genreMap[genre] = (genreMap[genre] || 0) + 1;
+      }
+    }
+  }
+
+  const topGenres = Object.entries(genreMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => ({ name, count }));
+
+  return {
+    totalGames: games.length,
+    completedCount: completed,
+    playingCount: playing,
+    droppedCount: dropped,
+    backlogCount: backlog,
+    totalPlaytimeHours: totalPlaytime,
+    averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
+    topGenres,
+  };
+}
+
+interface ProfilePageProps {
+  targetUsername?: string;
+}
+
+export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
+  const { user: authUser, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
+  const { library: ownLibrary, stats: ownStats, isLoading: libraryLoading } = useGameLibrary();
+  const router = useRouter();
+  const params = useParams();
+
+  const routeUsername = (targetUsername || (params?.username as string) || "").trim();
+
+  useEffect(() => {
+    if (!routeUsername && authUser?.username) {
+      router.replace(getProfileUrl(authUser.username));
+    }
+  }, [routeUsername, authUser?.username, router]);
+
+  const isOwnProfile = Boolean(
+    authUser && (!routeUsername || (authUser.username && authUser.username.toLowerCase() === routeUsername.toLowerCase()))
+  );
+
+  const isViewingPublic = Boolean(
+    routeUsername && (!authUser?.username || authUser.username.toLowerCase() !== routeUsername.toLowerCase())
+  );
+
+  const [publicData, setPublicData] = useState<{
+    user: UserProfile;
+    stats: any;
+    games: UserGame[];
+  } | null>(null);
+  const [publicLoading, setPublicLoading] = useState(isViewingPublic);
+  const [publicNotFound, setPublicNotFound] = useState(false);
+
+  useEffect(() => {
+    if (isViewingPublic && routeUsername) {
+      setPublicLoading(true);
+      setPublicNotFound(false);
+      fetch(`/api/user/${encodeURIComponent(routeUsername)}/games.json`)
+        .then(async (res) => {
+          if (!res.ok) {
+            setPublicNotFound(true);
+            return null;
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data?.user) {
+            setPublicData(data);
+          } else {
+            setPublicNotFound(true);
+          }
+        })
+        .catch(() => setPublicNotFound(true))
+        .finally(() => setPublicLoading(false));
+    } else {
+      setPublicData(null);
+      setPublicLoading(false);
+      setPublicNotFound(false);
+    }
+  }, [isViewingPublic, routeUsername]);
+
+  const activeUser = (isViewingPublic ? publicData?.user : authUser) as UserProfile | null;
+  const activeLibrary = isViewingPublic ? (publicData?.games || []) : ownLibrary;
+  const activeStats = useMemo(() => {
+    if (isViewingPublic) {
+      return computeLibraryStats(activeLibrary);
+    }
+    return ownStats;
+  }, [isViewingPublic, activeLibrary, ownStats]);
+
+  const isOwner = isOwnProfile;
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGameToEdit, setSelectedGameToEdit] = useState<any | null>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioInput, setBioInput] = useState(user?.bio || "");
-  const [favGameInput, setFavGameInput] = useState(user?.favoriteGame || "");
+  const [bioInput, setBioInput] = useState(authUser?.bio || "");
+  const [favGameInput, setFavGameInput] = useState(authUser?.favoriteGame || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -66,14 +189,14 @@ export default function ProfilePage() {
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
 
-  // Verificação e ativação automática se o usuário retornou do Stripe Checkout
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const sId = params.get("session_id");
-    const isUpgraded = params.get("upgraded");
+    const searchParams = new URLSearchParams(window.location.search);
+    const sId = searchParams.get("session_id");
+    const isUpgraded = searchParams.get("upgraded");
 
     if (sId) {
       fetch(`/api/checkout/verify?session_id=${sId}`)
@@ -91,9 +214,8 @@ export default function ProfilePage() {
     }
   }, []);
 
-  // Filtra jogos da biblioteca
   const filteredLibrary = useMemo(() => {
-    return library.filter((game) => {
+    return activeLibrary.filter((game) => {
       if (activeTab !== "all" && game.status !== activeTab) {
         return false;
       }
@@ -106,14 +228,14 @@ export default function ProfilePage() {
       }
       return true;
     });
-  }, [library, activeTab, searchQuery]);
+  }, [activeLibrary, activeTab, searchQuery]);
 
   const handleSaveBio = async () => {
     await updateUserBio(bioInput, favGameInput);
     setIsEditingBio(false);
   };
 
-  if (authLoading || (user && libraryLoading)) {
+  if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-48 rounded-[32px] bg-[#18191c]" />
@@ -122,7 +244,29 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
+  if (isViewingPublic && publicNotFound) {
+    return (
+      <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-4 max-w-lg mx-auto shadow-2xl my-12 animate-fadeIn">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/10">
+          <Gamepad2 className="w-7 h-7" />
+        </div>
+        <h2 className="text-2xl font-bold text-white tracking-tight">
+          Perfil não encontrado
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto">
+          O usuário <span className="text-[#00E5FF] font-mono">@{routeUsername}</span> ainda não existe ou não possui uma biblioteca configurada no MyGameList.
+        </p>
+        <Link
+          href="/"
+          className="inline-block rounded-full bg-white hover:bg-gray-200 text-black font-bold px-8 py-3 text-sm transition-all shadow-xl hover:scale-105"
+        >
+          Voltar ao Início
+        </Link>
+      </div>
+    );
+  }
+
+  if (!activeUser) {
     return (
       <>
         <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-4 max-w-lg mx-auto shadow-2xl my-8">
@@ -146,6 +290,9 @@ export default function ProfilePage() {
       </>
     );
   }
+
+  // Define perfil ativo garantidamente tipado e não-nulo para renderização
+  const user = activeUser;
 
   return (
     <div className="space-y-8 pb-12">
@@ -180,225 +327,81 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Banner de Perfil do Jogador */}
-      <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-6 sm:p-8 shadow-2xl">
-        {user.bannerURL && (
-          <img
-            src={user.bannerURL}
-            alt="Banner de Capa"
-            className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
-          />
-        )}
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="relative shrink-0">
-              <UserAvatar
-                photoURL={user.photoURL}
-                name={user.displayName}
-                size="xl"
-                className="border-2 border-[#00E5FF]/40 shadow-xl"
-              />
-            </div>
+      {/* Banner / Card do Perfil com Suporte aos 4 Layouts */}
+      <ProfileHeroCard
+        user={activeUser}
+        isOwner={isOwner}
+        isAdmin={isAdmin}
+        isPremium={isPremium}
+        onOpenEditBio={() => {
+          setBioInput(activeUser.bio || "");
+          setFavGameInput(activeUser.favoriteGame || "");
+          setIsEditingBio(!isEditingBio);
+        }}
+        onOpenTools={() => setIsToolsOpen(true)}
+        onOpenShare={() => setIsShareOpen(true)}
+        onOpenManagePlan={() => setIsManagePlanOpen(true)}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
+      />
 
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  {user.displayName}
-                </h1>
-                <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
-                <PlanBadge plan={user.plan || "free"} size="sm" />
-                {/* Títulos & Insígnias Gamer (Até 3 no Perfil) */}
-                {(() => {
-                  const titlesToDisplay =
-                    user.customTitles && user.customTitles.length > 0
-                      ? user.customTitles
-                      : user.customTitle
-                      ? [user.customTitle]
-                      : [];
-
-                  return titlesToDisplay.map((title, idx) => (
-                    <span
-                      key={idx}
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-bold shadow-sm inline-flex items-center gap-1 transition-all ${
-                        idx === 0
-                          ? user.theme === "gold"
-                            ? "bg-amber-500/15 border border-amber-500/40 text-amber-300"
-                            : user.theme === "purple"
-                            ? "bg-purple-500/15 border border-purple-500/40 text-purple-300"
-                            : user.theme === "crimson"
-                            ? "bg-rose-500/15 border border-rose-500/40 text-rose-300"
-                            : user.theme === "emerald"
-                            ? "bg-emerald-500/15 border border-emerald-500/40 text-emerald-300"
-                            : "bg-cyan-500/15 border border-cyan-500/40 text-[#00E5FF]"
-                          : "bg-white/10 border border-white/20 text-gray-200"
-                      }`}
-                      title={idx === 0 ? "Insígnia Principal" : `Insígnia #${idx + 1}`}
-                    >
-                      {title}
-                    </span>
-                  ));
-                })()}
-              </div>
-
-              {/* Status e Detalhes da Assinatura (Limpo & Interativo) */}
-              {user.plan === "vip" ? (
-                <div
-                  onClick={() => setIsManagePlanOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold cursor-pointer hover:bg-amber-500/20 active:scale-95 transition-all w-fit shadow-sm"
-                  title="Clique para gerenciar seu plano VIP"
-                >
-                  <Crown className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Membro Fundador VIP Vitalício</span>
-                </div>
-              ) : user.plan === "pro" ? (
-                <div
-                  onClick={() => setIsManagePlanOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all w-fit shadow-sm"
-                  title="Clique para gerenciar sua assinatura PRO"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                  <span>
-                    Assinante PRO Ativo
-                    {user.premiumUntil ? (
-                      <span className="text-gray-300 font-normal ml-1">
-                        • Válido até{" "}
-                        {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </span>
-                    ) : (
-                      <span className="text-gray-300 font-normal ml-1">(Renovação Automática)</span>
-                    )}
-                  </span>
-                </div>
-              ) : (
-                <div
-                  onClick={() => setIsUpgradeOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white text-xs font-medium cursor-pointer hover:border-white/20 active:scale-95 transition-all w-fit shadow-sm"
-                  title="Conheça as vantagens do plano PRO"
-                >
-                  <User className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Conta Free</span>
-                  <span className="text-[#00E5FF] font-semibold ml-1 flex items-center gap-0.5">
-                    • Seja PRO <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              )}
-
-              <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
-                {user.bio || "Nenhuma bio informada."}
-              </p>
-
-              {user.favoriteGame && (
-                <div className="inline-flex items-center gap-1.5 text-xs text-pink-300 bg-pink-950/40 border border-pink-500/20 px-3 py-0.5 rounded-full mt-1">
-                  <Heart className="w-3 h-3 fill-pink-400 text-pink-400" /> Jogo Favorito:{" "}
-                  <strong>{user.favoriteGame}</strong>
-                </div>
-              )}
-
-              {/* Barra de Gamertags e Redes Sociais */}
-              <SocialGamertagsBar socials={user.socialLinks} />
-            </div>
+      {/* Modal Inline de Edição de Perfil */}
+      {isOwner && isEditingBio && (
+        <div className="rounded-[28px] border border-white/10 bg-[#18191c] p-6 space-y-4 max-w-xl animate-fadeIn">
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1">
+              Bio / Apresentação
+            </label>
+            <textarea
+              value={bioInput}
+              onChange={(e) => setBioInput(e.target.value)}
+              rows={2}
+              className="w-full rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-white focus:outline-none focus:border-[#00E5FF] resize-none"
+            />
           </div>
-
-          {/* Tríade de Ações do Perfil (Mobile-First, Ergonômico e Sem Poluição) */}
-          <div className="w-full sm:w-auto flex flex-row items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
-            {/* Ação Primária: Adicionar Jogos */}
-            <Link
-              href="/search"
-              className="flex-1 sm:flex-initial min-h-[46px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-gray-200 text-black text-xs font-black transition-all shadow-xl shadow-white/10 active:scale-95"
-            >
-              <Plus className="w-4 h-4 text-black" />
-              <span>Adicionar Jogos</span>
-            </Link>
-
-            {/* Ação Secundária: Editar Perfil */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 mb-1">
+              Jogo Favorito
+            </label>
+            <input
+              type="text"
+              value={favGameInput}
+              onChange={(e) => setFavGameInput(e.target.value)}
+              placeholder="Ex: Elden Ring, The Witcher 3, Zelda..."
+              className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+            />
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                setBioInput(user.bio || "");
-                setFavGameInput(user.favoriteGame || "");
-                setIsEditingBio(!isEditingBio);
-              }}
-              className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/25 text-xs font-semibold text-gray-200 transition-all active:scale-95"
+              onClick={handleSaveBio}
+              className="px-4 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors"
             >
-              <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-              <span>Editar</span>
+              Salvar Alterações
             </button>
-
-            {/* Central de Ações & Ferramentas (Abre Bottom Sheet no mobile ou modal no desktop) */}
             <button
-              onClick={() => setIsToolsOpen(true)}
-              className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-[#00E5FF]/10 to-blue-500/15 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 hover:bg-[#00E5FF]/20 text-xs font-bold text-[#00E5FF] transition-all shadow-md shadow-[#00E5FF]/5 active:scale-95"
-              title="Ações e Ferramentas do Perfil"
+              onClick={() => setIsEditingBio(false)}
+              className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-white"
             >
-              <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
-              <span>Ferramentas</span>
+              Cancelar
             </button>
           </div>
         </div>
-
-        {/* Modal Inline de Edição de Perfil */}
-        {isEditingBio && (
-          <div className="mt-6 pt-6 border-t border-white/10 space-y-4 max-w-xl animate-fadeIn">
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1">
-                Bio / Apresentação
-              </label>
-              <textarea
-                value={bioInput}
-                onChange={(e) => setBioInput(e.target.value)}
-                rows={2}
-                className="w-full rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-white focus:outline-none focus:border-[#00E5FF] resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1">
-                Jogo Favorito
-              </label>
-              <input
-                type="text"
-                value={favGameInput}
-                onChange={(e) => setFavGameInput(e.target.value)}
-                placeholder="Ex: Elden Ring, The Witcher 3, Zelda..."
-                className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSaveBio}
-                className="px-4 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors"
-              >
-                Salvar Alterações
-              </button>
-              <button
-                onClick={() => setIsEditingBio(false)}
-                className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-white"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
-      {user.showcaseGameId && (
+      {activeUser.showcaseGameId && (
         <ShowcaseGameCard
-          game={library.find((g) => g.gameId === user.showcaseGameId)}
+          game={activeLibrary.find((g) => g.gameId === activeUser.showcaseGameId)}
         />
       )}
 
       {/* Showcase / Bio em Markdown Rico & GIFs */}
-      {(user.customMarkdown || user.customHtml) && (
-        <MarkdownProfileBio content={user.customMarkdown || user.customHtml} />
+      {(activeUser.customMarkdown || activeUser.customHtml) && (
+        <MarkdownProfileBio content={activeUser.customMarkdown || activeUser.customHtml} />
       )}
 
-
       {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}
-      {user.visibility?.showStats !== false && (
-        <StatsOverview stats={stats} activeTab={activeTab} onSelectTab={setActiveTab} />
+      {activeUser.visibility?.showStats !== false && (
+        <StatsOverview stats={activeStats} activeTab={activeTab} onSelectTab={setActiveTab} />
       )}
 
       {/* Abas de Navegação e Filtros (Mobile-First & Touch-Friendly) */}
@@ -407,11 +410,11 @@ export default function ProfilePage() {
           {/* Abas com rolagem suave horizontal e alvos de toque ergonômicos */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 flex-nowrap">
             {[
-              { id: "all", label: "Todos", count: stats.totalGames },
-              { id: "completed", label: "Zerados 🏆", count: stats.completedCount },
-              { id: "playing", label: "Jogando 🎮", count: stats.playingCount },
-              { id: "dropped", label: "Dropados 🛑", count: stats.droppedCount },
-              { id: "backlog", label: "Quero Jogar ⏳", count: stats.backlogCount },
+              { id: "all", label: "Todos", count: activeStats.totalGames },
+              { id: "completed", label: "Zerados 🏆", count: activeStats.completedCount },
+              { id: "playing", label: "Jogando 🎮", count: activeStats.playingCount },
+              { id: "dropped", label: "Dropados 🛑", count: activeStats.droppedCount },
+              { id: "backlog", label: "Quero Jogar ⏳", count: activeStats.backlogCount },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -591,12 +594,21 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setSelectedGameToEdit(asGame)}
-                      className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors mt-1"
-                    >
-                      Editar
-                    </button>
+                    {isOwner ? (
+                      <button
+                        onClick={() => setSelectedGameToEdit(asGame)}
+                        className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors mt-1"
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      <Link
+                        href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
+                        className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-[#00E5FF] transition-colors mt-1 block text-center"
+                      >
+                        Ver Detalhes
+                      </Link>
+                    )}
                   </div>
                 </div>
               );
@@ -679,12 +691,21 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setSelectedGameToEdit(asGame)}
-                      className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200"
-                    >
-                      Editar
-                    </button>
+                    {isOwner ? (
+                      <button
+                        onClick={() => setSelectedGameToEdit(asGame)}
+                        className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200"
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      <Link
+                        href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
+                        className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-[#00E5FF]"
+                      >
+                        Ver Detalhes
+                      </Link>
+                    )}
                   </div>
                 </div>
               );
@@ -694,73 +715,82 @@ export default function ProfilePage() {
       </div>
 
       {/* Modal para editar */}
-      <GameModal
-        game={selectedGameToEdit}
-        isOpen={Boolean(selectedGameToEdit)}
-        onClose={() => setSelectedGameToEdit(null)}
-      />
-
-      {/* Modal de Exportação */}
-      <ExportModal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-        games={library}
-        username={user.username || user.uid}
-      />
-
-      {/* Modal / Bottom Sheet de Ações & Ferramentas do Perfil */}
-      <ProfileToolsModal
-        isOpen={isToolsOpen}
-        onClose={() => setIsToolsOpen(false)}
-        user={user}
-        isPremium={isPremium}
-        isAdmin={isAdmin}
-        onOpenManagePlan={() => setIsManagePlanOpen(true)}
-        onOpenUpgrade={() => setIsUpgradeOpen(true)}
-        onOpenCustomizer={() => setIsCustomizerOpen(true)}
-        onOpenRoulette={() => setIsRouletteOpen(true)}
-        onOpenWrapped={() => setIsWrappedOpen(true)}
-        onOpenExport={() => setIsExportOpen(true)}
-        onInstallPwa={triggerPwaInstall}
-      />
-
-      {/* Modal de Gerenciamento do Plano Ativo */}
-      <ManagePlanModal
-        isOpen={isManagePlanOpen}
-        onClose={() => setIsManagePlanOpen(false)}
-        user={user}
-      />
-
-      {/* Modal de Upgrade de Planos (somente para usuários Free) */}
-      {!isPremium && (
-        <UpgradeModal
-          isOpen={isUpgradeOpen}
-          onClose={() => setIsUpgradeOpen(false)}
+      {isOwner && (
+        <GameModal
+          game={selectedGameToEdit}
+          isOpen={Boolean(selectedGameToEdit)}
+          onClose={() => setSelectedGameToEdit(null)}
         />
       )}
 
-      {/* Modal de Personalização do Perfil */}
-      <ProfileCustomizerModal
-        isOpen={isCustomizerOpen}
-        onClose={() => setIsCustomizerOpen(false)}
-        onOpenUpgrade={() => setIsUpgradeOpen(true)}
-        games={library}
-      />
+      {/* Modais Exclusivos do Proprietário da Conta */}
+      {isOwner && user && (
+        <>
+          <ExportModal
+            isOpen={isExportOpen}
+            onClose={() => setIsExportOpen(false)}
+            games={ownLibrary}
+            username={user.username || user.uid}
+          />
 
-      {/* Modal de Roleta do Backlog */}
-      <GameRouletteModal
-        isOpen={isRouletteOpen}
-        onClose={() => setIsRouletteOpen(false)}
-        games={library}
-      />
+          <ProfileToolsModal
+            isOpen={isToolsOpen}
+            onClose={() => setIsToolsOpen(false)}
+            user={user}
+            isPremium={isPremium}
+            isAdmin={isAdmin}
+            onOpenManagePlan={() => setIsManagePlanOpen(true)}
+            onOpenUpgrade={() => setIsUpgradeOpen(true)}
+            onOpenCustomizer={() => setIsCustomizerOpen(true)}
+            onOpenRoulette={() => setIsRouletteOpen(true)}
+            onOpenWrapped={() => setIsWrappedOpen(true)}
+            onOpenExport={() => setIsExportOpen(true)}
+            onOpenShare={() => setIsShareOpen(true)}
+            onInstallPwa={triggerPwaInstall}
+          />
 
-      {/* Modal de Retrospectiva Gamer Wrapped */}
-      <GamerWrappedModal
-        isOpen={isWrappedOpen}
-        onClose={() => setIsWrappedOpen(false)}
-        games={library}
-        user={user}
-        stats={stats}
+          <ManagePlanModal
+            isOpen={isManagePlanOpen}
+            onClose={() => setIsManagePlanOpen(false)}
+            user={user}
+          />
+
+          {!isPremium && (
+            <UpgradeModal
+              isOpen={isUpgradeOpen}
+              onClose={() => setIsUpgradeOpen(false)}
+            />
+          )}
+
+          <ProfileCustomizerModal
+            isOpen={isCustomizerOpen}
+            onClose={() => setIsCustomizerOpen(false)}
+            onOpenUpgrade={() => setIsUpgradeOpen(true)}
+            games={ownLibrary}
+          />
+
+          <GameRouletteModal
+            isOpen={isRouletteOpen}
+            onClose={() => setIsRouletteOpen(false)}
+            games={ownLibrary}
+          />
+
+          <GamerWrappedModal
+            isOpen={isWrappedOpen}
+            onClose={() => setIsWrappedOpen(false)}
+            games={ownLibrary}
+            user={user}
+            stats={ownStats}
+          />
+        </>
+      )}
+
+      {/* Modal de Compartilhamento do Perfil (Disponível para Dono e Visitantes) */}
+      <ShareProfileModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        username={activeUser?.username || user?.username || ""}
+        displayName={activeUser?.displayName || user?.displayName || "Gamer"}
       />
     </div>
   );

@@ -275,6 +275,8 @@ export interface UserGame {
   includeDlcHoursInTotal?: boolean;
 }
 
+export type ProfileLayout = "default" | "cinematic" | "gamer_id" | "minimal";
+
 export interface UserProfile {
   uid: string;
   username: string;
@@ -289,6 +291,7 @@ export interface UserProfile {
   hideAds?: boolean;
   bannerURL?: string | null;
   theme?: ProfileTheme;
+  profileLayout?: ProfileLayout;
   customTitle?: string | null;
   customTitles?: string[];
   createdCustomTitles?: string[];
