@@ -53,9 +53,9 @@ export default function AdBanner({
       const status = el.getAttribute("data-ad-status");
       const hasIframe = !!el.querySelector("iframe");
       if (status === "filled" || hasIframe) {
-        setIsFilled(true);
+        setIsFilled((prev) => (!prev ? true : prev));
       } else if (status === "unfilled") {
-        setIsFilled(false);
+        setIsFilled((prev) => (prev ? false : prev));
       }
     };
 

@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (auth && db) {
       let unsubscribeDoc: (() => void) | null = null;
+      const syncedAdminUids = new Set<string>();
 
       const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
         setFirebaseUser(fbUser);
@@ -72,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           unsubscribeDoc = onSnapshot(userDocRef, async (docSnap) => {
             if (docSnap.exists()) {
               let profile = docSnap.data() as UserProfile;
-              if (userIsAdmin && (profile.plan !== "vip" || !profile.isAdmin)) {
+              if (userIsAdmin && !syncedAdminUids.has(fbUser.uid) && (profile.plan !== "vip" || !profile.isAdmin)) {
+                syncedAdminUids.add(fbUser.uid);
                 profile = {
                   ...profile,
                   plan: "vip",
@@ -81,6 +83,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   hideAds: true,
                 };
                 await saveUserProfile(fbUser.uid, profile);
+              } else if (userIsAdmin) {
+                // Assegura privilégios de admin em memória caso ainda não gravados
+                profile = {
+                  ...profile,
+                  isAdmin: true,
+                };
               }
               setUser(profile);
             } else {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Game, GameStatus } from "@/lib/types";
 import Link from "next/link";
 import {
@@ -37,36 +37,67 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
   const [loading, setLoading] = useState(false);
   const [selectedGameForModal, setSelectedGameForModal] = useState<Game | null>(null);
 
-  // Cache simples em memória por categoria
-  const [cache, setCache] = useState<Record<string, Game[]>>({
+  // Cache seguro em memória por categoria usando ref para não causar loops no useEffect
+  const cacheRef = useRef<Record<string, Game[]>>({
     popular: initialGames,
   });
+  const requestedRef = useRef<Set<string>>(new Set());
+
+  // Sincroniza initialGames quando chegam
+  useEffect(() => {
+    if (initialGames && initialGames.length > 0) {
+      cacheRef.current["popular"] = initialGames;
+      if (activeTab === "popular" && games.length === 0) {
+        setGames(initialGames);
+      }
+    }
+  }, [initialGames, activeTab, games.length]);
 
   useEffect(() => {
-    if (cache[activeTab] && cache[activeTab].length > 0) {
-      setGames(cache[activeTab]);
+    if (cacheRef.current[activeTab] && cacheRef.current[activeTab].length > 0) {
+      setGames(cacheRef.current[activeTab]);
+      setLoading(false);
       return;
     }
+
+    if (requestedRef.current.has(activeTab)) {
+      return;
+    }
+
+    requestedRef.current.add(activeTab);
+    const abortController = new AbortController();
 
     async function loadRankings() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/games/rankings?category=${activeTab}&limit=10`);
+        const res = await fetch(`/api/games/rankings?category=${activeTab}&limit=10`, {
+          signal: abortController.signal,
+        });
         if (res.ok) {
           const data = await res.json();
           const items = data.games || [];
-          setGames(items);
-          setCache((prev) => ({ ...prev, [activeTab]: items }));
+          if (items.length > 0) {
+            cacheRef.current[activeTab] = items;
+            setGames(items);
+          }
         }
-      } catch (err) {
-        console.error("Erro ao carregar ranking:", err);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Erro ao carregar ranking:", err);
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     loadRankings();
-  }, [activeTab, cache]);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [activeTab]);
 
   const top3 = games.slice(0, 3);
   const rest7 = games.slice(3, 10);
@@ -146,15 +177,15 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
           </div>
         </div>
 
-        {/* Estado de Carregamento Esqueleto */}
-        {loading ? (
+        {/* Estado de Carregamento Esqueleto (Apenas se não há jogos exibidos) */}
+        {loading && games.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map((n) => (
               <div key={n} className="h-44 rounded-2xl bg-[#12151c] border border-[#222834] animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className={`space-y-6 transition-opacity duration-200 ${loading ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
             {/* ========================================================
                 1. PÓDIO TOP 3: CARDS DE DESTAQUE (#1 OURO, #2 PRATA, #3 BRONZE)
             ======================================================== */}

@@ -115,12 +115,12 @@ export default function HeroArcade3D() {
     mainGroup.add(pinMesh);
 
     // Ranhuras de ventilação mecânicas
+    const ventGeo = new THREE.BoxGeometry(1.6, 0.05, 0.08);
+    const ventMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0d14,
+      roughness: 0.8,
+    });
     for (let i = 0; i < 4; i++) {
-      const ventGeo = new THREE.BoxGeometry(1.6, 0.05, 0.08);
-      const ventMat = new THREE.MeshStandardMaterial({
-        color: 0x0a0d14,
-        roughness: 0.8,
-      });
       const ventMesh = new THREE.Mesh(ventGeo, ventMat);
       ventMesh.position.set(0, -0.4 - i * 0.2, 0.22);
       mainGroup.add(ventMesh);
@@ -338,10 +338,18 @@ export default function HeroArcade3D() {
       lineMat.dispose();
       screenGeo.dispose();
       screenMat.dispose();
+      gridHelper.geometry.dispose();
+      if (Array.isArray(gridHelper.material)) {
+        gridHelper.material.forEach((m) => m.dispose());
+      } else {
+        gridHelper.material.dispose();
+      }
       coreGeo.dispose();
       coreMat.dispose();
       pinGeo.dispose();
       pinMat.dispose();
+      ventGeo.dispose();
+      ventMat.dispose();
       sat1Geo.dispose();
       sat1Mat.dispose();
       sat2Geo.dispose();
@@ -350,6 +358,7 @@ export default function HeroArcade3D() {
       sat3Mat.dispose();
       particleGeo.dispose();
       particleMat.dispose();
+      renderer.forceContextLoss?.();
       renderer.dispose();
 
       if (renderer.domElement && container.contains(renderer.domElement)) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { GameStatus, UserGame } from "@/lib/types";
@@ -91,19 +91,21 @@ export default function ProfilePage() {
   }, []);
 
   // Filtra jogos da biblioteca
-  const filteredLibrary = library.filter((game) => {
-    if (activeTab !== "all" && game.status !== activeTab) {
-      return false;
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        game.gameTitle.toLowerCase().includes(q) ||
-        (game.userReview && game.userReview.toLowerCase().includes(q))
-      );
-    }
-    return true;
-  });
+  const filteredLibrary = useMemo(() => {
+    return library.filter((game) => {
+      if (activeTab !== "all" && game.status !== activeTab) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          game.gameTitle.toLowerCase().includes(q) ||
+          (game.userReview && game.userReview.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [library, activeTab, searchQuery]);
 
   const handleSaveBio = async () => {
     await updateUserBio(bioInput, favGameInput);

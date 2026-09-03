@@ -102,7 +102,7 @@ export default function HomePage() {
       setLoading(true);
       try {
         const [popRes, relRes, upRes, ptbrRes, shortRes] = await Promise.all([
-          fetch("/api/games/search"),
+          fetch("/api/games/rankings?category=popular&limit=10"),
           fetch("/api/games/releases"),
           fetch("/api/games/upcoming"),
           fetch("/api/games/curated?type=ptbr"),

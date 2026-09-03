@@ -9,7 +9,7 @@ export default function PwaRegister() {
       "serviceWorker" in navigator &&
       process.env.NODE_ENV === "production"
     ) {
-      window.addEventListener("load", () => {
+      const register = () => {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
@@ -18,7 +18,14 @@ export default function PwaRegister() {
           .catch((err) => {
             console.warn("Falha no registro do Service Worker:", err);
           });
-      });
+      };
+
+      if (document.readyState === "complete") {
+        register();
+      } else {
+        window.addEventListener("load", register);
+        return () => window.removeEventListener("load", register);
+      }
     }
   }, []);
 

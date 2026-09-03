@@ -440,7 +440,7 @@ export async function getRecentReleasesIGDB(limit = 24): Promise<Game[]> {
   // Arredonda o timestamp em blocos de 30 minutos para garantir chaves de cache determinísticas
   const nowSec = Math.floor(Date.now() / (1000 * 1800)) * 1800;
   const sixtyDaysAgo = nowSec - (60 * 24 * 60 * 60);
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category; where first_release_date <= ${nowSec} & first_release_date >= ${sixtyDaysAgo} & cover != null & category = (0, 8, 9, 10); sort first_release_date desc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where first_release_date <= ${nowSec} & first_release_date >= ${sixtyDaysAgo} & cover != null & parent_game = null; sort first_release_date desc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.RECENT_RELEASES);
   return data.map(mapIGDBGameToGame);
 }
@@ -449,7 +449,7 @@ export async function getRecentReleasesIGDB(limit = 24): Promise<Game[]> {
 export async function getUpcomingGamesIGDB(limit = 24): Promise<Game[]> {
   // Arredonda o timestamp em blocos de 30 minutos para garantir chaves de cache determinísticas
   const nowSec = Math.floor(Date.now() / (1000 * 1800)) * 1800;
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, hypes, screenshots.image_id, category; where first_release_date > ${nowSec} & cover != null & category = (0, 8, 9, 10); sort first_release_date asc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, hypes, screenshots.image_id; where first_release_date > ${nowSec} & cover != null & parent_game = null; sort first_release_date asc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.UPCOMING);
   return data.map(mapIGDBGameToGame);
 }
@@ -461,12 +461,12 @@ export async function getRankingsIGDB(category: "popular" | "top_rated" | "hyped
   const nowSec = Math.floor(Date.now() / (1000 * 3600)) * 3600;
 
   if (category === "top_rated") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, category; where aggregated_rating != null & total_rating_count > 40 & cover != null & category = (0, 8, 9, 10); sort aggregated_rating desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating; where aggregated_rating != null & total_rating_count > 40 & cover != null & parent_game = null; sort aggregated_rating desc; limit ${limit};`;
   } else if (category === "hyped") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, rating, category; where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & category = (0, 8, 9, 10); sort hypes desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, rating; where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & parent_game = null; sort hypes desc; limit ${limit};`;
   } else {
     // Mais populares por contagem total de avaliações e relevância
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating, category; where total_rating_count > 100 & cover != null & category = (0, 8, 9, 10); sort total_rating_count desc; limit ${limit};`;
+    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where total_rating_count > 100 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
   }
 
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
@@ -481,7 +481,7 @@ export async function getCalendarGamesIGDB(year: number, month: number): Promise
   const startSec = Math.floor(startDate.getTime() / 1000);
   const endSec = Math.floor(endDate.getTime() / 1000);
 
-  const body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, aggregated_rating, category; where first_release_date >= ${startSec} & first_release_date <= ${endSec} & cover != null & category = (0, 8, 9, 10); sort first_release_date asc; limit 100;`;
+  const body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, aggregated_rating; where first_release_date >= ${startSec} & first_release_date <= ${endSec} & cover != null & parent_game = null; sort first_release_date asc; limit 100;`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.CALENDAR);
 
   const grouped: Record<string, Game[]> = {};

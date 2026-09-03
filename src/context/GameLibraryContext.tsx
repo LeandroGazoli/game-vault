@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { UserGame, GameStatus, LibraryStats } from "@/lib/types";
 import { useAuth } from "./AuthContext";
 import { getUserLibrary, saveUserGame, removeUserGame } from "@/lib/firebase";
@@ -22,6 +22,11 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   const { user } = useAuth();
   const [library, setLibrary] = useState<UserGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const libraryRef = useRef<UserGame[]>(library);
+
+  useEffect(() => {
+    libraryRef.current = library;
+  }, [library]);
 
   useEffect(() => {
     async function load() {
@@ -43,7 +48,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     load();
   }, [user]);
 
-  const triggerZeradoConfetti = () => {
+  const triggerZeradoConfetti = useCallback(() => {
     try {
       confetti({
         particleCount: 80,
@@ -52,75 +57,104 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         colors: ["#00E5FF", "#6366f1", "#f59e0b", "#10b981"],
       });
     } catch (e) {}
-  };
+  }, []);
 
-  const addOrUpdateGame = async (
-    gameData: Partial<UserGame> & { gameId: number | string; gameTitle: string }
-  ) => {
-    if (!user) return;
+  const addOrUpdateGame = useCallback(
+    async (gameData: Partial<UserGame> & { gameId: number | string; gameTitle: string }) => {
+      if (!user) return;
 
-    const existingIndex = library.findIndex((g) => String(g.gameId) === String(gameData.gameId));
-    const isNewBeaten =
-      gameData.status === "completed" &&
-      (!library[existingIndex] || library[existingIndex].status !== "completed");
+      const currentLibrary = libraryRef.current;
+      const existingIndex = currentLibrary.findIndex(
+        (g) => String(g.gameId) === String(gameData.gameId)
+      );
+      const isNewBeaten =
+        gameData.status === "completed" &&
+        (!currentLibrary[existingIndex] || currentLibrary[existingIndex].status !== "completed");
 
-    const now = new Date().toISOString();
-    const updatedGame: UserGame = {
-      gameId: gameData.gameId,
-      gameSlug: gameData.gameSlug || String(gameData.gameId),
-      gameTitle: gameData.gameTitle,
-      gameCover: gameData.gameCover || null,
-      status: gameData.status || "backlog",
-      completionType: gameData.status === "completed" ? (gameData.completionType || null) : null,
-      userRating: gameData.userRating !== undefined ? gameData.userRating : null,
-      userPlaytimeHours: gameData.userPlaytimeHours ?? null,
-      userReview: gameData.userReview || "",
-      platformPlayed: gameData.platformPlayed || "PC",
-      platformsPlayed: gameData.platformsPlayed || [gameData.platformPlayed || "PC"],
-      isFavorite: gameData.isFavorite ?? false,
-      completedAt: gameData.status === "completed" ? (gameData.completedAt || now) : null,
-      startedAt: gameData.startedAt || now,
-      createdAt: existingIndex >= 0 ? library[existingIndex].createdAt : now,
-      updatedAt: now,
-      metacritic: gameData.metacritic ?? null,
-      hltbData: gameData.hltbData ?? null,
-      genres: gameData.genres || [],
-      releaseYear: gameData.releaseYear || "",
-      dlcs: gameData.dlcs !== undefined ? gameData.dlcs : (existingIndex >= 0 ? library[existingIndex].dlcs : undefined),
-      parentGameId: gameData.parentGameId !== undefined ? gameData.parentGameId : (existingIndex >= 0 ? library[existingIndex].parentGameId : undefined),
-      parentGameTitle: gameData.parentGameTitle !== undefined ? gameData.parentGameTitle : (existingIndex >= 0 ? library[existingIndex].parentGameTitle : undefined),
-      includeDlcHoursInTotal: gameData.includeDlcHoursInTotal !== undefined ? gameData.includeDlcHoursInTotal : (existingIndex >= 0 ? (library[existingIndex].includeDlcHoursInTotal ?? true) : true),
-    };
+      const now = new Date().toISOString();
+      const updatedGame: UserGame = {
+        gameId: gameData.gameId,
+        gameSlug: gameData.gameSlug || String(gameData.gameId),
+        gameTitle: gameData.gameTitle,
+        gameCover: gameData.gameCover || null,
+        status: gameData.status || "backlog",
+        completionType: gameData.status === "completed" ? gameData.completionType || null : null,
+        userRating: gameData.userRating !== undefined ? gameData.userRating : null,
+        userPlaytimeHours: gameData.userPlaytimeHours ?? null,
+        userReview: gameData.userReview || "",
+        platformPlayed: gameData.platformPlayed || "PC",
+        platformsPlayed: gameData.platformsPlayed || [gameData.platformPlayed || "PC"],
+        isFavorite: gameData.isFavorite ?? false,
+        completedAt: gameData.status === "completed" ? gameData.completedAt || now : null,
+        startedAt: gameData.startedAt || now,
+        createdAt: existingIndex >= 0 ? currentLibrary[existingIndex].createdAt : now,
+        updatedAt: now,
+        metacritic: gameData.metacritic ?? null,
+        hltbData: gameData.hltbData ?? null,
+        genres: gameData.genres || [],
+        releaseYear: gameData.releaseYear || "",
+        dlcs:
+          gameData.dlcs !== undefined
+            ? gameData.dlcs
+            : existingIndex >= 0
+            ? currentLibrary[existingIndex].dlcs
+            : undefined,
+        parentGameId:
+          gameData.parentGameId !== undefined
+            ? gameData.parentGameId
+            : existingIndex >= 0
+            ? currentLibrary[existingIndex].parentGameId
+            : undefined,
+        parentGameTitle:
+          gameData.parentGameTitle !== undefined
+            ? gameData.parentGameTitle
+            : existingIndex >= 0
+            ? currentLibrary[existingIndex].parentGameTitle
+            : undefined,
+        includeDlcHoursInTotal:
+          gameData.includeDlcHoursInTotal !== undefined
+            ? gameData.includeDlcHoursInTotal
+            : existingIndex >= 0
+            ? currentLibrary[existingIndex].includeDlcHoursInTotal ?? true
+            : true,
+      };
 
-    const nextList = [...library];
-    if (existingIndex >= 0) {
-      nextList[existingIndex] = updatedGame;
-    } else {
-      nextList.unshift(updatedGame);
-    }
-    setLibrary(nextList);
+      setLibrary((prev) => {
+        const nextList = [...prev];
+        const idx = nextList.findIndex((g) => String(g.gameId) === String(gameData.gameId));
+        if (idx >= 0) {
+          nextList[idx] = updatedGame;
+        } else {
+          nextList.unshift(updatedGame);
+        }
+        return nextList;
+      });
 
-    if (isNewBeaten) {
-      triggerZeradoConfetti();
-    }
+      if (isNewBeaten) {
+        triggerZeradoConfetti();
+      }
 
-    await saveUserGame(user.uid, updatedGame);
-  };
+      await saveUserGame(user.uid, updatedGame);
+    },
+    [user, triggerZeradoConfetti]
+  );
 
-  const deleteGame = async (gameId: number | string) => {
-    if (!user) return;
-    const nextList = library.filter((g) => String(g.gameId) !== String(gameId));
-    setLibrary(nextList);
-    await removeUserGame(user.uid, gameId);
-  };
+  const deleteGame = useCallback(
+    async (gameId: number | string) => {
+      if (!user) return;
+      setLibrary((prev) => prev.filter((g) => String(g.gameId) !== String(gameId)));
+      await removeUserGame(user.uid, gameId);
+    },
+    [user]
+  );
 
-  const getGameInLibrary = (gameId: number | string) => {
-    return library.find((g) => String(g.gameId) === String(gameId));
-  };
+  const getGameInLibrary = useCallback((gameId: number | string) => {
+    return libraryRef.current.find((g) => String(g.gameId) === String(gameId));
+  }, []);
 
-  const getGamesByStatus = (status: GameStatus) => {
-    return library.filter((g) => g.status === status);
-  };
+  const getGamesByStatus = useCallback((status: GameStatus) => {
+    return libraryRef.current.filter((g) => g.status === status);
+  }, []);
 
   const stats: LibraryStats = useMemo(() => {
     let totalPlaytime = 0;

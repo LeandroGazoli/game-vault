@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
 import AdBanner from "./ads/AdBanner";
@@ -81,17 +81,21 @@ export default function CalendarView() {
   };
 
   // Cálculo dos dias do mês para o mini-calendário lateral
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  const firstDayIndex = (new Date(currentYear, currentMonth - 1, 1).getDay() + 6) % 7; // Começa na segunda-feira
+  const { daysInMonth, firstDayIndex } = useMemo(() => {
+    const days = new Date(currentYear, currentMonth, 0).getDate();
+    const firstDay = (new Date(currentYear, currentMonth - 1, 1).getDay() + 6) % 7; // Começa na segunda-feira
+    return { daysInMonth: days, firstDayIndex: firstDay };
+  }, [currentYear, currentMonth]);
 
   // Agrupa e ordena as datas do mês
-  const sortedDates = Object.keys(calendarData).sort();
-  const filteredDates = selectedDayFilter
-    ? sortedDates.filter((dateStr) => {
-        const day = parseInt(dateStr.split("-")[2], 10);
-        return day === selectedDayFilter;
-      })
-    : sortedDates;
+  const sortedDates = useMemo(() => Object.keys(calendarData).sort(), [calendarData]);
+  const filteredDates = useMemo(() => {
+    if (!selectedDayFilter) return sortedDates;
+    return sortedDates.filter((dateStr) => {
+      const day = parseInt(dateStr.split("-")[2], 10);
+      return day === selectedDayFilter;
+    });
+  }, [sortedDates, selectedDayFilter]);
 
   // Formata o cabeçalho do dia (ex: "2 de setembro", "Hoje")
   const formatDayHeader = (dateStr: string) => {

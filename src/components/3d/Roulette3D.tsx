@@ -10,6 +10,11 @@ interface Roulette3DProps {
 
 export default function Roulette3D({ isSpinning }: Roulette3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isSpinningRef = useRef(isSpinning);
+
+  useEffect(() => {
+    isSpinningRef.current = isSpinning;
+  }, [isSpinning]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -102,7 +107,7 @@ export default function Roulette3D({ isSpinning }: Roulette3DProps) {
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
 
-      if (isSpinning) {
+      if (isSpinningRef.current) {
         spinVelocity = 12.0;
       } else if (spinVelocity > 0.8) {
         spinVelocity *= 0.95;
@@ -149,12 +154,13 @@ export default function Roulette3D({ isSpinning }: Roulette3DProps) {
       innerMat.dispose();
       ringGeo.dispose();
       ringMat.dispose();
+      renderer.forceContextLoss?.();
       renderer.dispose();
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [isSpinning]);
+  }, []);
 
   return (
     <div

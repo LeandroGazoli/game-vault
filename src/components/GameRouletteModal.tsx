@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { UserGame, Game } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import MetacriticBadge from "./MetacriticBadge";
@@ -44,6 +44,25 @@ export default function GameRouletteModal({
   const [selectedGame, setSelectedGame] = useState<UserGame | null>(null);
   const [spinCount, setSpinCount] = useState(0);
   const [statusUpdated, setStatusUpdated] = useState(false);
+  const spinIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Limpeza de segurança caso o modal feche ou desmonte durante o giro
+  useEffect(() => {
+    return () => {
+      if (spinIntervalRef.current) {
+        clearInterval(spinIntervalRef.current);
+        spinIntervalRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen && spinIntervalRef.current) {
+      clearInterval(spinIntervalRef.current);
+      spinIntervalRef.current = null;
+      setIsSpinning(false);
+    }
+  }, [isOpen]);
 
   // Pool de jogos elegíveis (Prioriza Backlog "Quero Jogar" e "Pausados")
   const eligibleGames = useMemo(() => {
@@ -77,18 +96,26 @@ export default function GameRouletteModal({
   const handleSpin = () => {
     if (eligibleGames.length === 0) return;
 
+    if (spinIntervalRef.current) {
+      clearInterval(spinIntervalRef.current);
+      spinIntervalRef.current = null;
+    }
+
     setIsSpinning(true);
     setStatusUpdated(false);
 
     let counter = 0;
     const totalIterations = 20;
-    const interval = setInterval(() => {
+    spinIntervalRef.current = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * eligibleGames.length);
       setSelectedGame(eligibleGames[randomIndex]);
       counter++;
 
       if (counter >= totalIterations) {
-        clearInterval(interval);
+        if (spinIntervalRef.current) {
+          clearInterval(spinIntervalRef.current);
+          spinIntervalRef.current = null;
+        }
         setIsSpinning(false);
         setSpinCount((prev) => prev + 1);
         try {
