@@ -190,6 +190,13 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
           releaseYear: item.releaseYear || existing?.releaseYear || "",
         };
 
+        if (item.dlcs !== undefined || existing?.dlcs) {
+          updatedGame.dlcs = item.dlcs || existing?.dlcs;
+        }
+        if (item.parentGameId !== undefined || existing?.parentGameId) {
+          updatedGame.parentGameId = item.parentGameId || existing?.parentGameId;
+        }
+
         if (existingIndex >= 0) {
           currentLibrary[existingIndex] = updatedGame;
         } else {
@@ -205,7 +212,12 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       }
 
       if (user) {
-        await batchSaveUserGames(user.uid, gamesToSave);
+        try {
+          await batchSaveUserGames(user.uid, gamesToSave);
+        } catch (saveError) {
+          console.error("Erro ao persistir lote de jogos no Firestore:", saveError);
+          throw saveError;
+        }
       }
 
       return gamesToSave.length;

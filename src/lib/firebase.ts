@@ -75,13 +75,32 @@ export async function getUserLibrary(userId: string): Promise<UserGame[]> {
   }
 }
 
+/**
+ * Limpa recursivamente valores undefined de um objeto para evitar erros do Firestore
+ * "Function WriteBatch.set() called with invalid data. Unsupported field value: undefined"
+ */
+export function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
+  const result: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) {
+      continue;
+    }
+    if (value !== null && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+      result[key] = cleanFirestoreData(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export async function saveUserGame(userId: string, game: UserGame): Promise<void> {
   if (!userId || !db) return;
   const gameDocId = String(game.gameId);
-  const updatedGame = {
+  const updatedGame = cleanFirestoreData({
     ...game,
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   try {
     await setDoc(doc(db, "users", userId, "games", gameDocId), updatedGame, { merge: true });
@@ -103,10 +122,10 @@ export async function batchSaveUserGames(userId: string, games: UserGame[]): Pro
     for (const g of chunk) {
       const gameDocId = String(g.gameId);
       const gameRef = doc(db, "users", userId, "games", gameDocId);
-      const docData = {
+      const docData = cleanFirestoreData({
         ...g,
         updatedAt: now,
-      };
+      });
       batch.set(gameRef, docData, { merge: true });
     }
 
@@ -190,7 +209,8 @@ export async function saveUserProfile(userId: string, profile: Partial<UserProfi
   if (!userId || !db) return;
 
   try {
-    await setDoc(doc(db, "users", userId), profile, { merge: true });
+    const cleanProfile = cleanFirestoreData(profile);
+    await setDoc(doc(db, "users", userId), cleanProfile, { merge: true });
   } catch (e) {
     console.error("Erro ao salvar perfil no Firestore:", e);
   }

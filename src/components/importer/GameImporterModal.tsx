@@ -80,7 +80,16 @@ export default function GameImporterModal({
   const [importProgress, setImportProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
 
-  if (!isOpen) return null;
+  // Hook unconditional no topo do componente (evita Minified React error #310)
+  const filteredReviewGames = useMemo(() => {
+    if (!reviewSearch.trim()) return draftGames;
+    const q = reviewSearch.toLowerCase();
+    return draftGames.filter(
+      (d) =>
+        d.originalTitle.toLowerCase().includes(q) ||
+        (d.matchedTitle && d.matchedTitle.toLowerCase().includes(q))
+    );
+  }, [draftGames, reviewSearch]);
 
   // Fecha e reinicia estado
   const handleClose = () => {
@@ -97,18 +106,19 @@ export default function GameImporterModal({
   // =========================================================================
   // 1. CARREGAMENTO VIA STEAM
   // =========================================================================
-  const handleLoadSteam = async (forceDemo = false) => {
+  const handleLoadSteam = async () => {
+    if (!steamInput.trim()) {
+      setSteamError("Por favor, informe seu SteamID64 ou link de perfil da Steam.");
+      return;
+    }
+
     setIsSteamLoading(true);
     setSteamError(null);
 
     try {
       const params = new URLSearchParams();
-      if (forceDemo || !steamInput.trim()) {
-        params.set("demo", "true");
-      } else {
-        params.set("steamId", steamInput.trim());
-        if (steamApiKey.trim()) params.set("apiKey", steamApiKey.trim());
-      }
+      params.set("steamId", steamInput.trim());
+      if (steamApiKey.trim()) params.set("apiKey", steamApiKey.trim());
 
       const res = await fetch(`/api/steam/games?${params.toString()}`);
       const data = await res.json();
@@ -337,22 +347,25 @@ export default function GameImporterModal({
     setImportProgress(10);
 
     const formattedGames = selectedGames.map((d, index) => {
-      // Gera ID estável se não foi encontrado no IGDB
-      const fallbackId = Math.abs(
-        d.originalTitle.split("").reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
-      ) + 9000000;
+      // Gera ID numérico único estável se não foi encontrado no IGDB
+      const hash = Math.abs(
+        d.originalTitle.split("").reduce((acc, char) => ((acc << 5) - acc + char.charCodeAt(0)) | 0, 0)
+      );
+      const fallbackId = 9000000 + (hash % 8000000) + index;
+      const numId = typeof d.matchedGameId === "number" ? d.matchedGameId : parseInt(String(d.matchedGameId || ""), 10);
+      const finalGameId = !isNaN(numId) && numId > 0 ? numId : fallbackId;
 
       return {
-        gameId: d.matchedGameId || fallbackId,
-        gameSlug: d.matchedSlug || d.originalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        gameId: finalGameId,
+        gameSlug: d.matchedSlug || d.originalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || String(finalGameId),
         gameTitle: d.matchedTitle || d.originalTitle,
         gameCover: d.matchedCover || null,
         status: d.status,
         platformPlayed: d.platform,
         platformsPlayed: [d.platform],
-        userPlaytimeHours: d.userPlaytimeHours || null,
-        userRating: d.userRating || null,
-        metacritic: d.matchedMetacritic || null,
+        userPlaytimeHours: typeof d.userPlaytimeHours === "number" && d.userPlaytimeHours > 0 ? d.userPlaytimeHours : null,
+        userRating: typeof d.userRating === "number" && d.userRating > 0 ? d.userRating : null,
+        metacritic: typeof d.matchedMetacritic === "number" ? d.matchedMetacritic : null,
         releaseYear: d.matchedReleaseYear || "",
         genres: d.matchedGenres || [],
       };
@@ -366,7 +379,7 @@ export default function GameImporterModal({
       setStep("completed");
     } catch (err) {
       console.error("Falha na importação:", err);
-      alert("Ocorreu um erro ao salvar os jogos. Tente novamente.");
+      alert("Ocorreu um erro ao salvar os jogos. Verifique sua conexão e tente novamente.");
       setStep("review");
     }
   };
@@ -394,17 +407,9 @@ export default function GameImporterModal({
     );
   };
 
-  const filteredReviewGames = useMemo(() => {
-    if (!reviewSearch.trim()) return draftGames;
-    const q = reviewSearch.toLowerCase();
-    return draftGames.filter(
-      (d) =>
-        d.originalTitle.toLowerCase().includes(q) ||
-        (d.matchedTitle && d.matchedTitle.toLowerCase().includes(q))
-    );
-  }, [draftGames, reviewSearch]);
-
   const selectedCount = draftGames.filter((d) => d.selected).length;
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -542,12 +547,12 @@ export default function GameImporterModal({
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => handleLoadSteam(false)}
+                    onClick={() => handleLoadSteam()}
                     disabled={isSteamLoading || !steamInput.trim()}
-                    className="flex-1 min-h-[46px] rounded-2xl bg-[#00E5FF] hover:bg-[#00c8e0] text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                    className="w-full min-h-[46px] rounded-2xl bg-[#00E5FF] hover:bg-[#00c8e0] text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                   >
                     {isSteamLoading ? (
                       <RefreshCw className="w-4 h-4 animate-spin text-black" />
@@ -555,17 +560,6 @@ export default function GameImporterModal({
                       <Download className="w-4 h-4 text-black" />
                     )}
                     <span>Carregar Jogos da Steam</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleLoadSteam(true)}
-                    disabled={isSteamLoading}
-                    className="min-h-[46px] px-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
-                    title="Testar com uma biblioteca de demonstração da Steam"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Testar com Demo</span>
                   </button>
                 </div>
               </div>

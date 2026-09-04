@@ -1,80 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SteamGameItem } from "@/lib/types";
 
-// Jogos populares de demonstração para teste imediato do importador
-const DEMO_STEAM_GAMES: SteamGameItem[] = [
-  {
-    appId: 730,
-    name: "Counter-Strike 2",
-    playtimeForeverHours: 428.5,
-    playtime2WeeksHours: 14.2,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/730/81e51c890a1961448b1d406fed6eb42b31a5477b.jpg",
-  },
-  {
-    appId: 1091500,
-    name: "Cyberpunk 2077",
-    playtimeForeverHours: 92.4,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/1091500/8d8dbdd1752b04f1a2efccb8529f864834e5699a.jpg",
-  },
-  {
-    appId: 1245620,
-    name: "ELDEN RING",
-    playtimeForeverHours: 135.0,
-    playtime2WeeksHours: 5.6,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/1245620/e86544faaa0d23588da9142f36f966141a4a4066.jpg",
-  },
-  {
-    appId: 1086940,
-    name: "Baldur's Gate 3",
-    playtimeForeverHours: 84.2,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/1086940/27361a4ec41a27e7703816a75f89ae798c1dd08f.jpg",
-  },
-  {
-    appId: 292030,
-    name: "The Witcher 3: Wild Hunt",
-    playtimeForeverHours: 110.8,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/292030/1e0427848417fe2880c507cfa29a1f26fa17c067.jpg",
-  },
-  {
-    appId: 440,
-    name: "Team Fortress 2",
-    playtimeForeverHours: 260.0,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/440/e3f595a92552da3d664ad00277fad2107345f743.jpg",
-  },
-  {
-    appId: 252490,
-    name: "Rust",
-    playtimeForeverHours: 180.3,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/252490/47622f6d2f347b59e7464a85702213abec80357f.jpg",
-  },
-  {
-    appId: 1145360,
-    name: "Hades",
-    playtimeForeverHours: 58.6,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/1145360/f201dd08a1c97f480327fbc16b34cfdbdc8ca0e6.jpg",
-  },
-  {
-    appId: 105600,
-    name: "Terraria",
-    playtimeForeverHours: 76.1,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/105600/858961e95f6681f005377f985926014d18308bc2.jpg",
-  },
-  {
-    appId: 620,
-    name: "Portal 2",
-    playtimeForeverHours: 22.0,
-    playtime2WeeksHours: 0,
-    iconUrl: "https://media.steampowered.com/steamcommunity/public/images/apps/620/26c5457fce293c834cbfa18f192b678c187be7b6.jpg",
-  },
-];
-
 /**
  * Resolve qualquer entrada do usuário para um SteamID64
  */
@@ -138,20 +64,18 @@ async function resolveSteamProfile(input: string): Promise<{
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const steamInput = searchParams.get("steamId") || searchParams.get("id") || "";
-  const isDemo = searchParams.get("demo") === "true";
   const userApiKey = searchParams.get("apiKey") || process.env.STEAM_API_KEY || "";
 
-  if (isDemo || (!steamInput && searchParams.get("load") !== "true")) {
-    return NextResponse.json({
-      success: true,
-      totalCount: DEMO_STEAM_GAMES.length,
-      games: DEMO_STEAM_GAMES,
-      isDemo: true,
-      profile: {
-        personaname: "Gamer Demo (Steam)",
-        avatarUrl: "https://avatars.fastly.steamstatic.com/c8582f8478cffe910a2fe196c32ff2e5ed34b1a9_full.jpg",
+  if (!steamInput.trim()) {
+    return NextResponse.json(
+      {
+        success: false,
+        totalCount: 0,
+        games: [],
+        error: "Informe um SteamID64 ou link de perfil da Steam para carregar os jogos.",
       },
-    });
+      { status: 400 }
+    );
   }
 
   const resolved = await resolveSteamProfile(steamInput);

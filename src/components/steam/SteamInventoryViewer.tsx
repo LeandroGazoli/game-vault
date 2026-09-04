@@ -10,9 +10,7 @@ import {
 import SteamItemModal from "./SteamItemModal";
 import {
   Search,
-  Sparkles,
   ExternalLink,
-  Lock,
   AlertCircle,
   RefreshCw,
   Save,
@@ -43,7 +41,6 @@ export default function SteamInventoryViewer({
   const [profile, setProfile] = useState<SteamInventoryResponse["profile"]>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SteamInventoryItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -54,19 +51,21 @@ export default function SteamInventoryViewer({
   const [exteriorFilter, setExteriorFilter] = useState("all");
 
   const loadInventory = useCallback(
-    async (steamId: string, appId: SteamSupportedAppId, forceDemo = false) => {
+    async (steamId: string, appId: SteamSupportedAppId) => {
+      if (!steamId.trim()) {
+        setItems([]);
+        setProfile(undefined);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
       try {
         const params = new URLSearchParams();
         params.set("appId", String(appId));
-
-        if (forceDemo || !steamId.trim()) {
-          params.set("demo", "true");
-        } else {
-          params.set("steamId", steamId.trim());
-        }
+        params.set("steamId", steamId.trim());
 
         const res = await fetch(`/api/steam/inventory?${params.toString()}`);
         const data: SteamInventoryResponse = await res.json();
@@ -74,14 +73,12 @@ export default function SteamInventoryViewer({
         if (data.success) {
           setItems(data.items || []);
           setProfile(data.profile);
-          setIsDemo(Boolean(data.isDemo));
           if (data.steamId64) {
             setCurrentSteamId(data.steamId64);
           }
         } else {
           setItems([]);
           setError(data.error || "Não foi possível carregar o inventário.");
-          setIsDemo(false);
         }
       } catch (err) {
         console.error("Erro ao carregar inventário:", err);
@@ -93,27 +90,19 @@ export default function SteamInventoryViewer({
     []
   );
 
-  // Inicializa com o Steam ID inicial ou com o modo demo se não houver steam ID
+  // Carrega inventário se houver um Steam ID inicial
   useEffect(() => {
     if (initialSteamId) {
       setSteamInput(initialSteamId);
-      loadInventory(initialSteamId, selectedAppId, false);
-    } else {
-      loadInventory("", selectedAppId, true);
+      loadInventory(initialSteamId, selectedAppId);
     }
   }, [initialSteamId, loadInventory, selectedAppId]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (steamInput.trim()) {
-      loadInventory(steamInput.trim(), selectedAppId, false);
-    } else {
-      loadInventory("", selectedAppId, true);
+      loadInventory(steamInput.trim(), selectedAppId);
     }
-  };
-
-  const handleToggleDemo = () => {
-    loadInventory("", selectedAppId, true);
   };
 
   const handleSaveToProfile = async () => {
@@ -173,7 +162,7 @@ export default function SteamInventoryViewer({
               key={app.id}
               onClick={() => {
                 setSelectedAppId(app.id);
-                loadInventory(steamInput, app.id, isDemo);
+                loadInventory(steamInput, app.id);
               }}
               className={`flex-shrink-0 min-h-[46px] px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2.5 select-none active:scale-95 border ${
                 isSelected
@@ -195,7 +184,7 @@ export default function SteamInventoryViewer({
         })}
       </div>
 
-      {/* 2. Barra de Busca de Perfil & Modo Demonstração */}
+      {/* 2. Barra de Busca de Perfil */}
       <div className="rounded-[28px] bg-[#14161a] border border-white/10 p-4 sm:p-6 space-y-4 shadow-xl">
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <div className="relative flex-1">
@@ -223,19 +212,6 @@ export default function SteamInventoryViewer({
               <span>Buscar</span>
             </button>
 
-            <button
-              type="button"
-              onClick={handleToggleDemo}
-              className={`h-11 px-4 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 border active:scale-95 ${
-                isDemo
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
-              }`}
-              title="Ver inventário de demonstração com itens lendários"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Vitrine Demo</span>
-            </button>
 
             {isOwner && onSaveSteamToProfile && steamInput.trim() && steamInput !== initialSteamId && (
               <button
@@ -276,11 +252,6 @@ export default function SteamInventoryViewer({
                 <span className="text-xs sm:text-sm font-bold text-white">
                   {profile?.personaname || "Perfil Steam"}
                 </span>
-                {isDemo && (
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300">
-                    MODO DEMO
-                  </span>
-                )}
               </div>
               <p className="text-[11px] text-gray-400">
                 {items.length} itens encontrados neste inventário
@@ -302,30 +273,12 @@ export default function SteamInventoryViewer({
         </div>
       </div>
 
-      {/* Alerta / Mensagem Informativa */}
-      {isDemo && (
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200">
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-bold block text-amber-300">Você está explorando o Modo Vitrine / Demonstração!</span>
-            Aqui você visualiza uma seleção lendária de skins, cosméticos e facas raras. Para visualizar o seu próprio inventário, digite seu <strong>SteamID64</strong> ou <strong>URL do perfil</strong> acima e certifique-se de que seu inventário esteja como <strong>Público</strong> na Steam.
-          </div>
-        </div>
-      )}
-
       {error && (
         <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-xs text-red-200">
           <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <span className="font-bold text-red-300">Atenção ao buscar inventário:</span>
             <p>{error}</p>
-            <button
-              onClick={handleToggleDemo}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-[11px] transition-colors"
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              Abrir Modo Demonstração
-            </button>
           </div>
         </div>
       )}
@@ -395,19 +348,17 @@ export default function SteamInventoryViewer({
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="rounded-[28px] border border-white/10 bg-[#18191c] p-10 text-center space-y-3">
-          <Package className="w-10 h-10 text-gray-600 mx-auto" />
-          <h3 className="text-sm sm:text-base font-bold text-white">Nenhum item encontrado</h3>
+          <Package className="w-10 h-10 text-gray-500 mx-auto" />
+          <h3 className="text-sm sm:text-base font-bold text-white">
+            {!steamInput.trim() ? "Conecte sua conta Steam" : "Nenhum item encontrado"}
+          </h3>
           <p className="text-xs text-gray-400 max-w-sm mx-auto">
-            {searchQuery || rarityFilter !== "all"
+            {!steamInput.trim()
+              ? "Digite seu SteamID64 ou link de perfil no campo de busca acima para carregar suas skins e inventário."
+              : searchQuery || rarityFilter !== "all"
               ? "Tente ajustar os filtros ou o termo de busca para visualizar seus itens."
-              : "Este usuário não possui itens neste jogo ou seu inventário está definido como privado na Steam."}
+              : "Este usuário não possui itens neste jogo ou seu inventário está configurado como privado na Steam."}
           </p>
-          <button
-            onClick={handleToggleDemo}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Ver Vitrine Demo
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
