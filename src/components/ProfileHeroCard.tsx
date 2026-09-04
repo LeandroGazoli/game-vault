@@ -187,11 +187,31 @@ export default function ProfileHeroCard({
           )}
 
           {/* Bio e Jogo Favorito */}
-          {user.bio && (
-            <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-              {user.bio}
-            </p>
-          )}
+          {user.bio ? (
+            <div className="group/bio flex items-start gap-2">
+              <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+                {user.bio}
+              </p>
+              {isOwner && (
+                <button
+                  onClick={onOpenEditBio || handleEdit}
+                  className="opacity-70 sm:opacity-0 sm:group-hover/bio:opacity-100 transition-opacity p-1 text-gray-400 hover:text-[#00E5FF] rounded-md hover:bg-white/5 flex-shrink-0"
+                  title="Editar bio"
+                  aria-label="Editar bio"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : isOwner ? (
+            <button
+              onClick={onOpenEditBio || handleEdit}
+              className="text-xs text-gray-500 hover:text-cyan-400 flex items-center gap-1.5 transition-colors py-0.5"
+            >
+              <Edit2 className="w-3 h-3" />
+              <span>Adicionar uma bio...</span>
+            </button>
+          ) : null}
 
           {user.favoriteGame && (
             <div className="inline-flex items-center gap-1.5 text-xs text-pink-300 bg-pink-950/40 border border-pink-500/20 px-3 py-1 rounded-full">
@@ -384,11 +404,31 @@ export default function ProfileHeroCard({
           )}
 
           {/* Bio e Jogo Favorito */}
-          {user.bio && (
-            <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-              {user.bio}
-            </p>
-          )}
+          {user.bio ? (
+            <div className="group/bio flex items-start gap-2">
+              <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+                {user.bio}
+              </p>
+              {isOwner && (
+                <button
+                  onClick={onOpenEditBio || handleEdit}
+                  className="opacity-70 sm:opacity-0 sm:group-hover/bio:opacity-100 transition-opacity p-1 text-gray-400 hover:text-[#00E5FF] rounded-md hover:bg-white/5 flex-shrink-0"
+                  title="Editar bio"
+                  aria-label="Editar bio"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : isOwner ? (
+            <button
+              onClick={onOpenEditBio || handleEdit}
+              className="text-xs text-gray-500 hover:text-cyan-400 flex items-center gap-1.5 transition-colors py-0.5"
+            >
+              <Edit2 className="w-3 h-3" />
+              <span>Adicionar uma bio...</span>
+            </button>
+          ) : null}
 
           {user.favoriteGame && (
             <div className="inline-flex items-center gap-1.5 text-xs text-pink-300 bg-pink-950/40 border border-pink-500/20 px-3 py-1 rounded-full">
@@ -538,11 +578,31 @@ export default function ProfileHeroCard({
         )}
 
         {/* Bio e Jogo Favorito */}
-        {user.bio && (
-          <p className={`relative z-10 text-xs text-gray-300 font-sans leading-relaxed border-l-2 ${themeStyles.hudBorder} pl-3`}>
-            {user.bio}
-          </p>
-        )}
+        {user.bio ? (
+          <div className="relative z-10 group/bio flex items-start gap-2">
+            <p className={`text-xs text-gray-300 font-sans leading-relaxed border-l-2 ${themeStyles.hudBorder} pl-3 flex-1`}>
+              {user.bio}
+            </p>
+            {isOwner && (
+              <button
+                onClick={onOpenEditBio || handleEdit}
+                className="opacity-70 sm:opacity-0 sm:group-hover/bio:opacity-100 transition-opacity p-1 text-gray-400 hover:text-cyan-300 rounded-md hover:bg-white/5 flex-shrink-0"
+                title="Editar bio"
+                aria-label="Editar bio"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ) : isOwner ? (
+          <button
+            onClick={onOpenEditBio || handleEdit}
+            className="relative z-10 text-xs text-gray-500 hover:text-cyan-400 flex items-center gap-1.5 transition-colors py-0.5"
+          >
+            <Edit2 className="w-3 h-3" />
+            <span>Adicionar uma bio...</span>
+          </button>
+        ) : null}
 
         {user.favoriteGame && (
           <div className="relative z-10 text-xs text-pink-300 font-mono flex items-center gap-1.5">
@@ -652,11 +712,31 @@ export default function ProfileHeroCard({
         </div>
       )}
 
-      {user.bio && (
-        <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-          {user.bio}
-        </p>
-      )}
+      {user.bio ? (
+        <div className="group/bio flex items-start gap-2">
+          <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+            {user.bio}
+          </p>
+          {isOwner && (
+            <button
+              onClick={onOpenEditBio || handleEdit}
+              className="opacity-70 sm:opacity-0 sm:group-hover/bio:opacity-100 transition-opacity p-1 text-gray-400 hover:text-white rounded-md hover:bg-white/5 flex-shrink-0"
+              title="Editar bio"
+              aria-label="Editar bio"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      ) : isOwner ? (
+        <button
+          onClick={onOpenEditBio || handleEdit}
+          className="text-xs text-gray-500 hover:text-white flex items-center gap-1.5 transition-colors py-0.5"
+        >
+          <Edit2 className="w-3 h-3" />
+          <span>Adicionar uma bio...</span>
+        </button>
+      ) : null}
 
       {user.favoriteGame && (
         <div className="text-xs text-gray-300 flex items-center gap-1.5">

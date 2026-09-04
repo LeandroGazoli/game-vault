@@ -9,6 +9,7 @@ interface ProfileBioRendererProps {
   content?: string | null;
   mode?: "markdown" | "html" | null;
   className?: string;
+  onEdit?: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export default function ProfileBioRenderer({
   content,
   mode,
   className = "",
+  onEdit,
 }: ProfileBioRendererProps) {
   const isHtml = useMemo(() => {
     if (mode === "html") return true;
@@ -31,8 +33,8 @@ export default function ProfileBioRenderer({
   if (!content || !content.trim()) return null;
 
   if (isHtml) {
-    return <CustomHtmlBio html={content} className={className} />;
+    return <CustomHtmlBio html={content} className={className} onEdit={onEdit} />;
   }
 
-  return <MarkdownProfileBio content={content} className={className} />;
+  return <MarkdownProfileBio content={content} className={className} onEdit={onEdit} />;
 }
