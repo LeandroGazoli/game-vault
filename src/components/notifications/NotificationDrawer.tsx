@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   SystemNotification,
@@ -43,7 +44,13 @@ export default function NotificationDrawer({
   isPushEnabled,
   isLoadingPush,
 }: NotificationDrawerProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted || typeof document === "undefined") return null;
 
   const renderCategoryIcon = (category: string) => {
     switch (category) {
@@ -63,7 +70,7 @@ export default function NotificationDrawer({
 
   const unreadCount = notifications.filter((n) => !readIds.includes(n.id)).length;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[110] !m-0 !mt-0 flex justify-end bg-black/75 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
@@ -223,6 +230,7 @@ export default function NotificationDrawer({
           )}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
