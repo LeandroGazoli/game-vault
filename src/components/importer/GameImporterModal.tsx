@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { UserGame, GameStatus, StorePlatform, ImportGameDraft } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
@@ -67,8 +67,20 @@ export default function GameImporterModal({
   // Xbox Tab State
   const [xboxInput, setXboxInput] = useState(user?.socialLinks?.xbox || "");
   const [xboxApiKey, setXboxApiKey] = useState("");
+  const [xboxTextList, setXboxTextList] = useState("");
   const [isXboxLoading, setIsXboxLoading] = useState(false);
   const [xboxError, setXboxError] = useState<string | null>(null);
+
+  // Carregar chaves salvas localmente
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedSteam = localStorage.getItem("gamevault_steam_api_key");
+      if (savedSteam && !steamApiKey) setSteamApiKey(savedSteam);
+
+      const savedXbox = localStorage.getItem("gamevault_xbox_api_key");
+      if (savedXbox && !xboxApiKey) setXboxApiKey(savedXbox);
+    }
+  }, []);
 
   // PlayStation Tab State
   const [psnInput, setPsnInput] = useState(user?.socialLinks?.psn || "");
@@ -178,11 +190,34 @@ export default function GameImporterModal({
   };
 
   // =========================================================================
-  // 1.1 CARREGAMENTO VIA XBOX (OPENXBL / NUVEM)
+  // 1.1 CARREGAMENTO VIA XBOX (OPENXBL / NUVEM OU LISTA)
   // =========================================================================
   const handleLoadXbox = async () => {
+    // Se preencheu lista rápida de títulos do Xbox por texto
+    if (xboxTextList.trim()) {
+      const lines = xboxTextList.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        const rawDrafts: ImportGameDraft[] = lines.map((line, idx) => {
+          const already = currentLibrary.some(
+            (libG) => libG.gameTitle.toLowerCase() === line.toLowerCase()
+          );
+          return {
+            id: `xbox_text_${idx}`,
+            originalTitle: line,
+            matchedTitle: line,
+            platform: "Xbox Series" as StorePlatform,
+            status: "backlog" as GameStatus,
+            selected: !already,
+            alreadyInLibrary: already,
+          };
+        });
+        await enrichDraftsWithIGDB(rawDrafts);
+        return;
+      }
+    }
+
     if (!xboxInput.trim()) {
-      setXboxError("Por favor, informe seu Xbox Gamertag.");
+      setXboxError("Por favor, informe sua Xbox Gamertag ou cole sua lista de jogos abaixo.");
       return;
     }
 
@@ -190,6 +225,10 @@ export default function GameImporterModal({
     setXboxError(null);
 
     try {
+      if (typeof window !== "undefined" && xboxApiKey.trim()) {
+        localStorage.setItem("gamevault_xbox_api_key", xboxApiKey.trim());
+      }
+
       const params = new URLSearchParams();
       params.set("gamertag", xboxInput.trim());
       if (xboxApiKey.trim()) params.set("apiKey", xboxApiKey.trim());
@@ -207,13 +246,17 @@ export default function GameImporterModal({
           (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
         );
 
+        let initialStatus: GameStatus = "backlog";
+        if (g.progressPercentage === 100) initialStatus = "completed";
+        else if (g.currentGamerscore > 0 || g.lastPlayed) initialStatus = "playing";
+
         return {
           id: `xbox_${g.titleId || idx}_${idx}`,
           originalTitle: g.name,
           matchedTitle: g.name,
           matchedCover: g.logoUrl || null,
-          platform: "Xbox Series" as StorePlatform,
-          status: "backlog" as GameStatus,
+          platform: (g.platform || "Xbox Series") as StorePlatform,
+          status: initialStatus,
           selected: !already,
           alreadyInLibrary: already,
         };
@@ -690,7 +733,12 @@ export default function GameImporterModal({
                             type="password"
                             placeholder="Sua Steam Web API Key..."
                             value={steamApiKey}
-                            onChange={(e) => setSteamApiKey(e.target.value)}
+                            onChange={(e) => {
+                              setSteamApiKey(e.target.value);
+                              if (typeof window !== "undefined") {
+                                localStorage.setItem("gamevault_steam_api_key", e.target.value.trim());
+                              }
+                            }}
                             className="w-full h-10 px-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF]"
                           />
                           <p className="text-[10px] text-gray-500 mt-1">
@@ -738,7 +786,7 @@ export default function GameImporterModal({
                     <span>Sincronização via Gamertag / Xbox Live</span>
                   </div>
                   <p className="text-xs text-gray-300 leading-relaxed">
-                    Insira sua <strong>Xbox Gamertag</strong>. Buscamos seus títulos jogados no Xbox Series X|S, Xbox One, Xbox 360 e PC Game Pass!
+                    Insira sua <strong>Xbox Gamertag</strong>. Buscamos seus títulos jogados no Xbox Series X|S, Xbox One, Xbox 360 e PC Game Pass com capas e conquistas!
                   </p>
 
                   <div className="space-y-2">
@@ -752,23 +800,42 @@ export default function GameImporterModal({
 
                     {/* Opcional: OpenXBL API Key */}
                     <div className="space-y-1 pt-1">
-                      <details className="text-[11px] text-gray-400 cursor-pointer">
+                      <details className="text-[11px] text-gray-400 cursor-pointer" open={Boolean(xboxApiKey)}>
                         <summary className="hover:text-white">
-                          Opções Avançadas: Chave OpenXBL (Opcional para Nuvem Direta)
+                          Opções Avançadas: Chave OpenXBL (xbl.io)
                         </summary>
-                        <div className="pt-2">
+                        <div className="pt-2 space-y-1.5">
                           <input
                             type="password"
                             placeholder="Sua chave da API do OpenXBL (xbl.io)..."
                             value={xboxApiKey}
-                            onChange={(e) => setXboxApiKey(e.target.value)}
+                            onChange={(e) => {
+                              setXboxApiKey(e.target.value);
+                              if (typeof window !== "undefined") {
+                                localStorage.setItem("gamevault_xbox_api_key", e.target.value.trim());
+                              }
+                            }}
                             className="w-full h-10 px-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
                           />
-                          <p className="text-[10px] text-gray-500 mt-1">
-                            Disponível gratuitamente em <a href="https://xbl.io" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">xbl.io</a> para sincronização contínua.
+                          <p className="text-[10px] text-gray-500">
+                            Obtenha gratuitamente em <a href="https://xbl.io/dashboard" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">xbl.io/dashboard</a> para conectar sua conta Xbox diretamente.
                           </p>
                         </div>
                       </details>
+                    </div>
+
+                    {/* Opção alternativa: Lista rápida colada */}
+                    <div className="pt-2 border-t border-white/10 space-y-1.5">
+                      <label className="text-[11px] text-gray-400 block font-medium">
+                        Ou cole sua lista de jogos do Xbox (um por linha):
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder={"Halo Infinite\nForza Horizon 5\nGears 5\nStarfield\nHi-Fi RUSH"}
+                        value={xboxTextList}
+                        onChange={(e) => setXboxTextList(e.target.value)}
+                        className="w-full p-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 font-mono resize-none"
+                      />
                     </div>
                   </div>
                 </div>
@@ -776,11 +843,11 @@ export default function GameImporterModal({
                 {xboxError && (
                   <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
                     <span className="font-bold flex items-center gap-1.5 text-amber-300">
-                      <AlertCircle className="w-3.5 h-3.5" /> Dica:
+                      <AlertCircle className="w-3.5 h-3.5" /> Atenção:
                     </span>
                     <p>{xboxError}</p>
                     <p className="text-[11px] text-gray-400 pt-1">
-                      💡 <strong>Dica rápida:</strong> Você também pode usar a aba <strong>&quot;Lista Rápida&quot;</strong> para colar os nomes dos seus jogos favoritos do Xbox e importá-los em segundos!
+                      💡 <strong>Dica:</strong> Se seu perfil Xbox não for público ou não tiver chave da API, você pode colar os nomes dos jogos acima no campo de texto e importá-los com 1 clique!
                     </p>
                   </div>
                 )}
@@ -789,7 +856,7 @@ export default function GameImporterModal({
                   <button
                     type="button"
                     onClick={() => handleLoadXbox()}
-                    disabled={isXboxLoading || !xboxInput.trim()}
+                    disabled={isXboxLoading || (!xboxInput.trim() && !xboxTextList.trim())}
                     className="w-full min-h-[46px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                   >
                     {isXboxLoading ? (
@@ -797,7 +864,11 @@ export default function GameImporterModal({
                     ) : (
                       <Download className="w-4 h-4 text-black" />
                     )}
-                    <span>Carregar Jogos do Xbox</span>
+                    <span>
+                      {xboxTextList.trim()
+                        ? "Carregar Lista de Jogos do Xbox"
+                        : "Carregar Jogos da Nuvem Xbox"}
+                    </span>
                   </button>
                 </div>
               </div>
