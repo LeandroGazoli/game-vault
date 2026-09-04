@@ -15,6 +15,11 @@ import {
   addFeedbackComment,
   updateFeedbackStatusAndResponse,
 } from "@/lib/firebase";
+import {
+  validateCommentSpam,
+  checkCommentCooldown,
+  recordCommentSubmission,
+} from "@/lib/antiSpam";
 import UserAvatar from "@/components/UserAvatar";
 import PlanBadge from "@/components/PlanBadge";
 import { getProfileUrl } from "@/lib/routes";
@@ -38,6 +43,7 @@ import {
   Trash2,
   Clock,
   Gift,
+  AlertCircle,
   Edit3,
 } from "lucide-react";
 
@@ -117,6 +123,8 @@ export default function FeedbackDetailModal({
     }
   };
 
+  const [commentError, setCommentError] = useState<string | null>(null);
+
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -126,6 +134,21 @@ export default function FeedbackDetailModal({
     const clean = commentInput.trim();
     if (!clean) return;
 
+    // 1. Verificação Anti-Spam
+    const spamCheck = validateCommentSpam(clean);
+    if (!spamCheck.isValid) {
+      setCommentError(spamCheck.error || "Comentário inválido.");
+      return;
+    }
+
+    // 2. Cooldown de Comentários
+    const cd = checkCommentCooldown(user.uid);
+    if (!cd.allowed) {
+      setCommentError(cd.reason || "Aguarde alguns segundos antes de comentar novamente.");
+      return;
+    }
+
+    setCommentError(null);
     setIsSubmittingComment(true);
     try {
       await addFeedbackComment(item.id, {
@@ -138,10 +161,12 @@ export default function FeedbackDetailModal({
         content: clean,
         isAdmin: Boolean(isAdmin),
       });
+      recordCommentSubmission(user.uid);
       setCommentInput("");
       await loadComments(item.id);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Erro ao enviar comentário:", e);
+      setCommentError(e?.message || "Erro ao publicar comentário.");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -469,6 +494,14 @@ export default function FeedbackDetailModal({
               </button>
             )}
           </form>
+
+          {/* Mensagem de Erro de Comentário / Anti-Spam */}
+          {commentError && (
+            <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-fadeIn">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{commentError}</span>
+            </div>
+          )}
 
           {/* Lista de Comentários */}
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">

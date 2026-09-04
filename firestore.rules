@@ -80,11 +80,18 @@ service cloud.firestore {
         request.resource.data.authorId == request.auth.uid &&
         request.resource.data.status == "under_review" &&
         request.resource.data.score == 0 &&
+        request.resource.data.upvotesCount == 0 &&
+        request.resource.data.downvotesCount == 0 &&
+        request.resource.data.commentsCount == 0 &&
+        request.resource.data.category in ["idea", "bug", "improvement", "feedback"] &&
+        (!('rewarded' in request.resource.data) || request.resource.data.rewarded == false) &&
+        (!('adminResponse' in request.resource.data) || request.resource.data.adminResponse == null) &&
         request.resource.data.title is string &&
-        request.resource.data.title.size() >= 3 &&
-        request.resource.data.title.size() <= 150 &&
+        request.resource.data.title.size() >= 5 &&
+        request.resource.data.title.size() <= 120 &&
         request.resource.data.description is string &&
-        request.resource.data.description.size() <= 5000;
+        request.resource.data.description.size() >= 15 &&
+        request.resource.data.description.size() <= 3000;
 
       // Atualização: Admin verificado tem controle total (status, notas da equipe e concessão de prêmios).
       // Usuários autenticados podem atualizar contadores de votos ou o próprio autor pode editar seu texto
@@ -114,7 +121,11 @@ service cloud.firestore {
       // Discussões e comentários da comunidade
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow create: if isAuthenticated() &&
+          request.resource.data.authorId == request.auth.uid &&
+          request.resource.data.content is string &&
+          request.resource.data.content.size() >= 3 &&
+          request.resource.data.content.size() <= 1000;
         allow update, delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       }
     }
