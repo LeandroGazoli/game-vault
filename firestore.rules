@@ -26,10 +26,8 @@ service cloud.firestore {
 
     // Regras para perfis de usuário
     match /users/{userId} {
-      // Leitura individual permitida (para exibir perfis e bibliotecas públicas)
-      allow get: if true;
-      // Listagem em massa da coleção inteira restrita exclusivamente a administradores verificados (Prevenção de Enumeração/Vazamento PII)
-      allow list: if isVerifiedAdmin();
+      // Leitura pública permitida para consulta de perfis e buscas por username
+      allow read: if true;
 
       // Criação inicial de conta: usuário comum só pode criar conta gratuita e sem privilégios
       allow create: if isVerifiedAdmin() || (

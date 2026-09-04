@@ -118,7 +118,10 @@ export async function getUserProfileByUsername(username: string): Promise<UserPr
   if (!username || !db) return null;
 
   try {
-    const clean = username.toLowerCase().trim();
+    const raw = username.trim();
+    const clean = raw.toLowerCase();
+
+    // 1. Busca por campo username (minúsculo padronizado)
     const q = query(
       collection(db, "users"),
       where("username", "==", clean),
@@ -127,6 +130,25 @@ export async function getUserProfileByUsername(username: string): Promise<UserPr
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       return snapshot.docs[0].data() as UserProfile;
+    }
+
+    // 2. Fallback: busca por username exato (caso tenha sido salvo com maiúsculas antigas)
+    if (clean !== raw) {
+      const qExact = query(
+        collection(db, "users"),
+        where("username", "==", raw),
+        limit(1)
+      );
+      const snapExact = await getDocs(qExact);
+      if (!snapExact.empty) {
+        return snapExact.docs[0].data() as UserProfile;
+      }
+    }
+
+    // 3. Fallback: verifica se o parâmetro foi um UID direto
+    const directDoc = await getDoc(doc(db, "users", raw));
+    if (directDoc.exists()) {
+      return directDoc.data() as UserProfile;
     }
   } catch (e) {
     console.error("Erro ao buscar perfil por username no Firestore:", e);

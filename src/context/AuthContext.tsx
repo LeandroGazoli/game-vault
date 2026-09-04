@@ -32,6 +32,7 @@ interface AuthContextType {
   signUpWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserBio: (bio: string, favoriteGame?: string) => Promise<void>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
   upgradePlan: (plan: UserPlan, hideAds?: boolean) => Promise<void>;
 }
 
@@ -231,6 +232,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await saveUserProfile(user.uid, updated);
   };
 
+  const updateUserProfile = async (data: Partial<UserProfile>) => {
+    if (!user) return;
+    const updated: UserProfile = {
+      ...user,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    setUser(updated);
+    await saveUserProfile(user.uid, updated);
+  };
+
   const upgradePlan = async (plan: UserPlan, hideAds = true) => {
     if (!user) return;
     const isPlanPremium = plan === "pro" || plan === "vip" || isAdmin;
@@ -258,6 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUpWithEmail,
         logout,
         updateUserBio,
+        updateUserProfile,
         upgradePlan,
       }}
     >

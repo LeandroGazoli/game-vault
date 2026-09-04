@@ -21,6 +21,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const planTag = isVip ? "👑 VIP" : isPro ? "⚡ PRO" : "";
   const title = `${displayName} (@${cleanUsername}) ${planTag} • Perfil Gamer no MyGameList`;
 
+  const isPrivate = targetUser ? (targetUser.isPublic === false || targetUser.visibility?.isPublic === false) : false;
+
+  if (isPrivate) {
+    return {
+      title: `${displayName} (@${cleanUsername}) • Perfil Privado no MyGameList`,
+      description: `Este perfil gamer é privado no MyGameList.`,
+      robots: {
+        index: false,
+        follow: false,
+      },
+      openGraph: {
+        title: `${displayName} (@${cleanUsername}) • Perfil Privado`,
+        description: `Este perfil gamer é privado no MyGameList.`,
+        url: `${SITE_URL}${getProfileUrl(cleanUsername)}`,
+        siteName: "MyGameList",
+        type: "profile",
+      },
+    };
+  }
+
   const bio = targetUser?.bio || "";
   const favGame = targetUser?.favoriteGame ? `🎮 Jogo Favorito: ${targetUser.favoriteGame}` : "";
   const titles = targetUser?.customTitles && targetUser.customTitles.length > 0

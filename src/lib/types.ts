@@ -71,6 +71,7 @@ export interface SocialLinks {
 }
 
 export interface ProfileVisibility {
+  isPublic?: boolean;
   showStats?: boolean;
   showPlaytime?: boolean;
   showRatings?: boolean;
@@ -408,6 +409,7 @@ export interface UserProfile {
   customBioMode?: "markdown" | "html" | null;
   socialLinks?: SocialLinks;
   showcaseGameId?: number | null;
+  isPublic?: boolean;
   visibility?: ProfileVisibility;
   premiumUntil?: string | null;
   createdAt: string;
