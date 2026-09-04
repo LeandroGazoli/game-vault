@@ -226,7 +226,11 @@ export async function createFeedbackItem(
   >
 ): Promise<string> {
   if (!db) throw new Error("Firestore não inicializado");
+  if (!auth?.currentUser) {
+    throw new Error("Você precisa estar conectado à sua conta para publicar uma sugestão.");
+  }
 
+  const currentUserId = auth.currentUser.uid;
   const feedbackCollection = collection(db, "feedback");
   const newDocRef = doc(feedbackCollection);
   const now = new Date().toISOString();
@@ -234,11 +238,13 @@ export async function createFeedbackItem(
   const item: FeedbackItem = {
     ...data,
     id: newDocRef.id,
+    authorId: currentUserId,
     status: "under_review",
     upvotesCount: 0,
     downvotesCount: 0,
     score: 0,
     commentsCount: 0,
+    rewarded: false,
     createdAt: now,
     updatedAt: now,
   };
@@ -329,6 +335,9 @@ export async function castFeedbackVote(
 ): Promise<{ userVote: 1 | -1 | 0; score: number; upvotes: number; downvotes: number }> {
   if (!feedbackId || !userId || !db) {
     throw new Error("Parâmetros inválidos para votação");
+  }
+  if (!auth?.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error("Você precisa estar conectado com sua conta para votar.");
   }
 
   const feedbackRef = doc(db, "feedback", feedbackId);
@@ -531,6 +540,9 @@ export async function addFeedbackComment(
   commentData: Omit<FeedbackComment, "id" | "createdAt">
 ): Promise<string> {
   if (!feedbackId || !db) throw new Error("Parâmetros inválidos");
+  if (!auth?.currentUser || auth.currentUser.uid !== commentData.authorId) {
+    throw new Error("Você precisa estar conectado com sua conta para comentar.");
+  }
 
   const commentsColl = collection(db, "feedback", feedbackId, "comments");
   const newCommentRef = doc(commentsColl);

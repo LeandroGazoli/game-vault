@@ -588,6 +588,7 @@ export default function FeedbackClient() {
         onSubmit={handleCreateFeedback}
         user={user}
         onRequireAuth={() => setIsAuthOpen(true)}
+        existingFeedbacks={items}
       />
 
       <FeedbackDetailModal

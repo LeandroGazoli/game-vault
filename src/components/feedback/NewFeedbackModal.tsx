@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { FeedbackCategory, FEEDBACK_CATEGORIES, UserProfile } from "@/lib/types";
+import { FeedbackCategory, FEEDBACK_CATEGORIES, UserProfile, FeedbackItem } from "@/lib/types";
+import {
+  validateFeedbackSpam,
+  checkFeedbackCooldown,
+  recordFeedbackSubmission,
+  checkDuplicateFeedback,
+} from "@/lib/antiSpam";
 import {
   X,
   Plus,
@@ -14,6 +20,7 @@ import {
   AlertCircle,
   Loader2,
   Send,
+  ShieldCheck,
 } from "lucide-react";
 
 interface NewFeedbackModalProps {
@@ -26,6 +33,7 @@ interface NewFeedbackModalProps {
   }) => Promise<void>;
   user: UserProfile | null;
   onRequireAuth: () => void;
+  existingFeedbacks?: FeedbackItem[];
 }
 
 export default function NewFeedbackModal({
@@ -34,10 +42,12 @@ export default function NewFeedbackModal({
   onSubmit,
   user,
   onRequireAuth,
+  existingFeedbacks = [],
 }: NewFeedbackModalProps) {
   const [category, setCategory] = useState<FeedbackCategory>("idea");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,18 +63,26 @@ export default function NewFeedbackModal({
     const cleanTitle = title.trim();
     const cleanDesc = description.trim();
 
-    if (cleanTitle.length < 5) {
-      setError("O título precisa ter pelo menos 5 caracteres.");
+    // 1. Verificação de Cooldown / Limite Diário (Anti-Spam)
+    const cooldown = checkFeedbackCooldown(user.uid);
+    if (!cooldown.allowed) {
+      setError(cooldown.reason || "Por favor, aguarde alguns segundos antes de postar novamente.");
       return;
     }
 
-    if (cleanTitle.length > 120) {
-      setError("O título pode ter no máximo 120 caracteres.");
-      return;
+    // 2. Verificação de Duplicidade (Anti-Spam)
+    if (existingFeedbacks && existingFeedbacks.length > 0) {
+      const dup = checkDuplicateFeedback(user.uid, cleanTitle, existingFeedbacks);
+      if (dup.isDuplicate) {
+        setError(dup.reason || "Você já postou uma sugestão idêntica anteriormente.");
+        return;
+      }
     }
 
-    if (cleanDesc.length < 15) {
-      setError("Por favor, forneça mais detalhes (mínimo 15 caracteres).");
+    // 3. Validação Profunda Anti-Fraude e Anti-Spam
+    const validation = validateFeedbackSpam(cleanTitle, cleanDesc, honeypot);
+    if (!validation.isValid) {
+      setError(validation.error || "Conteúdo rejeitado pelo sistema de segurança.");
       return;
     }
 
@@ -76,9 +94,12 @@ export default function NewFeedbackModal({
         description: cleanDesc,
         category,
       });
+      // Registra timestamp no anti-spam
+      recordFeedbackSubmission(user.uid);
       setTitle("");
       setDescription("");
       setCategory("idea");
+      setHoneypot("");
       onClose();
     } catch (err: any) {
       setError(err?.message || "Erro ao publicar. Tente novamente.");
@@ -223,6 +244,20 @@ export default function NewFeedbackModal({
             />
           </div>
 
+          {/* Campo Invisível Honeypot Anti-Bot */}
+          <div aria-hidden="true" style={{ display: "none", position: "absolute", left: "-9999px" }}>
+            <label htmlFor="website_url_hp">Deixe em branco se for humano</label>
+            <input
+              id="website_url_hp"
+              type="text"
+              name="website_url_hp"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
           {/* Mensagem de Erro */}
           {error && (
             <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-fadeIn">
@@ -231,33 +266,40 @@ export default function NewFeedbackModal({
             </div>
           )}
 
-          {/* Botões de Ação */}
-          <div className="pt-2 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-neutral-300 transition-colors"
-            >
-              Cancelar
-            </button>
+          {/* Botões de Ação & Selo de Segurança */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/5 pt-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Protegido por Anti-Spam &amp; Anti-Fraude</span>
+            </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-[#00E5FF] hover:from-cyan-300 hover:to-cyan-200 text-black text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Publicando...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  <span>Publicar para Votação</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-neutral-300 transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-[#00E5FF] hover:from-cyan-300 hover:to-cyan-200 text-black text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Publicando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Publicar para Votação</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
