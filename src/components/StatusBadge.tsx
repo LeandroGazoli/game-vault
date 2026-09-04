@@ -2,7 +2,7 @@
 
 import React from "react";
 import { GameStatus, CompletionType } from "@/lib/types";
-import { Trophy, Gamepad2, XCircle, Clock, Crown, Sword, Compass, Sparkles } from "lucide-react";
+import { Trophy, Gamepad2, XCircle, Clock, Crown, Sword, Compass, Sparkles, Layers } from "lucide-react";
 
 interface StatusBadgeProps {
   status: GameStatus;
@@ -28,6 +28,13 @@ export const STATUS_CONFIG: Record<
     text: "text-cyan-300",
     border: "border-cyan-500/40",
     icon: Gamepad2,
+  },
+  library: {
+    label: "Biblioteca",
+    bg: "bg-[#151726]/90",
+    text: "text-indigo-300",
+    border: "border-indigo-500/40",
+    icon: Layers,
   },
   dropped: {
     label: "Dropado",

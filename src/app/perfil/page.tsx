@@ -59,6 +59,7 @@ import {
   Layers,
   Bookmark,
   Ban,
+  Library,
 } from "lucide-react";
 
 function computeLibraryStats(games: UserGame[]): LibraryStats {
@@ -71,12 +72,14 @@ function computeLibraryStats(games: UserGame[]): LibraryStats {
   let playing = 0;
   let dropped = 0;
   let backlog = 0;
+  let libraryCount = 0;
 
   for (const g of games) {
     if (g.status === "completed") completed++;
     else if (g.status === "playing") playing++;
     else if (g.status === "dropped") dropped++;
     else if (g.status === "backlog") backlog++;
+    else if (g.status === "library") libraryCount++;
 
     if (g.userPlaytimeHours && g.userPlaytimeHours > 0) {
       totalPlaytime += g.userPlaytimeHours;
@@ -105,6 +108,7 @@ function computeLibraryStats(games: UserGame[]): LibraryStats {
     playingCount: playing,
     droppedCount: dropped,
     backlogCount: backlog,
+    libraryCount,
     totalPlaytimeHours: totalPlaytime,
     averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
     topGenres,
@@ -521,6 +525,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 flex-nowrap">
             {[
               { id: "all", label: "Todos", icon: Layers, iconColor: "text-gray-400", count: activeStats.totalGames },
+              { id: "library", label: "Biblioteca", icon: Library, iconColor: "text-indigo-400", count: activeStats.libraryCount || 0 },
               { id: "completed", label: "Zerados", icon: Trophy, iconColor: "text-amber-400", count: activeStats.completedCount },
               { id: "playing", label: "Jogando", icon: Gamepad2, iconColor: "text-emerald-400", count: activeStats.playingCount },
               { id: "backlog", label: "Quero Jogar", icon: Bookmark, iconColor: "text-purple-400", count: activeStats.backlogCount },

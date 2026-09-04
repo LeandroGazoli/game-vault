@@ -106,6 +106,7 @@ export async function GET(
         total: filteredGames.length,
         completed: filteredGames.filter((g) => g.status === "completed").length,
         playing: filteredGames.filter((g) => g.status === "playing").length,
+        library: filteredGames.filter((g) => g.status === "library").length,
         backlog: filteredGames.filter((g) => g.status === "backlog").length,
         favorites: filteredGames.filter((g) => g.isFavorite).length,
       },

@@ -57,6 +57,7 @@ export function filterGamesForExport(
 const STATUS_LABELS: Record<GameStatus, string> = {
   completed: "Zerado",
   playing: "Jogando",
+  library: "Biblioteca",
   backlog: "Quero Jogar (Backlog)",
   dropped: "Dropado",
 };

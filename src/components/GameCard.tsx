@@ -7,7 +7,7 @@ import StatusBadge from "./StatusBadge";
 import GameModal from "./GameModal";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
-import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3 } from "lucide-react";
+import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3, Layers } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
 import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
 
@@ -168,6 +168,18 @@ function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
                 >
                   <Play className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Jogando Agora</span>
+                </button>
+
+                <button
+                  onClick={() => handleQuickStatus("library")}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                    userGame?.status === "library"
+                      ? "bg-indigo-500/20 text-indigo-300 font-bold"
+                      : "text-gray-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <span>Na Biblioteca</span>
                 </button>
 
                 <button

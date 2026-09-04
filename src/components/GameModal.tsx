@@ -29,6 +29,7 @@ import {
   User,
   Monitor,
   Package,
+  Layers,
 } from "lucide-react";
 import { CONSOLE_CATEGORIES, POPULAR_CONSOLES } from "@/lib/platformUtils";
 
@@ -545,6 +546,20 @@ export default function GameModal({
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {/* Biblioteca */}
+                <button
+                  type="button"
+                  onClick={() => setStatus("library")}
+                  className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                    status === "library"
+                      ? "bg-indigo-400 text-black font-bold shadow-lg shadow-indigo-400/20"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  Biblioteca
+                </button>
+
                 {/* Quero Jogar / Backlog (Padrão) */}
                 <button
                   type="button"

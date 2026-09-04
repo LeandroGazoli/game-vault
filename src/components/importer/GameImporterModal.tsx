@@ -96,7 +96,7 @@ export default function GameImporterModal({
   // Text Tab State
   const [textInput, setTextInput] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState<StorePlatform>("Epic Games");
-  const [defaultStatus, setDefaultStatus] = useState<GameStatus>("backlog");
+  const [defaultStatus, setDefaultStatus] = useState<GameStatus>("library");
 
   // Step State: 'input' | 'review' | 'importing' | 'completed'
   const [step, setStep] = useState<"input" | "review" | "importing" | "completed">("input");
@@ -158,10 +158,10 @@ export default function GameImporterModal({
       // Converte jogos retornados da Steam em rascunhos para revisão
       const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
         const hours = g.playtimeForeverHours || 0;
-        // Se jogou mais de 15h, sugere 'Zerado' ou 'Jogando'
-        let initialStatus: GameStatus = "backlog";
+        let initialStatus: GameStatus = "library";
         if (hours > 20) initialStatus = "completed";
-        else if (hours > 0) initialStatus = "playing";
+        else if (hours > 1) initialStatus = "playing";
+        else initialStatus = "library"; // 1h ou menos de gameplay vai para Biblioteca
 
         const already = currentLibrary.some(
           (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
@@ -175,7 +175,7 @@ export default function GameImporterModal({
           platform: "Steam",
           status: initialStatus,
           userPlaytimeHours: hours > 0 ? hours : undefined,
-          selected: !already, // Desmarca automaticamente se já estiver na biblioteca
+          selected: true, // Importado por padrão
           alreadyInLibrary: already,
         };
       });
@@ -206,8 +206,8 @@ export default function GameImporterModal({
             originalTitle: line,
             matchedTitle: line,
             platform: "Xbox Series" as StorePlatform,
-            status: "backlog" as GameStatus,
-            selected: !already,
+            status: "library" as GameStatus,
+            selected: true,
             alreadyInLibrary: already,
           };
         });
@@ -246,9 +246,12 @@ export default function GameImporterModal({
           (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
         );
 
-        let initialStatus: GameStatus = "backlog";
+        const hours = g.playtimeForeverHours || 0;
+        let initialStatus: GameStatus = "library";
         if (g.progressPercentage === 100) initialStatus = "completed";
-        else if (g.currentGamerscore > 0 || g.lastPlayed) initialStatus = "playing";
+        else if (hours > 20) initialStatus = "completed";
+        else if (hours > 1 || (g.currentGamerscore && g.currentGamerscore > 500)) initialStatus = "playing";
+        else initialStatus = "library"; // 1h ou menos
 
         return {
           id: `xbox_${g.titleId || idx}_${idx}`,
@@ -257,7 +260,8 @@ export default function GameImporterModal({
           matchedCover: g.logoUrl || null,
           platform: (g.platform || "Xbox Series") as StorePlatform,
           status: initialStatus,
-          selected: !already,
+          userPlaytimeHours: hours > 0 ? hours : undefined,
+          selected: true,
           alreadyInLibrary: already,
         };
       });
@@ -288,8 +292,8 @@ export default function GameImporterModal({
             originalTitle: line,
             matchedTitle: line,
             platform: "PlayStation 5" as StorePlatform,
-            status: "backlog" as GameStatus,
-            selected: !already,
+            status: "library" as GameStatus,
+            selected: true,
             alreadyInLibrary: already,
           };
         });
@@ -328,8 +332,8 @@ export default function GameImporterModal({
           originalTitle: g.name,
           matchedTitle: g.name,
           platform: "PlayStation 5" as StorePlatform,
-          status: "backlog" as GameStatus,
-          selected: !already,
+          status: "library" as GameStatus,
+          selected: true,
           alreadyInLibrary: already,
         };
       });
@@ -371,16 +375,33 @@ export default function GameImporterModal({
               (libG) => libG.gameTitle.toLowerCase() === title.toLowerCase()
             );
 
+            const hours = item.userPlaytimeHours || item.playtime || undefined;
+            let status: GameStatus = "library";
+            if (item.status) {
+              const s = String(item.status).toLowerCase();
+              if (s.includes("completed") || s.includes("zerado")) status = "completed";
+              else if (s.includes("playing") || s.includes("jogando")) status = "playing";
+              else if (s.includes("dropped") || s.includes("dropado")) status = "dropped";
+              else if (s.includes("backlog") || s.includes("quero jogar")) status = "backlog";
+              else status = "library";
+            } else if (hours !== undefined && hours > 20) {
+              status = "completed";
+            } else if (hours !== undefined && hours > 1) {
+              status = "playing";
+            } else {
+              status = "library";
+            }
+
             return {
               id: `json_${idx}`,
               originalTitle: title,
               matchedTitle: title,
               matchedCover: item.gameCover || item.cover || null,
               platform: item.platformPlayed || item.platform || "PC",
-              status: item.status || "backlog",
-              userPlaytimeHours: item.userPlaytimeHours || item.playtime || undefined,
+              status,
+              userPlaytimeHours: hours,
               userRating: item.userRating || item.rating || undefined,
-              selected: !already,
+              selected: true, // Importado por padrão
               alreadyInLibrary: already,
             };
           });
@@ -407,16 +428,27 @@ export default function GameImporterModal({
 
             const platform = platformIdx >= 0 && cleanRow[platformIdx] ? cleanRow[platformIdx] : "PC";
             const rawStatus = statusIdx >= 0 && cleanRow[statusIdx] ? cleanRow[statusIdx].toLowerCase() : "";
-            let status: GameStatus = "backlog";
+            const hours = hoursIdx >= 0 && !isNaN(parseFloat(cleanRow[hoursIdx])) ? parseFloat(cleanRow[hoursIdx]) : undefined;
+
+            let status: GameStatus = "library";
             if (rawStatus.includes("completed") || rawStatus.includes("zerado") || rawStatus.includes("beaten")) {
               status = "completed";
             } else if (rawStatus.includes("playing") || rawStatus.includes("jogando")) {
               status = "playing";
             } else if (rawStatus.includes("dropped") || rawStatus.includes("dropado")) {
               status = "dropped";
+            } else if (rawStatus.includes("backlog") || rawStatus.includes("quero jogar")) {
+              status = "backlog";
+            } else if (rawStatus.includes("library") || rawStatus.includes("biblioteca")) {
+              status = "library";
+            } else if (hours !== undefined && hours > 20) {
+              status = "completed";
+            } else if (hours !== undefined && hours > 1) {
+              status = "playing";
+            } else {
+              status = "library";
             }
 
-            const hours = hoursIdx >= 0 && !isNaN(parseFloat(cleanRow[hoursIdx])) ? parseFloat(cleanRow[hoursIdx]) : undefined;
             const already = currentLibrary.some(
               (libG) => libG.gameTitle.toLowerCase() === title.toLowerCase()
             );
@@ -428,7 +460,7 @@ export default function GameImporterModal({
               platform,
               status,
               userPlaytimeHours: hours,
-              selected: !already,
+              selected: true, // Importado por padrão
               alreadyInLibrary: already,
             });
           }
@@ -465,8 +497,8 @@ export default function GameImporterModal({
         originalTitle: line,
         matchedTitle: line,
         platform: selectedPlatform,
-        status: defaultStatus,
-        selected: !already,
+        status: defaultStatus || "library",
+        selected: true, // Importado por padrão
         alreadyInLibrary: already,
       };
     });
@@ -1010,6 +1042,7 @@ export default function GameImporterModal({
                       onChange={(e) => setDefaultStatus(e.target.value as GameStatus)}
                       className="w-full h-11 px-3 rounded-xl bg-[#18191c] border border-white/10 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
                     >
+                      <option value="library">📚 Biblioteca (Na Estante)</option>
                       <option value="backlog">⏳ Quero Jogar (Backlog)</option>
                       <option value="playing">🎮 Jogando</option>
                       <option value="completed">🏆 Zerado</option>
@@ -1194,6 +1227,7 @@ export default function GameImporterModal({
                       onChange={(e) => updateGameStatus(draft.id, e.target.value as GameStatus)}
                       className="h-8 px-2 rounded-xl bg-[#18191c] border border-white/10 text-[11px] text-white focus:outline-none focus:border-[#00E5FF]"
                     >
+                      <option value="library">Biblioteca</option>
                       <option value="backlog">Quero Jogar</option>
                       <option value="playing">Jogando</option>
                       <option value="completed">Zerado</option>

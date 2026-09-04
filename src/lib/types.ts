@@ -1,4 +1,4 @@
-export type GameStatus = "completed" | "playing" | "dropped" | "backlog";
+export type GameStatus = "completed" | "playing" | "dropped" | "backlog" | "library";
 
 export type CompletionType = "main_story" | "main_extra" | "completionist" | "platinum" | "custom";
 
@@ -422,6 +422,7 @@ export interface LibraryStats {
   playingCount: number;
   droppedCount: number;
   backlogCount: number;
+  libraryCount?: number;
   totalPlaytimeHours: number;
   averageRating: number;
   topGenres: { name: string; count: number }[];

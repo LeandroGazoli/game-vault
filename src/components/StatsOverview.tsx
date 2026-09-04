@@ -2,7 +2,7 @@
 
 import React from "react";
 import { LibraryStats } from "@/lib/types";
-import { Trophy, Gamepad2, XCircle, Clock, Hourglass, Star, Flame } from "lucide-react";
+import { Trophy, Gamepad2, XCircle, Clock, Hourglass, Star, Flame, Layers } from "lucide-react";
 
 interface StatsOverviewProps {
   stats: LibraryStats;
@@ -22,8 +22,8 @@ export default function StatsOverview({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Cards de Métricas Principais (2 colunas no mobile, 4 no desktop) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      {/* Cards de Métricas Principais (2 no mobile, 3 no tablet, 5 no desktop) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {/* Total Zerados */}
         <div
           onClick={() => onSelectTab && onSelectTab("completed")}
@@ -63,6 +63,25 @@ export default function StatsOverview({
             {stats.playingCount}
           </div>
           <div className="text-[10px] sm:text-[11px] text-gray-400 mt-1">Em progresso ativo</div>
+        </div>
+
+        {/* Total Biblioteca */}
+        <div
+          onClick={() => onSelectTab && onSelectTab("library")}
+          className={`cursor-pointer rounded-2xl sm:rounded-3xl border p-4 sm:p-5 transition-all duration-200 select-none ${
+            activeTab === "library"
+              ? "bg-indigo-500/15 border-indigo-500 ring-2 ring-indigo-500/30 scale-[1.02]"
+              : "bg-[#141518]/90 border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5"
+          }`}
+        >
+          <div className="flex items-center justify-between text-indigo-400 mb-1">
+            <span className="text-[11px] sm:text-xs font-bold uppercase font-mono tracking-wider">Biblioteca</span>
+            <Layers className="w-4 h-4" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+            {stats.libraryCount ?? 0}
+          </div>
+          <div className="text-[10px] sm:text-[11px] text-gray-400 mt-1">Coleção / Na Estante</div>
         </div>
 
         {/* Total Quero Jogar / Backlog */}

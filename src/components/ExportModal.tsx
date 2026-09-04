@@ -137,6 +137,7 @@ export default function ExportModal({
             <div className="flex flex-wrap gap-2">
               {[
                 { id: "all", label: "Todos os Jogos" },
+                { id: "library", label: "Biblioteca" },
                 { id: "completed", label: "Zerados" },
                 { id: "playing", label: "Jogando" },
                 { id: "backlog", label: "Quero Jogar" },

@@ -252,12 +252,14 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     let playing = 0;
     let dropped = 0;
     let backlog = 0;
+    let libraryCount = 0;
 
     for (const g of library) {
       if (g.status === "completed") completed++;
       else if (g.status === "playing") playing++;
       else if (g.status === "dropped") dropped++;
       else if (g.status === "backlog") backlog++;
+      else if (g.status === "library") libraryCount++;
 
       if (g.userPlaytimeHours && g.userPlaytimeHours > 0) {
         totalPlaytime += g.userPlaytimeHours;
@@ -286,6 +288,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       playingCount: playing,
       droppedCount: dropped,
       backlogCount: backlog,
+      libraryCount,
       totalPlaytimeHours: totalPlaytime,
       averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
       topGenres,
