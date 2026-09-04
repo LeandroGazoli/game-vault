@@ -15,7 +15,9 @@ import {
   updateFeedbackStatusAndResponse,
   grantFeedbackReward,
   deleteFeedbackItem,
+  castFeedbackVote,
 } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import UserAvatar from "@/components/UserAvatar";
 import PlanBadge from "@/components/PlanBadge";
 import FeedbackDetailModal from "@/components/feedback/FeedbackDetailModal";
@@ -40,6 +42,7 @@ import {
 } from "lucide-react";
 
 export default function AdminFeedbackManager() {
+  const { user, isAdmin } = useAuth();
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,6 +137,39 @@ export default function AdminFeedbackManager() {
     } catch (e) {
       console.error("Erro ao excluir:", e);
       showToast("Erro ao excluir.");
+    }
+  };
+
+  const handleVote = async (item: FeedbackItem, voteType: 1 | -1) => {
+    if (!user) return;
+    try {
+      const res = await castFeedbackVote(item.id, user.uid, voteType);
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === item.id
+            ? {
+                ...i,
+                score: res.score,
+                upvotesCount: res.upvotes,
+                downvotesCount: res.downvotes,
+              }
+            : i
+        )
+      );
+      if (detailItem?.id === item.id) {
+        setDetailItem((prev) =>
+          prev
+            ? {
+                ...prev,
+                score: res.score,
+                upvotesCount: res.upvotes,
+                downvotesCount: res.downvotes,
+              }
+            : null
+        );
+      }
+    } catch (e) {
+      console.error("Erro ao votar no admin:", e);
     }
   };
 
@@ -433,9 +469,9 @@ export default function AdminFeedbackManager() {
         item={detailItem}
         isOpen={Boolean(detailItem)}
         onClose={() => setDetailItem(null)}
-        onVote={async () => {}}
-        user={null}
-        isAdmin={true}
+        onVote={handleVote}
+        user={user}
+        isAdmin={isAdmin}
         onRequireAuth={() => {}}
         onOpenRewardModal={(i) => setRewardItem(i)}
         onStatusChange={handleStatusChange}
