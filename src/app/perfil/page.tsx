@@ -455,6 +455,14 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         <ProfileBioRenderer
           content={activeUser.customMarkdown || activeUser.customHtml}
           mode={activeUser.customBioMode}
+          onEdit={
+            isOwner
+              ? () => {
+                  setCustomizerInitialTab("markdown");
+                  setIsCustomizerOpen(true);
+                }
+              : undefined
+          }
         />
       )}
 

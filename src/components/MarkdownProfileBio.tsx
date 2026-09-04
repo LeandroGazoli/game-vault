@@ -5,16 +5,18 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
-import { Sparkles, FileText } from "lucide-react";
+import { Sparkles, FileText, Edit2 } from "lucide-react";
 
 interface MarkdownProfileBioProps {
   content?: string | null;
   className?: string;
+  onEdit?: () => void;
 }
 
 export default function MarkdownProfileBio({
   content,
   className = "",
+  onEdit,
 }: MarkdownProfileBioProps) {
   const sanitizedContent = useMemo(() => {
     if (!content || !content.trim()) return "";
@@ -32,9 +34,21 @@ export default function MarkdownProfileBio({
         <span className="flex items-center gap-1.5 text-[#00E5FF] font-bold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" /> Bio &amp; Showcase do Jogador
         </span>
-        <span className="flex items-center gap-1 text-gray-500">
-          <FileText className="w-3.5 h-3.5" /> Markdown &amp; HTML Híbrido
-        </span>
+        <div className="flex items-center gap-3">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/5 hover:bg-[#00E5FF]/10 text-gray-300 hover:text-[#00E5FF] border border-white/10 hover:border-[#00E5FF]/30 transition-all text-xs font-sans font-semibold active:scale-95 shadow-sm"
+              title="Editar bio customizada"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-[#00E5FF]" />
+              <span>Editar Bio</span>
+            </button>
+          )}
+          <span className="hidden sm:flex items-center gap-1 text-gray-500">
+            <FileText className="w-3.5 h-3.5" /> Markdown &amp; HTML Híbrido
+          </span>
+        </div>
       </div>
 
       {/* Renderização do Markdown */}
