@@ -16,6 +16,7 @@ import {
   ProfileLayout,
 } from "@/lib/types";
 import ProfileBioRenderer from "./ProfileBioRenderer";
+import UserAvatar from "./UserAvatar";
 import { isPureHtmlBio } from "@/lib/sanitizeHtml";
 import {
   X,
@@ -36,6 +37,7 @@ import {
   Trophy,
   Share2,
   EyeOff,
+  Globe,
   Bold,
   Italic,
   Heading,
@@ -50,6 +52,9 @@ import {
   MousePointer,
   FileText,
   AlertCircle,
+  User,
+  Heart,
+  SlidersHorizontal,
 } from "lucide-react";
 
 interface ProfileCustomizerModalProps {
@@ -57,7 +62,7 @@ interface ProfileCustomizerModalProps {
   onClose: () => void;
   onOpenUpgrade: () => void;
   games?: UserGame[];
-  initialTab?: "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility";
+  initialTab?: "info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility";
 }
 
 const THEME_OPTIONS: { id: ProfileTheme; name: string; color: string; ring: string; badge: string; isVip?: boolean }[] = [
@@ -109,9 +114,15 @@ export default function ProfileCustomizerModal({
   games = [],
   initialTab,
 }: ProfileCustomizerModalProps) {
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, updateUserProfile } = useAuth();
 
-  const [activeSection, setActiveSection] = useState<"appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">(initialTab || "titles");
+  const [activeSection, setActiveSection] = useState<"info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">(initialTab || "info");
+
+  // Dados Básicos do Perfil
+  const [displayNameInput, setDisplayNameInput] = useState<string>(user?.displayName || "");
+  const [photoUrlInput, setPhotoUrlInput] = useState<string>(user?.photoURL || "");
+  const [bioInput, setBioInput] = useState<string>(user?.bio || "");
+  const [favGameInput, setFavGameInput] = useState<string>(user?.favoriteGame || "");
 
   // Estados de Personalização
   const [selectedBanner, setSelectedBanner] = useState<string>(user?.bannerURL || PRESET_BANNERS[0].url);
@@ -153,6 +164,7 @@ export default function ProfileCustomizerModal({
   // Visibilidade
   const [visibility, setVisibility] = useState<ProfileVisibility>(
     user?.visibility || {
+      isPublic: user?.isPublic ?? true,
       showStats: true,
       showPlaytime: true,
       showRatings: true,
@@ -171,6 +183,10 @@ export default function ProfileCustomizerModal({
       }
     }
     if (user && isOpen) {
+      setDisplayNameInput(user.displayName || "");
+      setPhotoUrlInput(user.photoURL || "");
+      setBioInput(user.bio || "");
+      setFavGameInput(user.favoriteGame || "");
       setSelectedBanner(user.bannerURL || PRESET_BANNERS[0].url);
       setSelectedTheme(user.theme || "cyan");
       if (user.customTitles && Array.isArray(user.customTitles) && user.customTitles.length > 0) {
@@ -186,7 +202,13 @@ export default function ProfileCustomizerModal({
       setBioMode(user.customBioMode || (isPureHtmlBio(bioContent) ? "html" : "markdown"));
       setSocials(user.socialLinks || {});
       setShowcaseGameId(user.showcaseGameId || null);
-      if (user.visibility) setVisibility(user.visibility);
+      setVisibility({
+        isPublic: user.isPublic ?? user.visibility?.isPublic ?? true,
+        showStats: user.visibility?.showStats ?? true,
+        showPlaytime: user.visibility?.showPlaytime ?? true,
+        showRatings: user.visibility?.showRatings ?? true,
+        showDropped: user.visibility?.showDropped ?? true,
+      });
     }
   }, [user, isOpen, initialTab]);
 
@@ -272,7 +294,16 @@ export default function ProfileCustomizerModal({
     setIsSaving(true);
     try {
       const banner = customBannerUrl.trim() || selectedBanner;
-      await saveUserProfile(user.uid, {
+      const cleanDisplayName = displayNameInput.trim() || user.displayName || user.username;
+      const cleanPhotoUrl = photoUrlInput.trim() || null;
+      const cleanBio = bioInput.trim();
+      const cleanFavGame = favGameInput.trim();
+
+      await updateUserProfile({
+        displayName: cleanDisplayName,
+        photoURL: cleanPhotoUrl,
+        bio: cleanBio,
+        favoriteGame: cleanFavGame,
         bannerURL: banner,
         theme: selectedTheme,
         profileLayout: selectedLayout,
@@ -284,15 +315,19 @@ export default function ProfileCustomizerModal({
         customBioMode: bioMode,
         socialLinks: socials,
         showcaseGameId: showcaseGameId,
-        visibility: visibility,
+        isPublic: visibility.isPublic !== false,
+        visibility: {
+          ...visibility,
+          isPublic: visibility.isPublic !== false,
+        },
       });
       setSuccessToast(true);
       setTimeout(() => {
         setSuccessToast(false);
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (e) {
-      console.error("Erro ao salvar customização do perfil:", e);
+      console.error("Erro ao salvar perfil e personalização:", e);
     } finally {
       setIsSaving(false);
     }
@@ -318,31 +353,32 @@ export default function ProfileCustomizerModal({
         {/* Header do Modal */}
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-semibold">
-            <Palette className="w-3.5 h-3.5" />
-            Central de Customização do Perfil Público
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Central de Edição &amp; Personalização do Perfil
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            Personalize seu Perfil Gamer
+            Editar &amp; Personalizar Perfil
             {!isPremium && (
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Exclusivo PRO
+                <Crown className="w-3 h-3" /> Modo Free &amp; PRO
               </span>
             )}
           </h3>
           <p className="text-xs text-gray-400">
-            Customize temas visuais, capas, Markdown com GIFs, gamertags e escolha o que exibir no seu perfil público.
+            Ajuste seus dados básicos, bio, foto, capa panorâmica, paleta de cores, insígnias gamer e configurações públicas.
           </p>
         </div>
 
         {/* Barra de Abas de Configuração */}
-        <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/5">
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-white/5 border border-white/5 overflow-x-auto no-scrollbar">
           {[
+            { id: "info", label: "Dados do Perfil", icon: User },
             { id: "appearance", label: "Capa & Cores", icon: Palette },
-            { id: "titles", label: `Títulos & Insígnias (${equippedTitles.length}/3)`, icon: Sparkles },
-            { id: "markdown", label: "Bio em Markdown & GIFs", icon: Code2 },
-            { id: "socials", label: "Gamertags & Redes", icon: Share2 },
-            { id: "showcase", label: "Jogo em Destaque", icon: Trophy },
-            { id: "visibility", label: "Privacidade & Exibição", icon: EyeOff },
+            { id: "titles", label: `Insígnias (${equippedTitles.length}/3)`, icon: Sparkles },
+            { id: "markdown", label: "Bio Estilizada", icon: Code2 },
+            { id: "socials", label: "Gamertags", icon: Share2 },
+            { id: "showcase", label: "Destaque", icon: Trophy },
+            { id: "visibility", label: "Privacidade", icon: EyeOff },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSection === tab.id;
@@ -351,7 +387,7 @@ export default function ProfileCustomizerModal({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSection(tab.id as any)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                   isActive
                     ? "bg-[#00E5FF] text-black shadow-md scale-105"
                     : "text-gray-300 hover:bg-white/10 hover:text-white"
@@ -363,6 +399,162 @@ export default function ProfileCustomizerModal({
             );
           })}
         </div>
+
+        {/* CONTEÚDO DA ABA 0: INFORMAÇÕES BÁSICAS DO PERFIL */}
+        {activeSection === "info" && (
+          <div className="space-y-5 animate-fadeIn">
+            {/* Foto / Avatar */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#00E5FF]" /> Foto de Perfil / Avatar
+              </label>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    photoURL={photoUrlInput || user.photoURL}
+                    name={displayNameInput || user.displayName}
+                    size="xl"
+                    className="border-2 border-[#00E5FF]/50 shadow-xl"
+                  />
+                </div>
+
+                <div className="space-y-2 flex-1 w-full">
+                  <div className="flex items-center gap-2">
+                    <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <input
+                      type="url"
+                      placeholder="Cole a URL da sua foto ou avatar (ex: Discord, Steam, Imgur)..."
+                      value={photoUrlInput}
+                      onChange={(e) => setPhotoUrlInput(e.target.value)}
+                      className="flex-1 bg-[#101114] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF]"
+                    />
+                    {photoUrlInput && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrlInput("")}
+                        className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-gray-400 hover:text-white transition-colors"
+                        title="Remover foto personalizada"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    Insira o link direto de uma imagem ou GIF para usar como foto de perfil. Se vazio, usará sua inicial estilizada.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Nome de Exibição & Nome de Usuário */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-300 flex items-center justify-between">
+                  <span>Nome de Exibição</span>
+                  <span className="text-[10px] text-gray-500 font-mono font-normal">
+                    {displayNameInput.length}/40
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={40}
+                  value={displayNameInput}
+                  onChange={(e) => setDisplayNameInput(e.target.value)}
+                  placeholder="Seu Nome Gamer"
+                  className="w-full bg-[#101114] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+                />
+                <p className="text-[10px] text-gray-400">
+                  Como os outros jogadores verão você na plataforma.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 flex items-center justify-between">
+                  <span>Identificador (@username)</span>
+                  <span className="text-[10px] text-gray-500 font-mono font-normal">Permanente</span>
+                </label>
+                <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-gray-400 font-mono flex items-center gap-1">
+                  <span className="text-gray-500">@</span>
+                  <span>{user.username}</span>
+                </div>
+                <p className="text-[10px] text-gray-500 font-mono">
+                  Link público: /perfil/{user.username}
+                </p>
+              </div>
+            </div>
+
+            {/* Bio / Apresentação Curta */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-300">
+                  Bio Curta / Apresentação
+                </label>
+                <span className="text-[10px] text-gray-500 font-mono">
+                  {bioInput.length}/280
+                </span>
+              </div>
+              <textarea
+                value={bioInput}
+                onChange={(e) => setBioInput(e.target.value)}
+                maxLength={280}
+                rows={3}
+                placeholder="Conte brevemente sobre seus gêneros favoritos, plataformas que joga ou o que está jogando atualmente..."
+                className="w-full bg-[#101114] border border-white/10 rounded-2xl p-3.5 text-xs text-white focus:outline-none focus:border-[#00E5FF] resize-none leading-relaxed"
+              />
+              <p className="text-[11px] text-gray-400">
+                Apresentação direta exibida no card principal do seu perfil. Para bio rica com formatação, use a aba &quot;Bio Estilizada&quot;.
+              </p>
+            </div>
+
+            {/* Jogo Favorito */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                <Heart className="w-3.5 h-3.5 text-pink-400" /> Jogo Favorito de Todos os Tempos
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={favGameInput}
+                  onChange={(e) => setFavGameInput(e.target.value)}
+                  placeholder="Ex: Elden Ring, The Witcher 3, Chrono Trigger, Zelda BOTW..."
+                  className="w-full bg-[#101114] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+                />
+              </div>
+
+              {/* Sugestões Rápidas a partir da Biblioteca do Usuário */}
+              {games && games.length > 0 && (
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                    Ou clique para selecionar da sua biblioteca:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                    {games
+                      .filter((g) => g.status === "completed" || (g.userRating && g.userRating >= 8))
+                      .slice(0, 10)
+                      .map((g) => (
+                        <button
+                          key={g.gameId}
+                          type="button"
+                          onClick={() => setFavGameInput(g.gameTitle)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1 border ${
+                            favGameInput === g.gameTitle
+                              ? "bg-pink-500/20 border-pink-500/50 text-pink-300 font-bold"
+                              : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+                          }`}
+                        >
+                          <span>{g.gameTitle}</span>
+                          {g.userRating && (
+                            <span className="text-[10px] text-amber-400">★{g.userRating}</span>
+                          )}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* CONTEÚDO DA ABA 1: VISUAL & TEMAS */}
         {activeSection === "appearance" && (
@@ -445,21 +637,40 @@ export default function ProfileCustomizerModal({
               </label>
 
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {THEME_OPTIONS.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setSelectedTheme(t.id)}
-                    className={`p-3 rounded-2xl border flex items-center gap-2.5 transition-all ${
-                      selectedTheme === t.id
-                        ? "bg-white/10 border-white/40 ring-2 " + t.ring
-                        : "bg-white/5 border-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded-full ${t.color} flex-shrink-0 shadow-md`} />
-                    <span className="text-xs font-bold text-white truncate">{t.name}</span>
-                  </button>
-                ))}
+                {THEME_OPTIONS.map((t) => {
+                  const isLocked = Boolean(t.isVip && !isPremium && user?.plan !== "vip");
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        if (isLocked) {
+                          onClose();
+                          onOpenUpgrade();
+                          return;
+                        }
+                        setSelectedTheme(t.id);
+                      }}
+                      className={`p-3 rounded-2xl border flex items-center justify-between gap-2 transition-all ${
+                        selectedTheme === t.id
+                          ? "bg-white/10 border-white/40 ring-2 " + t.ring
+                          : "bg-white/5 border-white/5 hover:bg-white/10"
+                      } ${isLocked ? "opacity-70" : ""}`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-3.5 h-3.5 rounded-full ${t.color} flex-shrink-0 shadow-md`} />
+                        <span className="text-xs font-bold text-white truncate">{t.name}</span>
+                      </div>
+                      {isLocked ? (
+                        <span title="Exclusivo VIP / PRO">
+                          <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        </span>
+                      ) : selectedTheme === t.id ? (
+                        <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1413,45 +1624,151 @@ export default function ProfileCustomizerModal({
 
         {/* CONTEÚDO DA ABA 5: PRIVACIDADE & VISIBILIDADE */}
         {activeSection === "visibility" && (
-          <div className="space-y-4 animate-fadeIn">
+          <div className="space-y-5 animate-fadeIn">
             <div>
               <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                <EyeOff className="w-4 h-4 text-cyan-400" /> Controle de Exibição das Seções Públicas
+                <ShieldCheck className="w-4 h-4 text-cyan-400" /> Configurações de Privacidade do Perfil
               </h4>
               <p className="text-xs text-gray-400">
-                Escolha o que visitantes e amigos podem ver ao acessar sua página pública.
+                Defina se seu perfil e biblioteca podem ser visualizados publicamente ao compartilhar seu link.
               </p>
             </div>
 
-            <div className="space-y-3">
-              {[
-                { key: "showStats", title: "Exibir Painel de Estatísticas Gerais", desc: "Mostra os contadores de jogos zerados, backlog e média de notas." },
-                { key: "showPlaytime", title: "Exibir Horas Jogadas", desc: "Mostra o total de horas registradas por jogo e no perfil." },
-                { key: "showRatings", title: "Exibir Notas Pessoais dadas aos Jogos", desc: "Permite que outros vejam suas avaliações de 0 a 10." },
-                { key: "showDropped", title: "Exibir Jogos Dropados / Pausados", desc: "Mostra a aba de jogos que você desistiu de jogar." },
-              ].map((item) => (
-                <label
-                  key={item.key}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={visibility[item.key as keyof ProfileVisibility] ?? true}
-                    onChange={(e) =>
-                      setVisibility({
-                        ...visibility,
-                        [item.key]: e.target.checked,
-                      })
-                    }
-                    className="mt-0.5 w-4 h-4 rounded border-gray-700 bg-neutral-900 text-[#00E5FF] focus:ring-[#00E5FF]"
-                  />
-                  <div>
-                    <h5 className="text-xs font-bold text-white">{item.title}</h5>
-                    <p className="text-[11px] text-gray-400">{item.desc}</p>
+            {/* SELETOR MESTRE: PÚBLICO vs PRIVADO */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Opção Público */}
+              <div
+                onClick={() =>
+                  setVisibility((prev) => ({
+                    ...prev,
+                    isPublic: true,
+                  }))
+                }
+                className={`p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
+                  visibility.isPublic !== false
+                    ? "bg-cyan-500/10 border-[#00E5FF] shadow-lg shadow-cyan-500/10 ring-1 ring-[#00E5FF]/50"
+                    : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      visibility.isPublic !== false ? "bg-cyan-500/20 text-[#00E5FF]" : "bg-white/10 text-gray-400"
+                    }`}>
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-bold text-white flex items-center gap-1.5">
+                        Perfil Público
+                      </h5>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                        Recomendado
+                      </span>
+                    </div>
                   </div>
-                </label>
-              ))}
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                    visibility.isPublic !== false
+                      ? "border-[#00E5FF] bg-[#00E5FF] text-black"
+                      : "border-gray-500 bg-transparent"
+                  }`}>
+                    {visibility.isPublic !== false && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Qualquer pessoa com o link (<span className="text-[#00E5FF] font-mono">@{user.username}</span>) pode ver sua biblioteca, personalizações e conquistas. Permite compartilhar em redes sociais.
+                </p>
+              </div>
+
+              {/* Opção Privado */}
+              <div
+                onClick={() =>
+                  setVisibility((prev) => ({
+                    ...prev,
+                    isPublic: false,
+                  }))
+                }
+                className={`p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
+                  visibility.isPublic === false
+                    ? "bg-amber-500/10 border-amber-400 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/50"
+                    : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      visibility.isPublic === false ? "bg-amber-500/20 text-amber-300" : "bg-white/10 text-gray-400"
+                    }`}>
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-bold text-white flex items-center gap-1.5">
+                        Perfil Privado
+                      </h5>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                        Oculto
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                    visibility.isPublic === false
+                      ? "border-amber-400 bg-amber-400 text-black"
+                      : "border-gray-500 bg-transparent"
+                  }`}>
+                    {visibility.isPublic === false && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Sua biblioteca, notas e horas de jogo ficam ocultas para visitantes. Ao compartilhar seu link, visitantes verão uma tela de perfil privado.
+                </p>
+              </div>
             </div>
+
+            {/* OPÇÕES GRANULARES (QUANDO PÚBLICO) OU AVISO (QUANDO PRIVADO) */}
+            {visibility.isPublic !== false ? (
+              <div className="space-y-3 pt-1">
+                <div className="border-t border-white/10 pt-3">
+                  <h5 className="text-xs font-bold text-gray-200 mb-1 flex items-center gap-1.5">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#00E5FF]" /> Opções de Exibição no Perfil Público
+                  </h5>
+                  <p className="text-[11px] text-gray-400 mb-3">
+                    Personalize quais métricas e seções ficam visíveis aos visitantes.
+                  </p>
+                </div>
+
+                {[
+                  { key: "showStats", title: "Exibir Painel de Estatísticas Gerais", desc: "Mostra contadores de jogos zerados, backlog e média de notas." },
+                  { key: "showPlaytime", title: "Exibir Horas Jogadas", desc: "Mostra o total de horas registradas por jogo e no perfil." },
+                  { key: "showRatings", title: "Exibir Notas Pessoais dadas aos Jogos", desc: "Permite que outros vejam suas avaliações de 0 a 10." },
+                  { key: "showDropped", title: "Exibir Jogos Dropados / Pausados", desc: "Mostra a aba de jogos que você desistiu de jogar." },
+                ].map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibility[item.key as keyof ProfileVisibility] ?? true}
+                      onChange={(e) =>
+                        setVisibility({
+                          ...visibility,
+                          [item.key]: e.target.checked,
+                        })
+                      }
+                      className="mt-0.5 w-4 h-4 rounded border-gray-700 bg-neutral-900 text-[#00E5FF] focus:ring-[#00E5FF]"
+                    />
+                    <div>
+                      <h5 className="text-xs font-bold text-white">{item.title}</h5>
+                      <p className="text-[11px] text-gray-400">{item.desc}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center gap-3">
+                <Lock className="w-5 h-5 text-amber-400 shrink-0" />
+                <span>Com o modo Privado ativo, sua biblioteca de jogos, histórico, notas e horas estarão completamente ocultos para visitantes e amigos.</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -1464,7 +1781,7 @@ export default function ProfileCustomizerModal({
               </span>
             ) : (
               <span className="text-amber-300 flex items-center gap-1">
-                <Crown className="w-3.5 h-3.5 text-amber-400" /> Assine o PRO para aplicar capas, Markdown e destaques
+                <Crown className="w-3.5 h-3.5 text-amber-400" /> Seja PRO para desbloquear layouts alternativos, insígnias ilimitadas e bio HTML5
               </span>
             )}
           </div>
@@ -1476,7 +1793,7 @@ export default function ProfileCustomizerModal({
               className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#00E5FF] hover:bg-cyan-400 text-black font-bold text-xs transition-all shadow-lg hover:scale-105 flex items-center justify-center gap-1.5 active:scale-95"
             >
               <Save className="w-3.5 h-3.5" />
-              {isSaving ? "Salvando..." : successToast ? "Salvo com Sucesso!" : "Salvar Toda a Personalização"}
+              {isSaving ? "Salvando..." : successToast ? "Salvo com Sucesso!" : "Salvar Perfil & Personalização"}
             </button>
 
             {!isPremium && (

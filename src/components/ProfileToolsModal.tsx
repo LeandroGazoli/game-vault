@@ -16,6 +16,8 @@ import {
   SlidersHorizontal,
   Settings,
   Share2,
+  Globe,
+  Lock,
 } from "lucide-react";
 
 interface ProfileToolsModalProps {
@@ -27,6 +29,7 @@ interface ProfileToolsModalProps {
   onOpenManagePlan: () => void;
   onOpenUpgrade: () => void;
   onOpenCustomizer: () => void;
+  onOpenPrivacy?: () => void;
   onOpenTitles?: () => void;
   onOpenRoulette: () => void;
   onOpenWrapped: () => void;
@@ -44,6 +47,7 @@ export default function ProfileToolsModal({
   onOpenManagePlan,
   onOpenUpgrade,
   onOpenCustomizer,
+  onOpenPrivacy,
   onOpenTitles,
   onOpenRoulette,
   onOpenWrapped,
@@ -156,7 +160,7 @@ export default function ProfileToolsModal({
             </button>
           )}
 
-          {/* 2. Personalizar Tema e Capa */}
+          {/* 2. Editar & Personalizar Perfil */}
           <button
             onClick={() => handleAction(onOpenCustomizer)}
             className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group active:scale-[0.99] min-h-[52px]"
@@ -167,10 +171,48 @@ export default function ProfileToolsModal({
               </div>
               <div>
                 <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors">
-                  Personalizar Perfil
+                  Editar &amp; Personalizar Perfil
                 </span>
                 <p className="text-[11px] text-gray-400">
-                  Capa, temas, títulos, insígnias e links sociais
+                  Dados, capa, temas, títulos, insígnias e links sociais
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+          </button>
+
+          {/* 2.1. Privacidade do Perfil (Atalho Direto) */}
+          <button
+            onClick={() => handleAction(onOpenPrivacy || onOpenCustomizer)}
+            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group active:scale-[0.99] min-h-[52px]"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                user.isPublic !== false && user.visibility?.isPublic !== false
+                  ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                  : "bg-amber-500/15 border border-amber-500/30 text-amber-300"
+              }`}>
+                {user.isPublic !== false && user.visibility?.isPublic !== false ? (
+                  <Globe className="w-5 h-5" />
+                ) : (
+                  <Lock className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                    Privacidade do Perfil
+                  </span>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
+                    user.isPublic !== false && user.visibility?.isPublic !== false
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  }`}>
+                    {user.isPublic !== false && user.visibility?.isPublic !== false ? "Público" : "Privado"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  Controle se outros podem ver seus jogos ao compartilhar
                 </p>
               </div>
             </div>

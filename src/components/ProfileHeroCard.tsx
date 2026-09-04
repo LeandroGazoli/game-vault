@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { UserProfile } from "@/lib/types";
+import { getThemeStyles } from "@/lib/themeStyles";
 import UserAvatar from "./UserAvatar";
 import PlanBadge from "./PlanBadge";
 import SocialGamertagsBar from "./SocialGamertagsBar";
@@ -19,6 +20,7 @@ import {
   ShieldCheck,
   Gamepad2,
   Trophy,
+  Palette,
 } from "lucide-react";
 
 interface ProfileHeroCardProps {
@@ -26,7 +28,8 @@ interface ProfileHeroCardProps {
   isOwner: boolean;
   isAdmin: boolean;
   isPremium: boolean;
-  onOpenEditBio: () => void;
+  onOpenEditProfile?: () => void;
+  onOpenEditBio?: () => void;
   onOpenTools: () => void;
   onOpenShare: () => void;
   onOpenManagePlan: () => void;
@@ -38,6 +41,7 @@ export default function ProfileHeroCard({
   isOwner,
   isAdmin,
   isPremium,
+  onOpenEditProfile,
   onOpenEditBio,
   onOpenTools,
   onOpenShare,
@@ -45,6 +49,8 @@ export default function ProfileHeroCard({
   onOpenUpgrade,
 }: ProfileHeroCardProps) {
   const layout = user.profileLayout || "default";
+  const handleEdit = onOpenEditProfile || onOpenEditBio || onOpenTools;
+  const themeStyles = getThemeStyles(user.theme);
 
   // Insígnias do usuário
   const titlesToDisplay =
@@ -59,13 +65,16 @@ export default function ProfileHeroCard({
   // =========================================================================
   if (layout === "default") {
     return (
-      <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] p-5 sm:p-8 shadow-2xl space-y-5">
+      <div className={`relative rounded-[32px] overflow-hidden border ${themeStyles.borderGlow} bg-[#18191c] p-5 sm:p-8 shadow-2xl ${themeStyles.cardGlow} space-y-5 transition-all`}>
         {user.bannerURL && (
-          <img
-            src={user.bannerURL}
-            alt="Banner de Capa"
-            className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
-          />
+          <>
+            <img
+              src={user.bannerURL}
+              alt="Banner de Capa"
+              className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-[#18191c]/80 to-transparent pointer-events-none" />
+          </>
         )}
 
         <div className="relative z-10 space-y-4">
@@ -77,7 +86,7 @@ export default function ProfileHeroCard({
                   photoURL={user.photoURL}
                   name={user.displayName}
                   size="xl"
-                  className="border-2 border-[#00E5FF]/40 shadow-xl"
+                  className={`border-2 ${themeStyles.avatarBorder} shadow-xl ring-2 ${themeStyles.avatarRing}/30`}
                 />
               </div>
 
@@ -86,7 +95,7 @@ export default function ProfileHeroCard({
                   <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight truncate">
                     {user.displayName}
                   </h1>
-                  <span className="text-xs text-[#00E5FF] font-mono shrink-0">
+                  <span className={`text-xs ${themeStyles.textAccent} font-mono shrink-0`}>
                     @{user.username}
                   </span>
                 </div>
@@ -158,7 +167,7 @@ export default function ProfileHeroCard({
             </button>
           </div>
 
-          {/* Insígnias Gamer em Largura Total (Sem Espremer ao lado da foto) */}
+          {/* Insígnias Gamer em Largura Total */}
           {titlesToDisplay.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap pt-1">
               {titlesToDisplay.map((title, idx) => (
@@ -166,18 +175,11 @@ export default function ProfileHeroCard({
                   key={idx}
                   className={`text-xs px-3 py-1 rounded-full font-bold shadow-sm inline-flex items-center gap-1.5 transition-all ${
                     idx === 0
-                      ? user.theme === "gold"
-                        ? "bg-amber-500/15 border border-amber-500/40 text-amber-300"
-                        : user.theme === "purple"
-                        ? "bg-purple-500/15 border border-purple-500/40 text-purple-300"
-                        : user.theme === "crimson"
-                        ? "bg-rose-500/15 border border-rose-500/40 text-rose-300"
-                        : user.theme === "emerald"
-                        ? "bg-emerald-500/15 border border-emerald-500/40 text-emerald-300"
-                        : "bg-cyan-500/15 border border-cyan-500/40 text-[#00E5FF]"
+                      ? themeStyles.badgeStyle
                       : "bg-white/10 border border-white/20 text-gray-200"
                   }`}
                 >
+                  <Sparkles className="w-3 h-3 opacity-70" />
                   {title}
                 </span>
               ))}
@@ -216,19 +218,20 @@ export default function ProfileHeroCard({
 
                 <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                   <button
-                    onClick={onOpenEditBio}
-                    className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/25 text-xs font-semibold text-gray-200 transition-all active:scale-95"
+                    onClick={handleEdit}
+                    className={`min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.borderHover} text-xs font-bold text-white transition-all shadow-md active:scale-95`}
+                    title="Editar dados cadastrais, bio, capa e personalizar perfil"
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-                    <span>Editar</span>
+                    <Palette className={`w-4 h-4 ${themeStyles.textAccent}`} />
+                    <span>Editar &amp; Personalizar</span>
                   </button>
 
                   <button
                     onClick={onOpenTools}
-                    className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-[#00E5FF]/10 to-blue-500/15 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 hover:bg-[#00E5FF]/20 text-xs font-bold text-[#00E5FF] transition-all shadow-md shadow-[#00E5FF]/5 active:scale-95"
+                    className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/25 text-xs font-bold text-gray-300 hover:text-white transition-all shadow-md active:scale-95"
                     title="Ações e Ferramentas do Perfil"
                   >
-                    <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
+                    <SlidersHorizontal className="w-4 h-4 text-gray-400" />
                     <span>Ferramentas</span>
                   </button>
                 </div>
@@ -261,7 +264,7 @@ export default function ProfileHeroCard({
   // =========================================================================
   if (layout === "cinematic") {
     return (
-      <div className="relative rounded-[32px] overflow-hidden border border-white/15 bg-[#14161a] shadow-2xl">
+      <div className={`relative rounded-[32px] overflow-hidden border ${themeStyles.borderGlow} bg-[#14161a] shadow-2xl ${themeStyles.cardGlow}`}>
         {/* Capa de Banner Expansiva com Botões Flutuantes em Vidro */}
         <div className="relative h-44 sm:h-56 w-full overflow-hidden bg-gradient-to-b from-indigo-950/60 to-black">
           {user.bannerURL ? (
@@ -284,7 +287,7 @@ export default function ProfileHeroCard({
               title="Compartilhar Perfil"
               aria-label="Compartilhar"
             >
-              <Share2 className="w-4 h-4 text-[#00E5FF]" />
+              <Share2 className={`w-4 h-4 ${themeStyles.textAccent}`} />
             </button>
 
             {isOwner && (
@@ -294,7 +297,7 @@ export default function ProfileHeroCard({
                 title="Ferramentas"
                 aria-label="Ferramentas"
               >
-                <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
+                <SlidersHorizontal className={`w-4 h-4 ${themeStyles.textAccent}`} />
               </button>
             )}
           </div>
@@ -309,7 +312,7 @@ export default function ProfileHeroCard({
                   photoURL={user.photoURL}
                   name={user.displayName}
                   size="xl"
-                  className="border-4 border-[#14161a] ring-2 ring-[#00E5FF] shadow-2xl"
+                  className={`border-4 border-[#14161a] ring-2 ${themeStyles.avatarRing} shadow-2xl`}
                 />
               </div>
 
@@ -318,7 +321,7 @@ export default function ProfileHeroCard({
                   <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     {user.displayName}
                   </h1>
-                  <span className="text-xs text-[#00E5FF] font-mono">@{user.username}</span>
+                  <span className={`text-xs ${themeStyles.textAccent} font-mono`}>@{user.username}</span>
                 </div>
 
                 {user.plan === "vip" ? (
@@ -351,11 +354,11 @@ export default function ProfileHeroCard({
                   <span>Adicionar Jogos</span>
                 </Link>
                 <button
-                  onClick={onOpenEditBio}
-                  className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 text-xs font-semibold text-gray-200 transition-all active:scale-95 flex items-center gap-2"
+                  onClick={handleEdit}
+                  className={`min-h-[44px] px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.borderHover} text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-2 shadow-md`}
                 >
-                  <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Editar</span>
+                  <Palette className={`w-3.5 h-3.5 ${themeStyles.textAccent}`} />
+                  <span>Editar &amp; Personalizar</span>
                 </button>
               </div>
             )}
@@ -367,7 +370,11 @@ export default function ProfileHeroCard({
               {titlesToDisplay.map((title, idx) => (
                 <span
                   key={idx}
-                  className="text-xs px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-200 font-bold flex items-center gap-1.5 shadow-sm"
+                  className={`text-xs px-3 py-1 rounded-xl border font-bold flex items-center gap-1.5 shadow-sm ${
+                    idx === 0
+                      ? themeStyles.badgeStyle
+                      : "bg-white/5 border-white/10 text-gray-200"
+                  }`}
                 >
                   <Trophy className="w-3 h-3 text-amber-400" />
                   <span>{title}</span>
@@ -403,17 +410,17 @@ export default function ProfileHeroCard({
                 <span>Adicionar Jogos</span>
               </Link>
               <button
-                onClick={onOpenEditBio}
-                className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 text-xs font-semibold text-gray-200 active:scale-95"
+                onClick={handleEdit}
+                className={`min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} text-xs font-bold text-white active:scale-95`}
               >
-                <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-                <span>Editar</span>
+                <Palette className={`w-3.5 h-3.5 ${themeStyles.textAccent}`} />
+                <span>Editar &amp; Personalizar</span>
               </button>
               <button
                 onClick={onOpenTools}
-                className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-cyan-500/10 border border-[#00E5FF]/30 text-xs font-bold text-[#00E5FF] active:scale-95"
+                className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 text-xs font-bold text-gray-300 hover:text-white active:scale-95"
               >
-                <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
+                <SlidersHorizontal className="w-4 h-4 text-gray-400" />
                 <span>Ferramentas</span>
               </button>
             </div>
@@ -428,12 +435,25 @@ export default function ProfileHeroCard({
   // =========================================================================
   if (layout === "gamer_id") {
     return (
-      <div className="relative rounded-[28px] overflow-hidden border-2 border-cyan-500/40 bg-gradient-to-br from-[#0e1014] via-[#14171e] to-[#0a0c10] p-5 sm:p-7 shadow-2xl space-y-4">
+      <div className={`relative rounded-[28px] overflow-hidden border-2 ${themeStyles.hudBorder} bg-gradient-to-br from-[#0e1014] via-[#14171e] to-[#0a0c10] p-5 sm:p-7 shadow-2xl ${themeStyles.cardGlow} space-y-4`}>
+        {/* Capa de Banner Cyberpunk com Scanlines se configurada */}
+        {user.bannerURL && (
+          <>
+            <img
+              src={user.bannerURL}
+              alt="Banner Cyber"
+              className="absolute inset-0 w-full h-full object-cover opacity-15 pointer-events-none"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0e1014] via-transparent to-transparent pointer-events-none" />
+          </>
+        )}
+
         {/* HUD Tech Header */}
-        <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+        <div className={`relative z-10 flex items-center justify-between border-b ${themeStyles.borderAccent} pb-3`}>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-            <span className="text-[10px] font-mono font-bold tracking-widest text-cyan-400 uppercase">
+            <span className={`w-2 h-2 rounded-full ${themeStyles.bgAccent} animate-pulse`} />
+            <span className={`text-[10px] font-mono font-bold tracking-widest ${themeStyles.hudText} uppercase`}>
               VAULT-ID // OP-#{user.uid.slice(0, 6).toUpperCase()}
             </span>
           </div>
@@ -441,7 +461,7 @@ export default function ProfileHeroCard({
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenShare}
-              className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:text-white transition-colors"
+              className={`p-1.5 rounded-lg ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.hudText} hover:text-white transition-colors`}
               title="Compartilhar ID"
             >
               <Share2 className="w-3.5 h-3.5" />
@@ -449,7 +469,7 @@ export default function ProfileHeroCard({
             {isOwner && (
               <button
                 onClick={onOpenTools}
-                className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:text-white transition-colors"
+                className={`p-1.5 rounded-lg ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.hudText} hover:text-white transition-colors`}
                 title="Ferramentas"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -459,13 +479,13 @@ export default function ProfileHeroCard({
         </div>
 
         {/* Identity Row */}
-        <div className="flex items-center gap-4">
+        <div className="relative z-10 flex items-center gap-4">
           <div className="relative shrink-0">
             <UserAvatar
               photoURL={user.photoURL}
               name={user.displayName}
               size="xl"
-              className="rounded-2xl border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/20"
+              className={`rounded-2xl border-2 ${themeStyles.avatarBorder} shadow-lg ${themeStyles.cardGlow}`}
             />
           </div>
 
@@ -473,7 +493,7 @@ export default function ProfileHeroCard({
             <h1 className="text-xl sm:text-2xl font-black text-white font-mono tracking-tight truncate">
               {user.displayName}
             </h1>
-            <p className="text-xs text-cyan-400 font-mono">
+            <p className={`text-xs ${themeStyles.textAccent} font-mono`}>
               CREDENTIAL: @{user.username}
             </p>
           </div>
@@ -481,21 +501,21 @@ export default function ProfileHeroCard({
 
         {/* Faixa de Prestígio Neon */}
         {user.plan === "vip" ? (
-          <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent border border-amber-500/40 flex items-center gap-2">
+          <div className="relative z-10 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent border border-amber-500/40 flex items-center gap-2">
             <Crown className="w-4 h-4 text-amber-400 shrink-0" />
             <span className="text-xs font-mono font-black text-amber-300 uppercase tracking-wide">
               MEMBRO FUNDADOR VIP • ACESSO VITALÍCIO
             </span>
           </div>
         ) : user.plan === "pro" ? (
-          <div className="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border border-cyan-500/40 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#00E5FF] shrink-0" />
-            <span className="text-xs font-mono font-black text-[#00E5FF] uppercase tracking-wide">
+          <div className={`relative z-10 p-2.5 rounded-xl bg-gradient-to-r ${themeStyles.bgSubtle} via-white/5 to-transparent border ${themeStyles.borderAccent} flex items-center gap-2`}>
+            <Sparkles className={`w-4 h-4 ${themeStyles.textAccent} shrink-0`} />
+            <span className={`text-xs font-mono font-black ${themeStyles.textAccent} uppercase tracking-wide`}>
               VAULT OPERATIVE PRO • ACESSO TOTAL
             </span>
           </div>
         ) : (
-          <div className="p-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+          <div className="relative z-10 p-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
             <span className="text-xs font-mono text-gray-400 uppercase tracking-wide">
               RECRUTA • FREE ACCESS
@@ -505,11 +525,11 @@ export default function ProfileHeroCard({
 
         {/* Chips Colecionáveis */}
         {titlesToDisplay.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="relative z-10 flex items-center gap-1.5 flex-wrap">
             {titlesToDisplay.map((title, idx) => (
               <span
                 key={idx}
-                className="text-[11px] font-mono px-2.5 py-0.5 rounded-md bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 font-bold"
+                className={`text-[11px] font-mono px-2.5 py-0.5 rounded-md ${themeStyles.hudBg} border ${themeStyles.hudBorder} ${themeStyles.hudText} font-bold`}
               >
                 [ {title} ]
               </span>
@@ -519,13 +539,13 @@ export default function ProfileHeroCard({
 
         {/* Bio e Jogo Favorito */}
         {user.bio && (
-          <p className="text-xs text-gray-300 font-sans leading-relaxed border-l-2 border-cyan-500/40 pl-3">
+          <p className={`relative z-10 text-xs text-gray-300 font-sans leading-relaxed border-l-2 ${themeStyles.hudBorder} pl-3`}>
             {user.bio}
           </p>
         )}
 
         {user.favoriteGame && (
-          <div className="text-xs text-pink-300 font-mono flex items-center gap-1.5">
+          <div className="relative z-10 text-xs text-pink-300 font-mono flex items-center gap-1.5">
             <Heart className="w-3.5 h-3.5 text-pink-400" /> FAV_GAME: <strong>{user.favoriteGame}</strong>
           </div>
         )}
@@ -534,24 +554,24 @@ export default function ProfileHeroCard({
 
         {/* Botões HUD */}
         {isOwner && (
-          <div className="grid grid-cols-2 sm:flex items-center gap-2 pt-2 border-t border-cyan-500/20">
+          <div className={`relative z-10 grid grid-cols-2 sm:flex items-center gap-2 pt-2 border-t ${themeStyles.borderAccent}`}>
             <Link
               href="/search"
-              className="col-span-2 sm:col-span-1 min-h-[44px] px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-mono font-black flex items-center justify-center gap-2 shadow-lg shadow-cyan-400/20 transition-all active:scale-95"
+              className={`col-span-2 sm:col-span-1 min-h-[44px] px-5 py-2 rounded-xl ${themeStyles.hudButton} text-xs font-mono font-black flex items-center justify-center gap-2 transition-all active:scale-95`}
             >
               <Plus className="w-4 h-4" />
               <span>+ ADD GAMES</span>
             </Link>
             <button
-              onClick={onOpenEditBio}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-white/5 border border-cyan-500/30 text-xs font-mono text-cyan-300 hover:bg-cyan-500/10 transition-colors flex items-center justify-center gap-1.5"
+              onClick={handleEdit}
+              className={`min-h-[44px] px-4 py-2 rounded-xl ${themeStyles.bgSubtle} border ${themeStyles.hudBorder} text-xs font-mono ${themeStyles.hudText} hover:bg-white/10 transition-colors flex items-center justify-center gap-1.5`}
             >
-              <Edit2 className="w-3.5 h-3.5" />
-              <span>EDIT_BIO</span>
+              <Palette className="w-3.5 h-3.5" />
+              <span>EDIT_CUSTOMIZE</span>
             </button>
             <button
               onClick={onOpenTools}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-white/5 border border-cyan-500/30 text-xs font-mono text-cyan-300 hover:bg-cyan-500/10 transition-colors flex items-center justify-center gap-1.5"
+              className={`min-h-[44px] px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-xs font-mono text-gray-300 hover:bg-white/10 transition-colors flex items-center justify-center gap-1.5`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>TOOLS</span>
@@ -566,21 +586,28 @@ export default function ProfileHeroCard({
   // 4. LAYOUT EDITORIAL MINIMAL: LUXO, CLEAN & TIPOGRAFIA PURA
   // =========================================================================
   return (
-    <div className="relative rounded-[28px] overflow-hidden border border-white/10 bg-[#121316] p-6 sm:p-8 space-y-5">
+    <div className={`relative rounded-[28px] overflow-hidden border ${themeStyles.borderGlow} bg-[#121316] p-6 sm:p-8 space-y-5 shadow-2xl ${themeStyles.cardGlow}`}>
+      {user.bannerURL && (
+        <div
+          className="absolute top-0 left-0 right-0 h-1.5 opacity-60 pointer-events-none"
+          style={{ backgroundColor: themeStyles.primaryHex }}
+        />
+      )}
+
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 sm:gap-5 min-w-0">
           <UserAvatar
             photoURL={user.photoURL}
             name={user.displayName}
             size="xl"
-            className="border border-white/20"
+            className={`border ${themeStyles.avatarBorder}`}
           />
 
           <div className="space-y-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight truncate">
               {user.displayName}
             </h1>
-            <p className="text-xs text-gray-400 font-mono">
+            <p className={`text-xs ${themeStyles.textAccent} font-mono`}>
               @{user.username}
             </p>
             <div className="pt-0.5">
@@ -615,7 +642,9 @@ export default function ProfileHeroCard({
           {titlesToDisplay.map((title, idx) => (
             <span
               key={idx}
-              className="text-xs px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 font-medium"
+              className={`text-xs px-3 py-1 rounded-lg border font-medium ${
+                idx === 0 ? themeStyles.badgeStyle : "bg-white/5 border-white/10 text-gray-300"
+              }`}
             >
               {title}
             </span>
@@ -646,14 +675,15 @@ export default function ProfileHeroCard({
             + Adicionar Jogos
           </Link>
           <button
-            onClick={onOpenEditBio}
-            className="px-4 py-2.5 rounded-xl border border-white/15 text-xs text-gray-300 hover:text-white transition-colors"
+            onClick={handleEdit}
+            className={`px-4 py-2.5 rounded-xl border ${themeStyles.borderAccent} ${themeStyles.borderHover} ${themeStyles.bgSubtle} text-xs font-bold text-white transition-colors flex items-center gap-2 shadow-md`}
           >
-            Editar Perfil
+            <Palette className={`w-3.5 h-3.5 ${themeStyles.textAccent}`} />
+            <span>Editar &amp; Personalizar</span>
           </button>
           <button
             onClick={onOpenTools}
-            className="px-4 py-2.5 rounded-xl border border-white/15 text-xs text-cyan-400 hover:border-cyan-400 transition-colors"
+            className="px-4 py-2.5 rounded-xl border border-white/15 text-xs text-gray-300 hover:text-white hover:border-white/30 transition-colors"
           >
             Ferramentas
           </button>

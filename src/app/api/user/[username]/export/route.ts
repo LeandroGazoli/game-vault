@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, limit } from "firebase/firestore";
 import { UserGame, UserProfile } from "@/lib/types";
 
 export async function GET(
@@ -25,20 +25,39 @@ export async function GET(
 
     // 1. Tenta buscar o perfil do usuário pelo UID direto ou campo username
     if (db) {
-      const userDirectDoc = await getDoc(doc(db, "users", username));
+      const raw = username.trim();
+      const clean = raw.toLowerCase();
+
+      const userDirectDoc = await getDoc(doc(db, "users", raw));
       if (userDirectDoc.exists()) {
         targetUserId = userDirectDoc.id;
         targetProfile = userDirectDoc.data() as UserProfile;
       } else {
         // Busca por campo username (case-insensitive)
-        const qUsers = query(collection(db, "users"), where("username", "==", username.toLowerCase()));
-        const snapUsers = await getDocs(qUsers);
+        const qUsers = query(collection(db, "users"), where("username", "==", clean), limit(1));
+        let snapUsers = await getDocs(qUsers);
+        if (snapUsers.empty && clean !== raw) {
+          const qUsersExact = query(collection(db, "users"), where("username", "==", raw), limit(1));
+          snapUsers = await getDocs(qUsersExact);
+        }
         if (!snapUsers.empty) {
           const first = snapUsers.docs[0];
           targetUserId = first.id;
           targetProfile = first.data() as UserProfile;
         }
       }
+    }
+
+    if (!targetProfile) {
+      return NextResponse.json({ error: "Perfil não encontrado" }, { status: 404 });
+    }
+
+    const isProfilePublic = targetProfile.isPublic !== false && targetProfile.visibility?.isPublic !== false;
+    if (!isProfilePublic) {
+      return NextResponse.json(
+        { error: "Este perfil é privado. A biblioteca não está disponível para exportação pública." },
+        { status: 403 }
+      );
     }
 
     // 2. Busca todos os jogos da biblioteca do usuário

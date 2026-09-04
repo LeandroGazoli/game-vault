@@ -12,6 +12,8 @@ import {
   Twitter,
   Send,
   Smartphone,
+  Lock,
+  Globe,
 } from "lucide-react";
 
 interface ShareProfileModalProps {
@@ -19,6 +21,8 @@ interface ShareProfileModalProps {
   onClose: () => void;
   username: string;
   displayName: string;
+  isPublic?: boolean;
+  onMakePublic?: () => Promise<void> | void;
 }
 
 export default function ShareProfileModal({
@@ -26,6 +30,8 @@ export default function ShareProfileModal({
   onClose,
   username,
   displayName,
+  isPublic = true,
+  onMakePublic,
 }: ShareProfileModalProps) {
   const [copied, setCopied] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
@@ -117,6 +123,32 @@ export default function ShareProfileModal({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Aviso caso o perfil esteja configurado como Privado */}
+        {isPublic === false && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2 animate-fadeIn">
+            <div className="flex items-start gap-2.5">
+              <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <strong className="text-white font-bold block">Seu perfil está Privado</strong>
+                <p className="text-[11px] text-gray-300 leading-relaxed">
+                  Amigos e visitantes que abrirem este link não verão seus jogos nem conquistas.
+                </p>
+              </div>
+            </div>
+            {onMakePublic && (
+              <button
+                onClick={async () => {
+                  await onMakePublic();
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-amber-500/20"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Liberar Perfil Público Agora</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Botão de Compartilhamento Nativo do Celular (se disponível) */}
         {canNativeShare && (

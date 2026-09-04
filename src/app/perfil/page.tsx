@@ -18,6 +18,7 @@ import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
+import { getThemeStyles } from "@/lib/themeStyles";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
@@ -49,6 +50,8 @@ import {
   ArrowRight,
   SlidersHorizontal,
   Share2,
+  Globe,
+  Lock,
 } from "lucide-react";
 
 function computeLibraryStats(games: UserGame[]): LibraryStats {
@@ -106,7 +109,7 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
-  const { user: authUser, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
+  const { user: authUser, updateUserProfile, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
   const { library: ownLibrary, stats: ownStats, isLoading: libraryLoading } = useGameLibrary();
   const router = useRouter();
   const params = useParams();
@@ -131,6 +134,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
     user: UserProfile;
     stats: any;
     games: UserGame[];
+    isPrivate?: boolean;
   } | null>(null);
   const [publicLoading, setPublicLoading] = useState(isViewingPublic);
   const [publicNotFound, setPublicNotFound] = useState(false);
@@ -177,9 +181,9 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGameToEdit, setSelectedGameToEdit] = useState<any | null>(null);
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioInput, setBioInput] = useState(authUser?.bio || "");
-  const [favGameInput, setFavGameInput] = useState(authUser?.favoriteGame || "");
+  const [customizerInitialTab, setCustomizerInitialTab] = useState<
+    "info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility"
+  >("info");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -191,6 +195,8 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
+
+  const profileThemeStyles = getThemeStyles(activeUser?.theme);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -230,16 +236,61 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
     });
   }, [activeLibrary, activeTab, searchQuery]);
 
-  const handleSaveBio = async () => {
-    await updateUserBio(bioInput, favGameInput);
-    setIsEditingBio(false);
-  };
-
   if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-48 rounded-[32px] bg-[#18191c]" />
         <div className="h-32 rounded-[32px] bg-[#18191c]" />
+      </div>
+    );
+  }
+
+  if (isViewingPublic && publicData?.isPrivate) {
+    const privateUser = publicData.user;
+    return (
+      <div className="max-w-xl mx-auto my-12 p-8 sm:p-10 rounded-[32px] border border-amber-500/30 bg-[#14161a] text-center space-y-6 shadow-2xl shadow-amber-500/10 animate-fadeIn">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <UserAvatar
+              photoURL={privateUser?.photoURL}
+              name={privateUser?.displayName || routeUsername}
+              size="xl"
+              className={`border-2 ${profileThemeStyles.avatarBorder}`}
+            />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-amber-500 border-2 border-[#14161a] flex items-center justify-center text-black shadow-md">
+              <Lock className="w-4 h-4 stroke-[2.5]" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              {privateUser?.displayName || routeUsername}
+            </h2>
+            <p className={`text-xs font-mono ${profileThemeStyles.textAccent}`}>
+              @{privateUser?.username || routeUsername}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 leading-relaxed">
+          <span className="font-bold text-amber-300 block mb-1">🔒 Perfil Privado</span>
+          Este usuário optou por manter sua biblioteca de jogos, histórico e estatísticas privados.
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            href="/"
+            className="w-full sm:w-auto px-6 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs transition-all shadow-lg active:scale-95"
+          >
+            Voltar ao Início
+          </Link>
+          <Link
+            href="/search"
+            className="w-full sm:w-auto px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs transition-all active:scale-95"
+          >
+            Explorar Jogos
+          </Link>
+        </div>
       </div>
     );
   }
@@ -327,65 +378,70 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         </div>
       )}
 
+      {/* Banner de Aviso de Modo Privado (visível apenas para o proprietário) */}
+      {isOwner && (authUser?.isPublic === false || authUser?.visibility?.isPublic === false) && (
+        <div className="rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-lg shadow-amber-500/5 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs sm:text-sm font-bold text-white block">
+                Seu perfil está configurado como Privado
+              </span>
+              <p className="text-[11px] text-gray-300">
+                Sua biblioteca e histórico estão invisíveis para outros usuários. Links compartilhados exibirão um aviso de perfil privado.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={async () => {
+                await updateUserProfile({
+                  isPublic: true,
+                  visibility: {
+                    ...authUser?.visibility,
+                    isPublic: true,
+                  },
+                });
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md shadow-amber-500/20"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Tornar Perfil Público</span>
+            </button>
+            <button
+              onClick={() => {
+                setCustomizerInitialTab("visibility");
+                setIsCustomizerOpen(true);
+              }}
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-colors"
+            >
+              Configurações
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner / Card do Perfil com Suporte aos 4 Layouts */}
       <ProfileHeroCard
         user={activeUser}
         isOwner={isOwner}
         isAdmin={isAdmin}
         isPremium={isPremium}
+        onOpenEditProfile={() => {
+          setCustomizerInitialTab("info");
+          setIsCustomizerOpen(true);
+        }}
         onOpenEditBio={() => {
-          setBioInput(activeUser.bio || "");
-          setFavGameInput(activeUser.favoriteGame || "");
-          setIsEditingBio(!isEditingBio);
+          setCustomizerInitialTab("info");
+          setIsCustomizerOpen(true);
         }}
         onOpenTools={() => setIsToolsOpen(true)}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
       />
-
-      {/* Modal Inline de Edição de Perfil */}
-      {isOwner && isEditingBio && (
-        <div className="rounded-[28px] border border-white/10 bg-[#18191c] p-6 space-y-4 max-w-xl animate-fadeIn">
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-1">
-              Bio / Apresentação
-            </label>
-            <textarea
-              value={bioInput}
-              onChange={(e) => setBioInput(e.target.value)}
-              rows={2}
-              className="w-full rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-white focus:outline-none focus:border-[#00E5FF] resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-1">
-              Jogo Favorito
-            </label>
-            <input
-              type="text"
-              value={favGameInput}
-              onChange={(e) => setFavGameInput(e.target.value)}
-              placeholder="Ex: Elden Ring, The Witcher 3, Zelda..."
-              className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSaveBio}
-              className="px-4 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors"
-            >
-              Salvar Alterações
-            </button>
-            <button
-              onClick={() => setIsEditingBio(false)}
-              className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-white"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
       {activeUser.showcaseGameId && (
@@ -424,7 +480,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 select-none active:scale-95 ${
                   activeTab === tab.id
-                    ? "bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/25 font-black"
+                    ? profileThemeStyles.activeTabBg
                     : "bg-[#18191c] text-gray-400 hover:text-gray-200 hover:bg-[#202126] border border-white/5"
                 }`}
               >
@@ -744,7 +800,14 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             isAdmin={isAdmin}
             onOpenManagePlan={() => setIsManagePlanOpen(true)}
             onOpenUpgrade={() => setIsUpgradeOpen(true)}
-            onOpenCustomizer={() => setIsCustomizerOpen(true)}
+            onOpenCustomizer={() => {
+              setCustomizerInitialTab("info");
+              setIsCustomizerOpen(true);
+            }}
+            onOpenPrivacy={() => {
+              setCustomizerInitialTab("visibility");
+              setIsCustomizerOpen(true);
+            }}
             onOpenRoulette={() => setIsRouletteOpen(true)}
             onOpenWrapped={() => setIsWrappedOpen(true)}
             onOpenExport={() => setIsExportOpen(true)}
@@ -770,6 +833,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onClose={() => setIsCustomizerOpen(false)}
             onOpenUpgrade={() => setIsUpgradeOpen(true)}
             games={ownLibrary}
+            initialTab={customizerInitialTab}
           />
 
           <GameRouletteModal
@@ -792,8 +856,26 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       <ShareProfileModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        username={activeUser?.username || user?.username || ""}
-        displayName={activeUser?.displayName || user?.displayName || "Gamer"}
+        username={activeUser?.username || authUser?.username || ""}
+        displayName={activeUser?.displayName || authUser?.displayName || "Gamer"}
+        isPublic={
+          isOwner
+            ? authUser?.isPublic !== false && authUser?.visibility?.isPublic !== false
+            : activeUser?.isPublic !== false && activeUser?.visibility?.isPublic !== false
+        }
+        onMakePublic={
+          isOwner
+            ? async () => {
+                await updateUserProfile({
+                  isPublic: true,
+                  visibility: {
+                    ...authUser?.visibility,
+                    isPublic: true,
+                  },
+                });
+              }
+            : undefined
+        }
       />
     </div>
   );
