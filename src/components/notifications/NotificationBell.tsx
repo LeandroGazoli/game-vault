@@ -20,8 +20,10 @@ import {
 import NotificationDrawer from "./NotificationDrawer";
 import NotificationToast from "./NotificationToast";
 import { Bell } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function NotificationBell() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<SystemNotification[]>([INITIAL_FEATURE_NOTIFICATION]);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -37,7 +39,13 @@ export default function NotificationBell() {
       setIsPushEnabled(getNotificationPermission() === "granted");
     }
 
-    // Assina notificações em tempo real do Firestore
+    // Para visitantes deslogados, mantém notificação estática inicial sem abrir websocket com o Firestore
+    if (!user) {
+      setNotifications([INITIAL_FEATURE_NOTIFICATION]);
+      return;
+    }
+
+    // Assina notificações em tempo real do Firestore apenas para usuários autenticados
     const unsubscribe = subscribeToSystemNotifications((serverNotifs) => {
       let merged: SystemNotification[] = [];
 
@@ -70,8 +78,12 @@ export default function NotificationBell() {
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, [user?.uid]);
 
   const handleMarkAsRead = (id: string) => {
     markNotificationAsRead(id);

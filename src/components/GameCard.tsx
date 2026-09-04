@@ -16,7 +16,7 @@ interface GameCardProps {
   onOpenAuthModal?: () => void;
 }
 
-export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
+function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
   const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -297,3 +297,6 @@ export default function GameCard({ game, onOpenAuthModal }: GameCardProps) {
     </>
   );
 }
+
+const GameCard = React.memo(GameCardComponent);
+export default GameCard;

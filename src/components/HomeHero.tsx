@@ -31,8 +31,8 @@ export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
     const mm = gsap.matchMedia();
 
     mm.add({
-      reduceMotion: "(prefers-reduced-motion: reduce)",
-      allowMotion: "(prefers-reduced-motion: no-preference)",
+      reduceMotion: "(prefers-reduced-motion: reduce), (max-width: 768px)",
+      allowMotion: "(prefers-reduced-motion: no-preference) and (min-width: 769px)",
     }, (context) => {
       const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
@@ -44,42 +44,42 @@ export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
         return;
       }
 
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
       tl.fromTo(
         ".hero-badge",
-        { autoAlpha: 0, y: -16, scale: 0.95 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.6 }
+        { autoAlpha: 0, y: -12, scale: 0.96 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.35 }
       )
       .fromTo(
         ".hero-title",
-        { autoAlpha: 0, y: 30 },
-        { autoAlpha: 1, y: 0, duration: 0.8 },
-        "-=0.4"
+        { autoAlpha: 0, y: 20 },
+        { autoAlpha: 1, y: 0, duration: 0.45 },
+        "-=0.2"
       )
       .fromTo(
         ".hero-desc",
-        { autoAlpha: 0, y: 20 },
-        { autoAlpha: 1, y: 0, duration: 0.6 },
-        "-=0.5"
+        { autoAlpha: 0, y: 15 },
+        { autoAlpha: 1, y: 0, duration: 0.35 },
+        "-=0.25"
       )
       .fromTo(
         ".hero-search",
-        { autoAlpha: 0, y: 20, scale: 0.98 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.6 },
-        "-=0.4"
+        { autoAlpha: 0, y: 15, scale: 0.98 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.35 },
+        "-=0.2"
       )
       .fromTo(
         ".hero-chip",
-        { autoAlpha: 0, y: 15, scale: 0.9 },
-        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.07, duration: 0.5, ease: "back.out(1.7)" },
-        "-=0.3"
+        { autoAlpha: 0, y: 10, scale: 0.94 },
+        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.04, duration: 0.3 },
+        "-=0.15"
       )
       .fromTo(
         ".hero-3d",
-        { autoAlpha: 0, scale: 0.93, y: 25 },
-        { autoAlpha: 1, scale: 1, y: 0, duration: 0.9, ease: "power2.out" },
-        "-=0.6"
+        { autoAlpha: 0, scale: 0.95, y: 15 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.45 },
+        "-=0.3"
       );
     });
   }, { scope: heroRef });

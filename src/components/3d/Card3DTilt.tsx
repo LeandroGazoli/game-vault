@@ -28,7 +28,7 @@ export default function Card3DTilt({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      // No mobile / touchscreen, não aplica tilt 3D para evitar layout shift durante o scroll
+      // No mobile / touchscreen, não aplica tilt 3D para evitar layout shift e poupar VRAM
       if (typeof window !== "undefined" && window.matchMedia("(hover: none)").matches) {
         return;
       }
@@ -52,20 +52,20 @@ export default function Card3DTilt({
           gsap.to(cardRef.current, {
             rotateX,
             rotateY,
-            scale: 1.03,
+            scale: 1.02,
             transformPerspective: 1000,
             duration: 0.15,
             ease: "power1.out",
             overwrite: "auto",
-            boxShadow: "0 20px 35px -10px rgba(0, 229, 255, 0.25), 0 0 15px rgba(0, 0, 0, 0.8)",
+            boxShadow: "0 15px 30px -10px rgba(0, 229, 255, 0.2), 0 0 15px rgba(0, 0, 0, 0.8)",
           });
         }
 
         if (glareRef.current) {
           glareRef.current.style.background = `radial-gradient(circle at ${x * 100}% ${
             y * 100
-          }%, rgba(255, 255, 255, 0.4) 0%, rgba(0, 229, 255, 0.25) 25%, rgba(255, 184, 0, 0.2) 50%, transparent 75%)`;
-          glareRef.current.style.opacity = "0.35";
+          }%, rgba(255, 255, 255, 0.3) 0%, rgba(0, 229, 255, 0.18) 25%, rgba(255, 184, 0, 0.15) 50%, transparent 75%)`;
+          glareRef.current.style.opacity = "0.3";
         }
       });
     },
@@ -82,7 +82,7 @@ export default function Card3DTilt({
         rotateX: 0,
         rotateY: 0,
         scale: 1,
-        duration: 0.55,
+        duration: 0.4,
         ease: "power2.out",
         overwrite: "auto",
         boxShadow: "0 0 0 rgba(0, 0, 0, 0)",
@@ -99,15 +99,14 @@ export default function Card3DTilt({
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative will-change-transform transform-gpu group/tilt ${className}`}
-      style={{ transformStyle: "preserve-3d" }}
+      className={`relative group/tilt ${className}`}
     >
       {children}
 
-      {/* Brilho Holográfico Especular Dinâmico (Foil Shimmer) */}
+      {/* Brilho Holográfico Especular Dinâmico (Desktop apenas) */}
       <div
         ref={glareRef}
-        className="pointer-events-none absolute inset-0 rounded-xl transition-opacity duration-200 z-30 overflow-hidden mix-blend-screen opacity-0"
+        className="pointer-events-none absolute inset-0 rounded-xl transition-opacity duration-200 z-30 overflow-hidden mix-blend-screen opacity-0 hidden sm:block"
       />
 
       {/* Borda Iluminada no Hover */}

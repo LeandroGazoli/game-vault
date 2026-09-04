@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Plus, Check, Star, Sparkles, Flame, Clock } 
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Card3DTilt from "./3d/Card3DTilt";
 import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
-import { gsap, useGSAP } from "@/lib/gsap";
+
 
 interface CatalogRowProps {
   title: string;
@@ -35,43 +35,7 @@ export default function CatalogRow({
   const { getGameInLibrary } = useGameLibrary();
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
-  // Revelação fluida dos cards ao rolar via ScrollTrigger
-  useGSAP(() => {
-    if (!sectionRef.current || games.length === 0) return;
 
-    const mm = gsap.matchMedia();
-    mm.add({
-      reduceMotion: "(prefers-reduced-motion: reduce)",
-      allowMotion: "(prefers-reduced-motion: no-preference)",
-    }, (context) => {
-      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-      if (reduceMotion) {
-        gsap.set([".catalog-header", ".catalog-card"], { autoAlpha: 1, y: 0 });
-        return;
-      }
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 88%",
-          once: true,
-        },
-        defaults: { ease: "power2.out" },
-      });
-
-      tl.fromTo(
-        ".catalog-header",
-        { autoAlpha: 0, y: 20 },
-        { autoAlpha: 1, y: 0, duration: 0.5 }
-      ).fromTo(
-        ".catalog-card",
-        { autoAlpha: 0, y: 30, scale: 0.96 },
-        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.05, duration: 0.45 },
-        "-=0.25"
-      );
-    });
-  }, { scope: sectionRef, dependencies: [games] });
 
   const scroll = (direction: "left" | "right") => {
     if (rowRef.current) {

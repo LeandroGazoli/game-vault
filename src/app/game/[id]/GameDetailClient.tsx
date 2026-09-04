@@ -224,9 +224,18 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   }, []);
 
   useEffect(() => {
+    if (initialGame) {
+      setGame(initialGame);
+      setLoading(false);
+      if (initialGame.videos && initialGame.videos.length > 0) {
+        setActiveVideoId((prev) => prev || initialGame.videos![0].video_id);
+      }
+      return;
+    }
+
     async function loadGame() {
       if (!id) return;
-      if (!initialGame) setLoading(true);
+      setLoading(true);
       try {
         const res = await fetch(`/api/games/${id}`);
         if (res.ok) {

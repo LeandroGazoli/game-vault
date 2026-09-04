@@ -29,7 +29,11 @@ export async function GET(
       game.hltb = hltb;
     }
 
-    return NextResponse.json(game);
+    return NextResponse.json(game, {
+      headers: {
+        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: "Erro ao buscar detalhes do jogo" }, { status: 500 });
   }

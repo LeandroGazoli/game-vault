@@ -15,7 +15,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const games = await getRankingsApi(category, limit);
-    return NextResponse.json({ games, total: games.length });
+    return NextResponse.json(
+      { games, total: games.length },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (error) {
     console.error("Erro em /api/games/rankings:", error);
     return NextResponse.json({ games: [], total: 0 }, { status: 500 });

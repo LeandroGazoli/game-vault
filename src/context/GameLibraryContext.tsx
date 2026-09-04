@@ -47,7 +47,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     }
 
     load();
-  }, [user]);
+  }, [user?.uid]);
 
   const triggerZeradoConfetti = useCallback(() => {
     try {
@@ -208,18 +208,29 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     };
   }, [library]);
 
+  const contextValue = useMemo(
+    () => ({
+      library,
+      stats,
+      isLoading,
+      addOrUpdateGame,
+      deleteGame,
+      getGameInLibrary,
+      getGamesByStatus,
+    }),
+    [
+      library,
+      stats,
+      isLoading,
+      addOrUpdateGame,
+      deleteGame,
+      getGameInLibrary,
+      getGamesByStatus,
+    ]
+  );
+
   return (
-    <GameLibraryContext.Provider
-      value={{
-        library,
-        stats,
-        isLoading,
-        addOrUpdateGame,
-        deleteGame,
-        getGameInLibrary,
-        getGamesByStatus,
-      }}
-    >
+    <GameLibraryContext.Provider value={contextValue}>
       {children}
     </GameLibraryContext.Provider>
   );

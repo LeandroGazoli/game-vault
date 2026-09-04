@@ -1,8 +1,8 @@
 // ============================================================
-// GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v3)
+// GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v3";
+const SW_VERSION = "v4";
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,
@@ -92,32 +92,56 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1. Navegação de páginas HTML: Network First com fallback para página offline
+  // 1. Navegação de páginas HTML: Network First com timeout de segurança (2500ms) e fallback offline
   if (request.mode === "navigate") {
+    const fetchWithTimeout = new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error("Network timeout"));
+      }, 2500);
+
+      fetch(request)
+        .then((res) => {
+          clearTimeout(timeoutId);
+          resolve(res);
+        })
+        .catch((err) => {
+          clearTimeout(timeoutId);
+          reject(err);
+        });
+    });
+
     event.respondWith(
-      fetch(request).catch(async () => {
+      fetchWithTimeout.catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
         const offlineFallback = await caches.match("/offline.html");
-        return offlineFallback || new Response("Offline", { status: 503 });
+        return offlineFallback || new Response("Offline", {
+          status: 503,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       })
     );
     return;
   }
 
-  // 2. Chunks estáticos do Next.js (_next/static/): Cache-First com TTL imutável
+  // 2. Chunks estáticos do Next.js (_next/static/): Cache-First resiliente com tratamento de erros
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
 
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAMES.assets).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        });
+        return fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAMES.assets).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Em caso de falha de rede ao baixar chunk, tenta qualquer correspondência em cache
+            return caches.match(request) || new Response("", { status: 408 });
+          });
       })
     );
     return;

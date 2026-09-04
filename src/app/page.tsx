@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { gsap, useGSAP } from "@/lib/gsap";
+
 import {
   Flame,
   Trophy,
@@ -85,7 +85,6 @@ const LEGENDARY_FRANCHISES = [
 export default function HomePage() {
   const { user } = useAuth();
   const { stats, library } = useGameLibrary();
-  const pageRef = useRef<HTMLDivElement>(null);
   
   const [topTenGames, setTopTenGames] = useState<Game[]>([]);
   const [releases, setReleases] = useState<Game[]>([]);
@@ -98,62 +97,7 @@ export default function HomePage() {
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [selectedGameForModal, setSelectedGameForModal] = useState<Game | null>(null);
 
-  // Animações acionadas pelo Scroll (ScrollTrigger)
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
 
-    mm.add({
-      reduceMotion: "(prefers-reduced-motion: reduce)",
-      allowMotion: "(prefers-reduced-motion: no-preference)",
-    }, (context) => {
-      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-      if (reduceMotion) {
-        gsap.set([".franchises-title", ".franchise-card", ".calendar-banner"], {
-          autoAlpha: 1,
-          y: 0,
-        });
-        return;
-      }
-
-      // Franquias Lendárias
-      const franchiseTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".franchises-section",
-          start: "top 85%",
-          once: true,
-        },
-        defaults: { ease: "power2.out" },
-      });
-
-      franchiseTl
-        .fromTo(".franchises-title", { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.5 })
-        .fromTo(
-          ".franchise-card",
-          { autoAlpha: 0, y: 30, scale: 0.94 },
-          { autoAlpha: 1, y: 0, scale: 1, stagger: 0.06, duration: 0.45 },
-          "-=0.2"
-        );
-
-      // Banner do Calendário de Lançamentos
-      gsap.fromTo(
-        ".calendar-banner",
-        { autoAlpha: 0, y: 35, scale: 0.97 },
-        {
-          autoAlpha: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.7,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".calendar-banner",
-            start: "top 88%",
-            once: true,
-          },
-        }
-      );
-    });
-  }, { scope: pageRef });
 
   useEffect(() => {
     async function loadData() {
@@ -245,7 +189,7 @@ export default function HomePage() {
   }, [library, topTenGames]);
 
   return (
-    <div ref={pageRef} className="space-y-12 pb-12">
+    <div className="space-y-12 pb-12">
       {/* ==========================================
           1. HERO SECTION CINEMATOGRÁFICO & REFINADO
       ========================================== */}

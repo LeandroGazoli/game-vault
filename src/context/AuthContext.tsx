@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import {
   auth,
   db,
@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
@@ -185,16 +185,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       throw err;
     }
-  };
+  }, []);
 
-  const signInWithEmail = async (email: string, pass: string) => {
+  const signInWithEmail = useCallback(async (email: string, pass: string) => {
+    if (!auth) return;
     const result = await signInWithEmailAndPassword(auth, email, pass);
     if (result.user) {
       setFirebaseUser(result.user);
     }
-  };
+  }, []);
 
-  const signUpWithEmail = async (email: string, pass: string, username: string) => {
+  const signUpWithEmail = useCallback(async (email: string, pass: string, username: string) => {
+    if (!auth) return;
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const userIsAdmin = Boolean(
       cred.user.emailVerified && ADMIN_EMAILS.includes(email.toLowerCase())
@@ -215,24 +217,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setFirebaseUser(cred.user);
     setUser(newProfile);
     await saveUserProfile(cred.user.uid, newProfile);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     if (auth) {
       await signOut(auth);
     }
     setUser(null);
     setFirebaseUser(null);
-  };
+  }, []);
 
-  const updateUserBio = async (bio: string, favoriteGame?: string) => {
+  const updateUserBio = useCallback(async (bio: string, favoriteGame?: string) => {
     if (!user) return;
     const updated = { ...user, bio, ...(favoriteGame ? { favoriteGame } : {}) };
     setUser(updated);
     await saveUserProfile(user.uid, updated);
-  };
+  }, [user]);
 
-  const updateUserProfile = async (data: Partial<UserProfile>) => {
+  const updateUserProfile = useCallback(async (data: Partial<UserProfile>) => {
     if (!user) return;
     const updated: UserProfile = {
       ...user,
@@ -241,9 +243,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     setUser(updated);
     await saveUserProfile(user.uid, updated);
-  };
+  }, [user]);
 
-  const upgradePlan = async (plan: UserPlan, hideAds = true) => {
+  const upgradePlan = useCallback(async (plan: UserPlan, hideAds = true) => {
     if (!user) return;
     const isPlanPremium = plan === "pro" || plan === "vip" || isAdmin;
     const updated: UserProfile = {
@@ -255,25 +257,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     setUser(updated);
     await saveUserProfile(user.uid, updated);
-  };
+  }, [user, isAdmin]);
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      firebaseUser,
+      isLoading,
+      isPremium,
+      isAdmin,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      logout,
+      updateUserBio,
+      updateUserProfile,
+      upgradePlan,
+    }),
+    [
+      user,
+      firebaseUser,
+      isLoading,
+      isPremium,
+      isAdmin,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      logout,
+      updateUserBio,
+      updateUserProfile,
+      upgradePlan,
+    ]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        firebaseUser,
-        isLoading,
-        isPremium,
-        isAdmin,
-        signInWithGoogle,
-        signInWithEmail,
-        signUpWithEmail,
-        logout,
-        updateUserBio,
-        updateUserProfile,
-        upgradePlan,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

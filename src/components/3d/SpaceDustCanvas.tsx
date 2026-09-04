@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 
 export default function SpaceDustCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -11,10 +11,23 @@ export default function SpaceDustCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Detectar preferência por movimento reduzido
+    // Detectar preferência por movimento reduzido ou dispositivo móvel / touch / PWA
+    const isMobileOrTouch =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 ||
+        window.matchMedia("(hover: none)").matches ||
+        window.matchMedia("(pointer: coarse)").matches ||
+        window.matchMedia("(display-mode: standalone)").matches);
+
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Em mobile, telas pequenas ou modo standalone PWA, não inicializa Three.js para poupar 100% de GPU/bateria e evitar tela preta
+    if (isMobileOrTouch || prefersReducedMotion) {
+      canvas.style.display = "none";
+      return;
+    }
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -22,6 +35,7 @@ export default function SpaceDustCanvas() {
     let renderer: THREE.WebGLRenderer;
     let scene: THREE.Scene;
     let camera: THREE.PerspectiveCamera;
+    let animationFrameId: number | null = null;
 
     try {
       scene = new THREE.Scene();
@@ -33,13 +47,20 @@ export default function SpaceDustCanvas() {
         canvas,
         alpha: true,
         antialias: false,
-        powerPreference: "high-performance",
+        powerPreference: "default",
       });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
     } catch {
       return;
     }
+
+    // Tratamento defensivo contra perda de contexto WebGL
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+    };
+    canvas.addEventListener("webglcontextlost", handleContextLost, false);
 
     // ============================================================
     // 1. CAMADA DE LUZES ATMOSFÉRICAS REATIVAS AO CURSOR
@@ -206,29 +227,24 @@ export default function SpaceDustCanvas() {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
     // ============================================================
-    // 5. GSAP SCROLLTRIGGER: PARALLAX CONTÍNUO AO LONGO DO SITE
+    // 5. PARALLAX CONTÍNUO AO LONGO DO SITE (Passivo e Ultraleve)
     // ============================================================
     let targetCameraY = 0;
-    const mapScrollToY = gsap.utils.mapRange(0, 1, 0, -2200);
 
-    let scrollTriggerInstance: ScrollTrigger | null = null;
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? window.scrollY / scrollHeight : 0;
+      targetCameraY = -2200 * Math.min(Math.max(progress, 0), 1);
+    };
 
     if (!prefersReducedMotion) {
-      scrollTriggerInstance = ScrollTrigger.create({
-        trigger: document.body,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1.2,
-        onUpdate: (self) => {
-          targetCameraY = mapScrollToY(self.progress);
-        },
-      });
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      handleScroll();
     }
 
     // ============================================================
     // 6. LOOP DE ANIMAÇÃO 60FPS (Otimizado com VisibilityChange)
     // ============================================================
-    let animationFrameId: number;
     let clock = new THREE.Clock();
     let isVisible = true;
 
@@ -288,11 +304,14 @@ export default function SpaceDustCanvas() {
     // 8. CLEANUP RIGOROSO (Prevenção de Memory Leaks)
     // ============================================================
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("visibilitychange", handleVisibility);
-      scrollTriggerInstance?.kill();
 
       particleGeo.dispose();
       particleMat.dispose();
@@ -318,7 +337,7 @@ export default function SpaceDustCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="vt-background fixed inset-0 pointer-events-none -z-10 w-full h-full will-change-transform opacity-75"
+      className="fixed inset-0 pointer-events-none -z-10 w-full h-full opacity-70"
       aria-hidden="true"
     />
   );
