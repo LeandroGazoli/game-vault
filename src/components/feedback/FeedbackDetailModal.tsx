@@ -87,6 +87,7 @@ export default function FeedbackDetailModal({
   const [adminResponseText, setAdminResponseText] = useState("");
   const [isSavingAdmin, setIsSavingAdmin] = useState(false);
   const [showAdminEdit, setShowAdminEdit] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (item && isOpen) {
@@ -122,8 +123,6 @@ export default function FeedbackDetailModal({
       setIsVoting(false);
     }
   };
-
-  const [commentError, setCommentError] = useState<string | null>(null);
 
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
