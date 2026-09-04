@@ -36,7 +36,14 @@ import {
   Layers,
   Bookmark,
   Lightbulb,
+  Upload,
 } from "lucide-react";
+
+export function openGameImporter() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("open-game-importer"));
+  }
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -45,8 +52,36 @@ export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isExploreMenuOpen, setIsExploreMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const exploreTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+  const userMenuTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenUserMenu = () => {
+    if (userMenuTimeoutRef.current) clearTimeout(userMenuTimeoutRef.current);
+    setIsUserMenuOpen(true);
+  };
+
+  const handleCloseUserMenu = () => {
+    if (userMenuTimeoutRef.current) clearTimeout(userMenuTimeoutRef.current);
+    userMenuTimeoutRef.current = setTimeout(() => {
+      setIsUserMenuOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      if (userMenuTimeoutRef.current) clearTimeout(userMenuTimeoutRef.current);
+    };
+  }, []);
 
   const handleOpenExplore = () => {
     if (exploreTimeoutRef.current) {
@@ -360,39 +395,122 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Perfil: no mobile é apenas o avatar circular compacto (32px), sem empurrar o menu */}
-                <Link
-                  href={user.username ? getProfileUrl(user.username) : "/perfil"}
-                  className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/10 border border-white/10 hover:border-white/30 transition-colors shrink-0"
-                  title={`Perfil de ${user.displayName}`}
+                {/* Menu Dropdown do Perfil */}
+                <div
+                  ref={userMenuRef}
+                  className="relative"
+                  onMouseEnter={handleOpenUserMenu}
+                  onMouseLeave={handleCloseUserMenu}
                 >
-                  <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
-                  <span className="text-xs font-semibold text-gray-200 max-w-[70px] sm:max-w-[85px] truncate hidden sm:inline">
-                    {user.displayName}
-                  </span>
-                  <span className="hidden md:inline">
-                    <PlanBadge plan={user.plan || "free"} size="sm" />
-                  </span>
-                </Link>
-
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-xs font-semibold text-amber-300 transition-colors shadow-sm shrink-0"
-                    title="Acessar Painel do Administrador"
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/10 border border-white/10 hover:border-white/30 transition-colors shrink-0 cursor-pointer"
+                    title={`Menu do perfil de ${user.displayName}`}
+                    aria-expanded={isUserMenuOpen}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="hidden md:inline">Admin</span>
-                  </Link>
-                )}
+                    <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
+                    <span className="text-xs font-semibold text-gray-200 max-w-[70px] sm:max-w-[85px] truncate hidden sm:inline">
+                      {user.displayName}
+                    </span>
+                    <span className="hidden md:inline">
+                      <PlanBadge plan={user.plan || "free"} size="sm" />
+                    </span>
+                    <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform hidden sm:inline ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                  </button>
 
-                <button
-                  onClick={() => logout()}
-                  title="Sair"
-                  className="hidden md:flex p-1.5 rounded-full text-gray-400 hover:text-rose-400 hover:bg-white/10 transition-colors shrink-0"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                  {/* Dropdown Menu Flutuante */}
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-[#101217] border border-white/15 p-2 shadow-2xl z-50 animate-fadeIn space-y-1">
+                      {/* Cabeçalho do Usuário */}
+                      <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-white truncate">
+                            {user.displayName}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-mono truncate">
+                            @{user.username || "gamer"}
+                          </p>
+                        </div>
+                        <PlanBadge plan={user.plan || "free"} size="sm" />
+                      </div>
+
+                      {/* Links do Menu */}
+                      <div className="pt-1 space-y-0.5">
+                        <Link
+                          href={user.username ? getProfileUrl(user.username) : "/perfil"}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <User className="w-4 h-4 text-cyan-400" />
+                          <span>Meu Perfil</span>
+                        </Link>
+
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            if (pathname?.startsWith("/perfil")) {
+                              openGameImporter();
+                            } else {
+                              window.location.href = `${user.username ? getProfileUrl(user.username) : "/perfil"}?action=import`;
+                            }
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-cyan-300 hover:text-white bg-cyan-950/30 hover:bg-cyan-950/60 border border-[#00E5FF]/20 hover:border-[#00E5FF]/40 transition-colors text-left group cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Upload className="w-4 h-4 text-[#00E5FF]" />
+                            <span>Importar Biblioteca</span>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#00E5FF]/20 text-[#00E5FF]">
+                            NOVO
+                          </span>
+                        </button>
+
+                        <Link
+                          href="/inventario-steam"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Sparkles className="w-4 h-4 text-cyan-300" />
+                          <span>Inventário Steam &amp; Skins</span>
+                        </Link>
+
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-amber-400" />
+                            <span>Painel Admin</span>
+                          </Link>
+                        )}
+
+                        <Link
+                          href="/feedback"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Lightbulb className="w-4 h-4 text-yellow-400" />
+                          <span>Ideias &amp; Reportar Bugs</span>
+                        </Link>
+                      </div>
+
+                      {/* Botão Sair */}
+                      <div className="pt-1 border-t border-white/10">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors text-left cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-rose-400" />
+                          <span>Sair da Conta</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <button
@@ -491,6 +609,27 @@ export default function Navbar() {
                     <span>•</span>
                     <span className="text-amber-300 font-bold">{stats.totalPlaytimeHours}h</span>
                   </div>
+
+                  {/* Botão Rápido de Importar */}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      if (pathname?.startsWith("/perfil")) {
+                        openGameImporter();
+                      } else {
+                        window.location.href = `${user.username ? getProfileUrl(user.username) : "/perfil"}?action=import`;
+                      }
+                    }}
+                    className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-xl bg-cyan-950/30 hover:bg-cyan-950/60 border border-[#00E5FF]/25 text-xs font-bold text-cyan-300 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      <span>Importar Biblioteca</span>
+                    </div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#00E5FF]/20 text-[#00E5FF]">
+                      NOVO
+                    </span>
+                  </button>
                 </div>
               ) : (
                 <button

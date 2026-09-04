@@ -21,6 +21,7 @@ import {
   Gamepad2,
   Trophy,
   Palette,
+  Upload,
 } from "lucide-react";
 
 interface ProfileHeroCardProps {
@@ -31,6 +32,7 @@ interface ProfileHeroCardProps {
   onOpenEditProfile?: () => void;
   onOpenEditBio?: () => void;
   onOpenTools: () => void;
+  onOpenImporter?: () => void;
   onOpenShare: () => void;
   onOpenManagePlan: () => void;
   onOpenUpgrade: () => void;
@@ -44,6 +46,7 @@ export default function ProfileHeroCard({
   onOpenEditProfile,
   onOpenEditBio,
   onOpenTools,
+  onOpenImporter,
   onOpenShare,
   onOpenManagePlan,
   onOpenUpgrade,
@@ -236,6 +239,17 @@ export default function ProfileHeroCard({
                   <span>Adicionar Jogos</span>
                 </Link>
 
+                {onOpenImporter && (
+                  <button
+                    onClick={onOpenImporter}
+                    className="w-full sm:w-auto min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-[#00E5FF]/40 hover:border-[#00E5FF]/70 text-[#00E5FF] text-xs font-bold transition-all shadow-md active:scale-95"
+                    title="Importar biblioteca da Steam, Epic, Xbox, PlayStation e arquivos"
+                  >
+                    <Upload className="w-4 h-4 text-[#00E5FF]" />
+                    <span>Importar</span>
+                  </button>
+                )}
+
                 <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                   <button
                     onClick={handleEdit}
@@ -373,6 +387,16 @@ export default function ProfileHeroCard({
                   <Plus className="w-4 h-4 text-black" />
                   <span>Adicionar Jogos</span>
                 </Link>
+                {onOpenImporter && (
+                  <button
+                    onClick={onOpenImporter}
+                    className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-bold transition-all active:scale-95 flex items-center gap-2 shadow-md"
+                    title="Importar biblioteca"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
+                    <span>Importar</span>
+                  </button>
+                )}
                 <button
                   onClick={handleEdit}
                   className={`min-h-[44px] px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.borderHover} text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-2 shadow-md`}
@@ -444,17 +468,26 @@ export default function ProfileHeroCard({
             <div className="sm:hidden grid grid-cols-2 gap-2 pt-2">
               <Link
                 href="/search"
-                className="col-span-2 min-h-[46px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-black text-xs font-black shadow-xl active:scale-95"
+                className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-black text-xs font-black shadow-xl active:scale-95"
               >
                 <Plus className="w-4 h-4 text-black" />
-                <span>Adicionar Jogos</span>
+                <span>Adicionar</span>
               </Link>
+              {onOpenImporter && (
+                <button
+                  onClick={onOpenImporter}
+                  className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-cyan-950/40 border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-bold active:scale-95"
+                >
+                  <Upload className="w-4 h-4 text-[#00E5FF]" />
+                  <span>Importar</span>
+                </button>
+              )}
               <button
                 onClick={handleEdit}
                 className={`min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} text-xs font-bold text-white active:scale-95`}
               >
                 <Palette className={`w-3.5 h-3.5 ${themeStyles.textAccent}`} />
-                <span>Editar &amp; Personalizar</span>
+                <span>Personalizar</span>
               </button>
               <button
                 onClick={onOpenTools}

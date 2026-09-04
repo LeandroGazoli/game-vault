@@ -31,7 +31,7 @@ interface GameImporterModalProps {
   existingGames?: UserGame[];
 }
 
-type ImportSourceTab = "steam" | "file" | "text";
+type ImportSourceTab = "steam" | "xbox" | "playstation" | "text" | "file";
 
 const POPULAR_STORE_PLATFORMS: StorePlatform[] = [
   "Epic Games",
@@ -63,6 +63,19 @@ export default function GameImporterModal({
   const [steamApiKey, setSteamApiKey] = useState("");
   const [isSteamLoading, setIsSteamLoading] = useState(false);
   const [steamError, setSteamError] = useState<string | null>(null);
+
+  // Xbox Tab State
+  const [xboxInput, setXboxInput] = useState(user?.socialLinks?.xbox || "");
+  const [xboxApiKey, setXboxApiKey] = useState("");
+  const [isXboxLoading, setIsXboxLoading] = useState(false);
+  const [xboxError, setXboxError] = useState<string | null>(null);
+
+  // PlayStation Tab State
+  const [psnInput, setPsnInput] = useState(user?.socialLinks?.psn || "");
+  const [psnNpsso, setPsnNpsso] = useState("");
+  const [psnTextList, setPsnTextList] = useState("");
+  const [isPsnLoading, setIsPsnLoading] = useState(false);
+  const [psnError, setPsnError] = useState<string | null>(null);
 
   // File Tab State
   const [fileName, setFileName] = useState<string | null>(null);
@@ -99,6 +112,8 @@ export default function GameImporterModal({
       setDraftGames([]);
       setFileError(null);
       setSteamError(null);
+      setXboxError(null);
+      setPsnError(null);
       setImportProgress(0);
     }, 200);
   };
@@ -159,6 +174,129 @@ export default function GameImporterModal({
       setSteamError("Erro de comunicação com o servidor.");
     } finally {
       setIsSteamLoading(false);
+    }
+  };
+
+  // =========================================================================
+  // 1.1 CARREGAMENTO VIA XBOX (OPENXBL / NUVEM)
+  // =========================================================================
+  const handleLoadXbox = async () => {
+    if (!xboxInput.trim()) {
+      setXboxError("Por favor, informe seu Xbox Gamertag.");
+      return;
+    }
+
+    setIsXboxLoading(true);
+    setXboxError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("gamertag", xboxInput.trim());
+      if (xboxApiKey.trim()) params.set("apiKey", xboxApiKey.trim());
+
+      const res = await fetch(`/api/importer/xbox?${params.toString()}`);
+      const data = await res.json();
+
+      if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {
+        setXboxError(data.error || "Nenhum jogo encontrado para este Gamertag.");
+        return;
+      }
+
+      const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
+        const already = currentLibrary.some(
+          (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
+        );
+
+        return {
+          id: `xbox_${g.titleId || idx}_${idx}`,
+          originalTitle: g.name,
+          matchedTitle: g.name,
+          matchedCover: g.logoUrl || null,
+          platform: "Xbox Series" as StorePlatform,
+          status: "backlog" as GameStatus,
+          selected: !already,
+          alreadyInLibrary: already,
+        };
+      });
+
+      await enrichDraftsWithIGDB(rawDrafts);
+    } catch (e) {
+      console.error("Erro ao carregar jogos do Xbox:", e);
+      setXboxError("Erro de comunicação com o servidor.");
+    } finally {
+      setIsXboxLoading(false);
+    }
+  };
+
+  // =========================================================================
+  // 1.2 CARREGAMENTO VIA PLAYSTATION (PSN ID / LISTA)
+  // =========================================================================
+  const handleLoadPlaystation = async () => {
+    // Se preencheu lista rápida de títulos PlayStation
+    if (psnTextList.trim()) {
+      const lines = psnTextList.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        const rawDrafts: ImportGameDraft[] = lines.map((line, idx) => {
+          const already = currentLibrary.some(
+            (libG) => libG.gameTitle.toLowerCase() === line.toLowerCase()
+          );
+          return {
+            id: `psn_${idx}`,
+            originalTitle: line,
+            matchedTitle: line,
+            platform: "PlayStation 5" as StorePlatform,
+            status: "backlog" as GameStatus,
+            selected: !already,
+            alreadyInLibrary: already,
+          };
+        });
+        await enrichDraftsWithIGDB(rawDrafts);
+        return;
+      }
+    }
+
+    if (!psnInput.trim()) {
+      setPsnError("Por favor, informe sua PSN Online ID ou cole sua lista de jogos abaixo.");
+      return;
+    }
+
+    setIsPsnLoading(true);
+    setPsnError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("psnId", psnInput.trim());
+      if (psnNpsso.trim()) params.set("npsso", psnNpsso.trim());
+
+      const res = await fetch(`/api/importer/playstation?${params.toString()}`);
+      const data = await res.json();
+
+      if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {
+        setPsnError(data.error || "A PlayStation Network exige exportação ou chave NPSSO. Utilize a lista rápida ou CSV.");
+        return;
+      }
+
+      const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
+        const already = currentLibrary.some(
+          (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
+        );
+        return {
+          id: `psn_${idx}`,
+          originalTitle: g.name,
+          matchedTitle: g.name,
+          platform: "PlayStation 5" as StorePlatform,
+          status: "backlog" as GameStatus,
+          selected: !already,
+          alreadyInLibrary: already,
+        };
+      });
+
+      await enrichDraftsWithIGDB(rawDrafts);
+    } catch (e) {
+      console.error("Erro ao carregar jogos da PSN:", e);
+      setPsnError("Erro de comunicação com o servidor.");
+    } finally {
+      setIsPsnLoading(false);
     }
   };
 
@@ -453,27 +591,53 @@ export default function GameImporterModal({
         {step === "input" && (
           <div className="space-y-5 overflow-y-auto pr-1">
             {/* Abas Seletoras de Fonte */}
-            <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-[#18191c] border border-white/10">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-2xl bg-[#14161a] border border-white/10">
               <button
                 type="button"
                 onClick={() => setActiveTab("steam")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "steam"
-                    ? "bg-[#00E5FF] text-black shadow-md shadow-cyan-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-cyan-950/60 text-[#00E5FF] border border-[#00E5FF]/50 shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <span className="text-sm">🎮</span>
+                <span>🎮</span>
                 <span>Steam</span>
               </button>
 
               <button
                 type="button"
+                onClick={() => setActiveTab("xbox")}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "xbox"
+                    ? "bg-emerald-950/60 text-emerald-300 border border-emerald-500/50 shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <span>🟢</span>
+                <span>Xbox</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("playstation")}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "playstation"
+                    ? "bg-blue-950/60 text-blue-300 border border-blue-500/50 shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <span>🔵</span>
+                <span>PlayStation</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab("text")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "text"
-                    ? "bg-[#00E5FF] text-black shadow-md shadow-cyan-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-purple-950/60 text-purple-300 border border-purple-500/50 shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -483,10 +647,10 @@ export default function GameImporterModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("file")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`col-span-2 sm:col-span-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "file"
-                    ? "bg-[#00E5FF] text-black shadow-md shadow-cyan-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-amber-950/60 text-amber-300 border border-amber-500/50 shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -560,6 +724,161 @@ export default function GameImporterModal({
                       <Download className="w-4 h-4 text-black" />
                     )}
                     <span>Carregar Jogos da Steam</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ABA 2: XBOX */}
+            {activeTab === "xbox" && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+                    <span className="font-mono text-[10px] bg-emerald-500/30 px-1.5 py-0.5 rounded text-emerald-200">XBOX CLOUD SYNC</span>
+                    <span>Sincronização via Gamertag / Xbox Live</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Insira sua <strong>Xbox Gamertag</strong>. Buscamos seus títulos jogados no Xbox Series X|S, Xbox One, Xbox 360 e PC Game Pass!
+                  </p>
+
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Ex: MajorNelson ou sua Gamertag"
+                      value={xboxInput}
+                      onChange={(e) => setXboxInput(e.target.value)}
+                      className="w-full h-11 px-3.5 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                    />
+
+                    {/* Opcional: OpenXBL API Key */}
+                    <div className="space-y-1 pt-1">
+                      <details className="text-[11px] text-gray-400 cursor-pointer">
+                        <summary className="hover:text-white">
+                          Opções Avançadas: Chave OpenXBL (Opcional para Nuvem Direta)
+                        </summary>
+                        <div className="pt-2">
+                          <input
+                            type="password"
+                            placeholder="Sua chave da API do OpenXBL (xbl.io)..."
+                            value={xboxApiKey}
+                            onChange={(e) => setXboxApiKey(e.target.value)}
+                            className="w-full h-10 px-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                          />
+                          <p className="text-[10px] text-gray-500 mt-1">
+                            Disponível gratuitamente em <a href="https://xbl.io" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">xbl.io</a> para sincronização contínua.
+                          </p>
+                        </div>
+                      </details>
+                    </div>
+                  </div>
+                </div>
+
+                {xboxError && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
+                    <span className="font-bold flex items-center gap-1.5 text-amber-300">
+                      <AlertCircle className="w-3.5 h-3.5" /> Dica:
+                    </span>
+                    <p>{xboxError}</p>
+                    <p className="text-[11px] text-gray-400 pt-1">
+                      💡 <strong>Dica rápida:</strong> Você também pode usar a aba <strong>&quot;Lista Rápida&quot;</strong> para colar os nomes dos seus jogos favoritos do Xbox e importá-los em segundos!
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleLoadXbox()}
+                    disabled={isXboxLoading || !xboxInput.trim()}
+                    className="w-full min-h-[46px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {isXboxLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
+                    ) : (
+                      <Download className="w-4 h-4 text-black" />
+                    )}
+                    <span>Carregar Jogos do Xbox</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ABA 3: PLAYSTATION */}
+            {activeTab === "playstation" && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-blue-950/20 border border-blue-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+                    <span className="font-mono text-[10px] bg-blue-500/30 px-1.5 py-0.5 rounded text-blue-200">PLAYSTATION SYNC</span>
+                    <span>Importação de jogos do PS4 e PS5</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Insira sua <strong>PSN Online ID</strong> ou cole a lista dos seus jogos do PlayStation. Enriquecemos os títulos com capas oficiais e notas do Metacritic!
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[11px] text-gray-400 block mb-1">
+                        Sua PSN Online ID:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: PlayStationBrasil ou sua PSN ID"
+                        value={psnInput}
+                        onChange={(e) => setPsnInput(e.target.value)}
+                        className="w-full h-11 px-3.5 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-400"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] text-gray-400">
+                          Ou cole os títulos dos seus jogos do PlayStation (1 por linha):
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPsnTextList(
+                              "God of War Ragnarök\nMarvel's Spider-Man 2\nBloodborne\nThe Last of Us Part I\nGhost of Tsushima\nHorizon Forbidden West\nDemon's Souls\nReturnal"
+                            )
+                          }
+                          className="text-[10px] text-blue-300 hover:text-blue-200 underline"
+                        >
+                          Exemplo PS5
+                        </button>
+                      </div>
+                      <textarea
+                        rows={4}
+                        placeholder="Ex:&#10;God of War Ragnarök&#10;Spider-Man 2&#10;The Last of Us Part I"
+                        value={psnTextList}
+                        onChange={(e) => setPsnTextList(e.target.value)}
+                        className="w-full p-3 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 resize-none font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {psnError && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
+                    <span className="font-bold flex items-center gap-1.5 text-amber-300">
+                      <AlertCircle className="w-3.5 h-3.5" /> Dica:
+                    </span>
+                    <p>{psnError}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleLoadPlaystation()}
+                    disabled={isPsnLoading || (!psnInput.trim() && !psnTextList.trim())}
+                    className="w-full min-h-[46px] rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-blue-600/20"
+                  >
+                    {isPsnLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <Download className="w-4 h-4 text-white" />
+                    )}
+                    <span>Importar Jogos da PlayStation</span>
                   </button>
                 </div>
               </div>

@@ -187,6 +187,34 @@ export default function ProfileToolsModal({
             <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
           </button>
 
+          {/* 2.1. Importar Biblioteca Multi-Lojas (Destaque Principal) */}
+          {onOpenImporter && (
+            <button
+              onClick={() => handleAction(onOpenImporter)}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-cyan-950/30 hover:bg-cyan-950/60 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 transition-all text-left group active:scale-[0.99] min-h-[52px] shadow-sm"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] flex-shrink-0">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] transition-colors">
+                      Importar Jogos &amp; Lojas
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30">
+                      STEAM • XBOX • PSN
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    Sincronize da Steam, Epic Games, Xbox, PlayStation e arquivos CSV/JSON
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+            </button>
+          )}
+
           {/* 2.1. Privacidade do Perfil (Atalho Direto) */}
           <button
             onClick={() => handleAction(onOpenPrivacy || onOpenCustomizer)}
@@ -313,34 +341,6 @@ export default function ProfileToolsModal({
             </div>
             <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
           </button>
-
-          {/* 5.1. Importar Biblioteca Multi-Lojas */}
-          {onOpenImporter && (
-            <button
-              onClick={() => handleAction(onOpenImporter)}
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-cyan-950/20 hover:bg-cyan-950/40 border border-[#00E5FF]/25 hover:border-[#00E5FF]/50 transition-all text-left group active:scale-[0.99] min-h-[52px]"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF] flex-shrink-0">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] transition-colors">
-                      Importar Jogos &amp; Lojas
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-cyan-500/20 text-cyan-300">
-                      NOVO
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-400">
-                    Sincronize da Steam, Epic Games, GOG, PlayStation e CSV/JSON
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-            </button>
-          )}
 
           {/* 5.2. Inventário Steam */}
           {onOpenSteamInventory && (

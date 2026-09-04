@@ -55,6 +55,10 @@ import {
   Globe,
   Lock,
   Upload,
+  ArrowUpDown,
+  Layers,
+  Bookmark,
+  Ban,
 } from "lucide-react";
 
 function computeLibraryStats(games: UserGame[]): LibraryStats {
@@ -183,6 +187,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "rating" | "playtime" | "title" | "year">("recent");
   const [selectedGameToEdit, setSelectedGameToEdit] = useState<any | null>(null);
   const [customizerInitialTab, setCustomizerInitialTab] = useState<
     "info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility"
@@ -202,11 +207,23 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
   const profileThemeStyles = getThemeStyles(activeUser?.theme);
 
+  // Escuta evento global de abertura do importador (disparado pela Navbar ou outros componentes)
+  useEffect(() => {
+    const handleOpenImporter = () => setIsImporterOpen(true);
+    window.addEventListener("open-game-importer", handleOpenImporter);
+    return () => window.removeEventListener("open-game-importer", handleOpenImporter);
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const searchParams = new URLSearchParams(window.location.search);
     const sId = searchParams.get("session_id");
     const isUpgraded = searchParams.get("upgraded");
+    const action = searchParams.get("action");
+
+    if (action === "import") {
+      setIsImporterOpen(true);
+    }
 
     if (sId) {
       fetch(`/api/checkout/verify?session_id=${sId}`)
@@ -225,7 +242,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   }, []);
 
   const filteredLibrary = useMemo(() => {
-    return activeLibrary.filter((game) => {
+    const list = activeLibrary.filter((game) => {
       if (activeTab !== "all" && game.status !== activeTab) {
         return false;
       }
@@ -238,7 +255,28 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       }
       return true;
     });
-  }, [activeLibrary, activeTab, searchQuery]);
+
+    return [...list].sort((a, b) => {
+      if (sortBy === "rating") {
+        return (b.userRating ?? -1) - (a.userRating ?? -1);
+      }
+      if (sortBy === "playtime") {
+        return (b.userPlaytimeHours ?? 0) - (a.userPlaytimeHours ?? 0);
+      }
+      if (sortBy === "title") {
+        return a.gameTitle.localeCompare(b.gameTitle);
+      }
+      if (sortBy === "year") {
+        const yearA = parseInt(a.releaseYear || "0", 10) || 0;
+        const yearB = parseInt(b.releaseYear || "0", 10) || 0;
+        return yearB - yearA;
+      }
+      if (a.createdAt && b.createdAt) {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      return 0;
+    });
+  }, [activeLibrary, activeTab, searchQuery, sortBy]);
 
   if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return (
@@ -442,6 +480,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           setIsCustomizerOpen(true);
         }}
         onOpenTools={() => setIsToolsOpen(true)}
+        onOpenImporter={() => setIsImporterOpen(true)}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
@@ -481,48 +520,42 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           {/* Abas com rolagem suave horizontal e alvos de toque ergonômicos */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 flex-nowrap">
             {[
-              { id: "all", label: "Todos", count: activeStats.totalGames },
-              { id: "completed", label: "Zerados 🏆", count: activeStats.completedCount },
-              { id: "playing", label: "Jogando 🎮", count: activeStats.playingCount },
-              { id: "dropped", label: "Dropados 🛑", count: activeStats.droppedCount },
-              { id: "backlog", label: "Quero Jogar ⏳", count: activeStats.backlogCount },
-              { id: "steam_inventory", label: "Inventário Steam 🎒", count: activeUser?.socialLinks?.steam ? "Steam" : "Skins" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 select-none active:scale-95 ${
-                  activeTab === tab.id
-                    ? profileThemeStyles.activeTabBg
-                    : "bg-[#18191c] text-gray-400 hover:text-gray-200 hover:bg-[#202126] border border-white/5"
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                    activeTab === tab.id ? "bg-black/20 text-black" : "bg-white/10 text-gray-400"
+              { id: "all", label: "Todos", icon: Layers, iconColor: "text-gray-400", count: activeStats.totalGames },
+              { id: "completed", label: "Zerados", icon: Trophy, iconColor: "text-amber-400", count: activeStats.completedCount },
+              { id: "playing", label: "Jogando", icon: Gamepad2, iconColor: "text-emerald-400", count: activeStats.playingCount },
+              { id: "backlog", label: "Quero Jogar", icon: Bookmark, iconColor: "text-purple-400", count: activeStats.backlogCount },
+              { id: "dropped", label: "Dropados", icon: Ban, iconColor: "text-rose-400", count: activeStats.droppedCount },
+              { id: "steam_inventory", label: "Inventário Steam", icon: Sparkles, iconColor: "text-cyan-400", count: activeUser?.socialLinks?.steam ? "Steam" : "Skins" },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-shrink-0 min-h-[42px] px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 select-none active:scale-95 ${
+                    isActive
+                      ? profileThemeStyles.activeTabBg
+                      : "bg-[#14161a] text-gray-400 hover:text-gray-200 hover:bg-[#1a1d24] border border-white/5"
                   }`}
                 >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-inherit" : tab.iconColor}`} />
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      isActive ? "bg-white/15 text-white" : "bg-white/5 text-gray-400"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Busca na Biblioteca, Ações e Modo de Visualização */}
+          {/* Busca na Biblioteca, Ordenação e Modo de Visualização */}
           <div className="flex items-center gap-2 w-full md:w-auto">
-            {isOwner && (
-              <button
-                type="button"
-                onClick={() => setIsImporterOpen(true)}
-                className="h-11 md:h-10 px-3 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm shrink-0"
-                title="Importar biblioteca da Steam, Epic Games, GOG ou arquivos CSV/JSON"
-              >
-                <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
-                <span className="hidden sm:inline">Importar</span>
-              </button>
-            )}
-
+            {/* Campo de Busca Rápida */}
             <div className="relative flex-1 md:flex-initial">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -530,7 +563,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                 placeholder="Filtrar na biblioteca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full md:w-52 h-11 md:h-10 pl-10 pr-8 rounded-2xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
+                className="w-full md:w-48 lg:w-52 h-11 md:h-10 pl-10 pr-8 rounded-2xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
               />
               {searchQuery && (
                 <button
@@ -542,7 +575,27 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
               )}
             </div>
 
-            <div className="flex items-center rounded-2xl bg-[#18191c] border border-white/10 p-1 flex-shrink-0">
+            {/* Seletor de Ordenação */}
+            <div className="relative flex-shrink-0">
+              <div className="flex items-center gap-1.5 h-11 md:h-10 px-2.5 sm:px-3 rounded-2xl bg-[#14161a] border border-white/10 text-xs text-gray-300 hover:border-white/20 transition-all">
+                <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent text-xs text-gray-200 font-medium focus:outline-none cursor-pointer pr-1"
+                  aria-label="Ordenar biblioteca"
+                >
+                  <option value="recent" className="bg-[#14161a] text-white">Adicionados Recentes</option>
+                  <option value="rating" className="bg-[#14161a] text-white">Maior Nota</option>
+                  <option value="playtime" className="bg-[#14161a] text-white">Mais Horas Jogadas</option>
+                  <option value="title" className="bg-[#14161a] text-white">Título (A - Z)</option>
+                  <option value="year" className="bg-[#14161a] text-white">Ano de Lançamento</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Alternador Grade / Lista */}
+            <div className="flex items-center rounded-2xl bg-[#14161a] border border-white/10 p-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
@@ -698,20 +751,16 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                     </div>
 
                     {/* Resumo de Avaliação e Horas */}
-                    <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] font-mono">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Nota:</span>
-                        {userGame.userRating !== null ? (
-                          <span className="font-bold text-amber-300">
-                            ⭐ {userGame.userRating.toFixed(1)}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500 italic">NS</span>
-                        )}
+                    <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono">
+                      <div className="flex items-center gap-1" title="Sua Avaliação">
+                        <span className="text-amber-400">★</span>
+                        <span className="font-bold text-gray-200">
+                          {userGame.userRating !== null ? userGame.userRating.toFixed(1) : "--"}
+                        </span>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Tempo:</span>
+                      <div className="flex items-center gap-1 text-gray-400" title="Tempo Jogado">
+                        <Clock className="w-3 h-3 text-cyan-400" />
                         <span className="font-semibold text-cyan-300">
                           {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours}h` : "--"}
                         </span>
@@ -721,14 +770,14 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                     {isOwner ? (
                       <button
                         onClick={() => setSelectedGameToEdit(asGame)}
-                        className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors mt-1"
+                        className="w-full py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors mt-1 active:scale-95"
                       >
                         Editar
                       </button>
                     ) : (
                       <Link
                         href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
-                        className="w-full py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-[#00E5FF] transition-colors mt-1 block text-center"
+                        className="w-full py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-[#00E5FF] transition-colors mt-1 block text-center active:scale-95"
                       >
                         Ver Detalhes
                       </Link>
@@ -758,16 +807,16 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
               return (
                 <div
                   key={userGame.gameId}
-                  className="rounded-2xl bg-[#18191c] border border-white/5 p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-white/20 transition-all"
+                  className="rounded-2xl bg-[#14161a] border border-white/5 p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-white/15 hover:bg-[#181a20] transition-all"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <img
                       src={userGame.gameCover || ""}
                       alt={userGame.gameTitle}
-                      className="w-12 h-16 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                      className="w-14 h-20 rounded-xl object-cover border border-white/10 shadow-md flex-shrink-0"
                     />
 
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-1.5 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
                         {userGame.dlcs && userGame.dlcs.length > 0 && (
@@ -782,7 +831,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                           <MetacriticBadge score={userGame.metacritic} size="sm" />
                         )}
                         <span className="text-xs text-gray-400 font-mono">
-                          {userGame.platformPlayed}
+                          {userGame.releaseYear ? `${userGame.releaseYear} • ` : ""}{userGame.platformPlayed}
                         </span>
                       </div>
 
@@ -800,32 +849,38 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-5 self-end md:self-center font-mono">
-                    <div className="text-right">
-                      <div className="text-[10px] text-gray-400">Tempo</div>
-                      <div className="font-bold text-cyan-300 text-xs">
-                        {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours}h` : "--"}
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 self-end md:self-center font-mono">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-right">
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      <div>
+                        <div className="text-[9px] text-gray-400 uppercase font-bold">Tempo</div>
+                        <div className="font-bold text-cyan-300 text-xs">
+                          {userGame.userPlaytimeHours ? `${userGame.userPlaytimeHours}h` : "--"}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <div className="text-[10px] text-gray-400">Nota</div>
-                      <div className="font-bold text-amber-400 text-xs">
-                        {userGame.userRating !== null ? `${userGame.userRating.toFixed(1)}/10` : "--"}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-right">
+                      <span className="text-amber-400 text-sm">★</span>
+                      <div>
+                        <div className="text-[9px] text-gray-400 uppercase font-bold">Nota</div>
+                        <div className="font-bold text-amber-300 text-xs">
+                          {userGame.userRating !== null ? `${userGame.userRating.toFixed(1)}` : "--"}
+                        </div>
                       </div>
                     </div>
 
                     {isOwner ? (
                       <button
                         onClick={() => setSelectedGameToEdit(asGame)}
-                        className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200"
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200 transition-colors active:scale-95"
                       >
                         Editar
                       </button>
                     ) : (
                       <Link
                         href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
-                        className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-[#00E5FF]"
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-[#00E5FF] transition-colors active:scale-95"
                       >
                         Ver Detalhes
                       </Link>
