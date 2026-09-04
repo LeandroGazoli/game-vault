@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SteamInventoryItem, SteamInventoryResponse, STEAM_SUPPORTED_APPS } from "@/lib/types";
+import { resolveSteamId64, getSteamPlayerSummary, getSteamApiKey } from "@/lib/steam";
 
 // Cache em memória simples para evitar rate limits estritos da Steam
 interface CachedInventory {
@@ -9,78 +10,13 @@ interface CachedInventory {
 const inventoryCache = new Map<string, CachedInventory>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
-
-/**
- * Resolve qualquer entrada do usuário (SteamID64 numérico, URL completa ou Custom Vanity URL)
- * para um SteamID64 e dados públicos de avatar.
- */
-async function resolveSteamProfile(input: string): Promise<{
-  steamId64: string | null;
-  personaname?: string;
-  avatarUrl?: string;
-  customURL?: string;
-}> {
-  const clean = input.trim();
-  if (!clean) return { steamId64: null };
-
-  // 1. Se já for puramente 17 dígitos
-  if (/^\d{17}$/.test(clean)) {
-    return { steamId64: clean };
-  }
-
-  // 2. Se for uma URL completa /profiles/7656119...
-  const profilesMatch = clean.match(/steamcommunity\.com\/profiles\/(\d{17})/i);
-  if (profilesMatch && profilesMatch[1]) {
-    return { steamId64: profilesMatch[1] };
-  }
-
-  // 3. Se for uma URL /id/vanity_name ou nome direto
-  let vanity = clean;
-  const idMatch = clean.match(/steamcommunity\.com\/id\/([^/?#]+)/i);
-  if (idMatch && idMatch[1]) {
-    vanity = idMatch[1];
-  } else {
-    // Remove possíveis barras ou espaços
-    vanity = vanity.replace(/https?:\/\//, "").replace(/\/$/, "");
-  }
-
-  try {
-    const res = await fetch(`https://steamcommunity.com/id/${encodeURIComponent(vanity)}/?xml=1`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-      next: { revalidate: 3600 },
-    });
-
-    if (res.ok) {
-      const xml = await res.text();
-      const steamIdMatch = xml.match(/<steamID64>(\d{17})<\/steamID64>/);
-      const personaMatch = xml.match(/<steamID><!\[CDATA\[(.*?)\]\]><\/steamID>/);
-      const avatarMatch = xml.match(/<avatarFull><!\[CDATA\[(.*?)\]\]><\/avatarFull>/);
-      const customUrlMatch = xml.match(/<customURL><!\[CDATA\[(.*?)\]\]><\/customURL>/);
-
-      if (steamIdMatch && steamIdMatch[1]) {
-        return {
-          steamId64: steamIdMatch[1],
-          personaname: personaMatch?.[1] || vanity,
-          avatarUrl: avatarMatch?.[1],
-          customURL: customUrlMatch?.[1] || vanity,
-        };
-      }
-    }
-  } catch (e) {
-    console.error("[Steam Resolve] Erro ao resolver perfil vanity:", e);
-  }
-
-  return { steamId64: null };
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const steamInput = searchParams.get("steamId") || searchParams.get("id") || "";
   const appId = parseInt(searchParams.get("appId") || "730", 10);
   const count = Math.min(100, Math.max(1, parseInt(searchParams.get("count") || "75", 10)));
   const startAssetId = searchParams.get("startAssetId") || "";
+  const apiKey = getSteamApiKey(searchParams.get("apiKey") || undefined);
 
   // Encontra configuração do app suportado
   const supportedApp = STEAM_SUPPORTED_APPS.find((a) => a.id === appId) || STEAM_SUPPORTED_APPS[0];
@@ -99,9 +35,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 1. Resolve o perfil Steam
-  const resolved = await resolveSteamProfile(steamInput);
-  if (!resolved.steamId64) {
+  // 1. Resolve o perfil Steam com API oficial e fallback
+  const steamId64 = await resolveSteamId64(steamInput, apiKey);
+  if (!steamId64) {
     return NextResponse.json(
       {
         success: false,
@@ -114,7 +50,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const steamId64 = resolved.steamId64;
   const cacheKey = `${steamId64}_${appId}_${contextId}_${startAssetId}`;
 
   // 2. Checa Cache
@@ -123,7 +58,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(cached.data);
   }
 
-  // 3. Chama a API de Inventário da Comunidade Steam
+  // 3. Dispara busca de resumo do jogador em paralelo com a consulta do inventário
+  const playerProfilePromise = getSteamPlayerSummary(steamId64, apiKey);
+
+  // 4. Chama a API de Inventário da Comunidade Steam
   try {
     const steamUrl = new URL(`https://steamcommunity.com/inventory/${steamId64}/${appId}/${contextId}`);
     steamUrl.searchParams.set("l", "brazilian");
@@ -196,7 +134,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 4. Mapeia assets e descriptions
+    // 5. Mapeia assets e descriptions
     const descriptionsMap = new Map<string, any>();
     if (Array.isArray(data.descriptions)) {
       for (const desc of data.descriptions) {
@@ -285,16 +223,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const profile = await playerProfilePromise;
     const responsePayload: SteamInventoryResponse = {
       success: true,
       steamId64,
       profile: {
-        personaname: resolved.personaname || `Steam Gamer (${steamId64})`,
-        avatarUrl: resolved.avatarUrl || "https://avatars.fastly.steamstatic.com/c8582f8478cffe910a2fe196c32ff2e5ed34b1a9_full.jpg",
-        profileUrl: resolved.customURL
-          ? `https://steamcommunity.com/id/${resolved.customURL}`
-          : `https://steamcommunity.com/profiles/${steamId64}`,
-        customURL: resolved.customURL,
+        personaname: profile.personaname || `Steam Gamer (${steamId64})`,
+        avatarUrl: profile.avatarUrl || "https://avatars.fastly.steamstatic.com/c8582f8478cffe910a2fe196c32ff2e5ed34b1a9_full.jpg",
+        profileUrl: profile.profileUrl || `https://steamcommunity.com/profiles/${steamId64}`,
+        customURL: profile.customURL,
       },
       appId,
       totalCount: data.total_inventory_count || items.length,

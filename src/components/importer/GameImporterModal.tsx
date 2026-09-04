@@ -144,7 +144,7 @@ export default function GameImporterModal({
           id: `steam_${g.appId}_${idx}`,
           originalTitle: g.name,
           matchedTitle: g.name,
-          matchedCover: g.iconUrl || null,
+          matchedCover: g.logoUrl || g.iconUrl || null,
           platform: "Steam",
           status: initialStatus,
           userPlaytimeHours: hours > 0 ? hours : undefined,
