@@ -21,6 +21,9 @@ import {
   Eye,
   Users,
   Loader2,
+  SlidersHorizontal,
+  ArrowUp,
+  Check,
 } from "lucide-react";
 import {
   GENRE_FILTER_OPTIONS,
@@ -36,6 +39,24 @@ import {
   findPerspectiveFilter,
   findGameModeFilter,
 } from "@/lib/filterConstants";
+
+const SEARCH_STATE_STORAGE_KEY = "MGL_SEARCH_SESSION_STATE_V1";
+
+interface SavedSearchState {
+  query: string;
+  genre: string;
+  platform: string;
+  perspective: string;
+  gameMode: string;
+  minRating: number;
+  sort: string;
+  games: Game[];
+  page: number;
+  totalCount: number;
+  hasMore: boolean;
+  scrollY: number;
+  targetGameId?: number | string | null;
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -74,12 +95,15 @@ function SearchContent() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Estados de UI expansível
+  // Estados de UI expansível e utilitários
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isRestoredRef = useRef(false);
 
-  // Sincroniza estado quando a URL muda externamente
+  // Sincroniza estado quando a URL muda externamente (ex: botão Voltar do navegador)
   useEffect(() => {
     const q = searchParams.get("q") || "";
     setQuery(q);
@@ -103,6 +127,169 @@ function SearchContent() {
     const s = searchParams.get("sort") || "popular";
     setSelectedSort(s);
   }, [searchParams]);
+
+  // Evita que o navegador force scroll para o topo antes de renderizar os itens cacheados
+  useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      const original = window.history.scrollRestoration;
+      window.history.scrollRestoration = "manual";
+      return () => {
+        window.history.scrollRestoration = original;
+      };
+    }
+  }, []);
+
+  // Restauração inteligente de cache de sessão e coordenadas de scroll ao voltar da página de jogo
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SEARCH_STATE_STORAGE_KEY);
+      if (!raw) return;
+      const cached: SavedSearchState = JSON.parse(raw);
+
+      const qVal = searchParams.get("q") || "";
+      const gVal = searchParams.get("genre") || "all";
+      const pVal = searchParams.get("platform") || searchParams.get("console") || "all";
+      const perspVal = searchParams.get("perspective") || "all";
+      const modeVal = searchParams.get("gameMode") || searchParams.get("mode") || "all";
+      const rVal = parseInt(searchParams.get("minRating") || searchParams.get("rating") || "0", 10);
+      const sVal = searchParams.get("sort") || "popular";
+
+      const matches =
+        (cached.query || "") === qVal &&
+        (cached.genre || "all") === gVal &&
+        (cached.platform || "all") === pVal &&
+        (cached.perspective || "all") === perspVal &&
+        (cached.gameMode || "all") === modeVal &&
+        (cached.minRating || 0) === rVal &&
+        (cached.sort || "popular") === sVal;
+
+      if (matches && cached.games && cached.games.length > 0) {
+        isRestoredRef.current = true;
+        setGames(cached.games);
+        setPage(cached.page || 1);
+        setTotalCount(cached.totalCount || cached.games.length);
+        setHasMore(Boolean(cached.hasMore));
+        setLoading(false);
+
+        const restoreScroll = () => {
+          if (cached.targetGameId) {
+            const cardEl = document.getElementById(`game-card-${cached.targetGameId}`);
+            if (cardEl) {
+              cardEl.scrollIntoView({ block: "center", behavior: "instant" });
+              return true;
+            }
+          }
+          if (cached.scrollY > 0) {
+            window.scrollTo({ top: cached.scrollY, behavior: "instant" });
+            return true;
+          }
+          return false;
+        };
+
+        requestAnimationFrame(() => {
+          restoreScroll();
+          setTimeout(restoreScroll, 60);
+          setTimeout(restoreScroll, 180);
+          setTimeout(restoreScroll, 350);
+        });
+
+        // Limpa targetGameId para não forçar salto em futuros reloads manuais
+        sessionStorage.setItem(
+          SEARCH_STATE_STORAGE_KEY,
+          JSON.stringify({ ...cached, targetGameId: null })
+        );
+      }
+    } catch (e) {
+      console.error("Erro ao restaurar busca da sessão:", e);
+    }
+  }, []);
+
+  // Listener de scroll para salvar posição atualizada e exibir botão "Voltar ao topo"
+  useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout | null = null;
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        try {
+          const raw = sessionStorage.getItem(SEARCH_STATE_STORAGE_KEY);
+          if (raw) {
+            const current = JSON.parse(raw);
+            sessionStorage.setItem(
+              SEARCH_STATE_STORAGE_KEY,
+              JSON.stringify({ ...current, scrollY: window.scrollY })
+            );
+          }
+        } catch {}
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, []);
+
+  // Mantém os dados da busca sincronizados no sessionStorage conforme mudam
+  useEffect(() => {
+    if (games.length > 0) {
+      try {
+        const raw = sessionStorage.getItem(SEARCH_STATE_STORAGE_KEY);
+        const existing = raw ? JSON.parse(raw) : {};
+        const stateToSave: SavedSearchState = {
+          query,
+          genre: selectedGenre,
+          platform: selectedPlatform,
+          perspective: selectedPerspective,
+          gameMode: selectedGameMode,
+          minRating,
+          sort: selectedSort,
+          games,
+          page,
+          totalCount,
+          hasMore,
+          scrollY: existing.scrollY !== undefined ? existing.scrollY : window.scrollY,
+          targetGameId: existing.targetGameId || null,
+        };
+        sessionStorage.setItem(SEARCH_STATE_STORAGE_KEY, JSON.stringify(stateToSave));
+      } catch {}
+    }
+  }, [
+    games,
+    page,
+    totalCount,
+    hasMore,
+    query,
+    selectedGenre,
+    selectedPlatform,
+    selectedPerspective,
+    selectedGameMode,
+    minRating,
+    selectedSort,
+  ]);
+
+  // Grava o ID do jogo e posição exata de scroll ao clicar num card antes de navegar
+  const handleCardClick = (gameId: number | string) => {
+    try {
+      const raw = sessionStorage.getItem(SEARCH_STATE_STORAGE_KEY);
+      const current = raw ? JSON.parse(raw) : {};
+      sessionStorage.setItem(
+        SEARCH_STATE_STORAGE_KEY,
+        JSON.stringify({
+          ...current,
+          scrollY: window.scrollY,
+          targetGameId: gameId,
+        })
+      );
+    } catch {}
+  };
+
+  // Scroll suave ao topo
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Atualiza os parâmetros na URL de forma limpa (sem scroll e sem recarregar a página)
   const updateUrlParams = useCallback(
@@ -163,6 +350,11 @@ function SearchContent() {
 
   // Busca adaptativa acionada ao alterar qualquer filtro ou termo de busca
   useEffect(() => {
+    if (isRestoredRef.current) {
+      isRestoredRef.current = false;
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -308,6 +500,7 @@ function SearchContent() {
 
   // Limpar todos os filtros
   const handleClearFilters = () => {
+    sessionStorage.removeItem(SEARCH_STATE_STORAGE_KEY);
     setInputValue("");
     setQuery("");
     setSelectedGenre("all");
@@ -327,16 +520,17 @@ function SearchContent() {
     });
   };
 
+  // Contagem de filtros avançados aplicados (não padrão)
+  const activeCustomFiltersCount =
+    (selectedPlatform !== "all" ? 1 : 0) +
+    (selectedGenre !== "all" ? 1 : 0) +
+    (selectedPerspective !== "all" ? 1 : 0) +
+    (selectedGameMode !== "all" ? 1 : 0) +
+    (minRating > 0 ? 1 : 0) +
+    (selectedSort !== "popular" ? 1 : 0);
+
   // Verifica se há algum filtro não padrão ativo
-  const hasActiveFilters = Boolean(
-    query.trim() ||
-    selectedGenre !== "all" ||
-    selectedPlatform !== "all" ||
-    selectedPerspective !== "all" ||
-    selectedGameMode !== "all" ||
-    minRating > 0 ||
-    selectedSort !== "popular"
-  );
+  const hasActiveFilters = Boolean(query.trim() || activeCustomFiltersCount > 0);
 
   const activePlatformOption = findPlatformFilter(selectedPlatform);
   const activeGenreOption = findGenreFilter(selectedGenre);
@@ -344,38 +538,42 @@ function SearchContent() {
   const activeGameModeOption = findGameModeFilter(selectedGameMode);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-12">
       {/* ========================================================
-          TOP HEADER DA BUSCA COM DESIGN SYSTEM PREMIUM
+          CABEÇALHO DE BUSCA COMPACTO E LIMPO
       ======================================================== */}
-      <div className="rounded-[32px] bg-[#18191c] border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="rounded-[28px] bg-[#14161d]/95 border border-white/10 p-4 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden backdrop-blur-md">
         {/* Glow de ambientação no topo */}
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#00E5FF]/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-2xl space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" /> Catálogo Completo IGDB
+        {/* Título & Badge integrados */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 relative z-10">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] font-semibold">
+              <Sparkles className="w-3 h-3 text-[#00E5FF]" /> Catálogo Completo IGDB
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Explorar Jogos
+            </h1>
+            <p className="text-xs text-gray-400">
+              Pesquise qualquer jogo do acervo mundial com notas oficiais e tempos de zeramento.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Explorar Jogos
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-400">
-            Pesquise qualquer jogo do acervo mundial, filtre por console, geração ou gênero, e veja notas oficiais e tempos de zeramento.
-          </p>
         </div>
 
-        {/* Campo de Busca Principal Integrado ao Catálogo */}
-        <div className="max-w-xl relative z-10">
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full group">
-            <Search className="absolute left-4 w-5 h-5 text-cyan-400 group-focus-within:text-[#00E5FF] transition-colors pointer-events-none" />
+        {/* Linha de Ação: Barra de Busca + Botão Filtros Avançados */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 relative z-10">
+          {/* Campo de Busca Principal */}
+          <form onSubmit={handleSearchSubmit} className="relative flex-1 flex items-center group">
+            <Search className="absolute left-3.5 w-4 h-4 text-cyan-400 group-focus-within:text-[#00E5FF] transition-colors pointer-events-none" />
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Digite o nome do jogo (Elden Ring, God of War, Zelda...)"
-              className="w-full pl-12 pr-28 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all"
+              className="w-full pl-10 pr-24 py-2.5 sm:py-3 rounded-2xl bg-[#0c0e14]/90 border border-cyan-500/30 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all shadow-inner"
             />
-            <div className="absolute right-2.5 flex items-center gap-1.5">
+            <div className="absolute right-2 flex items-center gap-1">
               {loading ? (
                 <div className="p-1">
                   <Loader2 className="w-4 h-4 text-[#00E5FF] animate-spin" />
@@ -384,362 +582,434 @@ function SearchContent() {
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                   title="Limpar busca"
                   aria-label="Limpar busca"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               ) : null}
 
               <button
                 type="submit"
-                className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-[#00E5FF] to-cyan-400 hover:from-cyan-300 hover:to-cyan-200 text-black font-extrabold text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00E5FF] to-cyan-400 hover:from-cyan-300 hover:to-cyan-200 text-black font-extrabold text-xs transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer"
               >
                 Buscar
               </button>
             </div>
           </form>
+
+          {/* Botão de Filtros Avançados / Customizados */}
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`px-3.5 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer active:scale-95 shadow-md flex-shrink-0 ${
+              showAdvancedFilters
+                ? "bg-cyan-500/20 text-[#00E5FF] border-[#00E5FF]/60 shadow-cyan-500/20"
+                : activeCustomFiltersCount > 0
+                ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/25"
+                : "bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Filtros Avançados</span>
+            {activeCustomFiltersCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-[#00E5FF] text-black text-[10px] font-black leading-none">
+                {activeCustomFiltersCount}
+              </span>
+            )}
+            {showAdvancedFilters ? (
+              <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Linha de Presets Rápidos de Descoberta (Sempre acessíveis em 1 toque) */}
+        <div className="pt-2 border-t border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 relative z-10">
+          <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1 flex-shrink-0 mr-1">
+            <Flame className="w-3.5 h-3.5 text-cyan-400" /> Modos rápidos:
+          </span>
+          {DISCOVERY_PRESETS.map((preset) => {
+            const isActive =
+              selectedSort === preset.sort &&
+              minRating === preset.minRating &&
+              (preset.platform ? selectedPlatform === preset.platform : selectedPlatform === "all") &&
+              selectedGenre === "all" &&
+              !query;
+
+            return (
+              <button
+                key={preset.id}
+                onClick={() => handleSelectPreset(preset)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? "bg-cyan-500/20 text-[#00E5FF] border border-[#00E5FF]/40 font-bold shadow-sm shadow-[#00E5FF]/20"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                }`}
+              >
+                <span>{preset.icon}</span>
+                <span>{preset.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* ========================================================
-            BARRA DE PRESETS ADAPTATIVOS RÁPIDOS
+            PAINEL EXPANSÍVEL DE FILTROS AVANÇADOS / CUSTOMIZADOS
         ======================================================== */}
-        <div className="pt-2 border-t border-white/5 space-y-3 relative z-10">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-            <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-              <Flame className="w-3.5 h-3.5 text-cyan-400" /> Modos de Exploração:
-            </span>
-            {DISCOVERY_PRESETS.map((preset) => {
-              const isActive =
-                selectedSort === preset.sort &&
-                minRating === preset.minRating &&
-                (preset.platform ? selectedPlatform === preset.platform : selectedPlatform === "all") &&
-                selectedGenre === "all" &&
-                !query;
-
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => handleSelectPreset(preset)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? "bg-cyan-500/20 text-[#00E5FF] border border-[#00E5FF]/40 font-bold shadow-md shadow-[#00E5FF]/15"
-                      : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                  }`}
-                >
-                  <span>{preset.icon}</span>
-                  <span>{preset.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ========================================================
-              FILTRO DE CONSOLES / PLATAFORMAS (ORGANIZADO POR GERAÇÃO)
-          ======================================================== */}
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Console & Plataforma:
-              </span>
-              <button
-                onClick={() => setShowAllPlatforms(!showAllPlatforms)}
-                className="text-xs font-medium text-[#00E5FF] hover:text-cyan-300 flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <span>{showAllPlatforms ? "Recolher Consoles" : "Ver Todos os Consoles"}</span>
-                {showAllPlatforms ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-
-            {/* Atalhos Rápidos dos Consoles Mais Populares */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-              {QUICK_POPULAR_PLATFORMS.map((plat) => {
-                const isSelected = selectedPlatform === plat.id;
-                return (
-                  <button
-                    key={plat.id}
-                    onClick={() => handleSelectPlatform(plat.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                      isSelected
-                        ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
-                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                    }`}
-                  >
-                    {plat.shortName || plat.name}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Painel Expansível com Todas as Gerações Agrupadas por Fabricante */}
-            {showAllPlatforms && (
-              <div className="mt-3 p-4 rounded-2xl bg-black/40 border border-white/10 space-y-4 animate-fadeIn">
-                {PLATFORM_FAMILIES.map((family) => (
-                  <div key={family.family} className="space-y-1.5">
-                    <div className="text-[11px] font-bold text-gray-400 tracking-wider uppercase flex items-center gap-1.5">
-                      <Layers className="w-3 h-3 text-cyan-400" /> {family.family}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {family.platforms.map((p) => {
-                        const isSelected = selectedPlatform === p.id;
-                        return (
-                          <button
-                            key={p.id}
-                            onClick={() => {
-                              handleSelectPlatform(p.id);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                              isSelected
-                                ? "bg-[#00E5FF] text-black font-bold shadow-sm"
-                                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5"
-                            }`}
-                          >
-                            {p.shortName || p.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+        {showAdvancedFilters && (
+          <div className="mt-3 p-4 sm:p-5 rounded-2xl bg-[#0c0e14]/95 border border-cyan-500/30 space-y-4 shadow-2xl relative z-10 animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#00E5FF]" />
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Personalizar Filtros
+                </h3>
               </div>
-            )}
-          </div>
-
-          {/* ========================================================
-              FILTRO POR GÊNERO / CATEGORIA
-          ======================================================== */}
-          <div className="pt-2">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-                <Filter className="w-3.5 h-3.5 text-cyan-400" /> Gênero:
-              </span>
-              {GENRE_FILTER_OPTIONS.map((genre) => {
-                const isSelected = selectedGenre === genre.id;
-                return (
-                  <button
-                    key={genre.id}
-                    onClick={() => handleSelectGenre(genre.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                      isSelected
-                        ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
-                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                    }`}
-                  >
-                    {genre.shortName || genre.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ========================================================
-              FILTRO POR PERSPECTIVA DE CÂMERA
-          ======================================================== */}
-          <div className="pt-2">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-                <Eye className="w-3.5 h-3.5 text-amber-400" /> Câmera / Visão:
-              </span>
-              {PERSPECTIVE_FILTER_OPTIONS.map((p) => {
-                const isSelected = selectedPerspective === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => handleSelectPerspective(p.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                      isSelected
-                        ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
-                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                    }`}
-                  >
-                    {p.shortName || p.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ========================================================
-              FILTRO POR MODO DE JOGO
-          ======================================================== */}
-          <div className="pt-2">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
-              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-                <Users className="w-3.5 h-3.5 text-emerald-400" /> Modo de Jogo:
-              </span>
-              {GAME_MODE_FILTER_OPTIONS.map((mode) => {
-                const isSelected = selectedGameMode === mode.id;
-                return (
-                  <button
-                    key={mode.id}
-                    onClick={() => handleSelectGameMode(mode.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                      isSelected
-                        ? "bg-emerald-400 text-black font-bold shadow-md shadow-emerald-400/20"
-                        : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                    }`}
-                  >
-                    {mode.shortName || mode.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ========================================================
-              NOTA MÍNIMA & ORDENAÇÃO DINÂMICA
-          ======================================================== */}
-          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            {/* Nota Metacritic Mínima */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" /> Nota Mínima:
-              </span>
-              {RATING_FILTER_OPTIONS.map((item) => (
+              {activeCustomFiltersCount > 0 && (
                 <button
-                  key={item.value}
-                  onClick={() => handleSelectRating(item.value)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                    minRating === item.value
-                      ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
-                      : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
-                  }`}
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  {item.label}
+                  <RotateCcw className="w-3 h-3" />
+                  Redefinir tudo
                 </button>
-              ))}
+              )}
             </div>
 
-            {/* Ordenação */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 flex-shrink-0">
-              <span className="text-xs font-semibold text-gray-400 mr-1 flex items-center gap-1.5 flex-shrink-0">
-                <ArrowUpDown className="w-3.5 h-3.5 text-purple-400" /> Ordem:
-              </span>
-              <div className="flex items-center gap-1.5">
-                {SORT_FILTER_OPTIONS.map((sortOpt) => {
-                  const isSelected = selectedSort === sortOpt.id;
+            {/* 1. Console & Plataforma */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" /> Console & Plataforma:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAllPlatforms(!showAllPlatforms)}
+                  className="text-[11px] font-medium text-[#00E5FF] hover:text-cyan-300 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>{showAllPlatforms ? "Recolher Gerações" : "Ver Todas as Gerações"}</span>
+                  {showAllPlatforms ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+
+              {/* Atalhos Rápidos dos Consoles Mais Populares */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {QUICK_POPULAR_PLATFORMS.map((plat) => {
+                  const isSelected = selectedPlatform === plat.id;
                   return (
                     <button
-                      key={sortOpt.id}
-                      onClick={() => handleSelectSort(sortOpt.id)}
+                      key={plat.id}
+                      onClick={() => handleSelectPlatform(plat.id)}
                       className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
                         isSelected
-                          ? "bg-purple-500/30 text-purple-200 border border-purple-400/50 font-bold shadow-sm"
-                          : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-transparent"
+                          ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
                       }`}
                     >
-                      {sortOpt.label}
+                      {plat.shortName || plat.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Painel Expansível de Gerações Agrupadas */}
+              {showAllPlatforms && (
+                <div className="mt-2 p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-3 animate-fadeIn">
+                  {PLATFORM_FAMILIES.map((family) => (
+                    <div key={family.family} className="space-y-1.5">
+                      <div className="text-[10px] font-bold text-gray-400 tracking-wider uppercase flex items-center gap-1">
+                        <Layers className="w-3 h-3 text-cyan-400" /> {family.family}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {family.platforms.map((p) => {
+                          const isSelected = selectedPlatform === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              onClick={() => handleSelectPlatform(p.id)}
+                              className={`px-2 py-0.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#00E5FF] text-black font-bold shadow-sm"
+                                  : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5"
+                              }`}
+                            >
+                              {p.shortName || p.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Gênero / Categoria */}
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
+              <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-cyan-400" /> Gênero:
+              </span>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {GENRE_FILTER_OPTIONS.map((genre) => {
+                  const isSelected = selectedGenre === genre.id;
+                  return (
+                    <button
+                      key={genre.id}
+                      onClick={() => handleSelectGenre(genre.id)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                        isSelected
+                          ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                      }`}
+                    >
+                      {genre.shortName || genre.name}
                     </button>
                   );
                 })}
               </div>
             </div>
-          </div>
 
-          {/* ========================================================
-              PAINEL DE FILTROS ATIVOS & BOTÃO LIMPAR FILTROS
-          ======================================================== */}
-          {hasActiveFilters && (
-            <div className="pt-3 border-t border-white/5 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono">Filtros ativos:</span>
+            {/* 3. Câmera & Visão */}
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
+              <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-amber-400" /> Câmera / Visão:
+              </span>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {PERSPECTIVE_FILTER_OPTIONS.map((p) => {
+                  const isSelected = selectedPerspective === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handleSelectPerspective(p.id)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                      }`}
+                    >
+                      {p.shortName || p.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-              {query.trim() && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                  Busca: &ldquo;{query}&rdquo;
-                  <button
-                    onClick={handleClearSearch}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                    title="Remover termo de busca"
-                    aria-label="Remover termo de busca"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+            {/* 4. Modo de Jogo */}
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
+              <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-emerald-400" /> Modo de Jogo:
+              </span>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+                {GAME_MODE_FILTER_OPTIONS.map((mode) => {
+                  const isSelected = selectedGameMode === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => handleSelectGameMode(mode.id)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                        isSelected
+                          ? "bg-emerald-400 text-black font-bold shadow-md shadow-emerald-400/20"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
+                      }`}
+                    >
+                      {mode.shortName || mode.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 5. Nota Mínima & Ordenação */}
+            <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Nota Mínima */}
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> Nota Mínima:
                 </span>
-              )}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                  {RATING_FILTER_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      onClick={() => handleSelectRating(item.value)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                        minRating === item.value
+                          ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
+                          : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {selectedPlatform !== "all" && activePlatformOption && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                  Console: {activePlatformOption.shortName || activePlatformOption.name}
-                  <button
-                    onClick={() => handleSelectPlatform("all")}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+              {/* Ordenação */}
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-purple-400" /> Ordem:
                 </span>
-              )}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                  {SORT_FILTER_OPTIONS.map((sortOpt) => {
+                    const isSelected = selectedSort === sortOpt.id;
+                    return (
+                      <button
+                        key={sortOpt.id}
+                        onClick={() => handleSelectSort(sortOpt.id)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                          isSelected
+                            ? "bg-purple-500/30 text-purple-200 border border-purple-400/50 font-bold shadow-sm"
+                            : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-transparent"
+                        }`}
+                      >
+                        {sortOpt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
-              {selectedGenre !== "all" && activeGenreOption && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                  Gênero: {activeGenreOption.shortName || activeGenreOption.name}
-                  <button
-                    onClick={() => handleSelectGenre("all")}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {selectedPerspective !== "all" && activePerspectiveOption && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 border border-amber-500/30 text-amber-300">
-                  Visão: {activePerspectiveOption.shortName || activePerspectiveOption.name}
-                  <button
-                    onClick={() => handleSelectPerspective("all")}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {selectedGameMode !== "all" && activeGameModeOption && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
-                  Modo: {activeGameModeOption.shortName || activeGameModeOption.name}
-                  <button
-                    onClick={() => handleSelectGameMode("all")}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {minRating > 0 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 border border-amber-500/30 text-amber-300">
-                  Nota: {minRating}+
-                  <button
-                    onClick={() => handleSelectRating(0)}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-
-              {selectedSort !== "popular" && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-purple-500/15 border border-purple-500/30 text-purple-300">
-                  Ordem: {SORT_FILTER_OPTIONS.find((s) => s.id === selectedSort)?.label}
-                  <button
-                    onClick={() => handleSelectSort("popular")}
-                    className="hover:text-white cursor-pointer ml-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
+            {/* Rodapé do Painel de Filtros */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer border border-transparent hover:border-red-500/20"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Limpar filtros
+              </button>
 
               <button
-                onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 font-semibold cursor-pointer transition-colors ml-auto"
+                type="button"
+                onClick={() => setShowAdvancedFilters(false)}
+                className="px-4 py-1.5 rounded-xl bg-[#00E5FF] hover:bg-cyan-300 text-black text-xs font-extrabold transition-all shadow-md shadow-[#00E5FF]/20 cursor-pointer active:scale-95 flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3 h-3" />
-                Limpar todos os filtros
+                <Check className="w-3.5 h-3.5" />
+                Ver Resultados ({totalCount > 0 ? totalCount : games.length})
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            FITA DE FILTROS ATIVOS (CHIPS RÁPIDOS PARA DESATIVAR)
+        ======================================================== */}
+        {hasActiveFilters && (
+          <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5 relative z-10">
+            <span className="text-[11px] text-gray-500 font-mono mr-0.5">Ativos:</span>
+
+            {query.trim() && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                Busca: &ldquo;{query}&rdquo;
+                <button
+                  onClick={handleClearSearch}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover termo de busca"
+                  aria-label="Remover termo de busca"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {selectedPlatform !== "all" && activePlatformOption && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                Console: {activePlatformOption.shortName || activePlatformOption.name}
+                <button
+                  onClick={() => handleSelectPlatform("all")}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover filtro de plataforma"
+                  aria-label="Remover filtro de plataforma"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {selectedGenre !== "all" && activeGenreOption && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                Gênero: {activeGenreOption.shortName || activeGenreOption.name}
+                <button
+                  onClick={() => handleSelectGenre("all")}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover filtro de gênero"
+                  aria-label="Remover filtro de gênero"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {selectedPerspective !== "all" && activePerspectiveOption && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                Visão: {activePerspectiveOption.shortName || activePerspectiveOption.name}
+                <button
+                  onClick={() => handleSelectPerspective("all")}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover filtro de perspectiva"
+                  aria-label="Remover filtro de perspectiva"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {selectedGameMode !== "all" && activeGameModeOption && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                Modo: {activeGameModeOption.shortName || activeGameModeOption.name}
+                <button
+                  onClick={() => handleSelectGameMode("all")}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover filtro de modo de jogo"
+                  aria-label="Remover filtro de modo de jogo"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {minRating > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                Nota: {minRating}+
+                <button
+                  onClick={() => handleSelectRating(0)}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover filtro de nota"
+                  aria-label="Remover filtro de nota"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {selectedSort !== "popular" && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-purple-500/15 border border-purple-500/30 text-purple-300">
+                Ordem: {SORT_FILTER_OPTIONS.find((s) => s.id === selectedSort)?.label}
+                <button
+                  onClick={() => handleSelectSort("popular")}
+                  className="hover:text-white cursor-pointer ml-0.5"
+                  title="Remover ordenação personalizada"
+                  aria-label="Remover ordenação personalizada"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            <button
+              onClick={handleClearFilters}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 font-semibold cursor-pointer transition-colors ml-auto"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Limpar tudo
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ========================================================
@@ -779,7 +1049,14 @@ function SearchContent() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {games.map((game) => (
-                <GameCard key={game.id} game={game} />
+                <div
+                  key={game.id}
+                  id={`game-card-${game.id}`}
+                  onClickCapture={() => handleCardClick(game.id)}
+                  className="h-full"
+                >
+                  <GameCard game={game} />
+                </div>
               ))}
             </div>
 
@@ -827,45 +1104,51 @@ function SearchContent() {
           </div>
         )}
       </div>
+
+      {/* ========================================================
+          BOTÃO FLUTUANTE VOLTAR AO TOPO
+      ======================================================== */}
+      <button
+        type="button"
+        onClick={handleScrollToTop}
+        aria-label="Voltar ao topo"
+        className={`fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#12151c]/90 hover:bg-[#1a1f2c] border border-cyan-500/40 hover:border-[#00E5FF] text-cyan-400 hover:text-white shadow-2xl shadow-cyan-500/10 backdrop-blur-md transition-all duration-300 active:scale-95 group cursor-pointer ${
+          showBackToTop
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+      >
+        <ArrowUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 text-cyan-400 group-hover:text-white" />
+        <span className="text-xs font-bold hidden sm:inline text-gray-200 group-hover:text-white">Topo</span>
+      </button>
     </div>
   );
 }
 
 export function SearchPageSkeleton() {
   return (
-    <div className="space-y-8 pb-12 animate-pulse">
-      {/* Top Header Skeleton */}
-      <div className="rounded-[32px] bg-[#18191c]/80 border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
-        <div className="max-w-2xl space-y-3">
-          <div className="h-6 w-44 rounded-full bg-white/10" />
-          <div className="h-9 w-64 sm:w-80 rounded-xl bg-white/15" />
-          <div className="h-4 w-full max-w-lg rounded-lg bg-white/5" />
+    <div className="space-y-6 pb-12 animate-pulse">
+      {/* Top Header Skeleton Compacto */}
+      <div className="rounded-[28px] bg-[#14161d]/80 border border-white/10 p-4 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden">
+        <div className="space-y-2">
+          <div className="h-5 w-40 rounded-full bg-white/10" />
+          <div className="h-7 w-56 rounded-xl bg-white/15" />
+          <div className="h-3.5 w-72 rounded-lg bg-white/5" />
         </div>
 
-        {/* Campo de Busca Skeleton */}
-        <div className="max-w-xl">
-          <div className="h-12 w-full rounded-full bg-white/10 border-2 border-white/5" />
+        {/* Barra de Busca + Botão Filtros Skeleton */}
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="h-11 flex-1 rounded-2xl bg-white/10 border border-white/5" />
+          <div className="h-11 w-36 rounded-2xl bg-white/10 shrink-0 border border-white/5" />
         </div>
 
         {/* Modos de Exploração Skeleton */}
-        <div className="pt-2 border-t border-white/5 space-y-3">
-          <div className="flex items-center gap-2 overflow-hidden py-1">
-            <div className="h-7 w-32 rounded-full bg-white/5 shrink-0" />
-            <div className="h-7 w-24 rounded-full bg-white/10 shrink-0" />
-            <div className="h-7 w-36 rounded-full bg-white/10 shrink-0" />
-            <div className="h-7 w-40 rounded-full bg-white/10 shrink-0" />
-            <div className="h-7 w-28 rounded-full bg-white/10 shrink-0" />
-          </div>
-
-          {/* Consoles Skeleton */}
-          <div className="space-y-2 pt-2">
-            <div className="h-4 w-40 rounded bg-white/10" />
-            <div className="flex items-center gap-2 overflow-hidden py-1">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-7 w-20 rounded-full bg-white/10 shrink-0" />
-              ))}
-            </div>
-          </div>
+        <div className="pt-2 border-t border-white/5 flex items-center gap-2 overflow-hidden py-1">
+          <div className="h-6 w-24 rounded-full bg-white/5 shrink-0" />
+          <div className="h-6 w-24 rounded-full bg-white/10 shrink-0" />
+          <div className="h-6 w-32 rounded-full bg-white/10 shrink-0" />
+          <div className="h-6 w-28 rounded-full bg-white/10 shrink-0" />
+          <div className="h-6 w-24 rounded-full bg-white/10 shrink-0" />
         </div>
       </div>
 
