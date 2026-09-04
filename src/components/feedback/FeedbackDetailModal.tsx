@@ -47,6 +47,30 @@ import {
   Edit3,
 } from "lucide-react";
 
+function formatSafeDate(
+  dateVal: any,
+  options?: Intl.DateTimeFormatOptions,
+  fallback = "Data indisponível"
+): string {
+  if (!dateVal) return fallback;
+  try {
+    let date: Date;
+    if (typeof dateVal?.toDate === "function") {
+      date = dateVal.toDate();
+    } else if (typeof dateVal === "object" && typeof dateVal.seconds === "number") {
+      date = new Date(dateVal.seconds * 1000);
+    } else if (dateVal instanceof Date) {
+      date = dateVal;
+    } else {
+      date = new Date(dateVal);
+    }
+    if (isNaN(date.getTime())) return fallback;
+    return date.toLocaleDateString("pt-BR", options);
+  } catch {
+    return fallback;
+  }
+}
+
 interface FeedbackDetailModalProps {
   item: FeedbackItem | null;
   isOpen: boolean;
@@ -56,7 +80,7 @@ interface FeedbackDetailModalProps {
   user: UserProfile | null;
   isAdmin?: boolean;
   onRequireAuth: () => void;
-  onOpenRewardModal: (item: FeedbackItem) => void;
+  onOpenRewardModal?: (item: FeedbackItem) => void;
   onStatusChange?: (item: FeedbackItem, status: FeedbackStatus, adminNote?: string) => Promise<void>;
   onDelete?: (item: FeedbackItem) => Promise<void>;
 }
@@ -266,20 +290,20 @@ export default function FeedbackDetailModal({
                 href={getProfileUrl(item.authorUsername)}
                 className="flex items-center gap-2 group/author hover:text-white"
               >
-                <UserAvatar photoURL={item.authorPhoto} name={item.authorName} size="sm" />
+                <UserAvatar photoURL={item.authorPhoto} name={item.authorName || "Jogador"} size="sm" />
                 <div>
                   <div className="font-bold text-neutral-200 group-hover/author:text-[#00E5FF] transition-colors">
-                    {item.authorName}
+                    {item.authorName || "Jogador"}
                   </div>
                   <span className="text-[11px] text-neutral-400 font-mono">
-                    @{item.authorUsername}
+                    @{item.authorUsername || "gamer"}
                   </span>
                 </div>
               </Link>
               <PlanBadge plan={item.authorPlan || "free"} size="sm" />
               <span className="text-neutral-400">•</span>
               <span className="text-neutral-400 text-[11px]">
-                {new Date(item.createdAt).toLocaleDateString("pt-BR", {
+                {formatSafeDate(item.createdAt, {
                   day: "2-digit",
                   month: "long",
                   year: "numeric",
@@ -348,7 +372,11 @@ export default function FeedbackDetailModal({
               </div>
               {item.adminResponseAt && (
                 <span className="text-[10px] text-neutral-400 font-mono">
-                  {new Date(item.adminResponseAt).toLocaleDateString("pt-BR")}
+                  {formatSafeDate(item.adminResponseAt, {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </span>
               )}
             </div>
@@ -369,7 +397,7 @@ export default function FeedbackDetailModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => onOpenRewardModal(item)}
+                  onClick={() => onOpenRewardModal && onOpenRewardModal(item)}
                   className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
                 >
                   <Gift className="w-3.5 h-3.5 text-amber-400" />
@@ -539,7 +567,7 @@ export default function FeedbackDetailModal({
                       </div>
                     </div>
                     <span className="text-[10px] text-neutral-400 font-mono">
-                      {new Date(c.createdAt).toLocaleDateString("pt-BR", {
+                      {formatSafeDate(c.createdAt, {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",

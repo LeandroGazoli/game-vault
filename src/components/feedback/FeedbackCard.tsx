@@ -44,6 +44,30 @@ interface FeedbackCardProps {
   currentUserId?: string;
 }
 
+function formatSafeDate(
+  dateVal: any,
+  options?: Intl.DateTimeFormatOptions,
+  fallback = "Recente"
+): string {
+  if (!dateVal) return fallback;
+  try {
+    let date: Date;
+    if (typeof dateVal?.toDate === "function") {
+      date = dateVal.toDate();
+    } else if (typeof dateVal === "object" && typeof dateVal.seconds === "number") {
+      date = new Date(dateVal.seconds * 1000);
+    } else if (dateVal instanceof Date) {
+      date = dateVal;
+    } else {
+      date = new Date(dateVal);
+    }
+    if (isNaN(date.getTime())) return fallback;
+    return date.toLocaleDateString("pt-BR", options);
+  } catch {
+    return fallback;
+  }
+}
+
 export default function FeedbackCard({
   item,
   userVote = 0,
@@ -331,9 +355,9 @@ export default function FeedbackCard({
                 href={getProfileUrl(item.authorUsername)}
                 className="flex items-center gap-2 group/author hover:text-white"
               >
-                <UserAvatar photoURL={item.authorPhoto} name={item.authorName} size="xs" />
+                <UserAvatar photoURL={item.authorPhoto} name={item.authorName || "Jogador"} size="xs" />
                 <span className="font-semibold text-neutral-300 group-hover/author:text-[#00E5FF] transition-colors truncate max-w-[120px]">
-                  {item.authorName}
+                  {item.authorName || "Jogador"}
                 </span>
               </Link>
               <PlanBadge plan={item.authorPlan || "free"} size="sm" />
@@ -342,7 +366,7 @@ export default function FeedbackCard({
             <div className="flex items-center gap-3 shrink-0">
               <span className="text-[11px] text-neutral-400 flex items-center gap-1">
                 <Clock className="w-3 h-3 text-neutral-400" />
-                {new Date(item.createdAt).toLocaleDateString("pt-BR", {
+                {formatSafeDate(item.createdAt, {
                   day: "2-digit",
                   month: "short",
                 })}

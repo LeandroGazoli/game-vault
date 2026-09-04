@@ -261,12 +261,22 @@ export default function FeedbackClient() {
         return true;
       })
       .sort((a, b) => {
+        const getTime = (val: any) => {
+          if (!val) return 0;
+          if (typeof val?.toDate === "function") return val.toDate().getTime();
+          if (typeof val === "object" && typeof val.seconds === "number") return val.seconds * 1000;
+          if (val instanceof Date) return val.getTime();
+          const t = new Date(val).getTime();
+          return isNaN(t) ? 0 : t;
+        };
+
         if (sortBy === "score") {
-          if (b.score !== a.score) return b.score - a.score;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          const scoreDiff = (b.score || 0) - (a.score || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return getTime(b.createdAt) - getTime(a.createdAt);
         }
         if (sortBy === "recent") {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return getTime(b.createdAt) - getTime(a.createdAt);
         }
         if (sortBy === "comments") {
           return (b.commentsCount || 0) - (a.commentsCount || 0);

@@ -212,6 +212,15 @@ export async function updateUserPlanByAdmin(
 // CENTRAL DE FEEDBACK, IDEIAS & RECOMPENSAS
 // ==========================================
 
+function getSafeTime(val: any): number {
+  if (!val) return 0;
+  if (typeof val?.toDate === "function") return val.toDate().getTime();
+  if (typeof val === "object" && typeof val.seconds === "number") return val.seconds * 1000;
+  if (val instanceof Date) return val.getTime();
+  const t = new Date(val).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
 export async function createFeedbackItem(
   data: Omit<
     FeedbackItem,
@@ -296,11 +305,12 @@ export async function getFeedbackItems(options?: {
     const sortBy = options?.sortBy || "score";
     items.sort((a, b) => {
       if (sortBy === "score") {
-        if (b.score !== a.score) return b.score - a.score;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        const scoreDiff = (b.score || 0) - (a.score || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return getSafeTime(b.createdAt) - getSafeTime(a.createdAt);
       }
       if (sortBy === "recent") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return getSafeTime(b.createdAt) - getSafeTime(a.createdAt);
       }
       if (sortBy === "comments") {
         return (b.commentsCount || 0) - (a.commentsCount || 0);
@@ -584,7 +594,7 @@ export async function getFeedbackComments(feedbackId: string): Promise<FeedbackC
     });
 
     comments.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => getSafeTime(a.createdAt) - getSafeTime(b.createdAt)
     );
 
     return comments;
