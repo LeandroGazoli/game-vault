@@ -36,7 +36,10 @@ self.addEventListener("install", (event) => {
 
 // Mensageria: ativação controlada via botão do usuário ("Atualizar Agora")
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  if (
+    event.data === "SKIP_WAITING" ||
+    (event.data && event.data.type === "SKIP_WAITING")
+  ) {
     self.skipWaiting();
   }
 });

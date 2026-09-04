@@ -8,7 +8,9 @@ export default function PwaRegister() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+  const isUpdatingRef = useRef(false);
 
   useEffect(() => {
     // Se estiver rodando dentro do WebView nativo do Capacitor (iOS ou Android),
@@ -22,11 +24,17 @@ export default function PwaRegister() {
       return;
     }
 
+    // Detecta se está rodando instalado como PWA (modo standalone)
+    const standaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standaloneMode);
+
     let refreshing = false;
 
-    // Escuta a mudança de controller (quando o novo SW ativa via SKIP_WAITING)
+    // Escuta a mudança de controller (quando o novo SW assume)
     const handleControllerChange = () => {
-      if (!refreshing) {
+      if (!refreshing && isUpdatingRef.current) {
         refreshing = true;
         window.location.reload();
       }
@@ -40,7 +48,13 @@ export default function PwaRegister() {
         // Se já houver um worker em espera logo após abrir a página
         if (reg.waiting && navigator.serviceWorker.controller) {
           waitingWorkerRef.current = reg.waiting;
-          setUpdateAvailable(true);
+          if (standaloneMode) {
+            setUpdateAvailable(true);
+          } else {
+            // Na web normal fora do PWA, ativa o novo SW silenciosamente sem incomodar o usuário com pop-up
+            reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            reg.waiting.postMessage("SKIP_WAITING");
+          }
         }
 
         // Monitora novas versões encontradas
@@ -53,7 +67,13 @@ export default function PwaRegister() {
             // significa que é um update (não a primeira instalação)
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
               waitingWorkerRef.current = newWorker;
-              setUpdateAvailable(true);
+              if (standaloneMode) {
+                setUpdateAvailable(true);
+              } else {
+                // Na web normal, ativação automática em segundo plano
+                newWorker.postMessage({ type: "SKIP_WAITING" });
+                newWorker.postMessage("SKIP_WAITING");
+              }
             }
           });
         });
@@ -95,17 +115,37 @@ export default function PwaRegister() {
     };
   }, []);
 
-  const handleApplyUpdate = () => {
-    if (waitingWorkerRef.current) {
-      setIsUpdating(true);
-      waitingWorkerRef.current.postMessage({ type: "SKIP_WAITING" });
-    } else {
-      window.location.reload();
+  const handleApplyUpdate = async () => {
+    setIsUpdating(true);
+    isUpdatingRef.current = true;
+
+    try {
+      // 1. Notifica o worker em espera guardado na referência
+      if (waitingWorkerRef.current) {
+        waitingWorkerRef.current.postMessage({ type: "SKIP_WAITING" });
+        waitingWorkerRef.current.postMessage("SKIP_WAITING");
+      }
+
+      // 2. Notifica diretamente o worker em espera registrado no navegador
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          reg.waiting.postMessage("SKIP_WAITING");
+        }
+      }
+    } catch (err) {
+      console.warn("[PWA] Erro ao enviar mensagem de atualização:", err);
     }
+
+    // 3. Fallback garantido: se o controllerchange demorar mais de 600ms, recarrega diretamente
+    setTimeout(() => {
+      window.location.reload();
+    }, 600);
   };
 
-  // Se não houver atualização ou o usuário optou por dispensar
-  if (!updateAvailable || isDismissed) {
+  // Se não estiver em modo standalone PWA, não houver atualização ou foi dispensado pelo usuário
+  if (!isStandalone || !updateAvailable || isDismissed) {
     return null;
   }
 
