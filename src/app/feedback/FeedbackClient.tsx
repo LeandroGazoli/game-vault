@@ -45,6 +45,9 @@ import {
   Gift,
   HelpCircle,
   TrendingUp,
+  Rocket,
+  ArrowRight,
+  Check,
 } from "lucide-react";
 
 export default function FeedbackClient() {
@@ -53,6 +56,9 @@ export default function FeedbackClient() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  // Aba Principal: Sugestões Ativas vs Área Exclusiva de Implementados
+  const [mainTab, setMainTab] = useState<"active" | "completed">("active");
 
   // Filtros e ordenação
   const [categoryFilter, setCategoryFilter] = useState<FeedbackCategory | "all">("all");
@@ -89,6 +95,26 @@ export default function FeedbackClient() {
   useEffect(() => {
     fetchFeedbacks();
   }, [user?.uid]);
+
+  // Sincronização com query params (?tab=completed ou ?id=xyz)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    if (tabParam === "completed" || tabParam === "implementados") {
+      setMainTab("completed");
+    }
+    const idParam = params.get("id");
+    if (idParam && items.length > 0) {
+      const found = items.find((i) => i.id === idParam);
+      if (found) {
+        setDetailItem(found);
+        if (found.status === "completed") {
+          setMainTab("completed");
+        }
+      }
+    }
+  }, [items]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -245,12 +271,40 @@ export default function FeedbackClient() {
     }
   };
 
-  // Filtragem e ordenação em memória
+  // Contadores para abas e métricas
+  const activeCount = useMemo(() => items.filter((i) => i.status !== "completed").length, [items]);
+  const completedCount = useMemo(() => items.filter((i) => i.status === "completed").length, [items]);
+  const completedVotesTotal = useMemo(
+    () =>
+      items
+        .filter((i) => i.status === "completed")
+        .reduce((acc, curr) => acc + (curr.score > 0 ? curr.score : 0), 0),
+    [items]
+  );
+  const completedRewardedCount = useMemo(
+    () => items.filter((i) => i.status === "completed" && i.rewarded).length,
+    [items]
+  );
+
+  // Filtragem e ordenação em memória com separação de sugestões ativas e implementadas
   const filteredItems = useMemo(() => {
     return items
       .filter((item) => {
+        // 1. Separação por Aba Principal: Ativas vs Área Exclusiva de Implementados
+        if (mainTab === "active") {
+          // Ocultar sumariamente os implementados da aba ativa
+          if (item.status === "completed") return false;
+          // Filtro por status ativo (se selecionado)
+          if (statusFilter !== "all" && item.status !== statusFilter) return false;
+        } else {
+          // Na área exclusiva, exibir estritamente apenas os implementados
+          if (item.status !== "completed") return false;
+        }
+
+        // 2. Filtro por Categoria
         if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-        if (statusFilter !== "all" && item.status !== statusFilter) return false;
+
+        // 3. Busca Textual
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
           const matchTitle = item.title?.toLowerCase().includes(q);
@@ -283,7 +337,7 @@ export default function FeedbackClient() {
         }
         return 0;
       });
-  }, [items, categoryFilter, statusFilter, sortBy, searchQuery]);
+  }, [items, mainTab, categoryFilter, statusFilter, sortBy, searchQuery]);
 
   // Contribuidores premiados (Hall da Fama)
   const rewardedItems = useMemo(() => {
@@ -430,7 +484,172 @@ export default function FeedbackClient() {
         </div>
       )}
 
-      {/* 3. BARRA DE CONTROLES, ORDENAÇÃO E FILTROS */}
+      {/* 3. NAVEGAÇÃO PRINCIPAL: SUGESTÕES ATIVAS VS ÁREA EXCLUSIVA DE IMPLEMENTADOS */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 rounded-3xl bg-[#0c0e14] border border-white/10 shadow-xl">
+        <div className="grid grid-cols-2 gap-1.5 w-full sm:w-auto">
+          {/* Aba Sugestões Ativas */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainTab("active");
+              setStatusFilter("all");
+            }}
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all ${
+              mainTab === "active"
+                ? "bg-gradient-to-r from-cyan-500 to-[#00E5FF] text-black shadow-lg shadow-cyan-500/25"
+                : "text-neutral-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <Lightbulb className="w-4 h-4" />
+            <span>Sugestões Ativas</span>
+            <span
+              className={`text-[11px] font-mono px-2 py-0.5 rounded-full font-bold ${
+                mainTab === "active"
+                  ? "bg-black/30 text-black"
+                  : "bg-white/10 text-neutral-300"
+              }`}
+            >
+              {activeCount}
+            </span>
+          </button>
+
+          {/* Aba Área Exclusiva de Implementados */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainTab("completed");
+              setStatusFilter("all");
+            }}
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all ${
+              mainTab === "completed"
+                ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 text-black shadow-lg shadow-emerald-500/25"
+                : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20"
+            }`}
+          >
+            <Rocket className="w-4 h-4" />
+            <span>Já Implementados</span>
+            <span
+              className={`text-[11px] font-mono px-2 py-0.5 rounded-full font-bold ${
+                mainTab === "completed"
+                  ? "bg-black/30 text-black"
+                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+              }`}
+            >
+              {completedCount}
+            </span>
+          </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 px-3 text-xs text-neutral-400 font-medium">
+          {mainTab === "active" ? (
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Backlog da Comunidade em Votação</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-emerald-300">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Área Exclusiva de Conquistas no Ar</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Banner de Acesso à Área Exclusiva (visível na aba de ativas) */}
+      {mainTab === "active" && completedCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-transparent border border-emerald-500/25 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0">
+              <Rocket className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">
+                ⭐ Conquistas da Comunidade no Ar
+              </span>
+              <p className="text-xs sm:text-sm text-neutral-200">
+                <strong className="text-emerald-300 font-bold">{completedCount} {completedCount === 1 ? "ideia de usuário já virou realidade" : "ideias de usuários já viraram realidade"}</strong> e {completedCount === 1 ? "está ativa" : "estão ativas"} no MyGameList!
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setMainTab("completed");
+              setCategoryFilter("all");
+            }}
+            className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95"
+          >
+            <span>Ver Área Exclusiva</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Hero Exclusivo da Área de Implementados */}
+      {mainTab === "completed" && (
+        <div className="relative rounded-[32px] overflow-hidden border border-emerald-500/30 bg-gradient-to-br from-[#0c1616] via-[#101b1a] to-[#0a1012] p-6 sm:p-8 shadow-2xl space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-mono">
+                <Rocket className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Área Exclusiva • Recursos Lançados</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Ideias da Comunidade que <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Viraram Realidade</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+                Esta área é dedicada exclusivamente a todas as propostas, melhorias e correções enviadas pelos nossos jogadores que foram aprovadas e colocadas em produção pela equipe do MyGameList!
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMainTab("active");
+                setCategoryFilter("all");
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-neutral-300 hover:text-white transition-all flex items-center justify-center gap-2 shrink-0 self-start md:self-center active:scale-95"
+            >
+              <span>← Voltar para Sugestões Ativas</span>
+            </button>
+          </div>
+
+          {/* 3 Métricas de Impacto */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-emerald-500/20">
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-emerald-500/20 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-lg font-black text-white font-mono">{completedCount}</div>
+                <div className="text-[11px] text-neutral-400">Recursos e Bugs Resolvidos</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-emerald-500/20 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-[#00E5FF] shrink-0">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-lg font-black text-white font-mono">+{completedVotesTotal}</div>
+                <div className="text-[11px] text-neutral-400">Votos Populares de Apoio</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-emerald-500/20 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-lg font-black text-white font-mono">{completedRewardedCount}</div>
+                <div className="text-[11px] text-neutral-400">Autores Premiados (VIP/PRO)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. BARRA DE CONTROLES, ORDENAÇÃO E FILTROS */}
       <div className="space-y-4">
         {/* Linha 1: Abas de Ordenação e Busca */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -440,7 +659,9 @@ export default function FeedbackClient() {
               onClick={() => setSortBy("score")}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 sortBy === "score"
-                  ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20 scale-105"
+                  ? mainTab === "completed"
+                    ? "bg-emerald-400 text-black shadow-md shadow-emerald-500/20 scale-105"
+                    : "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20 scale-105"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
@@ -478,7 +699,11 @@ export default function FeedbackClient() {
             <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Buscar por ideia, bug ou autor..."
+              placeholder={
+                mainTab === "completed"
+                  ? "Buscar recursos implementados..."
+                  : "Buscar por ideia, bug ou autor..."
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#14161e] border border-white/10 rounded-2xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-[#00E5FF] transition-colors"
@@ -498,11 +723,15 @@ export default function FeedbackClient() {
                   : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10"
               }`}
             >
-              Todas ({items.length})
+              Todas ({mainTab === "active" ? activeCount : completedCount})
             </button>
 
             {FEEDBACK_CATEGORIES.map((cat) => {
-              const count = items.filter((i) => i.category === cat.id).length;
+              const count = items.filter(
+                (i) =>
+                  (mainTab === "active" ? i.status !== "completed" : i.status === "completed") &&
+                  i.category === cat.id
+              ).length;
               const isSelected = categoryFilter === cat.id;
               return (
                 <button
@@ -522,25 +751,31 @@ export default function FeedbackClient() {
           </div>
 
           {/* Filtro por Status */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-neutral-400 font-medium">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as FeedbackStatus | "all")}
-              className="bg-[#14161e] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
-            >
-              <option value="all">Todos os Status</option>
-              <option value="under_review">🟡 Em Análise</option>
-              <option value="planned">🟣 Planejado</option>
-              <option value="in_progress">🔵 Em Desenvolvimento</option>
-              <option value="completed">🟢 Implementado</option>
-              <option value="declined">🔴 Não Viável</option>
-            </select>
-          </div>
+          {mainTab === "active" ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-neutral-400 font-medium">Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as FeedbackStatus | "all")}
+                className="bg-[#14161e] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+              >
+                <option value="all">Todos os Status Ativos</option>
+                <option value="under_review">🟡 Em Análise</option>
+                <option value="planned">🟣 Planejado</option>
+                <option value="in_progress">🔵 Em Desenvolvimento</option>
+                <option value="declined">🔴 Não Viável</option>
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 shrink-0 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-mono">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Status: Implementados no Site</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 4. LISTA DE CARDS DE FEEDBACK */}
+      {/* 5. LISTA DE CARDS DE FEEDBACK */}
       <div className="space-y-3.5">
         {isLoading ? (
           <div className="space-y-4 animate-pulse py-4">
@@ -549,29 +784,59 @@ export default function FeedbackClient() {
             <div className="h-32 rounded-3xl bg-[#14161e]" />
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="rounded-[32px] bg-[#14161e] border border-dashed border-white/10 p-10 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-[#00E5FF] flex items-center justify-center mx-auto">
-              <Lightbulb className="w-7 h-7" />
+          <div className={`rounded-[32px] bg-[#14161e] border border-dashed p-10 text-center space-y-4 ${
+            mainTab === "completed" ? "border-emerald-500/30" : "border-white/10"
+          }`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${
+              mainTab === "completed"
+                ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                : "bg-cyan-500/10 border border-cyan-500/20 text-[#00E5FF]"
+            }`}>
+              {mainTab === "completed" ? (
+                <Rocket className="w-7 h-7" />
+              ) : (
+                <Lightbulb className="w-7 h-7" />
+              )}
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold text-white">
-                Nenhuma publicação encontrada
+                {mainTab === "completed"
+                  ? searchQuery
+                    ? "Nenhum recurso implementado encontrado nesta busca"
+                    : "Nenhum recurso implementado nesta categoria ainda"
+                  : "Nenhuma sugestão ativa encontrada"}
               </h3>
               <p className="text-xs text-neutral-400 max-w-md mx-auto">
-                {searchQuery
+                {mainTab === "completed"
+                  ? searchQuery
+                    ? "Tente alterar os termos da sua pesquisa ou selecionar 'Todas as Categorias'."
+                    : "Quando a equipe do MyGameList concluir e publicar uma sugestão da comunidade, ela aparecerá com honras nesta área exclusiva!"
+                  : searchQuery
                   ? "Tente alterar os termos da sua pesquisa ou redefinir os filtros."
                   : "Seja o primeiro a enviar uma ideia de novo recurso ou reportar um erro!"}
               </p>
             </div>
-            <button
-              onClick={() => {
-                if (!user) setIsAuthOpen(true);
-                else setIsNewModalOpen(true);
-              }}
-              className="px-5 py-2.5 rounded-2xl bg-white hover:bg-neutral-200 text-black font-bold text-xs transition-all shadow-md active:scale-95"
-            >
-              + Enviar Primeira Sugestão
-            </button>
+            {mainTab === "completed" ? (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setCategoryFilter("all");
+                }}
+                className="px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition-all shadow-md active:scale-95"
+              >
+                Ver Todas as Categorias
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (!user) setIsAuthOpen(true);
+                  else setIsNewModalOpen(true);
+                }}
+                className="px-5 py-2.5 rounded-2xl bg-white hover:bg-neutral-200 text-black font-bold text-xs transition-all shadow-md active:scale-95"
+              >
+                + Enviar Primeira Sugestão
+              </button>
+            )}
           </div>
         ) : (
           filteredItems.map((item) => (
@@ -586,6 +851,7 @@ export default function FeedbackClient() {
               onDelete={handleDeleteFeedback}
               isAdmin={isAdmin}
               currentUserId={user?.uid}
+              isCompletedArea={mainTab === "completed"}
             />
           ))
         )}
