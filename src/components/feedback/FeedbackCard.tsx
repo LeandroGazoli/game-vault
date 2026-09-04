@@ -42,6 +42,7 @@ interface FeedbackCardProps {
   onDelete?: (item: FeedbackItem) => Promise<void>;
   isAdmin?: boolean;
   currentUserId?: string;
+  isCompletedArea?: boolean;
 }
 
 function formatSafeDate(
@@ -78,6 +79,7 @@ export default function FeedbackCard({
   onDelete,
   isAdmin = false,
   currentUserId,
+  isCompletedArea = false,
 }: FeedbackCardProps) {
   const [isVoting, setIsVoting] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -126,7 +128,11 @@ export default function FeedbackCard({
   return (
     <article
       onClick={() => onOpenDetail(item)}
-      className="group relative rounded-2xl sm:rounded-3xl bg-[#14161d] hover:bg-[#181a23] border border-white/10 hover:border-[#00E5FF]/40 p-4 sm:p-5 transition-all duration-200 shadow-xl cursor-pointer space-y-4"
+      className={`group relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 transition-all duration-200 shadow-xl cursor-pointer space-y-4 ${
+        item.status === "completed" || isCompletedArea
+          ? "bg-gradient-to-br from-[#12191d] to-[#14161f] border border-emerald-500/30 hover:border-emerald-400/60 shadow-emerald-950/20"
+          : "bg-[#14161d] hover:bg-[#181a23] border border-white/10 hover:border-[#00E5FF]/40"
+      }`}
     >
       {/* Faixa de Recompensa de Honra (se concedida pelo Admin) */}
       {item.rewarded && (
@@ -223,6 +229,13 @@ export default function FeedbackCard({
                 <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotClass}`} />
                 <span>{statusConfig.label}</span>
               </span>
+
+              {(item.status === "completed" || isCompletedArea) && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono uppercase tracking-wider">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span>No Ar</span>
+                </span>
+              )}
             </div>
 
             {/* Ações Rápidas do Topo (Compartilhar & Menu Admin) */}
@@ -326,7 +339,9 @@ export default function FeedbackCard({
           </div>
 
           {/* Título da Sugestão / Bug */}
-          <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#00E5FF] transition-colors leading-snug">
+          <h3 className={`text-sm sm:text-base font-bold text-white transition-colors leading-snug ${
+            item.status === "completed" || isCompletedArea ? "group-hover:text-emerald-300" : "group-hover:text-[#00E5FF]"
+          }`}>
             {item.title}
           </h3>
 
@@ -337,12 +352,26 @@ export default function FeedbackCard({
 
           {/* Resposta Oficial da Equipe (se houver) */}
           {item.adminResponse && (
-            <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-950/30 to-[#0e1015] border-l-2 border-[#00E5FF] space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#00E5FF]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#00E5FF]" />
-                <span>Resposta da Equipe MyGameList</span>
+            <div className={`p-3 rounded-xl border-l-2 space-y-1 ${
+              item.status === "completed" || isCompletedArea
+                ? "bg-gradient-to-r from-emerald-950/40 via-[#10171a] to-[#0e1015] border-emerald-400"
+                : "bg-gradient-to-r from-cyan-950/30 to-[#0e1015] border-[#00E5FF]"
+            }`}>
+              <div className={`flex items-center gap-1.5 text-[11px] font-bold ${
+                item.status === "completed" || isCompletedArea ? "text-emerald-300" : "text-[#00E5FF]"
+              }`}>
+                {item.status === "completed" || isCompletedArea ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#00E5FF]" />
+                )}
+                <span>
+                  {item.status === "completed" || isCompletedArea
+                    ? "Implementado pela Equipe MyGameList"
+                    : "Resposta da Equipe MyGameList"}
+                </span>
               </div>
-              <p className="text-xs text-neutral-300 italic line-clamp-2">
+              <p className="text-xs text-neutral-200 italic line-clamp-2">
                 &ldquo;{item.adminResponse}&rdquo;
               </p>
             </div>
