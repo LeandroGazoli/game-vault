@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { getGameDetailsIGDB } from "@/lib/igdbApi";
+import { getGameDetailsApi } from "@/lib/gameApi";
 import GameDetailClient from "../GameDetailClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { getGameUrl } from "@/lib/routes";
@@ -13,7 +13,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id, slug } = await params;
-  const game = await getGameDetailsIGDB(id).catch(() => null);
+  const game = await getGameDetailsApi(id).catch(() => null);
 
   if (!game) {
     return {
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function GameSlugPage({ params }: PageProps) {
   const { id, slug } = await params;
-  const game = await getGameDetailsIGDB(id).catch(() => null);
+  const game = await getGameDetailsApi(id).catch(() => null);
 
   if (!game) {
     notFound();

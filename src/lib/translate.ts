@@ -109,11 +109,12 @@ async function translateChunk(chunk: string): Promise<string> {
   }
 
   try {
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR&de=contato@mygameslist.com.br`;
     const res = await fetch(url, {
       headers: {
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(4000),
       next: { revalidate: 86400 },
     });
 

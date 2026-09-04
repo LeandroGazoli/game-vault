@@ -44,6 +44,14 @@ import {
 } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { formatPlatformShort } from "@/lib/platformUtils";
+import {
+  translateGenre,
+  translateGameMode,
+  translatePlayerPerspective,
+  translateTheme,
+  translateAgeRatingText,
+  isLikelyEnglish,
+} from "@/lib/gameUtils";
 
 interface GalleryMediaItem {
   url: string;
@@ -98,7 +106,7 @@ function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
     return (
       <div
         className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
-        title={`Classificação ESRB: ${esrb.rating}`}
+        title={`Classificação Indicativa: ${translateAgeRatingText(esrb.rating)}`}
       >
         ESRB {esrb.rating}
       </div>
@@ -111,7 +119,7 @@ function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
     return (
       <div
         className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
-        title={`Classificação PEGI: ${pegi.rating}`}
+        title={`Classificação Indicativa Europeia: PEGI +${pegi.rating} Anos`}
       >
         PEGI {pegi.rating}
       </div>
@@ -215,6 +223,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
   const galleryScrollRef = useRef<HTMLDivElement>(null);
   const activeThumbnailRef = useRef<HTMLButtonElement>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const userGame = game ? getGameInLibrary(game.id) : undefined;
@@ -229,6 +238,20 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       setLoading(false);
       if (initialGame.videos && initialGame.videos.length > 0) {
         setActiveVideoId((prev) => prev || initialGame.videos![0].video_id);
+      }
+
+      // Auto-cura de localização: se o jogo inicial foi carregado com sinopse em inglês, busca a tradução em segundo plano
+      if (isLikelyEnglish(initialGame.description_raw)) {
+        setIsTranslating(true);
+        fetch(`/api/games/${id}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((freshGame: Game | null) => {
+            if (freshGame && freshGame.description_raw && !isLikelyEnglish(freshGame.description_raw)) {
+              setGame(freshGame);
+            }
+          })
+          .catch(() => {})
+          .finally(() => setIsTranslating(false));
       }
       return;
     }
@@ -253,6 +276,22 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     }
     loadGame();
   }, [id, initialGame]);
+
+  const handleTranslateOnDemand = async () => {
+    if (!id || isTranslating) return;
+    setIsTranslating(true);
+    try {
+      const res = await fetch(`/api/games/${id}`);
+      if (res.ok) {
+        const data: Game = await res.json();
+        setGame(data);
+      }
+    } catch (err) {
+      console.warn("Erro ao traduzir sob demanda:", err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   // Montar lista unificada de todas as mídias (Key Art 1080p + Screenshots 1080p)
   const allMediaItems = useMemo<GalleryMediaItem[]>(() => {
@@ -550,7 +589,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                   key={g.id}
                   className="text-xs text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-3 py-1 rounded-full"
                 >
-                  {g.name}
+                  {translateGenre(g.name)}
                 </span>
               ))}
             </div>
@@ -887,9 +926,30 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
           {/* 2. SOBRE O JOGO (SINOPSE) */}
           <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-4 shadow-xl">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#00E5FF]" /> Sobre o Jogo
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#00E5FF]" /> Sobre o Jogo
+              </h3>
+              <div className="flex items-center gap-2">
+                {isTranslating ? (
+                  <span className="text-[11px] text-cyan-300 bg-cyan-950/50 border border-cyan-500/30 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 animate-pulse">
+                    <Sparkles className="w-3.5 h-3.5" /> Traduzindo sinopse...
+                  </span>
+                ) : game.description_raw && isLikelyEnglish(game.description_raw) ? (
+                  <button
+                    onClick={handleTranslateOnDemand}
+                    className="text-[11px] px-3 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+                    title="Buscar tradução em Português Brasileiro"
+                  >
+                    <Languages className="w-3.5 h-3.5" /> Traduzir para PT-BR
+                  </button>
+                ) : game.description_raw ? (
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium flex items-center gap-1">
+                    🇧🇷 Traduzido para PT-BR
+                  </span>
+                ) : null}
+              </div>
+            </div>
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
               {sanitizeTranslation(game.description_raw) || "Descrição não disponível para este jogo."}
             </p>
@@ -898,9 +958,16 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           {/* 3. ENREDO & NARRATIVA (STORYLINE SE HOUVER) */}
           {game.storyline && (
             <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-4 shadow-xl">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-purple-400" /> Enredo &amp; Narrativa
-              </h3>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-purple-400" /> Enredo &amp; Narrativa
+                </h3>
+                {!isLikelyEnglish(game.storyline) && (
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium flex items-center gap-1">
+                    🇧🇷 Traduzido para PT-BR
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
                 {sanitizeTranslation(game.storyline)}
               </p>
@@ -1083,7 +1150,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                     <div className="flex flex-wrap gap-1.5">
                       {game.game_modes.map((m) => (
                         <span key={m} className="text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-950/40 text-cyan-300 border border-cyan-500/20">
-                          {m}
+                          {translateGameMode(m)}
                         </span>
                       ))}
                     </div>
@@ -1098,7 +1165,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                     <div className="flex flex-wrap gap-1.5">
                       {game.player_perspectives.map((p) => (
                         <span key={p} className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-950/40 text-amber-300 border border-amber-500/20">
-                          {p}
+                          {translatePlayerPerspective(p)}
                         </span>
                       ))}
                     </div>
@@ -1111,12 +1178,12 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             {game.themes && game.themes.length > 0 && (
               <div className="space-y-1.5 pt-3 border-t border-white/5">
                 <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação:
+                  <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação &amp; Temas:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {game.themes.map((t) => (
                     <span key={t} className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20">
-                      {t}
+                      {translateTheme(t)}
                     </span>
                   ))}
                 </div>

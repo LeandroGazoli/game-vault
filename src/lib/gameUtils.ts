@@ -61,3 +61,143 @@ export function formatGenreName(name?: string | null): string {
   if (match && match[1]) return match[1];
   return trimmed.length > 14 ? trimmed.substring(0, 12) + "…" : trimmed;
 }
+
+/**
+ * Traduz o nome completo do gênero para Português Brasileiro (PT-BR) com clareza.
+ */
+export function translateGenre(name?: string | null): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("role-playing") || lower === "rpg") return "RPG";
+  if (lower.includes("action-adventure")) return "Ação & Aventura";
+  if (lower === "action" || lower.includes("hack and slash") || lower.includes("beat 'em up")) return "Ação";
+  if (lower === "adventure") return "Aventura";
+  if (lower === "shooter" || lower.includes("fps")) return "Tiro (Shooter)";
+  if (lower.includes("tactical")) return "Tático";
+  if (lower.includes("turn-based strategy") || lower.includes("tbs")) return "Estratégia por Turnos";
+  if (lower.includes("real time strategy") || lower.includes("rts")) return "Estratégia em Tempo Real";
+  if (lower === "strategy") return "Estratégia";
+  if (lower === "simulator") return "Simulador";
+  if (lower === "sport") return "Esporte";
+  if (lower === "racing") return "Corrida";
+  if (lower === "fighting") return "Luta";
+  if (lower === "platform") return "Plataforma";
+  if (lower === "puzzle") return "Quebra-Cabeça / Puzzle";
+  if (lower === "arcade") return "Arcade";
+  if (lower === "indie") return "Indie";
+  if (lower.includes("card") || lower.includes("board")) return "Cartas & Tabuleiro";
+  if (lower.includes("point-and-click")) return "Point & Click";
+  if (lower === "music") return "Música & Ritmo";
+  if (lower.includes("visual novel")) return "Visual Novel";
+  if (lower === "pinball") return "Pinball";
+  if (lower.includes("quiz") || lower.includes("trivia")) return "Quiz & Trivia";
+  if (lower.includes("moba")) return "MOBA";
+
+  return formatGenreName(trimmed);
+}
+
+/**
+ * Traduz Modos de Jogo do IGDB para Português Brasileiro (PT-BR).
+ */
+export function translateGameMode(mode?: string | null): string {
+  if (!mode) return "";
+  const trimmed = mode.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower === "single player" || lower === "singleplayer") return "Um Jogador";
+  if (lower === "multiplayer") return "Multijogador";
+  if (lower.includes("co-operative") || lower.includes("coop") || lower.includes("co-op")) return "Cooperativo (Co-op)";
+  if (lower.includes("split screen") || lower.includes("splitscreen")) return "Tela Dividida";
+  if (lower.includes("massively multiplayer online") || lower.includes("mmo")) return "MMO Online";
+  if (lower.includes("battle royale")) return "Battle Royale";
+
+  return trimmed;
+}
+
+/**
+ * Traduz Perspectivas de Câmera do Jogador do IGDB para Português Brasileiro (PT-BR).
+ */
+export function translatePlayerPerspective(perspective?: string | null): string {
+  if (!perspective) return "";
+  const trimmed = perspective.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("first person") || lower === "first-person") return "Primeira Pessoa (FPS)";
+  if (lower.includes("third person") || lower === "third-person") return "Terceira Pessoa";
+  if (lower.includes("bird view") || lower.includes("isometric")) return "Visão Isométrica / Superior";
+  if (lower.includes("side view") || lower === "side-scroller") return "Visão Lateral (2D)";
+  if (lower.includes("virtual reality") || lower === "vr") return "Realidade Virtual (VR)";
+  if (lower.includes("auditory")) return "Auditivo";
+  if (lower.includes("text")) return "Baseado em Texto";
+
+  return trimmed;
+}
+
+/**
+ * Traduz Temas e Ambientação do IGDB para Português Brasileiro (PT-BR).
+ */
+export function translateTheme(theme?: string | null): string {
+  if (!theme) return "";
+  const trimmed = theme.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("science fiction") || lower.includes("sci-fi")) return "Ficção Científica (Sci-Fi)";
+  if (lower === "fantasy") return "Fantasia";
+  if (lower === "horror") return "Terror / Horror";
+  if (lower === "survival") return "Sobrevivência";
+  if (lower === "historical") return "Histórico";
+  if (lower === "stealth") return "Furtividade (Stealth)";
+  if (lower === "open world") return "Mundo Aberto";
+  if (lower === "warfare" || lower === "war") return "Guerra";
+  if (lower === "comedy") return "Comédia";
+  if (lower === "business") return "Negócios / Gestão";
+  if (lower === "drama") return "Drama";
+  if (lower === "mystery") return "Mistério";
+  if (lower === "sandbox") return "Sandbox";
+  if (lower === "kids") return "Infantil";
+  if (lower === "party") return "Festa / Party";
+  if (lower === "romance") return "Romance";
+  if (lower === "erotic") return "Adulto (+18)";
+  if (lower === "educational") return "Educativo";
+  if (lower === "action") return "Ação";
+  if (lower === "thriller") return "Suspense / Thriller";
+
+  return trimmed;
+}
+
+/**
+ * Traduz descrições de classificações etárias norte-americanas (ESRB) para texto amigável em PT-BR.
+ */
+export function translateAgeRatingText(rating?: string | null): string {
+  if (!rating) return "";
+  const upper = rating.toUpperCase().trim();
+
+  if (upper.includes("EVERYONE 10+")) return "Maiores de 10 Anos (ESRB 10+)";
+  if (upper === "EVERYONE" || upper.includes("EVERYONE")) return "Livre / Para Todos (ESRB E)";
+  if (upper.includes("TEEN")) return "Adolescentes / 13+ (ESRB Teen)";
+  if (upper.includes("MATURE 17+") || upper.includes("MATURE")) return "Maiores de 17 Anos (ESRB M)";
+  if (upper.includes("ADULTS ONLY 18+") || upper.includes("ADULTS ONLY")) return "Adulto / 18+ (ESRB AO)";
+  if (upper.includes("RATING PENDING")) return "Classificação Pendente";
+
+  return rating;
+}
+
+/**
+ * Identifica se um texto está predominantemente em inglês analisando stop-words frequentes.
+ */
+export function isLikelyEnglish(text?: string | null): boolean {
+  if (!text || text.trim().length < 25) return false;
+  const sample = text.toLowerCase().slice(0, 500);
+
+  // Palavras exclusivas ou extremamente frequentes no inglês
+  const englishMatches = sample.match(/\b(the|and|is|are|in|with|of|to|for|from|by|which|their|players|gameplay|features|set in|takes place)\b/g);
+  // Palavras indicativas de português
+  const portugueseMatches = sample.match(/\b(o|a|os|as|um|uma|de|do|da|dos|das|em|no|na|nos|nas|com|para|por|que|este|esta|jogo|jogadores|história)\b/g);
+
+  const engCount = englishMatches ? englishMatches.length : 0;
+  const ptCount = portugueseMatches ? portugueseMatches.length : 0;
+
+  return engCount >= 3 && engCount > ptCount;
+}
