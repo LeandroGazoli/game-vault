@@ -18,6 +18,8 @@ import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
+import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
+import GameImporterModal from "@/components/importer/GameImporterModal";
 import { getThemeStyles } from "@/lib/themeStyles";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
@@ -52,6 +54,7 @@ import {
   Share2,
   Globe,
   Lock,
+  Upload,
 } from "lucide-react";
 
 function computeLibraryStats(games: UserGame[]): LibraryStats {
@@ -194,6 +197,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
 
   const profileThemeStyles = getThemeStyles(activeUser?.theme);
@@ -482,6 +486,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
               { id: "playing", label: "Jogando 🎮", count: activeStats.playingCount },
               { id: "dropped", label: "Dropados 🛑", count: activeStats.droppedCount },
               { id: "backlog", label: "Quero Jogar ⏳", count: activeStats.backlogCount },
+              { id: "steam_inventory", label: "Inventário Steam 🎒", count: activeUser?.socialLinks?.steam ? "Steam" : "Skins" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -504,8 +509,20 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             ))}
           </div>
 
-          {/* Busca na Biblioteca e Modo de Visualização */}
-          <div className="flex items-center gap-2.5 w-full md:w-auto">
+          {/* Busca na Biblioteca, Ações e Modo de Visualização */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setIsImporterOpen(true)}
+                className="h-11 md:h-10 px-3 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-[#00E5FF]/30 hover:border-[#00E5FF]/60 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm shrink-0"
+                title="Importar biblioteca da Steam, Epic Games, GOG ou arquivos CSV/JSON"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span className="hidden sm:inline">Importar</span>
+              </button>
+            )}
+
             <div className="relative flex-1 md:flex-initial">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -513,7 +530,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                 placeholder="Filtrar na biblioteca..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full md:w-56 h-11 md:h-10 pl-10 pr-8 rounded-2xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
+                className="w-full md:w-52 h-11 md:h-10 pl-10 pr-8 rounded-2xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
               />
               {searchQuery && (
                 <button
@@ -550,20 +567,60 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           </div>
         </div>
 
-        {/* Lista de Jogos do Usuário */}
-        {filteredLibrary.length === 0 ? (
+        {/* Lista de Jogos do Usuário ou Inventário Steam */}
+        {activeTab === "steam_inventory" ? (
+          <div className="rounded-[32px] bg-[#18191c] border border-white/10 p-4 sm:p-7 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                  <span>🎒 Inventário Steam &amp; Skins</span>
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Armas, facas, chapéus e colecionáveis do CS2, TF2, Rust, Dota 2 e Cartas Steam
+                </p>
+              </div>
+            </div>
+            <SteamInventoryViewer
+              initialSteamId={activeUser?.socialLinks?.steam || ""}
+              isOwner={isOwner}
+              onSaveSteamToProfile={
+                isOwner
+                  ? async (steamId) => {
+                      await updateUserProfile({
+                        socialLinks: {
+                          ...authUser?.socialLinks,
+                          steam: steamId,
+                        },
+                      });
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        ) : filteredLibrary.length === 0 ? (
           <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-3">
             <Gamepad2 className="w-10 h-10 text-gray-600 mx-auto" />
             <h3 className="text-base font-bold text-white">Nenhum jogo nesta categoria</h3>
             <p className="text-xs text-gray-400 max-w-sm mx-auto">
-              Navegue pelo catálogo do IGDB e adicione jogos para construir seu perfil!
+              Navegue pelo catálogo ou sincronize seus jogos da Steam, Epic Games e outras lojas!
             </p>
-            <Link
-              href="/search"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
-            >
-              <Plus className="w-3.5 h-3.5" /> Explorar Catálogo
-            </Link>
+            <div className="flex items-center justify-center gap-2.5 pt-1 flex-wrap">
+              <Link
+                href="/search"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
+              >
+                <Plus className="w-3.5 h-3.5" /> Explorar Catálogo
+              </Link>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setIsImporterOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all shadow-md active:scale-95"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Importar da Steam / Lojas
+                </button>
+              )}
+            </div>
           </div>
         ) : viewMode === "grid" ? (
           /* Visualização em Grade com Posters */
@@ -819,8 +876,16 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onOpenRoulette={() => setIsRouletteOpen(true)}
             onOpenWrapped={() => setIsWrappedOpen(true)}
             onOpenExport={() => setIsExportOpen(true)}
+            onOpenImporter={() => setIsImporterOpen(true)}
+            onOpenSteamInventory={() => setActiveTab("steam_inventory")}
             onOpenShare={() => setIsShareOpen(true)}
             onInstallPwa={triggerPwaInstall}
+          />
+
+          <GameImporterModal
+            isOpen={isImporterOpen}
+            onClose={() => setIsImporterOpen(false)}
+            existingGames={ownLibrary}
           />
 
           <ManagePlanModal

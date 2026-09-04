@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { UserGame, GameStatus, LibraryStats } from "@/lib/types";
 import { useAuth } from "./AuthContext";
-import { getUserLibrary, saveUserGame, removeUserGame } from "@/lib/firebase";
+import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 import { triggerSuccessHaptic } from "@/lib/capacitor";
 
@@ -12,6 +12,7 @@ interface GameLibraryContextType {
   stats: LibraryStats;
   isLoading: boolean;
   addOrUpdateGame: (gameData: Partial<UserGame> & { gameId: number | string; gameTitle: string }) => Promise<void>;
+  batchAddGames: (gamesData: Array<Partial<UserGame> & { gameId: number | string; gameTitle: string }>) => Promise<number>;
   deleteGame: (gameId: number | string) => Promise<void>;
   getGameInLibrary: (gameId: number | string) => UserGame | undefined;
   getGamesByStatus: (status: GameStatus) => UserGame[];
@@ -141,6 +142,77 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     [user, triggerZeradoConfetti]
   );
 
+  const batchAddGames = useCallback(
+    async (gamesData: Array<Partial<UserGame> & { gameId: number | string; gameTitle: string }>) => {
+      if (!gamesData || gamesData.length === 0) return 0;
+
+      const currentLibrary = [...libraryRef.current];
+      const now = new Date().toISOString();
+      let hasNewCompleted = false;
+      const gamesToSave: UserGame[] = [];
+
+      for (const item of gamesData) {
+        const existingIndex = currentLibrary.findIndex(
+          (g) => String(g.gameId) === String(item.gameId)
+        );
+        const existing = existingIndex >= 0 ? currentLibrary[existingIndex] : null;
+
+        if (item.status === "completed" && (!existing || existing.status !== "completed")) {
+          hasNewCompleted = true;
+        }
+
+        const platform = item.platformPlayed || "PC";
+        const platforms = item.platformsPlayed || (existing?.platformsPlayed ? [...existing.platformsPlayed] : [platform]);
+        if (!platforms.includes(platform)) {
+          platforms.push(platform);
+        }
+
+        const updatedGame: UserGame = {
+          gameId: item.gameId as any,
+          gameSlug: item.gameSlug || String(item.gameId),
+          gameTitle: item.gameTitle,
+          gameCover: item.gameCover !== undefined ? item.gameCover : existing?.gameCover || null,
+          status: item.status || existing?.status || "backlog",
+          completionType: item.status === "completed" ? item.completionType || existing?.completionType || null : null,
+          userRating: item.userRating !== undefined ? item.userRating : existing?.userRating ?? null,
+          userPlaytimeHours: item.userPlaytimeHours !== undefined ? item.userPlaytimeHours : existing?.userPlaytimeHours ?? null,
+          userReview: item.userReview || existing?.userReview || "",
+          platformPlayed: platform,
+          platformsPlayed: platforms,
+          isFavorite: item.isFavorite ?? existing?.isFavorite ?? false,
+          completedAt: item.status === "completed" ? item.completedAt || existing?.completedAt || now : null,
+          startedAt: item.startedAt || existing?.startedAt || now,
+          createdAt: existing?.createdAt || now,
+          updatedAt: now,
+          metacritic: item.metacritic !== undefined ? item.metacritic : existing?.metacritic ?? null,
+          hltbData: item.hltbData !== undefined ? item.hltbData : existing?.hltbData ?? null,
+          genres: item.genres || existing?.genres || [],
+          releaseYear: item.releaseYear || existing?.releaseYear || "",
+        };
+
+        if (existingIndex >= 0) {
+          currentLibrary[existingIndex] = updatedGame;
+        } else {
+          currentLibrary.unshift(updatedGame);
+        }
+        gamesToSave.push(updatedGame);
+      }
+
+      setLibrary(currentLibrary);
+
+      if (hasNewCompleted) {
+        triggerZeradoConfetti();
+      }
+
+      if (user) {
+        await batchSaveUserGames(user.uid, gamesToSave);
+      }
+
+      return gamesToSave.length;
+    },
+    [user, triggerZeradoConfetti]
+  );
+
   const deleteGame = useCallback(
     async (gameId: number | string) => {
       if (!user) return;
@@ -214,6 +286,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       stats,
       isLoading,
       addOrUpdateGame,
+      batchAddGames,
       deleteGame,
       getGameInLibrary,
       getGamesByStatus,
@@ -223,6 +296,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       stats,
       isLoading,
       addOrUpdateGame,
+      batchAddGames,
       deleteGame,
       getGameInLibrary,
       getGamesByStatus,

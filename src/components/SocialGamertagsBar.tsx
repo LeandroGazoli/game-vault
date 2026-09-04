@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { SocialLinks } from "@/lib/types";
 import {
   Gamepad2,
@@ -41,17 +42,26 @@ export default function SocialGamertagsBar({
     <div className={`flex flex-wrap items-center gap-2 pt-1 ${className}`}>
       {/* 1. Steam */}
       {socials.steam && (
-        <a
-          href={socials.steam.startsWith("http") ? socials.steam : `https://steamcommunity.com/id/${socials.steam}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1b2838]/80 hover:bg-[#1b2838] border border-blue-500/30 text-blue-200 text-xs font-semibold transition-all shadow-sm group"
-          title="Ver perfil na Steam"
-        >
-          <span className="font-mono text-[10px] bg-blue-500/20 px-1.5 py-0.2 rounded text-blue-300">STEAM</span>
-          <span>{socials.steam.replace(/https?:\/\/steamcommunity\.com\/id\/?/, "").replace(/\/$/, "")}</span>
-          <ExternalLink className="w-3 h-3 text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
-        </a>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <a
+            href={socials.steam.startsWith("http") ? socials.steam : `https://steamcommunity.com/id/${socials.steam}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1b2838]/80 hover:bg-[#1b2838] border border-blue-500/30 text-blue-200 text-xs font-semibold transition-all shadow-sm group"
+            title="Ver perfil na Steam"
+          >
+            <span className="font-mono text-[10px] bg-blue-500/20 px-1.5 py-0.2 rounded text-blue-300">STEAM</span>
+            <span>{socials.steam.replace(/https?:\/\/steamcommunity\.com\/id\/?/, "").replace(/\/$/, "")}</span>
+            <ExternalLink className="w-3 h-3 text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </a>
+          <Link
+            href={`/inventario-steam?steamId=${encodeURIComponent(socials.steam)}`}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/40 hover:bg-cyan-900/50 border border-[#00E5FF]/30 text-cyan-300 text-xs font-semibold transition-all shadow-sm active:scale-95"
+            title="Ver inventário de skins Steam deste jogador"
+          >
+            <span>🎒 Skins</span>
+          </Link>
+        </div>
       )}
 
       {/* 2. PlayStation Network (PSN) */}

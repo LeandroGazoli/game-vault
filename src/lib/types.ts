@@ -631,4 +631,165 @@ export const NOTIFICATION_CATEGORIES: Record<
   },
 };
 
+// ==========================================
+// SISTEMA DE INVENTÁRIO STEAM & IMPORTADOR
+// ==========================================
+
+export type SteamSupportedAppId = 730 | 440 | 252490 | 570 | 753;
+
+export interface SteamSupportedApp {
+  id: SteamSupportedAppId;
+  name: string;
+  shortName: string;
+  contextId: number;
+  icon: string;
+  badgeColor: string;
+  heroImage: string;
+}
+
+export const STEAM_SUPPORTED_APPS: SteamSupportedApp[] = [
+  {
+    id: 730,
+    name: "Counter-Strike 2",
+    shortName: "CS2",
+    contextId: 2,
+    icon: "🔫",
+    badgeColor: "border-amber-500/40 text-amber-300 bg-amber-500/10",
+    heroImage: "https://media.steampowered.com/steamcommunity/public/images/apps/730/81e51c890a1961448b1d406fed6eb42b31a5477b.jpg",
+  },
+  {
+    id: 440,
+    name: "Team Fortress 2",
+    shortName: "TF2",
+    contextId: 2,
+    icon: "🎩",
+    badgeColor: "border-orange-500/40 text-orange-300 bg-orange-500/10",
+    heroImage: "https://media.steampowered.com/steamcommunity/public/images/apps/440/e3f595a92552da3d664ad00277fad2107345f743.jpg",
+  },
+  {
+    id: 252490,
+    name: "Rust",
+    shortName: "Rust",
+    contextId: 2,
+    icon: "🌲",
+    badgeColor: "border-rose-500/40 text-rose-300 bg-rose-500/10",
+    heroImage: "https://media.steampowered.com/steamcommunity/public/images/apps/252490/47622f6d2f347b59e7464a85702213abec80357f.jpg",
+  },
+  {
+    id: 570,
+    name: "Dota 2",
+    shortName: "Dota 2",
+    contextId: 2,
+    icon: "⚔️",
+    badgeColor: "border-red-500/40 text-red-300 bg-red-500/10",
+    heroImage: "https://media.steampowered.com/steamcommunity/public/images/apps/570/d4f836839254be08d8e9dd333ecc9a01782d26d2.jpg",
+  },
+  {
+    id: 753,
+    name: "Comunidade Steam",
+    shortName: "Cartas & Itens",
+    contextId: 6,
+    icon: "🃏",
+    badgeColor: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10",
+    heroImage: "https://media.steampowered.com/steamcommunity/public/images/apps/753/135dc194e4c274da5c84d728551f15dbb03e0310.jpg",
+  },
+];
+
+export interface SteamItemTag {
+  category: string;
+  internalName: string;
+  localizedCategoryName?: string;
+  localizedTagName: string;
+  color?: string;
+}
+
+export interface SteamItemDescription {
+  type?: string;
+  value: string;
+  color?: string;
+}
+
+export interface SteamInventoryItem {
+  assetId: string;
+  classId: string;
+  instanceId: string;
+  amount: number;
+  name: string;
+  marketName: string;
+  marketHashName: string;
+  iconUrl: string;
+  iconUrlLarge?: string;
+  type: string;
+  rarity?: string;
+  rarityColor?: string;
+  exterior?: string;
+  weapon?: string;
+  descriptions?: SteamItemDescription[];
+  tags?: SteamItemTag[];
+  tradable: boolean;
+  marketable: boolean;
+  marketPrice?: string;
+  appId: number;
+  contextId: number;
+}
+
+export interface SteamInventoryResponse {
+  success: boolean;
+  steamId64?: string;
+  profile?: {
+    personaname: string;
+    avatarUrl: string;
+    profileUrl: string;
+    customURL?: string;
+  };
+  appId: number;
+  totalCount: number;
+  items: SteamInventoryItem[];
+  isDemo?: boolean;
+  error?: string;
+  isPrivate?: boolean;
+  rateLimited?: boolean;
+}
+
+export interface SteamGameItem {
+  appId: number;
+  name: string;
+  playtimeForeverHours: number;
+  playtime2WeeksHours?: number;
+  iconUrl?: string;
+  logoUrl?: string;
+}
+
+export type StorePlatform =
+  | "Steam"
+  | "Epic Games"
+  | "GOG"
+  | "PlayStation 5"
+  | "PlayStation 4"
+  | "Xbox Series"
+  | "Xbox One"
+  | "Nintendo Switch"
+  | "PC"
+  | "Outro";
+
+export interface ImportGameDraft {
+  id: string;
+  originalTitle: string;
+  matchedGameId?: number;
+  matchedSlug?: string;
+  matchedTitle?: string;
+  matchedCover?: string | null;
+  matchedMetacritic?: number | null;
+  matchedReleaseYear?: string;
+  matchedGenres?: string[];
+  platform: StorePlatform | string;
+  status: GameStatus;
+  userPlaytimeHours?: number;
+  userRating?: number;
+  isFavorite?: boolean;
+  selected: boolean;
+  alreadyInLibrary?: boolean;
+}
+
+
 

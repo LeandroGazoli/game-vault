@@ -87,6 +87,22 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "media.giphy.com",
       },
+      {
+        protocol: "https",
+        hostname: "community.cloudflare.steamstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.fastly.steamstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.steampowered.com",
+      },
+      {
+        protocol: "https",
+        hostname: "steamcommunity-a.akamaihd.net",
+      },
     ],
   },
   experimental: {

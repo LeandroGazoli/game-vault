@@ -22,6 +22,7 @@ import {
   where,
   limit,
   runTransaction,
+  writeBatch,
   orderBy,
   onSnapshot,
   Firestore
@@ -86,6 +87,35 @@ export async function saveUserGame(userId: string, game: UserGame): Promise<void
     await setDoc(doc(db, "users", userId, "games", gameDocId), updatedGame, { merge: true });
   } catch (e) {
     console.error("Erro ao salvar jogo no Firestore:", e);
+  }
+}
+
+export async function batchSaveUserGames(userId: string, games: UserGame[]): Promise<void> {
+  if (!userId || !db || games.length === 0) return;
+
+  const now = new Date().toISOString();
+  // Firestore writeBatch suporta até 500 operações por lote. Usamos fatias seguras de 400.
+  const CHUNK_SIZE = 400;
+  for (let i = 0; i < games.length; i += CHUNK_SIZE) {
+    const chunk = games.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+
+    for (const g of chunk) {
+      const gameDocId = String(g.gameId);
+      const gameRef = doc(db, "users", userId, "games", gameDocId);
+      const docData = {
+        ...g,
+        updatedAt: now,
+      };
+      batch.set(gameRef, docData, { merge: true });
+    }
+
+    try {
+      await batch.commit();
+    } catch (e) {
+      console.error(`Erro ao gravar lote ${i / CHUNK_SIZE + 1} de jogos no Firestore:`, e);
+      throw e;
+    }
   }
 }
 

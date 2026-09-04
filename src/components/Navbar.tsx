@@ -268,6 +268,13 @@ export default function Navbar() {
                         </div>
                         <div className="space-y-0.5">
                           <Link
+                            href="/inventario-steam"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cyan-300 hover:text-white hover:bg-white/10 transition-colors truncate font-semibold"
+                          >
+                            <span>🎒 Inventário Steam &amp; Skins</span>
+                          </Link>
+                          <Link
                             href="/categorias"
                             onClick={() => setIsExploreMenuOpen(false)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:text-white hover:bg-white/10 transition-colors truncate font-medium"
@@ -526,6 +533,7 @@ export default function Navbar() {
                   { href: "/rankings", label: "Rankings", icon: Sparkles, color: "text-amber-400" },
                   { href: "/feedback", label: "Ideias & Votação (Bugs)", icon: Lightbulb, color: "text-yellow-400" },
                   { href: "/search", label: "Explorar Catálogo", icon: Search, color: "text-cyan-400" },
+                  { href: "/inventario-steam", label: "Inventário Steam & Skins", icon: Gamepad2, color: "text-cyan-300" },
                   { href: user?.username ? getProfileUrl(user.username) : "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
                 ].map((item) => {
                   const Icon = item.icon;
