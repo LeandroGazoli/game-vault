@@ -76,27 +76,27 @@ export default function NotificationDrawer({
       onClick={onClose}
     >
       <aside
-        className="relative w-full max-w-md h-[100dvh] bg-[#0e1015] border-l border-white/10 flex flex-col shadow-2xl z-[111] overflow-hidden animate-slideInRight"
+        className="relative w-full max-w-md h-[100dvh] bg-[#0e1015] border-l border-white/10 flex flex-col shadow-2xl z-[111] overflow-hidden animate-slideInRight pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Topo do Drawer */}
-        <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#12141a] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-[#00E5FF] flex items-center justify-center font-bold">
+        {/* Topo do Drawer com proteção para Dynamic Island / Notch / Status Bar */}
+        <div className="shrink-0 px-4 sm:px-5 pt-safe-offset pb-3.5 sm:pb-4 border-b border-white/10 bg-[#12141a] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-[#00E5FF] flex items-center justify-center font-bold shrink-0">
               <Bell className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <h3 className="text-sm sm:text-base font-bold text-white truncate">
                   Notificações &amp; Avisos
                 </h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500 text-black font-mono">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500 text-black font-mono shrink-0">
                     {unreadCount} novas
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-neutral-400">
+              <p className="text-[11px] text-neutral-400 truncate">
                 Novos recursos, conteúdos e comunicados da equipe
               </p>
             </div>
@@ -104,7 +104,7 @@ export default function NotificationDrawer({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-neutral-400 hover:text-white transition-all flex items-center justify-center border border-white/10 shrink-0 cursor-pointer"
             title="Fechar"
             aria-label="Fechar"
           >
@@ -151,7 +151,7 @@ export default function NotificationDrawer({
         )}
 
         {/* Lista de Cards de Notificação */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 pb-safe-offset space-y-3 overscroll-contain [-webkit-overflow-scrolling:touch]">
           {notifications.length === 0 ? (
             <div className="py-16 text-center text-xs text-neutral-400 space-y-2 border border-dashed border-white/10 rounded-2xl bg-white/[0.02] my-4">
               <Bell className="w-8 h-8 text-neutral-600 mx-auto stroke-1" />
