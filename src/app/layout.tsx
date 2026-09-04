@@ -15,7 +15,7 @@ import { ShieldCheck } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import SpaceDustCanvas from "@/components/3d/SpaceDustCanvas";
+import ClientSpaceDustCanvas from "@/components/3d/ClientSpaceDustCanvas";
 
 import JsonLd from "@/components/seo/JsonLd";
 import CapacitorInit from "@/components/CapacitorInit";
@@ -166,7 +166,7 @@ export default function RootLayout({
         <JsonLd data={globalStructuredData} />
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
-        <SpaceDustCanvas />
+        <ClientSpaceDustCanvas />
         <ViewTransitionsProvider>
           <AuthProvider>
             <CapacitorInit />

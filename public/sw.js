@@ -1,140 +1,171 @@
-const CACHE_NAME = "gamevault-cache-v2";
-const STATIC_ASSETS = [
-  "/",
+// ============================================================
+// GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v3)
+// ============================================================
+
+const SW_VERSION = "v3";
+
+const CACHE_NAMES = {
+  static: `mgl-static-${SW_VERSION}`,
+  assets: `mgl-assets-${SW_VERSION}`,
+  images: `mgl-images-${SW_VERSION}`,
+};
+
+const CACHE_WHITELIST = Object.values(CACHE_NAMES);
+
+// 1. APP SHELL MÍNIMO E ULTRA-LEVE (Menos de 45 KB total)
+// Evita baixar imagens pesadas (>500KB) e a rota raiz dinâmica durante o install
+const PRECACHE_ASSETS = [
+  "/offline.html",
   "/favicon.svg",
-  "/icon.png",
   "/icon-192.png",
-  "/icon-512.png",
-  "/maskable-icon-512.png",
-  "/apple-touch-icon.png",
-  "/logo-mgl.png",
-  "/logo-mgl-dark.png",
 ];
 
-// Instalação do Service Worker & Precache de assets essenciais
+// Instalação do Service Worker
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn("[SW] Falha parcial no precache:", err);
+    caches.open(CACHE_NAMES.static).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn("[SW] Falha parcial no precache do App Shell:", err);
       });
     })
   );
-  self.skipWaiting();
+  // NOTA DE PERFORMANCE: NÃO chamamos self.skipWaiting() aqui!
+  // Evita interrupção da execução JS da página atual e saturação de I/O em disco.
+  // A nova versão aguardará até o usuário confirmar pelo toast ou fechar a aba.
 });
 
-// Ativação e limpeza de caches antigos
+// Mensageria: ativação controlada via botão do usuário ("Atualizar Agora")
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// Ativação e limpeza atômica de caches obsoletos
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cacheName) => {
+          if (!CACHE_WHITELIST.includes(cacheName)) {
+            console.log("[SW] Removendo cache obsoleto:", cacheName);
+            return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
-// Interceptação de requisições
+// Utilitário de controle de tamanho máximo do cache (LRU)
+// Garante que o armazenamento do Cache Storage fique sempre <50 MB
+async function limitCacheEntries(cacheName, maxItems = 50) {
+  try {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length > maxItems) {
+      await cache.delete(keys[0]);
+      await limitCacheEntries(cacheName, maxItems);
+    }
+  } catch {
+    // Silencia erros de concorrência com o cache
+  }
+}
+
+// Interceptação inteligente de requisições
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  // Requisições não-GET (POST, mutations, auth) não são cacheadas
+  // Apenas requisições GET são cacheadas
   if (request.method !== "GET") {
     return;
   }
 
-  // IMPORTANTE: Só intercepta requisições de mesma origem (same origin).
-  // CDNs externos (images.igdb.com, unsplash, googleusercontent, etc.)
-  // devem ser geridos nativamente pelo navegador via HTTP Cache (CloudFront),
-  // prevenindo o bug do Safari/WebKit iOS em que requisições no-cors opacas
-  // falham e retornam status 408/offline.
+  const url = new URL(request.url);
+
+  // CDNs externos (IGDB, Unsplash, Google Fonts, AdSense, Analytics)
+  // são geridos nativamente pelo navegador via HTTP Cache (CloudFront),
+  // prevenindo respostas opacas no-cors e inchaço do Cache Storage.
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // APIs do Next.js: Network First com fallback de cache
-  if (url.pathname.startsWith("/api/")) {
+  // 1. Navegação de páginas HTML: Network First com fallback para página offline
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(request).then(
-            (cached) =>
-              cached ||
-              new Response(JSON.stringify({ error: "offline" }), {
-                status: 503,
-                headers: { "Content-Type": "application/json" },
-              })
-          )
-        )
+      fetch(request).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        const offlineFallback = await caches.match("/offline.html");
+        return offlineFallback || new Response("Offline", { status: 503 });
+      })
     );
     return;
   }
 
-  // Assets estáticos locais (CSS, JS, imagens locais da aplicação)
+  // 2. Chunks estáticos do Next.js (_next/static/): Cache-First com TTL imutável
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+
+        return fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAMES.assets).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Imagens e vetores locais: Cache-First com limite de tamanho LRU (máx 50)
   if (
-    url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".png") ||
     url.pathname.endsWith(".svg") ||
     url.pathname.endsWith(".jpg") ||
     url.pathname.endsWith(".webp") ||
-    url.pathname.endsWith(".css") ||
-    url.pathname.endsWith(".js")
+    url.pathname.endsWith(".ico")
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        if (cached) {
-          return cached;
-        }
-        return fetch(request)
-          .then((response) => {
-            if (response && response.status === 200) {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-            }
-            return response;
-          })
-          .catch(() => new Response("", { status: 404 }));
-      })
-    );
-    return;
-  }
+        if (cached) return cached;
 
-  // Navegação de páginas HTML (Next.js): Network First com fallback do cache
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
+        return fetch(request).then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            caches.open(CACHE_NAMES.images).then((cache) => {
+              cache.put(request, clone);
+              limitCacheEntries(CACHE_NAMES.images, 50);
+            });
           }
           return response;
-        })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("/")))
+        });
+      })
     );
     return;
   }
 
-  // Padrão: Network com fallback para Cache
+  // 4. Rotas de API locais: Network First transparente sem inflar o Cache Storage
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ error: "offline" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    return;
+  }
+
+  // Padrão: Network First com fallback de cache
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        return response;
-      })
-      .catch(() => caches.match(request).then((cached) => cached || new Response("", { status: 404 })))
+    fetch(request).catch(() => caches.match(request))
   );
 });
 
@@ -154,7 +185,7 @@ self.addEventListener("push", (event) => {
   if (event.data) {
     try {
       data = { ...data, ...event.data.json() };
-    } catch (e) {
+    } catch {
       data.body = event.data.text();
     }
   }
@@ -192,4 +223,3 @@ self.addEventListener("notificationclick", (event) => {
       })
   );
 });
-

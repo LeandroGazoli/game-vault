@@ -89,6 +89,46 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack(config, { isServer, dev }) {
+    if (!isServer && !dev) {
+      config.optimization = config.optimization || {};
+      config.optimization.splitChunks = config.optimization.splitChunks || {};
+      config.optimization.splitChunks.cacheGroups = {
+        ...config.optimization.splitChunks.cacheGroups,
+        three: {
+          test: /[\\/]node_modules[\\/](three|@types[\\/]three)[\\/]/,
+          name: "vendor-three",
+          chunks: "all",
+          priority: 40,
+        },
+        gsap: {
+          test: /[\\/]node_modules[\\/](gsap|@gsap)[\\/]/,
+          name: "vendor-gsap",
+          chunks: "all",
+          priority: 35,
+        },
+        framerMotion: {
+          test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+          name: "vendor-framer-motion",
+          chunks: "all",
+          priority: 30,
+        },
+        firebase: {
+          test: /[\\/]node_modules[\\/](firebase|@firebase)[\\/]/,
+          name: "vendor-firebase",
+          chunks: "all",
+          priority: 25,
+        },
+        lucide: {
+          test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+          name: "vendor-lucide",
+          chunks: "all",
+          priority: 20,
+        },
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
