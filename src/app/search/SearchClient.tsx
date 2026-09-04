@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense, useCallback, useRef } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import { Game } from "@/lib/types";
 import GameCard from "@/components/GameCard";
-import LiveSearchInput from "@/components/LiveSearchInput";
 import {
   Search,
   Filter,
@@ -21,6 +20,7 @@ import {
   Layers,
   Eye,
   Users,
+  Loader2,
 } from "lucide-react";
 import {
   GENRE_FILTER_OPTIONS,
@@ -43,6 +43,7 @@ function SearchContent() {
 
   // Estados principais de busca e filtros
   const [query, setQuery] = useState(() => searchParams.get("q") || "");
+  const [inputValue, setInputValue] = useState(() => searchParams.get("q") || "");
   const [selectedGenre, setSelectedGenre] = useState(() => {
     const g = searchParams.get("genre");
     return g ? findGenreFilter(g)?.id || "all" : "all";
@@ -78,10 +79,11 @@ function SearchContent() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Sincroniza estado quando a URL muda externamente (ex: submit do LiveSearchInput ou navegação)
+  // Sincroniza estado quando a URL muda externamente
   useEffect(() => {
     const q = searchParams.get("q") || "";
     setQuery(q);
+    setInputValue(q);
 
     const g = searchParams.get("genre");
     setSelectedGenre(g ? findGenreFilter(g)?.id || "all" : "all");
@@ -136,6 +138,28 @@ function SearchContent() {
     },
     [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort]
   );
+
+  // Debounce na digitação do campo de busca para atualizar a query com fluidez
+  useEffect(() => {
+    if (inputValue === query) return;
+    const timer = setTimeout(() => {
+      setQuery(inputValue);
+      updateUrlParams({ q: inputValue });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [inputValue, query, updateUrlParams]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuery(inputValue);
+    updateUrlParams({ q: inputValue });
+  };
+
+  const handleClearSearch = () => {
+    setInputValue("");
+    setQuery("");
+    updateUrlParams({ q: "" });
+  };
 
   // Busca adaptativa acionada ao alterar qualquer filtro ou termo de busca
   useEffect(() => {
@@ -269,6 +293,7 @@ function SearchContent() {
     setSelectedGenre("all");
     setSelectedPerspective("all");
     setSelectedGameMode("all");
+    setInputValue("");
     setQuery("");
     updateUrlParams({
       q: "",
@@ -283,6 +308,7 @@ function SearchContent() {
 
   // Limpar todos os filtros
   const handleClearFilters = () => {
+    setInputValue("");
     setQuery("");
     setSelectedGenre("all");
     setSelectedPlatform("all");
@@ -338,12 +364,42 @@ function SearchContent() {
           </p>
         </div>
 
-        {/* Campo de Busca Principal com Autocomplete */}
+        {/* Campo de Busca Principal Integrado ao Catálogo */}
         <div className="max-w-xl relative z-10">
-          <LiveSearchInput
-            variant="hero"
-            placeholder="Digite o nome do jogo (Elden Ring, God of War, Zelda...)"
-          />
+          <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full group">
+            <Search className="absolute left-4 w-5 h-5 text-cyan-400 group-focus-within:text-[#00E5FF] transition-colors pointer-events-none" />
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Digite o nome do jogo (Elden Ring, God of War, Zelda...)"
+              className="w-full pl-12 pr-28 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all"
+            />
+            <div className="absolute right-2.5 flex items-center gap-1.5">
+              {loading ? (
+                <div className="p-1">
+                  <Loader2 className="w-4 h-4 text-[#00E5FF] animate-spin" />
+                </div>
+              ) : inputValue ? (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Limpar busca"
+                  aria-label="Limpar busca"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : null}
+
+              <button
+                type="submit"
+                className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-[#00E5FF] to-cyan-400 hover:from-cyan-300 hover:to-cyan-200 text-black font-extrabold text-xs transition-all shadow-lg shadow-cyan-500/25 active:scale-95 cursor-pointer"
+              >
+                Buscar
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* ========================================================
@@ -592,11 +648,10 @@ function SearchContent() {
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
                   Busca: &ldquo;{query}&rdquo;
                   <button
-                    onClick={() => {
-                      setQuery("");
-                      updateUrlParams({ q: "" });
-                    }}
+                    onClick={handleClearSearch}
                     className="hover:text-white cursor-pointer ml-0.5"
+                    title="Remover termo de busca"
+                    aria-label="Remover termo de busca"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -776,16 +831,70 @@ function SearchContent() {
   );
 }
 
+export function SearchPageSkeleton() {
+  return (
+    <div className="space-y-8 pb-12 animate-pulse">
+      {/* Top Header Skeleton */}
+      <div className="rounded-[32px] bg-[#18191c]/80 border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="max-w-2xl space-y-3">
+          <div className="h-6 w-44 rounded-full bg-white/10" />
+          <div className="h-9 w-64 sm:w-80 rounded-xl bg-white/15" />
+          <div className="h-4 w-full max-w-lg rounded-lg bg-white/5" />
+        </div>
+
+        {/* Campo de Busca Skeleton */}
+        <div className="max-w-xl">
+          <div className="h-12 w-full rounded-full bg-white/10 border-2 border-white/5" />
+        </div>
+
+        {/* Modos de Exploração Skeleton */}
+        <div className="pt-2 border-t border-white/5 space-y-3">
+          <div className="flex items-center gap-2 overflow-hidden py-1">
+            <div className="h-7 w-32 rounded-full bg-white/5 shrink-0" />
+            <div className="h-7 w-24 rounded-full bg-white/10 shrink-0" />
+            <div className="h-7 w-36 rounded-full bg-white/10 shrink-0" />
+            <div className="h-7 w-40 rounded-full bg-white/10 shrink-0" />
+            <div className="h-7 w-28 rounded-full bg-white/10 shrink-0" />
+          </div>
+
+          {/* Consoles Skeleton */}
+          <div className="space-y-2 pt-2">
+            <div className="h-4 w-40 rounded bg-white/10" />
+            <div className="flex items-center gap-2 overflow-hidden py-1">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="h-7 w-20 rounded-full bg-white/10 shrink-0" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de Resultados Skeleton (18 cards) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <div className="h-4 w-48 rounded bg-white/10" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((n) => (
+            <div
+              key={n}
+              className="aspect-[3/4] rounded-2xl bg-[#18191c]/80 border border-white/10 overflow-hidden relative"
+            >
+              <div className="absolute inset-x-3 bottom-3 space-y-2">
+                <div className="h-4 w-3/4 rounded bg-white/15" />
+                <div className="h-3 w-1/2 rounded bg-white/10" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SearchClient() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-12 text-center text-gray-500 font-mono flex items-center justify-center gap-3">
-          <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-          <span>Carregando catálogo de jogos...</span>
-        </div>
-      }
-    >
+    <Suspense fallback={<SearchPageSkeleton />}>
       <SearchContent />
     </Suspense>
   );

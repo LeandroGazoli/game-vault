@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import AuthModal from "./AuthModal";
-import LiveSearchInput from "./LiveSearchInput";
 import Logo from "./Logo";
 import PlanBadge from "./PlanBadge";
 import UserAvatar from "./UserAvatar";

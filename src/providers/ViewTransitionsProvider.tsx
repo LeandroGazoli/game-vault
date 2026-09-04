@@ -3,6 +3,7 @@
 import React, {
   createContext,
   useContext,
+  useState,
   useCallback,
   useEffect,
   useRef,
@@ -34,6 +35,7 @@ export default function ViewTransitionsProvider({
   const pathname = usePathname();
   const router = useRouter();
   const [, startReactTransition] = useTransition();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Referência para resolver a transição pendente do navegador
   const finishTransitionRef = useRef<(() => void) | null>(null);
@@ -41,6 +43,7 @@ export default function ViewTransitionsProvider({
 
   // Quando o pathname muda, resolvemos a transição pendente para que o navegador capture a nova snapshot
   useEffect(() => {
+    setIsNavigating(false);
     if (finishTransitionRef.current) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -87,6 +90,7 @@ export default function ViewTransitionsProvider({
       }
 
       // Inicia a transição e aguarda a montagem da nova rota pelo React
+      setIsNavigating(true);
       const shouldScroll = options?.scroll ?? true;
       document.startViewTransition(
         () =>
@@ -95,6 +99,7 @@ export default function ViewTransitionsProvider({
 
             // Timeout de segurança: nunca trava a tela caso a rota demore
             timeoutRef.current = setTimeout(() => {
+              setIsNavigating(false);
               if (finishTransitionRef.current) {
                 finishTransitionRef.current();
                 finishTransitionRef.current = null;
@@ -125,6 +130,7 @@ export default function ViewTransitionsProvider({
     }
 
     const handlePopState = () => {
+      setIsNavigating(true);
       if (finishTransitionRef.current) {
         finishTransitionRef.current();
       }
@@ -133,6 +139,7 @@ export default function ViewTransitionsProvider({
           new Promise<void>((resolve) => {
             finishTransitionRef.current = resolve;
             timeoutRef.current = setTimeout(() => {
+              setIsNavigating(false);
               if (finishTransitionRef.current) {
                 finishTransitionRef.current();
                 finishTransitionRef.current = null;
@@ -228,6 +235,11 @@ export default function ViewTransitionsProvider({
 
   return (
     <ViewTransitionContext.Provider value={{ navigateWithTransition }}>
+      {isNavigating && (
+        <div className="fixed top-0 left-0 right-0 h-[2.5px] z-[9999] pointer-events-none overflow-hidden bg-cyan-950/20">
+          <div className="vt-progress-bar h-full w-full bg-gradient-to-r from-transparent via-[#00E5FF] to-cyan-300 shadow-[0_0_12px_#00E5FF]" />
+        </div>
+      )}
       {children}
     </ViewTransitionContext.Provider>
   );

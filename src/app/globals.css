@@ -329,5 +329,17 @@ div[class*="fixed"][class*="inset-0"] {
   }
 }
 
+/* Barra de Progresso Superior de Navegação */
+@keyframes vt-progress {
+  0% { transform: translateX(-100%); }
+  40% { transform: translateX(-25%); }
+  80% { transform: translateX(-5%); }
+  100% { transform: translateX(0%); }
+}
+
+.vt-progress-bar {
+  animation: vt-progress 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 
 

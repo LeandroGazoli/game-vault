@@ -204,7 +204,7 @@ export default function LiveSearchInput({
             POPUP DE AUTOCOMPLETE / PRÉVIA AO VIVO
         ========================================== */}
         {isOpen && query.trim().length >= 2 && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-[60] rounded-2xl bg-[#14161f]/95 border border-cyan-500/30 shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden backdrop-blur-2xl animate-fadeIn divide-y divide-white/5">
+          <div className="absolute top-full left-0 right-0 mt-2 z-[60] rounded-2xl bg-[#0e1118] border border-cyan-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.98)] ring-1 ring-white/10 overflow-hidden animate-fadeIn divide-y divide-white/10">
             {results.length === 0 && !loading ? (
               <div className="p-4 text-center text-xs text-gray-400">
                 Nenhum jogo encontrado para &quot;{query}&quot;. Pressione Enter para ver todos.
