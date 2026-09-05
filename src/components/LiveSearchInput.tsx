@@ -6,9 +6,13 @@ import { Game } from "@/lib/types";
 import GameModal from "./GameModal";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
-import { Search, Loader2, Plus, Check, Star, ArrowRight, X } from "lucide-react";
+import { Search, Loader2, Plus, Check, Star, ArrowRight, X, Sparkles } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { formatPlatformShort } from "@/lib/platformUtils";
+import { isDescriptiveOrIntentQuery } from "@/lib/searchUtils";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { SystemSettings } from "@/lib/types";
 
 interface LiveSearchInputProps {
   placeholder?: string;
@@ -29,9 +33,83 @@ export default function LiveSearchInput({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
+  // IA Recommendations State
+  const [isAiEnabled, setIsAiEnabled] = useState(true);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiQueriedText, setAiQueriedText] = useState("");
+  const aiAbortControllerRef = useRef<AbortController | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
+
+  // Observa feature flag de IA em tempo real do Firestore
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as SystemSettings;
+          setIsAiEnabled(data.features?.aiRecommendations !== false);
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.error("Erro ao escutar configurações no LiveSearchInput:", e);
+    }
+  }, []);
+
+  // Dispara a Curadoria Inteligente com Gemini
+  const triggerAiRecommendation = async (promptText: string, force = false) => {
+    const trimmed = promptText.trim();
+    if (!trimmed || trimmed.length < 3 || !isAiEnabled) return;
+    if (!force && aiQueriedText.toLowerCase() === trimmed.toLowerCase()) return;
+
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    aiAbortControllerRef.current = abortController;
+
+    setIsAiLoading(true);
+    setAiQueriedText(trimmed);
+
+    try {
+      const res = await fetch("/api/games/ai-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: trimmed }),
+        signal: abortController.signal,
+      });
+
+      if (!res.ok) throw new Error("Falha na recomendação IA");
+      const data = await res.json();
+
+      if (Array.isArray(data.games) && data.games.length > 0) {
+        setAiExplanation(data.explanation || null);
+        const markedAiGames: Game[] = data.games.map((g: Game) => ({
+          ...g,
+          isAiRecommended: true,
+          aiExplanation: data.explanation,
+        }));
+
+        setResults((prev) => {
+          const existingIds = new Set(markedAiGames.map((g) => g.id));
+          const filteredPrev = prev.filter((g) => !existingIds.has(g.id));
+          return [...markedAiGames, ...filteredPrev];
+        });
+        setIsOpen(true);
+      }
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.warn("Curadoria IA ignorada ou indisponível:", err);
+      }
+    } finally {
+      if (aiAbortControllerRef.current === abortController) {
+        setIsAiLoading(false);
+      }
+    }
+  };
 
   // Atalho global: Cmd+K / Ctrl+K ou "/" para focar rapidamente na busca
   useEffect(() => {
@@ -61,15 +139,25 @@ export default function LiveSearchInput({
     if (!trimmed || trimmed.length < 3) {
       setResults([]);
       setLoading(false);
+      setAiExplanation(null);
+      setIsAiLoading(false);
+      setAiQueriedText("");
       return;
     }
+
+    const isIntent = isDescriptiveOrIntentQuery(trimmed);
 
     // 1. Responde instantaneamente se já foi buscado nesta sessão
     const cacheKey = trimmed.toLowerCase();
     if (searchCacheRef.current.has(cacheKey)) {
-      setResults(searchCacheRef.current.get(cacheKey)!);
+      const cached = searchCacheRef.current.get(cacheKey)!;
+      setResults(cached);
       setIsOpen(true);
       setLoading(false);
+
+      if (isAiEnabled && (isIntent || cached.length === 0)) {
+        triggerAiRecommendation(trimmed);
+      }
       return;
     }
 
@@ -77,13 +165,14 @@ export default function LiveSearchInput({
     const abortController = new AbortController();
 
     const timer = setTimeout(async () => {
+      let items: Game[] = [];
       try {
         const res = await fetch(`/api/games/search?q=${encodeURIComponent(trimmed)}&limit=8`, {
           signal: abortController.signal,
         });
         if (res.ok) {
           const data = await res.json();
-          const items = (data.games || []).slice(0, 6);
+          items = (data.games || []).slice(0, 6);
           searchCacheRef.current.set(cacheKey, items);
           setResults(items);
           setIsOpen(true);
@@ -97,13 +186,18 @@ export default function LiveSearchInput({
           setLoading(false);
         }
       }
+
+      // Regra de IA: Se for consulta descritiva/intenção OU se a busca normal não retornou resultados
+      if (isAiEnabled && (isIntent || items.length === 0)) {
+        triggerAiRecommendation(trimmed);
+      }
     }, 350);
 
     return () => {
       clearTimeout(timer);
       abortController.abort();
     };
-  }, [query]);
+  }, [query, isAiEnabled]);
 
   // Fecha o dropdown ao clicar fora ou ao pressionar Esc
   useEffect(() => {
@@ -164,12 +258,32 @@ export default function LiveSearchInput({
             }`}
           />
 
-          {/* Atalho de Teclado, Botão de Limpar ou Loading Spinner */}
+          {/* Atalho de Teclado, Curadoria IA, Botão de Limpar ou Loading Spinner */}
           <div className="absolute right-3 flex items-center gap-1.5">
             {!query && !loading && !isHero && (
               <div className="hidden xl:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-gray-400 pointer-events-none">
                 <span className="text-[9px]">⌘</span>K
               </div>
+            )}
+
+            {/* Botão de Curadoria IA */}
+            {isAiEnabled && query.trim().length >= 3 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  triggerAiRecommendation(query, true);
+                }}
+                className={`p-1 rounded-full transition-all flex items-center justify-center ${
+                  isAiLoading
+                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 animate-pulse"
+                    : "text-purple-400 hover:text-purple-200 hover:bg-purple-500/20"
+                }`}
+                title="Curadoria Inteligente por IA"
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${isAiLoading ? "animate-spin" : ""}`} />
+              </button>
             )}
 
             {loading ? (
@@ -180,6 +294,9 @@ export default function LiveSearchInput({
                 onClick={() => {
                   setQuery("");
                   setResults([]);
+                  setAiExplanation(null);
+                  setIsAiLoading(false);
+                  setAiQueriedText("");
                   setIsOpen(false);
                 }}
                 className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -205,9 +322,39 @@ export default function LiveSearchInput({
         ========================================== */}
         {isOpen && query.trim().length >= 2 && (
           <div className="absolute top-full left-0 right-0 mt-2 z-[60] rounded-2xl bg-[#0e1118] border border-cyan-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.98)] ring-1 ring-white/10 overflow-hidden animate-fadeIn divide-y divide-white/10">
+            {/* Banner da Explicação IA */}
+            {aiExplanation && (
+              <div className="p-3 bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-black/60 border-b border-purple-500/30 flex items-start gap-2 text-xs">
+                <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[10px] text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                    Curadoria Inteligente por IA
+                  </p>
+                  <p className="text-[11px] text-purple-200/90 leading-relaxed mt-0.5">
+                    {aiExplanation}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Aviso de busca IA em andamento */}
+            {isAiLoading && results.length > 0 && !aiExplanation && (
+              <div className="px-3 py-1.5 bg-purple-950/20 border-b border-purple-500/20 text-[11px] text-purple-300/90 flex items-center gap-2 animate-pulse">
+                <Sparkles className="w-3 h-3 text-purple-400 animate-spin" />
+                <span>Consultando curadoria com IA...</span>
+              </div>
+            )}
+
             {results.length === 0 && !loading ? (
               <div className="p-4 text-center text-xs text-gray-400">
-                Nenhum jogo encontrado para &quot;{query}&quot;. Pressione Enter para ver todos.
+                {isAiLoading ? (
+                  <div className="flex items-center justify-center gap-2 text-purple-300">
+                    <Sparkles className="w-4 h-4 text-purple-400 animate-spin" />
+                    <span>Consultando Curadoria Inteligente com IA...</span>
+                  </div>
+                ) : (
+                  <span>Nenhum jogo encontrado para &quot;{query}&quot;. Pressione Enter para ver todos.</span>
+                )}
               </div>
             ) : (
               <div>
@@ -219,13 +366,21 @@ export default function LiveSearchInput({
                     return (
                       <div
                         key={game.id}
-                        className="group flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
+                        className={`group relative flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all cursor-pointer ${
+                          game.isAiRecommended
+                            ? "ai-card-wrapper bg-[#120e24]/90 border border-purple-500/40 hover:border-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.15)] mb-1"
+                            : "hover:bg-white/10"
+                        }`}
                         onClick={() => {
                           setIsOpen(false);
                           router.push(getGameUrl(game));
                         }}
                         title={`Abrir página de ${game.name}`}
                       >
+                        {game.isAiRecommended && (
+                          <div className="ai-card-border-beam rounded-xl" />
+                        )}
+
                         {/* Capa + Informações */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="w-10 h-13 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-cyan-500/50 flex-shrink-0 transition-colors shadow-sm">
@@ -243,9 +398,21 @@ export default function LiveSearchInput({
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] truncate transition-colors">
-                              {game.name}
-                            </h4>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className={`text-xs sm:text-sm font-bold truncate transition-colors ${
+                                game.isAiRecommended
+                                  ? "text-purple-200 group-hover:text-purple-100"
+                                  : "text-white group-hover:text-[#00E5FF]"
+                              }`}>
+                                {game.name}
+                              </h4>
+                              {game.isAiRecommended && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/40 shrink-0">
+                                  <Sparkles className="w-2.5 h-2.5 text-purple-400" />
+                                  Curadoria IA
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-mono mt-0.5 flex-wrap">
                               {releaseYear && <span>{releaseYear}</span>}
                               {game.platforms && game.platforms.length > 0 && (

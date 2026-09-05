@@ -4,8 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { getGameUrl } from "@/lib/routes";
-import { Game } from "@/lib/types";
+import { Game, SystemSettings } from "@/lib/types";
+import { isDescriptiveOrIntentQuery } from "@/lib/searchUtils";
 import {
   Search,
   Loader2,
@@ -46,12 +49,30 @@ export default function SpotlightSearchModal() {
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // Estados do Curador Gamer por Inteligência Artificial
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiQueriedText, setAiQueriedText] = useState<string>("");
+  const [isAiEnabled, setIsAiEnabled] = useState(true);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Monitora a feature flag em tempo real do Admin
+  useEffect(() => {
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as SystemSettings;
+        setIsAiEnabled(Boolean(data.features?.aiRecommendations ?? true));
+      }
+    });
+    return () => unsub();
   }, []);
 
   // Fecha o modal automaticamente ao navegar para qualquer página
@@ -113,8 +134,56 @@ export default function SpotlightSearchModal() {
     } else {
       setQuery("");
       setResults([]);
+      setAiExplanation(null);
+      setAiQueriedText("");
     }
   }, [isOpen]);
+
+  const triggerAiRecommendation = async (searchPrompt: string, force = false) => {
+    const text = searchPrompt.trim();
+    if (!text || text.length < 3) return;
+    if (!isAiEnabled) return;
+
+    if (!force && aiQueriedText === text.toLowerCase()) return;
+
+    setIsAiLoading(true);
+    setAiQueriedText(text.toLowerCase());
+
+    try {
+      const res = await fetch("/api/ai/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: text }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const recommended: Game[] = (data.games || []).map((g: Game) => ({
+          ...g,
+          isAiRecommended: true,
+        }));
+
+        if (recommended.length > 0) {
+          setAiExplanation(data.explanation || null);
+
+          setResults((prev) => {
+            const aiIds = new Set(recommended.map((g) => g.id));
+            const existingUpdated = prev.map((g) =>
+              aiIds.has(g.id) ? { ...g, isAiRecommended: true } : g
+            );
+            const existingIds = new Set(existingUpdated.map((g) => g.id));
+            const newAiGames = recommended.filter((g) => !existingIds.has(g.id));
+            return [...newAiGames, ...existingUpdated];
+          });
+          setSelectedIndex(0);
+        }
+      }
+    } catch (err) {
+      console.warn("Curador IA não disponível para spotlight:", err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   // Busca em tempo real com debounce e cache
   useEffect(() => {
@@ -122,6 +191,8 @@ export default function SpotlightSearchModal() {
     if (!trimmed || trimmed.length < 2) {
       setResults([]);
       setLoading(false);
+      setAiExplanation(null);
+      setAiQueriedText("");
       return;
     }
 
@@ -146,6 +217,16 @@ export default function SpotlightSearchModal() {
           searchCacheRef.current.set(cacheKey, items);
           setResults(items);
           setSelectedIndex(0);
+
+          // Regras para acionamento do Curador Inteligente (IA):
+          // 1. Quando for busca descritiva / de intenção
+          // 2. OU quando a busca tradicional retornar 0 resultados
+          const isIntent = isDescriptiveOrIntentQuery(trimmed);
+          const hadNoResults = items.length === 0;
+
+          if (isAiEnabled && (isIntent || hadNoResults) && trimmed.length >= 3) {
+            triggerAiRecommendation(trimmed);
+          }
         }
       } catch (err: any) {
         if (err.name !== "AbortError") {
@@ -162,7 +243,7 @@ export default function SpotlightSearchModal() {
       clearTimeout(timer);
       abortController.abort();
     };
-  }, [query]);
+  }, [query, isAiEnabled]);
 
   // Navegação por teclado
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
@@ -208,16 +289,40 @@ export default function SpotlightSearchModal() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Buscar por jogo, franquia, saga..."
+            placeholder="Buscar por título ou descrever o que procura (ex: estilo souls-like)..."
             className="flex-1 bg-transparent text-white placeholder:text-neutral-500 text-sm sm:text-base outline-none font-medium min-w-0"
           />
 
-          {loading && <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />}
+          {isAiLoading ? (
+            <div className="flex items-center gap-1 text-[11px] text-[#00E5FF] font-semibold animate-pulse shrink-0">
+              <Sparkles className="w-3.5 h-3.5 animate-spin" />
+              <span className="hidden sm:inline">IA pensando...</span>
+            </div>
+          ) : loading ? (
+            <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
+          ) : null}
 
-          {query && !loading && (
+          {/* Botão de Curadoria IA manual quando houver termo digitado */}
+          {isAiEnabled && query.trim().length >= 3 && (
+            <button
+              type="button"
+              onClick={() => triggerAiRecommendation(query, true)}
+              disabled={isAiLoading}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-[#00E5FF] hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50"
+              title="Buscar recomendações com Curador IA"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF] animate-pulse" />
+              <span className="hidden sm:inline">Curadoria IA</span>
+            </button>
+          )}
+
+          {query && !loading && !isAiLoading && (
             <button
               onClick={() => {
                 setQuery("");
+                setResults([]);
+                setAiExplanation(null);
+                setAiQueriedText("");
                 inputRef.current?.focus();
               }}
               className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
@@ -246,80 +351,154 @@ export default function SpotlightSearchModal() {
 
         {/* Lista de Conteúdo / Resultados */}
         <div ref={listRef} className="overflow-y-auto flex-1 p-2 space-y-1">
+          {/* Banner de Justificativa / Curadoria IA */}
+          {aiExplanation && (
+            <div className="mx-1 mb-2 p-3 rounded-xl bg-gradient-to-r from-cyan-950/70 via-[#121927] to-purple-950/50 border border-cyan-500/40 flex items-start gap-2.5 text-xs text-cyan-200 animate-fadeIn">
+              <Sparkles className="w-4 h-4 text-[#00E5FF] shrink-0 mt-0.5 animate-pulse" />
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] text-[#00E5FF]">
+                  <span>Curadoria Inteligente por IA</span>
+                  <span className="text-gray-400 font-normal lowercase">(em destaque)</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-gray-200">{aiExplanation}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiExplanation(null)}
+                className="text-neutral-400 hover:text-white p-0.5 cursor-pointer rounded hover:bg-white/10"
+                title="Fechar"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Indicador de carregamento em background da IA */}
+          {isAiLoading && results.length > 0 && (
+            <div className="mx-1 mb-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] font-medium flex items-center gap-2 animate-pulse">
+              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF] animate-spin shrink-0" />
+              <span>Curador IA analisando recomendações para enriquecer sua busca...</span>
+            </div>
+          )}
+
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
               results.map((game, index) => {
+                const isAi = Boolean(game.isAiRecommended);
                 const duration = formatGameDuration(game);
                 const isSelected = index === selectedIndex;
                 const releaseYear = game.released ? game.released.substring(0, 4) : "";
 
                 return (
                   <div
-                    key={game.id}
-                    onClick={() => handleSelectGame(game)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                    className={`flex items-center justify-between gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${
-                      isSelected
-                        ? "bg-[#1d2331] border border-cyan-500/30 text-white shadow-sm"
-                        : "hover:bg-white/5 text-neutral-300 border border-transparent"
-                    }`}
+                    key={`${game.id}-${isAi ? "ai" : "std"}`}
+                    className={isAi ? "ai-card-wrapper my-1.5" : "my-0.5"}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative w-11 h-14 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0">
-                        {game.background_image ? (
-                          <img
-                            src={game.background_image}
-                            alt={game.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white truncate max-w-sm">
-                            {game.name}
-                          </h4>
-                          {releaseYear && (
-                            <span className="text-[11px] text-neutral-400 font-mono">
-                              ({releaseYear})
-                            </span>
-                          )}
+                    {isAi && <div className="ai-card-border-beam" />}
+                    <div
+                      onClick={() => handleSelectGame(game)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                      className={`relative flex items-center justify-between gap-3 p-2.5 ${
+                        isAi ? "rounded-[12px] bg-[#121622] hover:bg-[#161c2c]" : "rounded-xl hover:bg-white/5"
+                      } cursor-pointer transition-all ${
+                        isSelected
+                          ? isAi
+                            ? "bg-[#182033] shadow-md"
+                            : "bg-[#1d2331] border border-cyan-500/30 text-white shadow-sm"
+                          : isAi
+                          ? "text-neutral-200"
+                          : "text-neutral-300 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative w-11 h-14 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0">
+                          {game.background_image ? (
+                            <img
+                              src={game.background_image}
+                              alt={game.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null}
                         </div>
 
-                        <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
-                          {game.genres && game.genres[0] && (
-                            <span className="px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase text-[9px]">
-                              {formatGenreName(game.genres[0].name)}
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-bold text-white truncate max-w-sm">
+                              {game.name}
+                            </h4>
+                            {releaseYear && (
+                              <span className="text-[11px] text-neutral-400 font-mono">
+                                ({releaseYear})
+                              </span>
+                            )}
+                            {isAi && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-[#00E5FF] text-[9px] font-black uppercase tracking-wider border border-cyan-500/40">
+                                <Sparkles className="w-2.5 h-2.5 text-[#00E5FF] animate-pulse" />
+                                Curadoria IA
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
+                            {game.genres && game.genres[0] && (
+                              <span className="px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase text-[9px]">
+                                {formatGenreName(game.genres[0].name)}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-cyan-400" />
+                              {duration.text}
                             </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-cyan-400" />
-                            {duration.text}
-                          </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
-                      <ArrowRight className={`w-4 h-4 transition-transform ${isSelected ? "translate-x-1 text-[#00E5FF]" : "text-neutral-500"}`} />
+                      <div className="flex items-center gap-3 shrink-0">
+                        {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
+                        <ArrowRight className={`w-4 h-4 transition-transform ${isSelected ? "translate-x-1 text-[#00E5FF]" : "text-neutral-500"}`} />
+                      </div>
                     </div>
                   </div>
                 );
               })
+            ) : isAiLoading ? (
+              <div className="p-8 text-center space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-[#00E5FF] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/20">
+                  <Sparkles className="w-5 h-5 text-[#00E5FF] animate-spin" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-white">Consultando o Curador Inteligente...</p>
+                  <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+                    Buscando recomendações sob medida para &ldquo;<span className="text-cyan-300 font-semibold">{query}</span>&rdquo;.
+                  </p>
+                </div>
+              </div>
             ) : !loading ? (
-              <div className="p-8 text-center space-y-2">
+              <div className="p-8 text-center space-y-3">
                 <p className="text-sm text-neutral-400">Nenhum resultado encontrado para &quot;{query}&quot;</p>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    router.push(`/search?q=${encodeURIComponent(query)}`);
-                  }}
-                  className="text-xs text-[#00E5FF] hover:underline font-mono"
-                >
-                  Tentar busca avançada no catálogo completo →
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {isAiEnabled && query.trim().length >= 3 && (
+                    <button
+                      type="button"
+                      onClick={() => triggerAiRecommendation(query, true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-[#00E5FF] font-bold text-xs border border-cyan-500/40 transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      Buscar com Curador IA
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      router.push(`/search?q=${encodeURIComponent(query)}`);
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-all cursor-pointer"
+                  >
+                    <span>Abrir busca avançada</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ) : null
           ) : (
