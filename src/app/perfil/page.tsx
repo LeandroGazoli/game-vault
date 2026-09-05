@@ -1126,7 +1126,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       />
 
       {/* Modal de Comemoração de Level-Up com Confetes e Haptics */}
-      {levelUpData && (
+      {isOwnProfile && levelUpData && (
         <LevelUpCelebrationModal
           isOpen={Boolean(levelUpData)}
           onClose={dismissLevelUp}

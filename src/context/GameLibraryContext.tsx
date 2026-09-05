@@ -297,25 +297,97 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     };
   }, [library]);
 
-  // Sincroniza gamerLevel e gamerXp no Firestore para persistência global
+  // Controle de persistência de nível e comemoração única de Level-Up
+  const isHydratedRef = useRef(false);
+  const celebratedLevelRef = useRef<number>(0);
   const lastSavedGamerRef = useRef<{ level: number; xp: number } | null>(null);
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; oldLevel: number; rankTitle: string } | null>(null);
 
+  // Reseta referências se o usuário mudar ou deslogar
+  const currentUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (currentUserIdRef.current !== (user?.uid ?? null)) {
+      currentUserIdRef.current = user?.uid ?? null;
+      isHydratedRef.current = false;
+      celebratedLevelRef.current = 0;
+      lastSavedGamerRef.current = null;
+      setLevelUpData(null);
+    }
+  }, [user?.uid]);
+
   const dismissLevelUp = useCallback(() => {
+    if (user && levelUpData) {
+      try {
+        localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(levelUpData.newLevel));
+      } catch {}
+    }
     setLevelUpData(null);
-  }, []);
+  }, [user, levelUpData]);
 
   useEffect(() => {
     if (!user || isLoading) return;
     const currentInfo = calculateGamerLevel(stats);
     const { level, xp, rankTitle } = currentInfo;
-    const oldLevel = lastSavedGamerRef.current?.level ?? user.gamerLevel ?? 1;
 
-    // Se o nível aumentou durante a sessão de uso, dispara comemoração
-    if (lastSavedGamerRef.current !== null && level > oldLevel) {
-      setLevelUpData({ newLevel: level, oldLevel, rankTitle });
+    // 1. Fase de Hidratação Inicial:
+    // NUNCA dispara comemoração no carregamento da página, F5 ou login.
+    if (!isHydratedRef.current) {
+      isHydratedRef.current = true;
+
+      let storedCelebrated = 0;
+      try {
+        const storedStr = localStorage.getItem(`gamevault_celebrated_level_${user.uid}`);
+        if (storedStr) storedCelebrated = parseInt(storedStr, 10) || 0;
+      } catch {}
+
+      const firestoreCelebrated = user.celebratedGamerLevel || user.gamerLevel || 0;
+      // Define a base como o maior nível registrado ou o nível atual
+      const baseCelebrated = Math.max(storedCelebrated, firestoreCelebrated, level);
+      celebratedLevelRef.current = baseCelebrated;
+
+      try {
+        localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(baseCelebrated));
+      } catch {}
+
+      lastSavedGamerRef.current = { level, xp };
+
+      if (
+        user.gamerLevel !== level ||
+        user.gamerXp !== xp ||
+        user.celebratedGamerLevel !== baseCelebrated
+      ) {
+        saveUserProfile(user.uid, {
+          gamerLevel: level,
+          gamerXp: xp,
+          celebratedGamerLevel: baseCelebrated,
+        }).catch((err) => console.warn("Erro ao sincronizar nível gamer inicial:", err));
+      }
+      return;
     }
 
+    // 2. Fase Ativa:
+    // O jogador subiu de nível durante a sessão ativa (ex: adicionou/zerou jogo ou somou horas)
+    if (level > celebratedLevelRef.current) {
+      const oldLevel = celebratedLevelRef.current;
+      celebratedLevelRef.current = level;
+
+      try {
+        localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(level));
+      } catch {}
+
+      lastSavedGamerRef.current = { level, xp };
+      saveUserProfile(user.uid, {
+        gamerLevel: level,
+        gamerXp: xp,
+        celebratedGamerLevel: level,
+      }).catch((err) => console.warn("Erro ao persistir nível gamer conquistado:", err));
+
+      // Dispara a comemoração UMA ÚNICA VEZ
+      setLevelUpData({ newLevel: level, oldLevel, rankTitle });
+      return;
+    }
+
+    // 3. Atualização de XP apenas (sem subir de nível)
     if (
       (user.gamerLevel !== level || user.gamerXp !== xp) &&
       (lastSavedGamerRef.current?.level !== level || lastSavedGamerRef.current?.xp !== xp)
@@ -324,7 +396,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       saveUserProfile(user.uid, {
         gamerLevel: level,
         gamerXp: xp,
-      }).catch((err) => console.warn("Erro ao sincronizar nível gamer:", err));
+      }).catch((err) => console.warn("Erro ao sincronizar XP gamer:", err));
     }
   }, [stats, user, isLoading]);
 
