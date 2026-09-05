@@ -178,7 +178,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
         id: "library_20",
         title: "Curador de Respeito",
         description: "Adicione 20 jogos à sua biblioteca personalizada.",
-        game: "Steam Curator Legacy",
+        game: "Curador do Vault",
         category: "library",
         globalRarity: 42.1,
         icon: Bookmark,
@@ -191,9 +191,9 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
         id: "library_50",
         title: "Grande Arquivista",
         description: "Catálogo robusto com mais de 50 títulos organizados.",
-        game: "Steam Curator Legacy",
+        game: "Curador do Vault",
         category: "library",
-        globalRarity: 9.6, // Conquista Rara Steam (< 10%)
+        globalRarity: 9.6, // Conquista Rara (< 10%)
         icon: Bookmark,
         isUnlocked: library >= 50,
         currentValue: library,
@@ -217,7 +217,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
         id: "level_15",
         title: "Gamer Dedicado (Lv. 15)",
         description: "Alcance o Nível Gamer 15 e garanta seu lugar no Top 25%.",
-        game: "Steam Level Climb",
+        game: "Jornada de Nível",
         category: "level",
         globalRarity: 16.4,
         icon: Sparkles,
@@ -230,9 +230,9 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
         id: "level_30",
         title: "Veterano Hardcore (Lv. 30)",
         description: "Chegue ao Nível 30 e integre o Top 10% da comunidade.",
-        game: "Steam Level Climb",
+        game: "Jornada de Nível",
         category: "level",
-        globalRarity: 5.9, // Conquista Rara Steam (< 10%)
+        globalRarity: 5.9, // Conquista Rara (< 10%)
         icon: Trophy,
         isUnlocked: effectiveLevel >= 30,
         currentValue: effectiveLevel,
@@ -243,9 +243,9 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
         id: "level_50",
         title: "Mestre Lendário (Lv. 50)",
         description: "Atingiu o prestigiado Nível 50. Reverência garantida!",
-        game: "Steam Level Climb",
+        game: "Jornada de Nível",
         category: "level",
-        globalRarity: 1.1, // Conquista Ultra Rara Steam
+        globalRarity: 1.1, // Conquista Ultra Rara
         icon: Crown,
         isUnlocked: effectiveLevel >= 50,
         currentValue: effectiveLevel,
@@ -352,7 +352,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono font-bold tracking-widest text-[#8a9eaf] uppercase">
-                Steam Profile Showcase
+                Expositor Gamer
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#66c0f4]" />
             </div>
@@ -388,7 +388,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            Insígnias Steam ({steamBadges.length})
+            Insígnias de Conta ({steamBadges.length})
           </button>
         </div>
       </div>
@@ -666,7 +666,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
           <div className="p-3 bg-[#101822]/60 border border-[#2a475e] rounded-xl flex items-center justify-between text-xs font-mono text-gray-300">
             <span className="flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-400" />
-              <span>Coleção de Insígnias de Conta Steam (Nível 1 a 5)</span>
+              <span>Coleção de Insígnias de Conta (Nível 1 a 5)</span>
             </span>
             <span className="text-amber-300 font-bold">
               +{steamBadges.reduce((acc, b) => acc + b.xpReward, 0)} XP Total

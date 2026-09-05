@@ -19,6 +19,7 @@ import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
+import ProfileXpProgressBar from "@/components/profile/ProfileXpProgressBar";
 import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
 import GamerScoreboardCard from "@/components/profile/GamerScoreboardCard";
 import GamerBadgesCard from "@/components/profile/GamerBadgesCard";
@@ -26,6 +27,7 @@ import GamerQuestsCard from "@/components/profile/GamerQuestsCard";
 import GamerXpBreakdownModal from "@/components/profile/GamerXpBreakdownModal";
 import LevelUpCelebrationModal from "@/components/profile/LevelUpCelebrationModal";
 import ShareGamerCardModal from "@/components/profile/ShareGamerCardModal";
+import { triggerSelectionHaptic } from "@/lib/capacitor";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import GameImporterModal from "@/components/importer/GameImporterModal";
 import { getThemeStyles } from "@/lib/themeStyles";
@@ -219,6 +221,25 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isGamerCardOpen, setIsGamerCardOpen] = useState(false);
   const [realGamerRank, setRealGamerRank] = useState<GamerRankResult | null>(null);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
+  const [profileSection, setProfileSection] = useState<"bio" | "gamification">("bio");
+
+  // Permite abrir diretamente a área de conquistas via query param (?tab=conquistas ou #conquistas)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const section = urlParams.get("secao") || urlParams.get("tab") || window.location.hash;
+      if (
+        section === "conquistas" ||
+        section === "gamification" ||
+        section === "xp" ||
+        section === "missoes" ||
+        section === "#conquistas" ||
+        section === "#gamification"
+      ) {
+        setProfileSection("gamification");
+      }
+    }
+  }, []);
 
   // Busca a posição real e percentual do perfil no ranking global do Firebase
   useEffect(() => {
@@ -526,44 +547,70 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
       />
 
-      {/* Card Nobre VIP / PRO Legendary Vault (Inspirado nas Referências DemoVip) */}
-      <LegendaryVaultCard
-        user={activeUser}
-        stats={activeStats}
-        isOwner={isOwner}
-        realRank={realGamerRank?.formattedRank}
-        onOpenUpgrade={() => setIsUpgradeOpen(true)}
-        onOpenManagePlan={() => setIsManagePlanOpen(true)}
-        onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
-      />
+      {/* Seletor de Seções Principais: Perfil & Bio vs Conquistas & Nível */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#121620] border border-white/10 self-start sm:self-auto">
+          <button
+            onClick={() => {
+              triggerSelectionHaptic();
+              setProfileSection("bio");
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              profileSection === "bio"
+                ? "bg-[#2a475e] text-[#66c0f4] shadow-md border border-[#66c0f4]/40"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <User className="w-4 h-4" />
+            <span>Perfil &amp; Bio</span>
+          </button>
 
-      {/* Placar Numérico Digital Neon de Pontos e XP (Inspirado nas Referências DemoVip) */}
-      <GamerScoreboardCard
-        stats={activeStats}
-        plan={activeUser.plan}
-        onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
-      />
+          <button
+            onClick={() => {
+              triggerSelectionHaptic();
+              setProfileSection("gamification");
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              profileSection === "gamification"
+                ? "bg-[#2a475e] text-[#66c0f4] shadow-md border border-[#66c0f4]/40"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>Conquistas &amp; Nível</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#66c0f4]/20 text-[#66c0f4] border border-[#66c0f4]/30">
+              LV. {activeUser.gamerLevel || calculateGamerLevel(activeStats, undefined, activeUser.plan).level}
+            </span>
+          </button>
+        </div>
 
-      {/* Medalhas & Conquistas Desbloqueáveis do Gamer */}
-      <GamerBadgesCard
-        stats={activeStats}
-        gamerLevel={activeUser.gamerLevel}
-      />
+        {profileSection === "gamification" && (
+          <button
+            onClick={() => {
+              triggerSelectionHaptic();
+              setProfileSection("bio");
+            }}
+            className="text-xs font-mono font-bold text-gray-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer self-end sm:self-auto"
+          >
+            <span>← Voltar para a Bio do Perfil</span>
+          </button>
+        )}
+      </div>
 
-      {/* Missões & Desafios Gamers da Temporada */}
-      <GamerQuestsCard
-        stats={activeStats}
-        user={activeUser}
-        isOwner={isOwner}
-        onOpenCustomizer={() => {
-          if (typeof window !== "undefined" && window.innerWidth < 768) {
-            router.push("/perfil/editar?tab=showcase");
-          } else {
-            setCustomizerInitialTab("showcase");
-            setIsCustomizerOpen(true);
-          }
-        }}
-      />
+      {profileSection === "bio" ? (
+        <>
+          {/* Barra de Progresso de XP Compacta no Perfil */}
+          <ProfileXpProgressBar
+            user={activeUser}
+            stats={activeStats}
+            realRank={realGamerRank?.formattedRank}
+            onOpenGamification={() => {
+              setProfileSection("gamification");
+              window.scrollTo({ top: 350, behavior: "smooth" });
+            }}
+            onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
+            onOpenUpgrade={() => setIsUpgradeOpen(true)}
+          />
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
       {activeUser.showcaseGameId && (
@@ -982,6 +1029,83 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           </div>
         )}
       </div>
+        </>
+      ) : (
+        /* ÁREA SEPARADA: Sistema de Pontos, Nível, Conquistas e Missões */
+        <div className="space-y-6 animate-fadeIn">
+          {/* Cabeçalho de Destaque da Área de Gamificação */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#101822] border border-[#2a475e] shadow-xl">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-[#1b2838] border border-[#2a475e] text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-[#8a9eaf] uppercase">
+                    Hub Gamer
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#66c0f4]" />
+                </div>
+                <h2 className="text-base sm:text-xl font-black text-white tracking-wide uppercase font-sans">
+                  Central de Conquistas, Nível &amp; XP
+                </h2>
+                <p className="text-xs text-[#8a9eaf] mt-0.5">
+                  Painel dedicado de progressão, placar ao vivo, insígnias de conta e missões
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerSelectionHaptic();
+                setProfileSection("bio");
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1b2838] hover:bg-[#2a475e] text-xs font-bold text-[#66c0f4] hover:text-white border border-[#2a475e] transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+            >
+              <span>← Voltar para a Bio</span>
+            </button>
+          </div>
+
+          {/* Barra de Nível Completa com Círculo de Nível e Insígnia em Destaque */}
+          <LegendaryVaultCard
+            user={activeUser}
+            stats={activeStats}
+            isOwner={isOwner}
+            realRank={realGamerRank?.formattedRank}
+            onOpenUpgrade={() => setIsUpgradeOpen(true)}
+            onOpenManagePlan={() => setIsManagePlanOpen(true)}
+            onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
+          />
+
+          {/* Placar Numérico Digital de Pontos e XP */}
+          <GamerScoreboardCard
+            stats={activeStats}
+            plan={activeUser.plan}
+            onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
+          />
+
+          {/* Expositor de Conquistas & Insígnias */}
+          <GamerBadgesCard
+            stats={activeStats}
+            gamerLevel={activeUser.gamerLevel}
+          />
+
+          {/* Missões & Desafios Gamers da Temporada */}
+          <GamerQuestsCard
+            stats={activeStats}
+            user={activeUser}
+            isOwner={isOwner}
+            onOpenCustomizer={() => {
+              if (typeof window !== "undefined" && window.innerWidth < 768) {
+                router.push("/perfil/editar?tab=showcase");
+              } else {
+                setCustomizerInitialTab("showcase");
+                setIsCustomizerOpen(true);
+              }
+            }}
+          />
+        </div>
+      )}
 
       {/* Modal para editar */}
       {isOwner && (

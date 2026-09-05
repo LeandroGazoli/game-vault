@@ -39,7 +39,7 @@ export default function GamerScoreboardCard({
             <h3 className="text-sm sm:text-base font-black text-white tracking-wide uppercase flex items-center gap-1.5 font-sans">
               <span>Placar de Pontos &amp; XP</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#2a475e] text-[#66c0f4] border border-[#66c0f4]/30">
-                STEAM HUD
+                HUD GAMER
               </span>
             </h3>
             <p className="text-[11px] text-[#8a9eaf]">
