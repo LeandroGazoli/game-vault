@@ -21,6 +21,8 @@ import JsonLd from "@/components/seo/JsonLd";
 import CapacitorInit from "@/components/CapacitorInit";
 import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
 import ViewTransitionsProvider from "@/providers/ViewTransitionsProvider";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
+import BannedUserModal from "@/components/BannedUserModal";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -172,6 +174,7 @@ export default function RootLayout({
             <CapacitorInit />
             <GameLibraryProvider>
               <PwaRegister />
+              <AnnouncementBanner />
               <Navbar />
               <main className="vt-main flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 pb-32 md:pb-8 overflow-x-clip">
                 {children}
@@ -183,6 +186,7 @@ export default function RootLayout({
             {/* Modais Globais: Busca Spotlight, Instalação PWA & Consentimento de Cookies */}
             <SpotlightSearchModal />
             <PwaInstallPrompt />
+            <BannedUserModal />
             <CookieConsent />
 
             {/* Footer Completo e Institucional */}

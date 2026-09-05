@@ -21,6 +21,7 @@ import { UserProfile } from "@/lib/types";
 import { getAllUsersForAdmin, getAuditLogs } from "@/lib/firebase";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
+import AdminAnalyticsCharts from "@/components/admin/AdminAnalyticsCharts";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -140,6 +141,9 @@ export default function AdminDashboardPage() {
           <div className="text-[11px] text-gray-400">Receita Recorrente Mensal</div>
         </div>
       </div>
+
+      {/* Gráficos Visuais de Adesão e Distribuição de Níveis */}
+      <AdminAnalyticsCharts users={users} />
 
       {/* Grid Duplo: Ações Rápidas & Logs Recentes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
