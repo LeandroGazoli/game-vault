@@ -6,6 +6,9 @@ import {
   findPerspectiveFilter,
   findGameModeFilter,
 } from "@/lib/filterConstants";
+import { getAuthenticatedUser } from "@/lib/serverAuth";
+import { getUserProfile } from "@/lib/firebase";
+import { isUserAdult } from "@/lib/gameUtils";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -18,6 +21,7 @@ export async function GET(request: NextRequest) {
   const perspectiveParam = searchParams.get("perspective") || "";
   const gameModeParam = searchParams.get("gameMode") || searchParams.get("mode") || "";
   const sort = searchParams.get("sort") || "popular";
+  const adultParam = searchParams.get("adult") === "true" || searchParams.get("onlyAdult") === "true";
 
   try {
     let genreId: number | undefined;
@@ -32,6 +36,40 @@ export async function GET(request: NextRequest) {
         themeId = genreFilter.igdbThemeId;
       } else if (!isNaN(Number(genreParam))) {
         genreId = parseInt(genreParam, 10);
+      }
+    }
+
+    const isAdultRequested = Boolean(
+      adultParam ||
+      genreParam === "adult" ||
+      themeId === 42
+    );
+
+    // Validação estrita de maioridade para acesso a jogos +18
+    if (isAdultRequested) {
+      let isAuthorized = false;
+      try {
+        const authResult = await getAuthenticatedUser(request);
+        if (authResult.authenticated && authResult.user?.uid) {
+          const profile = await getUserProfile(authResult.user.uid);
+          if (profile?.birthDate && isUserAdult(profile.birthDate)) {
+            isAuthorized = true;
+          }
+        }
+      } catch (authErr) {
+        console.warn("[/api/games/search] Falha na verificação de autenticação adulta:", authErr);
+      }
+
+      if (!isAuthorized) {
+        return NextResponse.json({
+          games: [],
+          count: 0,
+          total: 0,
+          page,
+          hasMore: false,
+          adultRestricted: true,
+          message: "Acesso a jogos +18 restrito. Faça login e informe sua data de nascimento comprovando maioridade.",
+        });
       }
     }
 
@@ -83,6 +121,7 @@ export async function GET(request: NextRequest) {
       sort,
       page,
       pageSize,
+      onlyAdult: isAdultRequested,
     });
 
     return NextResponse.json(result);

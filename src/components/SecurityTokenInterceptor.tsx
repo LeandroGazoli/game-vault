@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { auth } from "@/lib/firebase";
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -14,7 +15,7 @@ export default function SecurityTokenInterceptor() {
 
     const originalFetch = window.fetch;
 
-    // Intercepta chamadas de fetch no cliente para injetar o x-app-token de forma transparente
+    // Intercepta chamadas de fetch no cliente para injetar o x-app-token e o token de autenticação de forma transparente
     window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
       let url = "";
       if (typeof input === "string") {
@@ -26,14 +27,22 @@ export default function SecurityTokenInterceptor() {
       }
 
       if (url.includes("/api/games")) {
+        const headers = new Headers(init?.headers);
         const token = getCookie("__gv_app_token");
-        if (token) {
-          const headers = new Headers(init?.headers);
-          if (!headers.has("x-app-token")) {
-            headers.set("x-app-token", token);
-          }
-          return originalFetch(input, { ...init, headers });
+        if (token && !headers.has("x-app-token")) {
+          headers.set("x-app-token", token);
         }
+
+        if (auth?.currentUser && !headers.has("Authorization") && !headers.has("authorization")) {
+          try {
+            const idToken = await auth.currentUser.getIdToken();
+            if (idToken) {
+              headers.set("Authorization", `Bearer ${idToken}`);
+            }
+          } catch {}
+        }
+
+        return originalFetch(input, { ...init, headers });
       }
 
       return originalFetch(input, init);

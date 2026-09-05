@@ -54,6 +54,8 @@ export interface SearchGamesApiOptions {
   sort?: string;
   page?: number;
   pageSize?: number;
+  onlyAdult?: boolean;
+  includeAdult?: boolean;
 }
 
 export async function searchGamesApi(
@@ -75,6 +77,8 @@ export async function searchGamesApi(
           perspectiveId: queryOrOptions.perspectiveId,
           gameModeId: queryOrOptions.gameModeId,
           sort: queryOrOptions.sort,
+          onlyAdult: queryOrOptions.onlyAdult,
+          includeAdult: queryOrOptions.includeAdult,
         };
 
   const page = typeof queryOrOptions === "string" ? pageArg : queryOrOptions.page || 1;

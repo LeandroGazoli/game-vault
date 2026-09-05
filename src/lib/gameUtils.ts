@@ -201,3 +201,109 @@ export function isLikelyEnglish(text?: string | null): boolean {
 
   return engCount >= 3 && engCount > ptCount;
 }
+
+/**
+ * Calcula a idade exata com base na data de nascimento (formato 'YYYY-MM-DD').
+ * Seguro contra desvios de fuso horário UTC / local.
+ */
+export function calculateAge(birthDateStr?: string | null): number {
+  if (!birthDateStr) return 0;
+  const parts = birthDateStr.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return 0;
+  const [bYear, bMonth, bDay] = parts;
+  const today = new Date();
+  const cYear = today.getFullYear();
+  const cMonth = today.getMonth() + 1;
+  const cDay = today.getDate();
+
+  let age = cYear - bYear;
+  if (cMonth < bMonth || (cMonth === bMonth && cDay < bDay)) {
+    age--;
+  }
+  return Math.max(0, age);
+}
+
+/**
+ * Verifica se o usuário tem 18 anos ou mais a partir da sua data de nascimento informada.
+ */
+export function isUserAdult(birthDate?: string | null): boolean {
+  if (!birthDate) return false;
+  return calculateAge(birthDate) >= 18;
+}
+
+/**
+ * Detecta centralizadamente se um jogo possui conteúdo adulto (+18).
+ * Analisa a flag isAdult, temas do IGDB (Erotic / ID 42) e classificações indicativas (CLASS_IND 18, PEGI 18, ESRB AO).
+ */
+export function isAdultGame(game?: Partial<Game> | null): boolean {
+  if (!game) return false;
+
+  // 1. Flag direta isAdult se já mapeada
+  if (game.isAdult === true) return true;
+
+  // 2. Análise de Temas (Tema 42 no IGDB é 'Erotic')
+  if (Array.isArray(game.themes)) {
+    const hasAdultTheme = game.themes.some((t: any) => {
+      if (typeof t === "string") {
+        const lower = t.toLowerCase().trim();
+        return lower === "erotic" || lower === "adult" || lower === "adulto (+18)" || lower.includes("hentai") || lower.includes("eroge");
+      }
+      if (typeof t === "object" && t !== null) {
+        if (t.id === 42) return true;
+        const name = (t.name || "").toLowerCase().trim();
+        return name === "erotic" || name === "adult" || name === "adulto (+18)";
+      }
+      return false;
+    });
+    if (hasAdultTheme) return true;
+  }
+
+  // 3. Análise de Classificações Indicativas Oficiais
+  if (Array.isArray(game.age_ratings) && game.age_ratings.length > 0) {
+    const has18PlusRating = game.age_ratings.some((ar) => {
+      const org = (ar.organization || "").toUpperCase();
+      const rating = (ar.rating || "").toUpperCase();
+
+      // Classificação Brasileira (CLASS_IND)
+      if (org.includes("CLASS_IND") || org.includes("CLASSIND")) {
+        return rating.includes("18") || rating === "18";
+      }
+      // Classificação Europeia (PEGI)
+      if (org.includes("PEGI")) {
+        return rating.includes("18") || rating === "18";
+      }
+      // Classificação Americana (ESRB AO - Adults Only)
+      if (org.includes("ESRB")) {
+        return rating.includes("ADULTS ONLY") || rating.includes("AO");
+      }
+      // Classificação Alemã (USK)
+      if (org.includes("USK")) {
+        return rating.includes("18");
+      }
+      // Classificação Japonesa (CERO Z - 18+)
+      if (org.includes("CERO")) {
+        return rating === "Z" || rating.includes("Z");
+      }
+      // Classificação Australiana (ACB R18+)
+      if (org.includes("ACB")) {
+        return rating.includes("R18") || rating.includes("18+");
+      }
+
+      return false;
+    });
+
+    if (has18PlusRating) return true;
+  }
+
+  // 4. Gêneros com indicação adulta explícita
+  if (Array.isArray(game.genres)) {
+    const hasAdultGenre = game.genres.some((g) => {
+      const gName = (g.name || "").toLowerCase();
+      return gName.includes("erotic") || gName.includes("hentai") || gName.includes("eroge");
+    });
+    if (hasAdultGenre) return true;
+  }
+
+  return false;
+}
+
