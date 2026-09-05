@@ -451,20 +451,6 @@ export default function CommunityLeaderboardPage() {
       {/* ========================================================
           BARRA FIXA INFERIOR: SUA POSIÇÃO NO RANKING
       ======================================================== */}
-      {authUser && userRankIndex >= 0 && (
-        <div className="sticky bottom-4 z-30 p-3.5 sm:p-4 rounded-2xl bg-[#0c0f16]/95 border-2 border-[#00E5FF]/50 backdrop-blur-xl shadow-2xl shadow-cyan-500/20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-[#00E5FF]/20 text-[#00E5FF] flex items-center justify-center font-mono font-black text-xs border border-[#00E5FF]/40">
-              #{userRankIndex + 1}
-            </div>
-            <div>
-              <div className="text-xs font-black text-white flex items-center gap-1.5">
-                <span>Sua Posição no Ranking Oficial</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] bg-[#00E5FF] text-black font-black uppercase">
-                  Top {Math.max(1, Math.round(((userRankIndex + 1) / Math.max(gamers.length, 1)) * 100))}%
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-300 font-mono">
                 Nível {authUser.gamerLevel || 1} • {(authUser.gamerXp || 0).toLocaleString("pt-BR")} XP acumulados
               </p>
             </div>
