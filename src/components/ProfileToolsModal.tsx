@@ -21,6 +21,7 @@ import {
   Upload,
   Gamepad2,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface ProfileToolsModalProps {
   isOpen: boolean;
@@ -69,22 +70,12 @@ export default function ProfileToolsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      {/* Backdrop click */}
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal / Bottom Sheet Container */}
-      <div
-        className="relative z-10 w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] bg-[#14161a] border border-white/15 p-5 pb-[max(env(safe-area-inset-bottom,0px)+1.25rem,1.5rem)] sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
-        role="dialog"
-        aria-modal="true"
-      >
-        {/* Mobile handle indicator */}
-        <div className="sm:hidden w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-1 flex-shrink-0" />
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+    >
+      <div className="space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-shrink-0 pb-2 border-b border-white/10">
@@ -454,6 +445,6 @@ export default function ProfileToolsModal({
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

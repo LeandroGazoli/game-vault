@@ -24,6 +24,7 @@ import {
   Layers,
   ChevronDown,
 } from "lucide-react";
+import AdaptiveModal from "../ui/AdaptiveModal";
 
 interface GameImporterModalProps {
   isOpen: boolean;
@@ -625,16 +626,12 @@ export default function GameImporterModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] !m-0 !mt-0 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
-      onClick={handleClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      maxWidth="max-w-2xl"
     >
-      <div
-        className="relative z-10 w-full sm:max-w-2xl rounded-t-[32px] sm:rounded-[32px] bg-[#14161a] border border-white/15 p-5 sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Mobile Drag Indicator */}
-        <div className="sm:hidden w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-1 flex-shrink-0" />
+      <div className="space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3 flex-shrink-0">
@@ -1311,6 +1308,6 @@ export default function GameImporterModal({
           </div>
         )}
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

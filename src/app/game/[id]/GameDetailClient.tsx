@@ -660,14 +660,23 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               )}
             </div>
 
-            {/* Botão de Ação: Registrar / Editar */}
+            {/* Botão de Ação: Registrar / Editar (Estilo Stash) */}
             <div className="pt-2 w-full sm:w-auto flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs sm:text-sm font-bold shadow-xl transition-all active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
               >
-                <Edit3 className="w-4 h-4" />
-                {userGame ? "Atualizar Meu Registro / Resenha" : "+ Adicionar ao Meu Perfil"}
+                {userGame ? (
+                  <>
+                    <Edit3 className="w-4 h-4 text-black" />
+                    <span>Atualizar Meu Registro</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 text-black stroke-[3]" />
+                    <span>Adicionar à Coleção</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -1080,9 +1089,10 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 </p>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="w-full py-3 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md"
+                  className="w-full py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  + Adicionar ao Meu Perfil
+                  <Plus className="w-4 h-4 stroke-[3]" />
+                  Adicionar à Coleção
                 </button>
               </div>
             )}

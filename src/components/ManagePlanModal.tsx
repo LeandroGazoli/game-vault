@@ -16,6 +16,7 @@ import {
   EyeOff,
   Check,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface ManagePlanModalProps {
   isOpen: boolean;
@@ -89,12 +90,12 @@ export default function ManagePlanModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div
-        className="relative w-full max-w-lg rounded-[32px] bg-[#14161a] border border-white/15 p-6 sm:p-8 shadow-2xl space-y-6 overflow-hidden max-h-[92vh] overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-      >
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+    >
+      <div className="space-y-6 relative">
         {/* Glow de fundo */}
         <div
           className={`absolute -top-24 -right-24 w-60 h-60 rounded-full blur-3xl pointer-events-none ${
@@ -282,6 +283,6 @@ export default function ManagePlanModal({
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

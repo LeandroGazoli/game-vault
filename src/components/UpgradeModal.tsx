@@ -17,6 +17,7 @@ import {
   Lock,
   RefreshCw,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -82,21 +83,12 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-4xl"
     >
-      <div
-        className="relative w-full max-w-4xl rounded-[32px] bg-[#18191c] border border-white/10 p-6 sm:p-8 shadow-2xl space-y-6 text-white max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="space-y-6">
 
         {/* Header do Modal */}
         <div className="text-center space-y-2 max-w-lg mx-auto">
@@ -317,6 +309,6 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           <span>Pagamento 100% seguro e criptografado processado pelo <strong>Stripe Brasil</strong></span>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

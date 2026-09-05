@@ -22,6 +22,7 @@ import {
   Send,
   ShieldCheck,
 } from "lucide-react";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 interface NewFeedbackModalProps {
   isOpen: boolean;
@@ -123,25 +124,14 @@ export default function NewFeedbackModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[100] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
     >
-      <div
-        className="relative w-full max-w-2xl rounded-3xl bg-[#14161e] border border-white/10 p-5 sm:p-8 shadow-2xl space-y-6 text-white max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-          aria-label="Fechar modal"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
+      <div className="space-y-6">
         {/* Cabeçalho */}
-        <div className="space-y-1.5 pr-8">
+        <div className="space-y-1.5 pr-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-semibold">
             <Lightbulb className="w-3.5 h-3.5" />
             Voz da Comunidade MyGameList
@@ -303,6 +293,6 @@ export default function NewFeedbackModal({
           </div>
         </form>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }
