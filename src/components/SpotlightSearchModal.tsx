@@ -8,7 +8,11 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getGameUrl } from "@/lib/routes";
 import { Game, SystemSettings } from "@/lib/types";
-import { isDescriptiveOrIntentQuery } from "@/lib/searchUtils";
+import {
+  isDescriptiveOrIntentQuery,
+  AI_SEARCH_DEBOUNCE_MS,
+  MIN_AI_QUERY_LENGTH,
+} from "@/lib/searchUtils";
 import {
   Search,
   Loader2,
@@ -58,6 +62,9 @@ export default function SpotlightSearchModal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
+  const aiDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const aiQueriedTextRef = useRef<string>("");
+  const aiAbortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -132,21 +139,36 @@ export default function SpotlightSearchModal() {
       }, 50);
       setSelectedIndex(0);
     } else {
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
+      if (aiAbortControllerRef.current) {
+        aiAbortControllerRef.current.abort();
+      }
       setQuery("");
       setResults([]);
       setAiExplanation(null);
       setAiQueriedText("");
+      aiQueriedTextRef.current = "";
     }
   }, [isOpen]);
 
   const triggerAiRecommendation = async (searchPrompt: string, force = false) => {
     const text = searchPrompt.trim();
-    if (!text || text.length < 3) return;
+    if (!text || text.length < MIN_AI_QUERY_LENGTH) return;
     if (!isAiEnabled) return;
 
-    if (!force && aiQueriedText === text.toLowerCase()) return;
+    if (!force && aiQueriedTextRef.current === text.toLowerCase()) return;
+
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    aiAbortControllerRef.current = controller;
 
     setIsAiLoading(true);
+    aiQueriedTextRef.current = text.toLowerCase();
     setAiQueriedText(text.toLowerCase());
 
     try {
@@ -154,6 +176,7 @@ export default function SpotlightSearchModal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),
+        signal: controller.signal,
       });
 
       if (res.ok) {
@@ -161,6 +184,7 @@ export default function SpotlightSearchModal() {
         const recommended: Game[] = (data.games || []).map((g: Game) => ({
           ...g,
           isAiRecommended: true,
+          aiExplanation: data.explanation,
         }));
 
         if (recommended.length > 0) {
@@ -169,7 +193,7 @@ export default function SpotlightSearchModal() {
           setResults((prev) => {
             const aiIds = new Set(recommended.map((g) => g.id));
             const existingUpdated = prev.map((g) =>
-              aiIds.has(g.id) ? { ...g, isAiRecommended: true } : g
+              aiIds.has(g.id) ? { ...g, isAiRecommended: true, aiExplanation: data.explanation } : g
             );
             const existingIds = new Set(existingUpdated.map((g) => g.id));
             const newAiGames = recommended.filter((g) => !existingIds.has(g.id));
@@ -178,10 +202,14 @@ export default function SpotlightSearchModal() {
           setSelectedIndex(0);
         }
       }
-    } catch (err) {
-      console.warn("Curador IA não disponível para spotlight:", err);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.warn("Curador IA não disponível para spotlight:", err);
+      }
     } finally {
-      setIsAiLoading(false);
+      if (aiAbortControllerRef.current === controller) {
+        setIsAiLoading(false);
+      }
     }
   };
 
@@ -193,13 +221,38 @@ export default function SpotlightSearchModal() {
       setLoading(false);
       setAiExplanation(null);
       setAiQueriedText("");
+      aiQueriedTextRef.current = "";
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
       return;
     }
 
+    const isIntent = isDescriptiveOrIntentQuery(trimmed);
+
+    // 1. Se já está no cache local do catálogo:
     const cacheKey = trimmed.toLowerCase();
     if (searchCacheRef.current.has(cacheKey)) {
-      setResults(searchCacheRef.current.get(cacheKey)!);
+      const cached = searchCacheRef.current.get(cacheKey)!;
+      setResults(cached);
       setLoading(false);
+
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
+
+      // Se achou jogos normais e não é intenção descritiva, a IA NÃO é chamada
+      if (!isIntent && cached.length > 0) {
+        return;
+      }
+
+      if (isAiEnabled && (isIntent || cached.length === 0) && trimmed.length >= MIN_AI_QUERY_LENGTH) {
+        aiDebounceTimerRef.current = setTimeout(() => {
+          triggerAiRecommendation(trimmed);
+        }, AI_SEARCH_DEBOUNCE_MS);
+      }
       return;
     }
 
@@ -207,26 +260,17 @@ export default function SpotlightSearchModal() {
     const abortController = new AbortController();
 
     const timer = setTimeout(async () => {
+      let items: Game[] = [];
       try {
         const res = await fetch(`/api/games/search?q=${encodeURIComponent(trimmed)}&limit=8`, {
           signal: abortController.signal,
         });
         if (res.ok) {
           const data = await res.json();
-          const items = data.games || [];
+          items = data.games || [];
           searchCacheRef.current.set(cacheKey, items);
           setResults(items);
           setSelectedIndex(0);
-
-          // Regras para acionamento do Curador Inteligente (IA):
-          // 1. Quando for busca descritiva / de intenção
-          // 2. OU quando a busca tradicional retornar 0 resultados
-          const isIntent = isDescriptiveOrIntentQuery(trimmed);
-          const hadNoResults = items.length === 0;
-
-          if (isAiEnabled && (isIntent || hadNoResults) && trimmed.length >= 3) {
-            triggerAiRecommendation(trimmed);
-          }
         }
       } catch (err: any) {
         if (err.name !== "AbortError") {
@@ -237,11 +281,32 @@ export default function SpotlightSearchModal() {
           setLoading(false);
         }
       }
+
+      // Limpa qualquer timer de IA agendado antes
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
+
+      // Se encontrou jogos e NÃO é intenção descritiva, cancela a busca por IA
+      if (!isIntent && items.length > 0) {
+        return;
+      }
+
+      // Proteção de digitação: Só agenda a IA após 1200ms de inatividade do usuário sem teclar
+      if (isAiEnabled && (isIntent || items.length === 0) && trimmed.length >= MIN_AI_QUERY_LENGTH) {
+        aiDebounceTimerRef.current = setTimeout(() => {
+          triggerAiRecommendation(trimmed);
+        }, AI_SEARCH_DEBOUNCE_MS);
+      }
     }, 280);
 
     return () => {
       clearTimeout(timer);
       abortController.abort();
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+      }
     };
   }, [query, isAiEnabled]);
 
@@ -306,7 +371,13 @@ export default function SpotlightSearchModal() {
           {isAiEnabled && query.trim().length >= 3 && (
             <button
               type="button"
-              onClick={() => triggerAiRecommendation(query, true)}
+              onClick={() => {
+                if (aiDebounceTimerRef.current) {
+                  clearTimeout(aiDebounceTimerRef.current);
+                  aiDebounceTimerRef.current = null;
+                }
+                triggerAiRecommendation(query, true);
+              }}
               disabled={isAiLoading}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-[#00E5FF] hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50"
               title="Buscar recomendações com Curador IA"
@@ -319,10 +390,19 @@ export default function SpotlightSearchModal() {
           {query && !loading && !isAiLoading && (
             <button
               onClick={() => {
+                if (aiDebounceTimerRef.current) {
+                  clearTimeout(aiDebounceTimerRef.current);
+                  aiDebounceTimerRef.current = null;
+                }
+                if (aiAbortControllerRef.current) {
+                  aiAbortControllerRef.current.abort();
+                }
                 setQuery("");
                 setResults([]);
                 setAiExplanation(null);
                 setAiQueriedText("");
+                aiQueriedTextRef.current = "";
+                setIsAiLoading(false);
                 inputRef.current?.focus();
               }}
               className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"

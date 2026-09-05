@@ -41,7 +41,11 @@ import {
   findPerspectiveFilter,
   findGameModeFilter,
 } from "@/lib/filterConstants";
-import { isDescriptiveOrIntentQuery } from "@/lib/searchUtils";
+import {
+  isDescriptiveOrIntentQuery,
+  AI_SEARCH_DEBOUNCE_MS,
+  MIN_AI_QUERY_LENGTH,
+} from "@/lib/searchUtils";
 
 const SEARCH_STATE_STORAGE_KEY = "MGL_SEARCH_SESSION_STATE_V1";
 
@@ -123,6 +127,9 @@ function SearchContent() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isRestoredRef = useRef(false);
+  const aiDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const aiQueriedTextRef = useRef<string>("");
+  const aiAbortControllerRef = useRef<AbortController | null>(null);
 
   // Sincroniza estado quando a URL muda externamente (ex: botão Voltar do navegador)
   useEffect(() => {
@@ -361,18 +368,38 @@ function SearchContent() {
     e.preventDefault();
     setQuery(inputValue);
     updateUrlParams({ q: inputValue });
+
+    // Cancelar debounce timer pendente se houver
+    if (aiDebounceTimerRef.current) {
+      clearTimeout(aiDebounceTimerRef.current);
+      aiDebounceTimerRef.current = null;
+    }
+
+    // Se o usuário submeteu explicitamente via Enter, verifica se é intenção descritiva
+    const isIntent = isDescriptiveOrIntentQuery(inputValue);
+    if (isAiEnabled && isIntent && inputValue.trim().length >= MIN_AI_QUERY_LENGTH) {
+      triggerAiRecommendation(inputValue, true);
+    }
   };
 
   const triggerAiRecommendation = useCallback(
     async (searchPrompt: string, force = false) => {
       const text = searchPrompt.trim();
-      if (!text || text.length < 3) return;
+      if (!text || text.length < MIN_AI_QUERY_LENGTH) return;
       if (!isAiEnabled) return;
 
       // Evita disparar chamadas repetidas para a mesma query
-      if (!force && aiQueriedText === text.toLowerCase()) return;
+      if (!force && aiQueriedTextRef.current === text.toLowerCase()) return;
+
+      // Cancela requisição de IA anterior ainda em andamento
+      if (aiAbortControllerRef.current) {
+        aiAbortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      aiAbortControllerRef.current = controller;
 
       setIsAiLoading(true);
+      aiQueriedTextRef.current = text.toLowerCase();
       setAiQueriedText(text.toLowerCase());
 
       try {
@@ -380,6 +407,7 @@ function SearchContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: text }),
+          signal: controller.signal,
         });
 
         if (res.ok) {
@@ -387,6 +415,7 @@ function SearchContent() {
           const recommended: Game[] = (data.games || []).map((g: Game) => ({
             ...g,
             isAiRecommended: true,
+            aiExplanation: data.explanation,
           }));
 
           if (recommended.length > 0) {
@@ -396,7 +425,7 @@ function SearchContent() {
               const aiIds = new Set(recommended.map((g) => g.id));
               // Marca os jogos existentes que a IA também recomendou
               const existingUpdated = prev.map((g) =>
-                aiIds.has(g.id) ? { ...g, isAiRecommended: true } : g
+                aiIds.has(g.id) ? { ...g, isAiRecommended: true, aiExplanation: data.explanation } : g
               );
               const existingIds = new Set(existingUpdated.map((g) => g.id));
               const newAiGames = recommended.filter((g) => !existingIds.has(g.id));
@@ -408,20 +437,33 @@ function SearchContent() {
             setTotalCount((prev) => prev + recommended.length);
           }
         }
-      } catch (err) {
-        console.warn("Curador IA não disponível para esta consulta:", err);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.warn("Curador IA não disponível para esta consulta:", err);
+        }
       } finally {
-        setIsAiLoading(false);
+        if (aiAbortControllerRef.current === controller) {
+          setIsAiLoading(false);
+        }
       }
     },
-    [aiQueriedText, isAiEnabled]
+    [isAiEnabled]
   );
 
   const handleClearSearch = () => {
+    if (aiDebounceTimerRef.current) {
+      clearTimeout(aiDebounceTimerRef.current);
+      aiDebounceTimerRef.current = null;
+    }
+    if (aiAbortControllerRef.current) {
+      aiAbortControllerRef.current.abort();
+    }
     setInputValue("");
     setQuery("");
     setAiExplanation(null);
     setAiQueriedText("");
+    aiQueriedTextRef.current = "";
+    setIsAiLoading(false);
     updateUrlParams({ q: "" });
   };
 
@@ -446,6 +488,7 @@ function SearchContent() {
       if (!query.trim()) {
         setAiExplanation(null);
         setAiQueriedText("");
+        aiQueriedTextRef.current = "";
       }
 
       const params = new URLSearchParams();
@@ -470,14 +513,30 @@ function SearchContent() {
           setTotalCount(data.total || data.count || items.length);
           setHasMore(Boolean(data.hasMore ?? (items.length >= 36)));
 
+          // Limpa qualquer timer de IA pendente
+          if (aiDebounceTimerRef.current) {
+            clearTimeout(aiDebounceTimerRef.current);
+            aiDebounceTimerRef.current = null;
+          }
+
           // Regras para acionamento do Curador Inteligente (IA):
           // 1. Quando for busca descritiva / intenção de estilo (não título de jogo específico)
           // 2. OU quando a busca tradicional retornar 0 resultados no catálogo
           const isIntent = isDescriptiveOrIntentQuery(query);
           const hadNoResults = items.length === 0;
 
-          if (isAiEnabled && (isIntent || hadNoResults) && query.trim().length >= 3) {
-            triggerAiRecommendation(query);
+          // Se a busca tradicional encontrou jogos e NÃO é uma intenção de estilo clara,
+          // a IA NÃO é chamada (economiza cota e cancela qualquer busca enquanto digita nomes)
+          if (!isIntent && !hadNoResults) {
+            return;
+          }
+
+          // Proteção contra chamadas a cada tecla:
+          // Dispara a IA SOMENTE após 1200ms de inatividade do usuário sem digitar novas teclas
+          if (isAiEnabled && (isIntent || hadNoResults) && query.trim().length >= MIN_AI_QUERY_LENGTH) {
+            aiDebounceTimerRef.current = setTimeout(() => {
+              triggerAiRecommendation(query);
+            }, AI_SEARCH_DEBOUNCE_MS);
           }
         }
       } catch (err: any) {
@@ -495,6 +554,9 @@ function SearchContent() {
 
     return () => {
       controller.abort();
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+      }
     };
   }, [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort, triggerAiRecommendation, isAiEnabled]);
 

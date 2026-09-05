@@ -9,7 +9,11 @@ import { getGameUrl } from "@/lib/routes";
 import { Search, Loader2, Plus, Check, Star, ArrowRight, X, Sparkles } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { formatPlatformShort } from "@/lib/platformUtils";
-import { isDescriptiveOrIntentQuery } from "@/lib/searchUtils";
+import {
+  isDescriptiveOrIntentQuery,
+  AI_SEARCH_DEBOUNCE_MS,
+  MIN_AI_QUERY_LENGTH,
+} from "@/lib/searchUtils";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { SystemSettings } from "@/lib/types";
@@ -39,6 +43,8 @@ export default function LiveSearchInput({
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiQueriedText, setAiQueriedText] = useState("");
   const aiAbortControllerRef = useRef<AbortController | null>(null);
+  const aiDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const aiQueriedTextRef = useRef<string>("");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,8 +68,8 @@ export default function LiveSearchInput({
   // Dispara a Curadoria Inteligente com Gemini
   const triggerAiRecommendation = async (promptText: string, force = false) => {
     const trimmed = promptText.trim();
-    if (!trimmed || trimmed.length < 3 || !isAiEnabled) return;
-    if (!force && aiQueriedText.toLowerCase() === trimmed.toLowerCase()) return;
+    if (!trimmed || trimmed.length < MIN_AI_QUERY_LENGTH || !isAiEnabled) return;
+    if (!force && aiQueriedTextRef.current === trimmed.toLowerCase()) return;
 
     if (aiAbortControllerRef.current) {
       aiAbortControllerRef.current.abort();
@@ -72,13 +78,14 @@ export default function LiveSearchInput({
     aiAbortControllerRef.current = abortController;
 
     setIsAiLoading(true);
+    aiQueriedTextRef.current = trimmed.toLowerCase();
     setAiQueriedText(trimmed);
 
     try {
-      const res = await fetch("/api/games/ai-recommendations", {
+      const res = await fetch("/api/ai/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: trimmed }),
+        body: JSON.stringify({ prompt: trimmed }),
         signal: abortController.signal,
       });
 
@@ -142,6 +149,11 @@ export default function LiveSearchInput({
       setAiExplanation(null);
       setIsAiLoading(false);
       setAiQueriedText("");
+      aiQueriedTextRef.current = "";
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
       return;
     }
 
@@ -155,8 +167,20 @@ export default function LiveSearchInput({
       setIsOpen(true);
       setLoading(false);
 
-      if (isAiEnabled && (isIntent || cached.length === 0)) {
-        triggerAiRecommendation(trimmed);
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
+
+      // Se achou jogos normais e não é intenção descritiva, a IA NÃO é chamada
+      if (!isIntent && cached.length > 0) {
+        return;
+      }
+
+      if (isAiEnabled && (isIntent || cached.length === 0) && trimmed.length >= MIN_AI_QUERY_LENGTH) {
+        aiDebounceTimerRef.current = setTimeout(() => {
+          triggerAiRecommendation(trimmed);
+        }, AI_SEARCH_DEBOUNCE_MS);
       }
       return;
     }
@@ -187,15 +211,31 @@ export default function LiveSearchInput({
         }
       }
 
-      // Regra de IA: Se for consulta descritiva/intenção OU se a busca normal não retornou resultados
-      if (isAiEnabled && (isIntent || items.length === 0)) {
-        triggerAiRecommendation(trimmed);
+      // Limpa qualquer timer de IA agendado antes
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+        aiDebounceTimerRef.current = null;
+      }
+
+      // Se encontrou jogos no catálogo e NÃO é intenção descritiva, cancela busca por IA
+      if (!isIntent && items.length > 0) {
+        return;
+      }
+
+      // Proteção de digitação: Só agenda a IA após 1200ms de inatividade sem novas teclas
+      if (isAiEnabled && (isIntent || items.length === 0) && trimmed.length >= MIN_AI_QUERY_LENGTH) {
+        aiDebounceTimerRef.current = setTimeout(() => {
+          triggerAiRecommendation(trimmed);
+        }, AI_SEARCH_DEBOUNCE_MS);
       }
     }, 350);
 
     return () => {
       clearTimeout(timer);
       abortController.abort();
+      if (aiDebounceTimerRef.current) {
+        clearTimeout(aiDebounceTimerRef.current);
+      }
     };
   }, [query, isAiEnabled]);
 
@@ -223,6 +263,10 @@ export default function LiveSearchInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (aiDebounceTimerRef.current) {
+      clearTimeout(aiDebounceTimerRef.current);
+      aiDebounceTimerRef.current = null;
+    }
     if (query.trim()) {
       setIsOpen(false);
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -273,6 +317,10 @@ export default function LiveSearchInput({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (aiDebounceTimerRef.current) {
+                    clearTimeout(aiDebounceTimerRef.current);
+                    aiDebounceTimerRef.current = null;
+                  }
                   triggerAiRecommendation(query, true);
                 }}
                 className={`p-1 rounded-full transition-all flex items-center justify-center ${
@@ -292,11 +340,19 @@ export default function LiveSearchInput({
               <button
                 type="button"
                 onClick={() => {
+                  if (aiDebounceTimerRef.current) {
+                    clearTimeout(aiDebounceTimerRef.current);
+                    aiDebounceTimerRef.current = null;
+                  }
+                  if (aiAbortControllerRef.current) {
+                    aiAbortControllerRef.current.abort();
+                  }
                   setQuery("");
                   setResults([]);
                   setAiExplanation(null);
                   setIsAiLoading(false);
                   setAiQueriedText("");
+                  aiQueriedTextRef.current = "";
                   setIsOpen(false);
                 }}
                 className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
