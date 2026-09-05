@@ -18,7 +18,10 @@ import {
   updateFeedbackStatusAndResponse,
   grantFeedbackReward,
   deleteFeedbackItem,
+  db,
 } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+import { SystemSettings } from "@/lib/types";
 import FeedbackCard from "@/components/feedback/FeedbackCard";
 import NewFeedbackModal from "@/components/feedback/NewFeedbackModal";
 import FeedbackDetailModal from "@/components/feedback/FeedbackDetailModal";
@@ -56,6 +59,19 @@ export default function FeedbackClient() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [bountiesEnabled, setBountiesEnabled] = useState(true);
+
+  // Escuta a feature flag 'bountiesEnabled' em tempo real
+  useEffect(() => {
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as SystemSettings;
+        setBountiesEnabled(Boolean(data.features?.bountiesEnabled));
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Aba Principal: Sugestões Ativas vs Área Exclusiva de Implementados
   const [mainTab, setMainTab] = useState<"active" | "completed">("active");
@@ -396,44 +412,46 @@ export default function FeedbackClient() {
           </div>
         </div>
 
-        {/* Três Pilares do Sistema de Recompensas */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10">
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/15 text-[#00E5FF] shrink-0">
-              <TrendingUp className="w-4 h-4" />
+        {/* Três Pilares do Sistema de Recompensas (Controlado por Feature Flag no Admin) */}
+        {bountiesEnabled && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/10 animate-fadeIn">
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-cyan-500/15 text-[#00E5FF] shrink-0">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">1. Votação Democrática</h4>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Upvotes e Downvotes definem as prioridades do nosso roadmap.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">1. Votação Democrática</h4>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
-                Upvotes e Downvotes definem as prioridades do nosso roadmap.
-              </p>
-            </div>
-          </div>
 
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
-              <Crown className="w-4 h-4" />
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
+                <Crown className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">2. VIP &amp; PRO Grátis</h4>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Ache bugs críticos ou sugira recursos adotados para ganhar acesso vitalício.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">2. VIP &amp; PRO Grátis</h4>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
-                Ache bugs críticos ou sugira recursos adotados para ganhar acesso vitalício.
-              </p>
-            </div>
-          </div>
 
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-purple-500/15 text-purple-400 shrink-0">
-              <Trophy className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">3. Insígnias Gamer</h4>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
-                Tags como &ldquo;Bug Hunter&rdquo; ou &ldquo;Visionário&rdquo; direto no seu perfil.
-              </p>
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-purple-500/15 text-purple-400 shrink-0">
+                <Trophy className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">3. Insígnias Gamer</h4>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Tags como &ldquo;Bug Hunter&rdquo; ou &ldquo;Visionário&rdquo; direto no seu perfil.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 2. MURAL DE DESTAQUES: HALL DA FAMA DE CONTRIBUIDORES PREMIADOS */}

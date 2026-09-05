@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useCallback, useRef } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import { Game } from "@/lib/types";
 import GameCard from "@/components/GameCard";
+import AiRecommendationBox from "@/components/search/AiRecommendationBox";
 import {
   Search,
   Filter,
@@ -539,6 +540,9 @@ function SearchContent() {
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Assistente Curador Inteligente de IA (Controlado por Feature Flag no Admin) */}
+      <AiRecommendationBox />
+
       {/* ========================================================
           CABEÇALHO DE BUSCA COMPACTO E LIMPO
       ======================================================== */}
