@@ -45,7 +45,7 @@ export default function ShareGamerCardModal({
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, user.plan);
   const displayLevel = user.gamerLevel || gamerLevelInfo.level;
   const rankTitle = gamerLevelInfo.rankTitle;
 
@@ -190,10 +190,16 @@ export default function ShareGamerCardModal({
     ctx.fill();
     ctx.stroke();
 
-    // Texto do Nível
+    // Texto do Nível & Boost
     ctx.fillStyle = "#94A3B8";
-    ctx.font = "bold 20px monospace";
-    ctx.fillText("NÍVEL GAMER", badgeX + 30, badgeY + 40);
+    ctx.font = "bold 15px monospace";
+    const boostSuffix =
+      user.plan === "vip"
+        ? " • 👑 2.0x VIP BOOST"
+        : user.plan === "pro"
+        ? " • ⚡ 1.5x PRO BOOST"
+        : "";
+    ctx.fillText(`NÍVEL GAMER${boostSuffix}`, badgeX + 30, badgeY + 40);
 
     ctx.fillStyle = theme === "neon" ? "#00E5FF" : theme === "gold" ? "#F59E0B" : "#FFFFFF";
     ctx.font = "900 36px monospace";

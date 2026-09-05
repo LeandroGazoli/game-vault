@@ -326,7 +326,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!user || isLoading) return;
-    const currentInfo = calculateGamerLevel(stats);
+    const currentInfo = calculateGamerLevel(stats, undefined, user.plan);
     const { level, xp, rankTitle } = currentInfo;
 
     // 1. Fase de Hidratação Inicial:

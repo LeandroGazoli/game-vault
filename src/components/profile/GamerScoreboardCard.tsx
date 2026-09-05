@@ -1,22 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { LibraryStats, calculateGamerLevel, UserPlan } from "@/lib/types";
 import { Sparkles, Trophy, ChevronRight, Zap, Target, Hourglass, Shield } from "lucide-react";
 
 interface GamerScoreboardCardProps {
   stats?: LibraryStats | null;
+  plan?: UserPlan;
   onOpenRankings?: () => void;
   onOpenXpBreakdown?: () => void;
 }
 
 export default function GamerScoreboardCard({
   stats,
+  plan,
   onOpenRankings,
   onOpenXpBreakdown,
 }: GamerScoreboardCardProps) {
   const [activeSlide, setActiveSlide] = useState<0 | 1>(0);
-  const gamerLevelInfo = calculateGamerLevel(stats);
+  const gamerLevelInfo = calculateGamerLevel(stats, undefined, plan);
 
   const completedScore = (stats?.completedCount || 0) * 120 + (stats?.totalGames || 0) * 10;
   const hoursScore = gamerLevelInfo.breakdown.hoursXp;
@@ -79,7 +81,14 @@ export default function GamerScoreboardCard({
             title={onOpenXpBreakdown ? "Clique para abrir o extrato detalhado de XP" : undefined}
           >
             <div className="flex items-center justify-between text-gray-400 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider mb-1">
-              <span>XP Total</span>
+              <span className="flex items-center gap-1.5">
+                <span>XP Total</span>
+                {gamerLevelInfo.boostMultiplier > 1 && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#00E5FF]/20 text-[#00E5FF] font-bold">
+                    {gamerLevelInfo.boostLabel}
+                  </span>
+                )}
+              </span>
               <Sparkles className="w-3 h-3 text-[#00E5FF]" />
             </div>
             <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-[#00E5FF] drop-shadow-[0_0_12px_rgba(0,229,255,0.5)]">

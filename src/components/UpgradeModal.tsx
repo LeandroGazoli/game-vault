@@ -173,6 +173,10 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               </div>
 
               <ul className="space-y-2 text-xs text-gray-300 pt-3 border-t border-white/5">
+                <li className="flex items-center gap-2 font-bold text-[#00E5FF]">
+                  <Zap className="w-3.5 h-3.5 text-[#00E5FF] fill-[#00E5FF]/20" />
+                  <span>Boost de +50% de XP (1.5x)</span>
+                </li>
                 <li className="flex items-center gap-2 font-medium text-white">
                   <EyeOff className="w-3.5 h-3.5 text-[#00E5FF]" />
                   <span>100% Livre de Anúncios</span>
@@ -228,6 +232,10 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               </div>
 
               <ul className="space-y-2 text-xs text-gray-200 pt-3 border-t border-white/10">
+                <li className="flex items-center gap-2 font-bold text-[#00E5FF]">
+                  <Zap className="w-3.5 h-3.5 text-[#00E5FF] fill-[#00E5FF]/20" />
+                  <span>Boost de +50% de XP (1.5x) por 1 ano</span>
+                </li>
                 <li className="flex items-center gap-2 font-semibold text-white">
                   <EyeOff className="w-3.5 h-3.5 text-[#00E5FF]" />
                   <span>100% Sem Anúncios por 1 ano</span>
@@ -239,10 +247,6 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <li className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Acesso Prioritário a Recursos</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Exportações Ilimitadas (Excel/JSON)</span>
                 </li>
               </ul>
             </div>
@@ -277,6 +281,10 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               </div>
 
               <ul className="space-y-2 text-xs text-gray-300 pt-3 border-t border-white/5">
+                <li className="flex items-center gap-2 font-bold text-amber-300">
+                  <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
+                  <span>👑 Boost 2.0x (XP em Dobro Vitalício)</span>
+                </li>
                 <li className="flex items-center gap-2 font-semibold text-amber-300">
                   <Crown className="w-3.5 h-3.5 text-amber-400" />
                   <span>Selo Dourado &quot;Fundador VIP&quot;</span>

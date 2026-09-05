@@ -193,6 +193,10 @@ export default function PlanosClient() {
             </div>
 
             <ul className="space-y-3 text-xs text-gray-300 pt-4 border-t border-white/5">
+              <li className="flex items-center gap-2.5 font-bold text-[#00E5FF]">
+                <Zap className="w-4 h-4 text-[#00E5FF] flex-shrink-0 fill-[#00E5FF]/20" />
+                <span>Boost de +50% no Ganho de XP (1.5x)</span>
+              </li>
               <li className="flex items-center gap-2.5 font-semibold text-white">
                 <EyeOff className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
                 <span>100% Livre de Anúncios</span>
@@ -252,6 +256,10 @@ export default function PlanosClient() {
             </div>
 
             <ul className="space-y-3 text-xs text-gray-200 pt-4 border-t border-white/10">
+              <li className="flex items-center gap-2.5 font-extrabold text-[#00E5FF]">
+                <Zap className="w-4 h-4 text-[#00E5FF] flex-shrink-0 fill-[#00E5FF]/20" />
+                <span>Boost de +50% no Ganho de XP (1.5x) por 1 ano</span>
+              </li>
               <li className="flex items-center gap-2.5 font-bold text-white">
                 <EyeOff className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
                 <span>100% Sem Anúncios por 1 ano</span>
@@ -301,6 +309,10 @@ export default function PlanosClient() {
             </div>
 
             <ul className="space-y-3 text-xs text-gray-300 pt-4 border-t border-white/5">
+              <li className="flex items-center gap-2.5 font-black text-amber-300">
+                <Crown className="w-4 h-4 text-amber-400 flex-shrink-0 fill-amber-400/30" />
+                <span>👑 Boost Supremo: 2.0x (XP em Dobro Vitalício)</span>
+              </li>
               <li className="flex items-center gap-2.5 font-bold text-amber-300">
                 <Crown className="w-4 h-4 text-amber-400 flex-shrink-0" />
                 <span>Selo Dourado &quot;Fundador VIP&quot;</span>

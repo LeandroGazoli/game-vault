@@ -23,8 +23,10 @@ export default function LegendaryVaultCard({
   onOpenManagePlan,
   onOpenXpBreakdown,
 }: LegendaryVaultCardProps) {
-  const isVipOrPro = user.plan === "vip" || user.plan === "pro";
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
+  const isVip = user.plan === "vip";
+  const isPro = user.plan === "pro";
+  const isVipOrPro = isVip || isPro;
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, user.plan);
   const displayLevel = user.gamerLevel || gamerLevelInfo.level;
 
   const handleAction = () => {
@@ -50,9 +52,17 @@ export default function LegendaryVaultCard({
           {/* Lado Esquerdo: Tag VIP, Título e Ação */}
           <div className="space-y-2 max-w-md">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black text-[11px] tracking-wider uppercase shadow-md flex items-center gap-1">
+              <span
+                className={`px-2.5 py-0.5 rounded-md text-black font-black text-[11px] tracking-wider uppercase shadow-md flex items-center gap-1 ${
+                  isVip
+                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
+                    : isPro
+                    ? "bg-gradient-to-r from-[#00E5FF] to-cyan-400"
+                    : "bg-gray-300"
+                }`}
+              >
                 <Crown className="w-3 h-3 text-black fill-black" />
-                <span>VIP</span>
+                <span>{user.plan ? user.plan.toUpperCase() : "FREE"}</span>
               </span>
               <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300/80">
                 #LEGENDARY-VAULT
@@ -65,9 +75,11 @@ export default function LegendaryVaultCard({
                 <Sparkles className="w-4 h-4 text-[#00E5FF] animate-pulse" />
               </h3>
               <p className="text-xs text-gray-300 font-medium">
-                {isVipOrPro
-                  ? "Assinatura Nobre Ativa • Acesso a temas exclusivos, estatísticas ilimitadas e insígnias lendárias."
-                  : "Desbloqueie o potencial máximo com temas neon, zero anúncios e estatísticas de prestígio."}
+                {isVip
+                  ? "Assinatura VIP Fundador Ativa • XP em Dobro (2.0x), selo dourado e acesso vitalício total."
+                  : isPro
+                  ? "Assinatura PRO Ativa • Boost de +50% de XP (1.5x), temas exclusivos e sem anúncios."
+                  : "Desbloqueie o potencial máximo com Boost de até 2.0x XP, temas neon e zero anúncios."}
               </p>
             </div>
 
@@ -77,21 +89,39 @@ export default function LegendaryVaultCard({
                 onClick={handleAction}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#00b4d8] hover:from-white hover:to-gray-100 text-black font-extrabold text-xs tracking-tight shadow-[0_0_15px_rgba(0,229,255,0.4)] transition-all active:scale-95 cursor-pointer"
               >
-                <span>{isVipOrPro ? "Gerenciar Benefícios" : "PRO Levelitar"}</span>
+                <span>{isVipOrPro ? "Gerenciar Benefícios" : "Ativar Boost de XP"}</span>
                 <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
               </button>
             </div>
           </div>
 
-          {/* Lado Direito: Brasão PRO LEVEL com Nível Dinâmico */}
+          {/* Lado Direito: Brasão PRO LEVEL com Nível Dinâmico e Boost Pill */}
           <div className="flex items-center gap-3 sm:flex-col sm:items-end self-start sm:self-center bg-white/5 sm:bg-transparent p-3 sm:p-0 rounded-2xl border border-white/10 sm:border-0">
-            {/* Brasão Dourado de Asas PRO LEVEL */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/40 shadow-inner">
-              <Trophy className="w-4 h-4 text-amber-400 fill-amber-400/30" />
-              <span className="text-xs font-black text-amber-300 uppercase tracking-wider">
-                PRO LEVEL
-              </span>
-            </div>
+            {/* Pill do Multiplicador de XP */}
+            {isVip ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/40 shadow-inner">
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
+                <span className="text-xs font-black text-amber-300 font-mono tracking-wider">
+                  2.0x XP BOOST
+                </span>
+              </div>
+            ) : isPro ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-500/20 border border-[#00E5FF]/40 shadow-inner">
+                <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span className="text-xs font-black text-[#00E5FF] font-mono tracking-wider">
+                  1.5x XP BOOST
+                </span>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenUpgrade}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all text-[11px] font-mono font-bold cursor-pointer"
+                title="Faça upgrade para ganhar até 2.0x de XP"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>1.0x XP • Ativar Boost</span>
+              </button>
+            )}
 
             {/* Badge de Nível Ciano Neon */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/40 shadow-[0_0_15px_rgba(0,229,255,0.2)]">
@@ -149,7 +179,14 @@ export default function LegendaryVaultCard({
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
-            <span>Level {displayLevel}</span>
+            <span className="flex items-center gap-1.5">
+              <span>Level {displayLevel}</span>
+              {gamerLevelInfo.boostBonusXp > 0 && (
+                <span className="text-emerald-400 font-bold">
+                  (Bônus {gamerLevelInfo.boostLabel}: +{gamerLevelInfo.boostBonusXp.toLocaleString("pt-BR")} XP)
+                </span>
+              )}
+            </span>
             <span>
               Faltam {gamerLevelInfo.xpToNextLevel.toLocaleString("pt-BR")} XP para o Level {Math.min(99, displayLevel + 1)}
             </span>
