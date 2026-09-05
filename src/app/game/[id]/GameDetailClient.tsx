@@ -35,6 +35,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Eye,
   Languages,
   Package,
@@ -49,7 +51,9 @@ import {
   Tag,
   Search,
   Compass,
+  CheckCircle2,
 } from "lucide-react";
+import { triggerSelectionHaptic } from "@/lib/capacitor";
 import AuthModal from "@/components/AuthModal";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
 import AdultContentModal from "@/components/AdultContentModal";
@@ -211,6 +215,11 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const activeThumbnailRef = useRef<HTMLButtonElement>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  // Estados específicos para a experiência Mobile
+  const [mobileTab, setMobileTab] = useState<"overview" | "vault" | "details" | "media">("overview");
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isStorylineExpanded, setIsStorylineExpanded] = useState(false);
 
   const userGame = game ? getGameInLibrary(game.id) : undefined;
 
@@ -668,10 +677,1188 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   ];
   const uniqueDlcs = Array.from(new Map(allDlcsRaw.map((d) => [d.id, d])).values());
 
+  // =========================================================================
+  // FUNÇÕES MODULARES DE RENDERIZAÇÃO (REUTILIZADAS EM MOBILE E DESKTOP)
+  // =========================================================================
+
+  // 1. HUB DE MÍDIA UNIFICADO (TRAILERS & GALERIA 1080P)
+  const renderMediaHub = () => {
+    if (allMediaItems.length === 0 && (!game.videos || game.videos.length === 0)) {
+      return null;
+    }
+
+    return (
+      <section className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-5 shadow-2xl">
+        {/* Barra de Abas de Mídia */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+          <div className="flex items-center gap-2 bg-[#121316] p-1 rounded-2xl border border-white/10 text-xs w-fit">
+            {allMediaItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setMediaTab("gallery");
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all min-h-[36px] ${
+                  mediaTab === "gallery"
+                    ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Galeria de Imagens</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    mediaTab === "gallery" ? "bg-black/30 text-black" : "bg-white/10 text-gray-400"
+                  }`}
+                >
+                  {allMediaItems.length}
+                </span>
+              </button>
+            )}
+
+            {game.videos && game.videos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setMediaTab("videos");
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all min-h-[36px] ${
+                  mediaTab === "videos"
+                    ? "bg-red-500 text-white shadow-md shadow-red-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <Youtube className="w-3.5 h-3.5" />
+                <span>Trailers &amp; Vídeos</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    mediaTab === "videos" ? "bg-black/30 text-white" : "bg-white/10 text-gray-400"
+                  }`}
+                >
+                  {game.videos.length}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Controles da Galeria (Filtros e Setas) */}
+          {mediaTab === "gallery" && allMediaItems.length > 0 && (
+            <div className="flex items-center gap-2">
+              {artworksCount > 0 && screenshotsCount > 0 && (
+                <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      setMediaFilter("all");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                      mediaFilter === "all" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      setMediaFilter("artworks");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                      mediaFilter === "artworks" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Artes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      setMediaFilter("screenshots");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                      mediaFilter === "screenshots" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Screenshots
+                  </button>
+                </div>
+              )}
+
+              <div className="hidden sm:flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => scrollGallery("left")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/5 transition-colors"
+                  title="Rolar para esquerda"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollGallery("right")}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/5 transition-colors"
+                  title="Rolar para direita"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Conteúdo da Aba Galeria */}
+        {mediaTab === "gallery" && allMediaItems.length > 0 && (
+          <div
+            ref={galleryScrollRef}
+            className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x snap-mandatory py-1 -mx-2 px-2 sm:mx-0 sm:px-0"
+          >
+            {displayedMediaItems.map((item, idx) => {
+              if (failedImages.has(item.url)) return null;
+
+              return (
+                <div
+                  key={item.id || idx}
+                  onClick={() => setLightboxIndex(idx)}
+                  className="w-[260px] sm:w-[320px] md:w-[360px] flex-shrink-0 snap-start group relative aspect-video rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-lg hover:border-cyan-400/60 transition-all hover:scale-[1.01]"
+                >
+                  <img
+                    src={item.url}
+                    alt={item.label}
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => {
+                      setFailedImages((prev) => new Set(prev).add(item.url));
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
+                    {item.type === "artwork" ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 backdrop-blur-md shadow-sm">
+                        Arte Oficial
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-gray-300 border border-white/15 backdrop-blur-md shadow-sm">
+                        Screenshot
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black/70 text-gray-300 border border-white/10 backdrop-blur-md">
+                      {idx + 1}/{displayedMediaItems.length}
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-white bg-black/85 px-4 py-2 rounded-full border border-white/25 shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                      <Maximize2 className="w-3.5 h-3.5 text-cyan-400" /> Ampliar no Slide
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Conteúdo da Aba Vídeos */}
+        {mediaTab === "videos" && game.videos && game.videos.length > 0 && (
+          <div className="space-y-4 animate-fadeIn">
+            {activeVideoId && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${activeVideoId}?rel=0&modestbranding=1`}
+                  title={game.name}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full border-0"
+                />
+              </div>
+            )}
+
+            {game.videos.length > 1 && (
+              <div className="space-y-2 pt-1">
+                <span className="text-xs font-semibold text-gray-400 block">
+                  Outros Vídeos Disponíveis ({game.videos.length}):
+                </span>
+                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2">
+                  {game.videos.map((vid) => {
+                    const isActive = activeVideoId === vid.video_id;
+                    return (
+                      <button
+                        key={vid.id}
+                        type="button"
+                        onClick={() => {
+                          triggerSelectionHaptic();
+                          setActiveVideoId(vid.video_id);
+                        }}
+                        className={`flex-shrink-0 w-44 sm:w-48 rounded-xl overflow-hidden text-left border transition-all group ${
+                          isActive
+                            ? "border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10 bg-cyan-950/40"
+                            : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="relative aspect-video w-full overflow-hidden bg-neutral-900">
+                          <img
+                            src={`https://img.youtube.com/vi/${vid.video_id}/mqdefault.jpg`}
+                            alt={vid.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <div className={`p-1.5 rounded-full ${isActive ? "bg-[#00E5FF] text-black" : "bg-black/70 text-white"}`}>
+                              <Youtube className="w-3.5 h-3.5 fill-current" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-gray-200 line-clamp-1 group-hover:text-white">
+                            {vid.name}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  // 2. SOBRE O JOGO (SINOPSE COM LER MAIS NO MOBILE)
+  const renderSynopsis = (isMobile = false) => {
+    const rawText = sanitizeTranslation(game.description_raw) || "Descrição não disponível para este jogo.";
+    const isLong = rawText.length > 320;
+    const displayText = isMobile && isLong && !isDescriptionExpanded
+      ? rawText.slice(0, 300) + "..."
+      : rawText;
+
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-4 shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
+          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#00E5FF]" /> Sobre o Jogo
+          </h3>
+          <div className="flex items-center gap-2">
+            {isTranslating ? (
+              <span className="text-[11px] text-cyan-300 bg-cyan-950/50 border border-cyan-500/30 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 animate-pulse">
+                <Sparkles className="w-3.5 h-3.5" /> Traduzindo...
+              </span>
+            ) : game.description_raw && isLikelyEnglish(game.description_raw) ? (
+              <button
+                type="button"
+                onClick={handleTranslateOnDemand}
+                className="text-[11px] px-3 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                title="Buscar tradução em Português Brasileiro"
+              >
+                <Languages className="w-3.5 h-3.5" /> Traduzir para PT-BR
+              </button>
+            ) : game.description_raw ? (
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium flex items-center gap-1">
+                🇧🇷 Traduzido para PT-BR
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="relative">
+          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+            {displayText}
+          </p>
+
+          {isMobile && isLong && !isDescriptionExpanded && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#18191c] to-transparent pointer-events-none" />
+          )}
+        </div>
+
+        {isMobile && isLong && (
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setIsDescriptionExpanded(!isDescriptionExpanded);
+            }}
+            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-cyan-300 border border-white/10 transition-all active:scale-95 cursor-pointer"
+          >
+            <span>{isDescriptionExpanded ? "Mostrar menos" : "Ler sinopse completa"}</span>
+            {isDescriptionExpanded ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // 3. ENREDO & NARRATIVA (STORYLINE)
+  const renderStoryline = (isMobile = false) => {
+    if (!game.storyline) return null;
+    const storylineText = sanitizeTranslation(game.storyline);
+    const isLong = storylineText.length > 280;
+    const displayText = isMobile && isLong && !isStorylineExpanded
+      ? storylineText.slice(0, 260) + "..."
+      : storylineText;
+
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-4 shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
+          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <Layers className="w-5 h-5 text-purple-400" /> Enredo &amp; Narrativa
+          </h3>
+          {!isLikelyEnglish(game.storyline) && (
+            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium flex items-center gap-1">
+              🇧🇷 Traduzido para PT-BR
+            </span>
+          )}
+        </div>
+
+        <div className="relative">
+          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+            {displayText}
+          </p>
+          {isMobile && isLong && !isStorylineExpanded && (
+            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#18191c] to-transparent pointer-events-none" />
+          )}
+        </div>
+
+        {isMobile && isLong && (
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setIsStorylineExpanded(!isStorylineExpanded);
+            }}
+            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-purple-300 border border-white/10 transition-all active:scale-95 cursor-pointer"
+          >
+            <span>{isStorylineExpanded ? "Mostrar menos" : "Ler enredo completo"}</span>
+            {isStorylineExpanded ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // 4. DURAÇÃO & RITMO DE ZERAMENTO (HLTB)
+  const renderHltb = () => {
+    return <HltbCard hltb={game.hltb} userPlaytimeHours={userGame?.userPlaytimeHours} />;
+  };
+
+  // 5. ONDE JOGAR / LOJAS OFICIAIS
+  const renderStores = (isMobile = false) => {
+    if (storeWebsites.length === 0) return null;
+
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-7 space-y-3.5 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4 text-cyan-400" />
+            <span>Onde Jogar &amp; Lojas Oficiais</span>
+          </h3>
+          <span className="text-[10px] text-gray-400 font-mono">Lojas Disponíveis</span>
+        </div>
+        <p className="text-xs text-gray-400">
+          Acesse as páginas oficiais para comprar, baixar ou conferir detalhes deste jogo:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          {storeWebsites.map((w) => {
+            const meta = getWebsiteMeta(w.url);
+            return (
+              <a
+                key={w.id}
+                href={w.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`min-h-[48px] flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all active:scale-95 shadow-sm ${meta.color}`}
+                title={`Página oficial de ${game.name} na ${meta.label}`}
+              >
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  <span>{meta.label}</span>
+                </div>
+                <span className="text-[10px] uppercase font-mono tracking-wider opacity-80">
+                  Acessar Loja
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // 6. CATEGORIAS & ESTILOS DO JOGO
+  const renderCategories = () => {
+    if ((!game.genres || game.genres.length === 0) && (!game.themes || game.themes.length === 0)) {
+      return null;
+    }
+
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
+          <div className="space-y-0.5">
+            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Tags className="w-5 h-5 text-[#00E5FF]" /> Categorias &amp; Estilos do Jogo
+            </h3>
+            <p className="text-xs text-gray-400">
+              Clique em qualquer categoria para buscar e explorar outros títulos do mesmo estilo no acervo.
+            </p>
+          </div>
+          <Link
+            href="/categorias"
+            className="text-xs font-semibold text-[#00E5FF] hover:text-cyan-300 flex items-center gap-1 w-fit transition-colors group"
+          >
+            <span>Ver todas as categorias</span>
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
+
+        {/* Grid de Cards Interativos de Categorias */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {game.genres?.map((g) => {
+            const { searchUrl, curatedUrl } = getCategoryHubUrl(g.name);
+            return (
+              <div
+                key={g.id}
+                className="p-3.5 rounded-2xl bg-white/5 hover:bg-cyan-950/20 border border-white/10 hover:border-cyan-500/40 transition-all group flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 font-mono">
+                      Gênero
+                    </span>
+                    <Tag className="w-3.5 h-3.5 text-cyan-400/60 group-hover:text-cyan-400 transition-colors" />
+                  </div>
+                  <h4 className="text-base font-bold text-white group-hover:text-[#00E5FF] transition-colors">
+                    {translateGenre(g.name)}
+                  </h4>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href={searchUrl}
+                    className="flex-1 py-2 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 hover:text-white border border-cyan-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 min-h-[40px]"
+                    title={`Buscar jogos de ${translateGenre(g.name)}`}
+                  >
+                    <Search className="w-3 h-3" />
+                    <span>Buscar Jogos</span>
+                  </Link>
+                  {curatedUrl && (
+                    <Link
+                      href={curatedUrl}
+                      className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer min-h-[40px]"
+                      title="Ver página especial da categoria"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {game.themes?.slice(0, 4).map((t) => {
+            const { searchUrl, curatedUrl } = getCategoryHubUrl(t);
+            return (
+              <div
+                key={t}
+                className="p-3.5 rounded-2xl bg-white/5 hover:bg-purple-950/20 border border-white/10 hover:border-purple-500/40 transition-all group flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 font-mono">
+                      Tema / Ambientação
+                    </span>
+                    <Layers className="w-3.5 h-3.5 text-purple-400/60 group-hover:text-purple-400 transition-colors" />
+                  </div>
+                  <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
+                    {translateTheme(t)}
+                  </h4>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href={searchUrl}
+                    className="flex-1 py-2 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 hover:text-white border border-purple-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 min-h-[40px]"
+                    title={`Buscar jogos com tema ${translateTheme(t)}`}
+                  >
+                    <Search className="w-3 h-3" />
+                    <span>Buscar Jogos</span>
+                  </Link>
+                  {curatedUrl && (
+                    <Link
+                      href={curatedUrl}
+                      className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer min-h-[40px]"
+                      title="Ver página especial da categoria"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // 7. PAINEL DO JOGADOR ("SEU REGISTRO NO VAULT")
+  const renderPlayerVault = (isMobile = false) => {
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-400" /> Seu Registro no Vault
+          </h3>
+          {userGame && (
+            <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+              Na Coleção
+            </span>
+          )}
+        </div>
+
+        {userGame ? (
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+              <span className="text-gray-400 font-sans">Status atual:</span>
+              <StatusBadge status={userGame.status} completionType={userGame.completionType} size="md" />
+            </div>
+
+            {userGame.userRating !== null && (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+                <span className="text-gray-400 font-sans">Sua Nota:</span>
+                <span className="font-bold text-amber-400 text-sm">
+                  ⭐ {userGame.userRating.toFixed(1)} / 10
+                </span>
+              </div>
+            )}
+
+            {userGame.userPlaytimeHours !== null && (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+                <span className="text-gray-400 font-sans">Tempo jogado:</span>
+                <span className="font-bold text-cyan-300 text-sm">
+                  {userGame.userPlaytimeHours}h
+                </span>
+              </div>
+            )}
+
+            {userGame.platformPlayed && (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+                <span className="text-gray-400 font-sans">Plataforma:</span>
+                <span className="font-semibold text-gray-200">
+                  {userGame.platformPlayed}
+                </span>
+              </div>
+            )}
+
+            {userGame.userReview && (
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-gray-500 font-sans">
+                  Sua Resenha
+                </span>
+                <p className="text-xs text-gray-300 italic whitespace-pre-line font-sans">
+                  &quot;{userGame.userReview}&quot;
+                </p>
+              </div>
+            )}
+
+            {/* DLCs Concluídas ou Vinculadas */}
+            {userGame.dlcs && userGame.dlcs.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 space-y-1.5 font-sans">
+                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400">
+                  <span className="flex items-center gap-1">
+                    <Package className="w-3.5 h-3.5" /> DLCs Vinculadas
+                  </span>
+                  <span className="font-mono">
+                    {userGame.dlcs.filter((d) => d.status === "completed").length}/{userGame.dlcs.length} Zeradas
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {userGame.dlcs.map((d) => (
+                    <span
+                      key={d.id}
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
+                        d.status === "completed"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          : d.status === "playing"
+                          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                          : "bg-white/5 text-gray-300 border border-white/10"
+                      }`}
+                      title={`${d.name} (${d.status})`}
+                    >
+                      {d.name.length > 22 ? `${d.name.substring(0, 20)}...` : d.name}
+                      {d.playtimeHours ? ` (${d.playtimeHours}h)` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerSelectionHaptic();
+                setIsModalOpen(true);
+              }}
+              className="w-full min-h-[48px] py-3 rounded-2xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/30 text-xs font-bold text-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 active:scale-98"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Editar Registro no Vault</span>
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-6 sm:py-8 space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-cyan-400 shadow-inner">
+              <Gamepad2 className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white">
+                Adicione este jogo à sua coleção
+              </h4>
+              <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                Controle o que você está jogando, anote suas notas, registre suas horas e acompanhe os títulos que já zerou.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerSelectionHaptic();
+                setIsModalOpen(true);
+              }}
+              className="w-full min-h-[50px] py-3.5 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Adicionar à Coleção</span>
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 8. FICHA TÉCNICA RÁPIDA CONSOLIDADA
+  const renderTechnicalSpecs = () => {
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-5 shadow-xl">
+        <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
+          <Monitor className="w-4 h-4 text-cyan-400" /> Ficha Técnica
+        </h3>
+
+        {/* Desenvolvedora & Distribuidora */}
+        {(game.developers?.length || game.publishers?.length) ? (
+          <div className="space-y-2">
+            <span className="text-xs font-semibold text-gray-400 block">Produção &amp; Distribuição:</span>
+            <div className="flex flex-col gap-1.5 text-xs">
+              {game.developers && game.developers.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                  <span className="text-gray-400">Desenvolvedora:</span>
+                  <span className="text-gray-200 font-bold">
+                    {game.developers.map((dev, idx) => (
+                      <Link
+                        key={dev}
+                        href={`/search?q=${encodeURIComponent(dev)}`}
+                        className="hover:text-cyan-300 hover:underline transition-colors"
+                      >
+                        {dev}{idx < game.developers!.length - 1 ? ", " : ""}
+                      </Link>
+                    ))}
+                  </span>
+                </div>
+              )}
+              {game.publishers && game.publishers.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <span className="text-gray-400">Publicadora:</span>
+                  <span className="text-gray-200 font-bold">
+                    {game.publishers.map((pub, idx) => (
+                      <Link
+                        key={pub}
+                        href={`/search?q=${encodeURIComponent(pub)}`}
+                        className="hover:text-purple-300 hover:underline transition-colors"
+                      >
+                        {pub}{idx < game.publishers!.length - 1 ? ", " : ""}
+                      </Link>
+                    ))}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Gêneros & Categorias */}
+        {game.genres && game.genres.length > 0 && (
+          <div className="space-y-2 pt-3 border-t border-white/5">
+            <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Tags className="w-3.5 h-3.5 text-cyan-400" /> Gêneros &amp; Categorias:
+              </span>
+              <span className="text-[10px] text-gray-500">Clique para buscar</span>
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {game.genres.map((g) => {
+                const { searchUrl } = getCategoryHubUrl(g.name);
+                return (
+                  <Link
+                    key={g.id}
+                    href={searchUrl}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-cyan-950/40 hover:bg-cyan-900/70 text-cyan-300 hover:text-white border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 group shadow-sm active:scale-95 cursor-pointer min-h-[36px]"
+                    title={`Buscar jogos na categoria ${translateGenre(g.name)}`}
+                  >
+                    <Search className="w-2.5 h-2.5 text-cyan-400 group-hover:text-cyan-200" />
+                    <span>{translateGenre(g.name)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Plataformas */}
+        <div className="space-y-2 pt-3 border-t border-white/5">
+          <span className="text-xs font-semibold text-gray-400 block">Plataformas Disponíveis:</span>
+          <div className="flex flex-wrap gap-1.5">
+            {game.platforms && game.platforms.length > 0 ? (
+              game.platforms.map((p) => (
+                <Link
+                  key={p.platform.id}
+                  href={`/search?platform=${encodeURIComponent(p.platform.name)}`}
+                  className="text-xs font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-white/25 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer min-h-[36px]"
+                  title={`Buscar jogos para ${p.platform.name}`}
+                >
+                  <Gamepad2 className="w-3 h-3 text-cyan-400/70" />
+                  <span>{p.platform.name}</span>
+                </Link>
+              ))
+            ) : (
+              <span className="text-xs text-gray-500">Múltiplas plataformas</span>
+            )}
+          </div>
+        </div>
+
+        {/* Suporte a Português do Brasil */}
+        {game.ptbrSupport && (
+          <div className="space-y-1.5 pt-3 border-t border-white/5">
+            <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+              <Languages className="w-3.5 h-3.5 text-emerald-400" /> Português (Brasil):
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {game.ptbrSupport.audio && (
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium">
+                  Áudio Dublado 🇧🇷
+                </span>
+              )}
+              {game.ptbrSupport.subtitles && (
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-blue-950/40 text-blue-300 border border-blue-500/20 font-medium">
+                  Legendas
+                </span>
+              )}
+              {game.ptbrSupport.interface && (
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium">
+                  Interface &amp; Menus
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modos de Jogo & Perspectiva */}
+        {((game.game_modes && game.game_modes.length > 0) || (game.player_perspectives && game.player_perspectives.length > 0)) && (
+          <div className="space-y-3 pt-3 border-t border-white/5">
+            {game.game_modes && game.game_modes.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-cyan-400" /> Modos de Jogo:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.game_modes.map((m) => (
+                    <span key={m} className="text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-950/40 text-cyan-300 border border-cyan-500/20">
+                      {translateGameMode(m)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {game.player_perspectives && game.player_perspectives.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-amber-400" /> Câmera / Perspectiva:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.player_perspectives.map((p) => (
+                    <span key={p} className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-950/40 text-amber-300 border border-amber-500/20">
+                      {translatePlayerPerspective(p)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ambientação & Temas */}
+        {game.themes && game.themes.length > 0 && (
+          <div className="space-y-1.5 pt-3 border-t border-white/5">
+            <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação &amp; Temas:
+              </span>
+              <span className="text-[10px] text-gray-500">Clique para buscar</span>
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {game.themes.map((t) => (
+                <Link
+                  key={t}
+                  href={getCategorySearchUrl(t)}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-purple-950/40 hover:bg-purple-900/70 text-purple-300 hover:text-white border border-purple-500/20 hover:border-purple-400 transition-all flex items-center gap-1 group active:scale-95 cursor-pointer min-h-[32px]"
+                  title={`Buscar jogos com o tema ${translateTheme(t)}`}
+                >
+                  <Search className="w-2.5 h-2.5 text-purple-400 group-hover:text-purple-200" />
+                  <span>{translateTheme(t)}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Classificação Indicativa Detalhada */}
+        {((game.age_ratings && game.age_ratings.length > 0) || isAdult) && (
+          <div className="space-y-2 pt-3 border-t border-white/5">
+            <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Classificação Indicativa Oficial:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {game.age_ratings && game.age_ratings.length > 0 ? (
+                game.age_ratings.map((ar, idx) => {
+                  const primary = getPrimaryAgeRating([ar]);
+                  return (
+                    <div
+                      key={idx}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs ${
+                        primary
+                          ? `${primary.bgClass} ${primary.textClass} ${primary.borderClass || "border-white/20"}`
+                          : "bg-white/5 border-white/10 text-gray-200"
+                      }`}
+                    >
+                      <span className="font-black text-sm">{primary?.badgeText || ar.rating}</span>
+                      <div className="text-left">
+                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-75">{ar.organization}</p>
+                        <p className="text-[11px] leading-tight font-medium">{primary?.description || translateAgeRatingText(ar.rating)}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-red-950/60 border-red-500/30 text-red-300 text-xs">
+                  <span className="font-black text-sm">18</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Restrição Adulta</p>
+                    <p className="text-[11px] font-medium">Conteúdo Adulto / Não recomendado para menores</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Marcadores e Palavras-chave / Conteúdo */}
+        {game.keywords && game.keywords.length > 0 && (
+          <div className="space-y-1.5 pt-3 border-t border-white/5">
+            <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Marcadores &amp; Conteúdo:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {game.keywords.map((kw, idx) => (
+                <Link
+                  key={idx}
+                  href={`/search?q=${encodeURIComponent(kw)}`}
+                  className={`text-[10px] px-2 py-0.5 rounded-md border font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                    isAdultGame({ keywords: [kw] })
+                      ? "bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300 font-bold"
+                      : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300 hover:text-white"
+                  }`}
+                  title={`Buscar jogos com a tag "${kw}"`}
+                >
+                  #{kw}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 9. COMUNIDADES, WIKIS & REDES
+  const renderCommunity = () => {
+    if (communityWebsites.length === 0) return null;
+
+    return (
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-4 shadow-xl">
+        <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
+          <Globe className="w-4 h-4 text-emerald-400" /> Comunidade &amp; Guias
+        </h3>
+        <div className="flex flex-col gap-2">
+          {communityWebsites.map((w) => {
+            const meta = getWebsiteMeta(w.url);
+            return (
+              <a
+                key={w.id}
+                href={w.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`min-h-[44px] inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium border transition-all ${meta.color}`}
+                title={`Acessar ${meta.label}`}
+              >
+                <span>{meta.label}</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // 10. SEÇÃO DE EXPANSÕES & DLCS OFICIAIS
+  const renderDlcs = () => {
+    if (uniqueDlcs.length === 0) return null;
+
+    return (
+      <section className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-6 shadow-2xl animate-fadeIn">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+          <div className="space-y-1">
+            <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+              <Package className="w-5 h-5 text-[#00E5FF]" /> Expansões &amp; DLCs Oficiais ({uniqueDlcs.length})
+            </h3>
+            <p className="text-xs text-gray-400">
+              Conteúdos adicionais, expansões de história e DLCs lançadas para {game.name}.
+            </p>
+          </div>
+
+          {userGame?.dlcs && userGame.dlcs.length > 0 && (
+            <span className="px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-[#00E5FF] font-mono font-bold w-fit">
+              {userGame.dlcs.filter((d) => d.status === "completed").length} de {uniqueDlcs.length} DLCs Zeradas
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {uniqueDlcs.map((dlc) => {
+            const userDlc = userGame?.dlcs?.find((d) => d.id === dlc.id);
+
+            return (
+              <div
+                key={dlc.id}
+                className={`group rounded-2xl border transition-all hover:scale-[1.02] flex flex-col justify-between overflow-hidden ${
+                  userDlc?.status === "completed"
+                    ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500"
+                    : userDlc?.status === "playing"
+                    ? "bg-cyan-950/20 border-cyan-500/40 hover:border-cyan-500"
+                    : "bg-white/5 border-white/10 hover:border-white/20"
+                }`}
+              >
+                <Link href={getGameUrl(dlc)} className="block">
+                  <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
+                    {dlc.coverUrl ? (
+                      <img
+                        src={dlc.coverUrl}
+                        alt={dlc.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 font-mono">
+                        DLC
+                      </div>
+                    )}
+
+                    {userDlc && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono shadow-md ${
+                            userDlc.status === "completed"
+                              ? "bg-emerald-500 text-black"
+                              : userDlc.status === "playing"
+                              ? "bg-cyan-500 text-black"
+                              : "bg-amber-500 text-black"
+                          }`}
+                        >
+                          {userDlc.status === "completed"
+                            ? "Zerada"
+                            : userDlc.status === "playing"
+                            ? "Jogando"
+                            : "Quero"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-2.5 space-y-1">
+                    <h4
+                      className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2"
+                      title={dlc.name}
+                    >
+                      {dlc.name}
+                    </h4>
+                    <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
+                      <span>{dlc.releaseDate ? dlc.releaseDate.substring(0, 4) : "DLC"}</span>
+                      {userDlc?.playtimeHours && (
+                        <span className="text-cyan-300 font-bold">{userDlc.playtimeHours}h</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+
+                <div className="p-2 pt-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      setIsModalOpen(true);
+                    }}
+                    className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/15 text-[10px] font-semibold text-gray-300 hover:text-white transition-all border border-white/5 min-h-[36px]"
+                  >
+                    {userDlc ? "Editar no Jogo" : "+ Anexar / Registrar"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  // 11. FRANQUIA & UNIVERSO DA SAGA
+  const renderUniverse = () => {
+    if (!game.franchises?.[0] && !game.collections?.[0]) return null;
+    const franchiseName = game.franchises?.[0] || game.collections?.[0] || "";
+
+    return (
+      <section className="rounded-[28px] sm:rounded-[32px] border border-amber-500/25 bg-gradient-to-r from-amber-950/20 via-[#18191c] to-black p-5 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Universo &amp; Linha do Tempo
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Saga {franchiseName}
+            </h3>
+            <p className="text-xs text-gray-300 max-w-2xl leading-relaxed">
+              Quer mergulhar na cronologia completa? Encontre todos os títulos, edições e expansões desta franquia no acervo.
+            </p>
+          </div>
+
+          <Link
+            href={`/search?q=${encodeURIComponent(franchiseName)}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-lg self-start sm:self-auto flex-shrink-0 min-h-[44px]"
+          >
+            <span>Ver Todos os Jogos da Saga</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
+    );
+  };
+
+  // 12. TÍTULOS SEMELHANTES / RECOMENDAÇÕES
+  const renderSimilarGames = () => {
+    if (!game.similar_games || game.similar_games.length === 0) return null;
+
+    return (
+      <section className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-6 shadow-2xl">
+        <div className="space-y-1 border-b border-white/5 pb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-400" /> Títulos Semelhantes Recomendados
+          </h3>
+          <p className="text-xs text-gray-400">
+            Se você curte {game.name}, talvez também vá gostar destes títulos selecionados pelo IGDB.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {game.similar_games.slice(0, 12).map((sg) => (
+            <div
+              key={sg.id}
+              className="group rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-cyan-500/40 transition-all hover:scale-[1.03] flex flex-col justify-between"
+            >
+              <Link
+                href={getGameUrl(sg)}
+                className="block flex-1 flex flex-col"
+              >
+                <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
+                  {sg.coverUrl ? (
+                    <img
+                      src={sg.coverUrl}
+                      alt={sg.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
+                      Sem Capa
+                    </div>
+                  )}
+                  {sg.rating && (
+                    <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold font-mono text-amber-400 border border-amber-400/30">
+                      ★ {sg.rating.toFixed(1)}
+                    </div>
+                  )}
+                </div>
+                <div className="p-2.5">
+                  <h4 className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2">
+                    {sg.name}
+                  </h4>
+                </div>
+              </Link>
+
+              <div className="p-2 pt-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    triggerSelectionHaptic();
+                    setModalGame({
+                      id: sg.id,
+                      name: sg.name,
+                      background_image: sg.coverUrl,
+                      slug: String(sg.id),
+                      rating: sg.rating ? Number((sg.rating * 10).toFixed(0)) : undefined,
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  className="w-full min-h-[36px] py-1.5 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black text-[10px] font-bold text-gray-200 transition-all flex items-center justify-center gap-1 border border-white/10 shadow-sm active:scale-95"
+                  title="Salvar ou registrar este jogo no seu perfil"
+                >
+                  <Plus className="w-3 h-3 text-cyan-400 group-hover:text-black" />
+                  <span>+ Salvar</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-6 sm:space-y-8 pb-16">
       {/* Botão Voltar */}
       <button
+        type="button"
         onClick={() => router.back()}
         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
       >
@@ -703,7 +1890,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
           <Link
             href={getGameUrl(game.parent_game)}
-            className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0"
+            className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0 min-h-[40px]"
           >
             <span>Ver Jogo Base</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -711,10 +1898,12 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         </div>
       )}
 
-      {/* Hero Header do Jogo */}
-      <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
+      {/* =========================================================================
+          HERO HEADER DO JOGO (RESPONSIVO: COMPACTO NO MOBILE, COMPLETO NO DESKTOP)
+      ========================================================================= */}
+      <div className="relative rounded-[28px] sm:rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
         {/* Backdrop Banner */}
-        <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-neutral-950">
+        <div className="relative h-44 sm:h-72 lg:h-96 w-full overflow-hidden bg-neutral-950">
           {backdropImage && !bannerError ? (
             <img
               src={backdropImage}
@@ -731,10 +1920,140 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-[#18191c]/60 to-transparent" />
         </div>
 
-        {/* Informações Principais sobrepostas */}
-        <div className="relative -mt-28 sm:-mt-36 p-6 sm:p-8 flex flex-col md:flex-row items-start gap-6 sm:gap-8">
+        {/* ==================== HERO MOBILE (< lg) ==================== */}
+        <div className="lg:hidden relative -mt-20 sm:-mt-28 p-4 sm:p-6 space-y-4">
+          <div className="flex items-end gap-3.5 sm:gap-5">
+            {/* Capa Poster */}
+            <div className="w-24 sm:w-32 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/15 bg-neutral-900 flex-shrink-0 group">
+              {game.background_image && !posterError ? (
+                <img
+                  src={game.background_image}
+                  alt={game.name}
+                  decoding="async"
+                  onError={() => setPosterError(true)}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500">
+                  <Sparkles className="w-6 h-6 text-[#00E5FF]/40 mb-1" />
+                  <span className="text-[10px] font-semibold text-gray-300 line-clamp-2">{game.name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Resumo ao lado da capa */}
+            <div className="flex-1 min-w-0 pb-1 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {getAgeRatingBadge(game.age_ratings, isAdult)}
+
+                {game.released && (
+                  <span className="text-[11px] font-mono text-gray-300 bg-black/60 border border-white/10 px-2 py-0.5 rounded-md">
+                    {game.released.substring(0, 4)}
+                  </span>
+                )}
+
+                {game.ptbrSupport?.audio && (
+                  <span className="text-[10px] text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md font-medium">
+                    🇧🇷 Dublado
+                  </span>
+                )}
+                {game.ptbrSupport?.subtitles && !game.ptbrSupport?.audio && (
+                  <span className="text-[10px] text-blue-300 bg-blue-950/60 border border-blue-500/30 px-2 py-0.5 rounded-md font-medium">
+                    🇧🇷 Legendado
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-lg sm:text-2xl font-black text-white leading-tight tracking-tight line-clamp-2">
+                {game.name}
+              </h1>
+
+              {game.developers && game.developers[0] && (
+                <p className="text-[11px] text-gray-400 font-medium truncate">
+                  {game.developers[0]}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {game.metacritic && (
+                  <MetacriticBadge score={game.metacritic} size="sm" showLabel />
+                )}
+
+                {game.rating && (
+                  <span className="flex items-center gap-1 text-[11px] font-mono text-amber-400 font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                    <Star className="w-3 h-3 fill-amber-400" />
+                    {game.rating.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Botão de Ação Primário na Thumb Zone do Mobile */}
+          <div className="pt-1">
+            {userGame ? (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setIsModalOpen(true);
+                }}
+                className="w-full min-h-[48px] flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-lg"
+              >
+                <div className="flex items-center gap-2.5">
+                  <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+                  <span className="text-white font-extrabold text-sm">Seu Registro</span>
+                  {userGame.userRating && (
+                    <span className="text-amber-400 font-mono text-xs font-bold">
+                      ⭐ {userGame.userRating.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-amber-300 font-black text-xs bg-amber-400/20 px-2.5 py-1 rounded-xl">
+                  <span>Editar</span>
+                  <Edit3 className="w-3.5 h-3.5" />
+                </div>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setIsModalOpen(true);
+                }}
+                className="w-full min-h-[50px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-black stroke-[3]" />
+                <span>Adicionar ao Meu Vault</span>
+              </button>
+            )}
+          </div>
+
+          {/* Gêneros Rápidos no Mobile */}
+          {game.genres && game.genres.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {game.genres.slice(0, 3).map((g) => (
+                <Link
+                  key={g.id}
+                  href={getCategorySearchUrl(g.name)}
+                  className="flex-shrink-0 text-[11px] text-cyan-300 bg-cyan-950/50 hover:bg-cyan-900/70 border border-cyan-500/30 px-2.5 py-1 rounded-full font-medium transition-all"
+                >
+                  {translateGenre(g.name)}
+                </Link>
+              ))}
+              {game.genres.length > 3 && (
+                <span className="text-[10px] text-gray-500 font-mono px-1">
+                  +{game.genres.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ==================== HERO DESKTOP (hidden lg:flex) ==================== */}
+        <div className="hidden lg:flex relative -mt-36 p-8 flex-row items-start gap-8">
           {/* Capa Poster */}
-          <div className="w-36 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 bg-neutral-900 flex-shrink-0 group">
+          <div className="w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 bg-neutral-900 flex-shrink-0 group">
             {game.background_image && !posterError ? (
               <img
                 src={game.background_image}
@@ -754,7 +2073,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           {/* Dados do Jogo */}
           <div className="flex-1 min-w-0 space-y-3.5">
             <div className="flex flex-wrap items-center gap-2">
-              {/* Selo Oficial de Classificação Indicativa (CLASS_IND Brasil / ESRB / PEGI / +18) */}
               {getAgeRatingBadge(game.age_ratings, isAdult)}
 
               {game.released && (
@@ -764,7 +2082,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 </span>
               )}
 
-              {/* Franquia / Coleção Oficial */}
               {(game.franchises?.[0] || game.collections?.[0]) && (
                 <Link
                   href={`/search?q=${encodeURIComponent(game.franchises?.[0] || game.collections?.[0] || "")}`}
@@ -776,7 +2093,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 </Link>
               )}
 
-              {/* Destaque de Localização PT-BR */}
               {game.ptbrSupport?.audio && (
                 <span className="flex items-center gap-1 text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full font-medium" title="Possui Dublagem em Português do Brasil">
                   🇧🇷 Dublado
@@ -813,11 +2129,10 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               ))}
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               {game.name}
             </h1>
 
-            {/* Desenvolvedoras e Distribuidoras Clicáveis */}
             {(game.developers?.length || game.publishers?.length) ? (
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-400 font-medium">
                 {game.developers && game.developers.length > 0 && (
@@ -855,7 +2170,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               </div>
             ) : null}
 
-            {/* Badges de Notas: Metacritic & Comunidade */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               {game.metacritic && (
                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
@@ -879,10 +2193,13 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               )}
             </div>
 
-            {/* Botão de Ação: Registrar / Editar (Estilo Stash) */}
             <div className="pt-2 w-full sm:w-auto flex flex-wrap items-center gap-3">
               <button
-                onClick={() => setIsModalOpen(true)}
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setIsModalOpen(true);
+                }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
               >
                 {userGame ? (
@@ -899,7 +2216,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               </button>
             </div>
 
-            {/* Acesso Imediato: Onde Jogar & Lojas Oficiais */}
             {storeWebsites.length > 0 && (
               <div className="pt-2 flex flex-wrap items-center gap-2">
                 <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1.5 mr-1">
@@ -917,967 +2233,155 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                       title={`Página oficial do jogo em ${meta.label}`}
                     >
                       <span>{meta.label}</span>
-                      <ExternalLink className="w-3 h-3 opacity-70" />
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          GRID DE 2 COLUNAS: CONTEÚDO PRINCIPAL (ESQ) & PAINEL LATERAL (DIR)
-      ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-        {/* =====================================================================
-            COLUNA PRINCIPAL (2 COLUNAS / ~65%)
-        ===================================================================== */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 1. HUB DE MÍDIA UNIFICADO (TRAILERS & GALERIA 1080P) */}
-          {(allMediaItems.length > 0 || (game.videos && game.videos.length > 0)) && (
-            <section className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-5 shadow-2xl">
-              {/* Barra de Abas de Mídia */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
-                <div className="flex items-center gap-2 bg-[#121316] p-1 rounded-2xl border border-white/10 text-xs w-fit">
-                  {allMediaItems.length > 0 && (
-                    <button
-                      onClick={() => setMediaTab("gallery")}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all ${
-                        mediaTab === "gallery"
-                          ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span>Galeria de Imagens</span>
-                      <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                          mediaTab === "gallery" ? "bg-black/30 text-black" : "bg-white/10 text-gray-400"
-                        }`}
-                      >
-                        {allMediaItems.length}
-                      </span>
-                    </button>
-                  )}
-
-                  {game.videos && game.videos.length > 0 && (
-                    <button
-                      onClick={() => setMediaTab("videos")}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold transition-all ${
-                        mediaTab === "videos"
-                          ? "bg-red-500 text-white shadow-md shadow-red-500/20"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      <Youtube className="w-3.5 h-3.5" />
-                      <span>Trailers &amp; Vídeos</span>
-                      <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                          mediaTab === "videos" ? "bg-black/30 text-white" : "bg-white/10 text-gray-400"
-                        }`}
-                      >
-                        {game.videos.length}
-                      </span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Controles da Galeria (Filtros e Setas) se estiver na aba Galeria */}
-                {mediaTab === "gallery" && allMediaItems.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    {artworksCount > 0 && screenshotsCount > 0 && (
-                      <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 text-[11px]">
-                        <button
-                          onClick={() => setMediaFilter("all")}
-                          className={`px-2.5 py-0.5 rounded-lg font-medium transition-all ${
-                            mediaFilter === "all" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          Todas
-                        </button>
-                        <button
-                          onClick={() => setMediaFilter("artworks")}
-                          className={`px-2.5 py-0.5 rounded-lg font-medium transition-all ${
-                            mediaFilter === "artworks" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          Artes
-                        </button>
-                        <button
-                          onClick={() => setMediaFilter("screenshots")}
-                          className={`px-2.5 py-0.5 rounded-lg font-medium transition-all ${
-                            mediaFilter === "screenshots" ? "bg-white/20 text-white font-bold" : "text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          Screenshots
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="hidden sm:flex items-center gap-1">
-                      <button
-                        onClick={() => scrollGallery("left")}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/5 transition-colors"
-                        title="Rolar para esquerda"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => scrollGallery("right")}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/5 transition-colors"
-                        title="Rolar para direita"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Conteúdo da Aba Galeria */}
-              {mediaTab === "gallery" && allMediaItems.length > 0 && (
-                <div
-                  ref={galleryScrollRef}
-                  className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x snap-mandatory py-1 -mx-2 px-2 sm:mx-0 sm:px-0"
-                >
-                  {displayedMediaItems.map((item, idx) => {
-                    if (failedImages.has(item.url)) return null;
-
-                    return (
-                      <div
-                        key={item.id || idx}
-                        onClick={() => setLightboxIndex(idx)}
-                        className="w-[260px] sm:w-[320px] md:w-[360px] flex-shrink-0 snap-start group relative aspect-video rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer shadow-lg hover:border-cyan-400/60 transition-all hover:scale-[1.01]"
-                      >
-                        <img
-                          src={item.url}
-                          alt={item.label}
-                          loading="lazy"
-                          decoding="async"
-                          onError={() => {
-                            setFailedImages((prev) => new Set(prev).add(item.url));
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-
-                        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
-                          {item.type === "artwork" ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 backdrop-blur-md shadow-sm">
-                              Arte Oficial
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-gray-300 border border-white/15 backdrop-blur-md shadow-sm">
-                              Screenshot
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black/70 text-gray-300 border border-white/10 backdrop-blur-md">
-                            {idx + 1}/{displayedMediaItems.length}
-                          </span>
-                        </div>
-
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="flex items-center gap-1.5 text-xs font-bold text-white bg-black/85 px-4 py-2 rounded-full border border-white/25 shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                            <Maximize2 className="w-3.5 h-3.5 text-cyan-400" /> Ampliar no Slide
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Conteúdo da Aba Vídeos */}
-              {mediaTab === "videos" && game.videos && game.videos.length > 0 && (
-                <div className="space-y-4 animate-fadeIn">
-                  {activeVideoId && (
-                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl">
-                      <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${activeVideoId}?rel=0&modestbranding=1`}
-                        title={game.name}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full border-0"
-                      />
-                    </div>
-                  )}
-
-                  {game.videos.length > 1 && (
-                    <div className="space-y-2 pt-1">
-                      <span className="text-xs font-semibold text-gray-400 block">
-                        Outros Vídeos Disponíveis ({game.videos.length}):
-                      </span>
-                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2">
-                        {game.videos.map((vid) => {
-                          const isActive = activeVideoId === vid.video_id;
-                          return (
-                            <button
-                              key={vid.id}
-                              onClick={() => setActiveVideoId(vid.video_id)}
-                              className={`flex-shrink-0 w-44 sm:w-48 rounded-xl overflow-hidden text-left border transition-all group ${
-                                isActive
-                                  ? "border-[#00E5FF] shadow-lg shadow-[#00E5FF]/10 bg-cyan-950/40"
-                                  : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
-                              }`}
-                            >
-                              <div className="relative aspect-video w-full overflow-hidden bg-neutral-900">
-                                <img
-                                  src={`https://img.youtube.com/vi/${vid.video_id}/mqdefault.jpg`}
-                                  alt={vid.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                  <div className={`p-1.5 rounded-full ${isActive ? "bg-[#00E5FF] text-black" : "bg-black/70 text-white"}`}>
-                                    <Youtube className="w-3.5 h-3.5 fill-current" />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="p-2">
-                                <p className="text-xs font-medium text-gray-200 line-clamp-1 group-hover:text-white">
-                                  {vid.name}
-                                </p>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-          )}
-
-          {/* 2. SOBRE O JOGO (SINOPSE) */}
-          <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-4 shadow-xl">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#00E5FF]" /> Sobre o Jogo
-              </h3>
-              <div className="flex items-center gap-2">
-                {isTranslating ? (
-                  <span className="text-[11px] text-cyan-300 bg-cyan-950/50 border border-cyan-500/30 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 animate-pulse">
-                    <Sparkles className="w-3.5 h-3.5" /> Traduzindo sinopse...
-                  </span>
-                ) : game.description_raw && isLikelyEnglish(game.description_raw) ? (
-                  <button
-                    onClick={handleTranslateOnDemand}
-                    className="text-[11px] px-3 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-medium transition-colors flex items-center gap-1.5 shadow-sm"
-                    title="Buscar tradução em Português Brasileiro"
-                  >
-                    <Languages className="w-3.5 h-3.5" /> Traduzir para PT-BR
-                  </button>
-                ) : game.description_raw ? (
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium flex items-center gap-1">
-                    🇧🇷 Traduzido para PT-BR
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
-              {sanitizeTranslation(game.description_raw) || "Descrição não disponível para este jogo."}
-            </p>
-          </div>
-
-          {/* 3. ENREDO & NARRATIVA (STORYLINE SE HOUVER) */}
-          {game.storyline && (
-            <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-4 shadow-xl">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-purple-400" /> Enredo &amp; Narrativa
-                </h3>
-                {!isLikelyEnglish(game.storyline) && (
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium flex items-center gap-1">
-                    🇧🇷 Traduzido para PT-BR
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
-                {sanitizeTranslation(game.storyline)}
-              </p>
-            </div>
-          )}
-
-          {/* 4. DURAÇÃO & RITMO DE ZERAMENTO (HOWLONGTOBEAT + CALCULADORA) */}
-          <HltbCard hltb={game.hltb} userPlaytimeHours={userGame?.userPlaytimeHours} />
-
-          {/* 5. EXPLORAR CATEGORIAS & ESTILOS DO JOGO */}
-          {((game.genres && game.genres.length > 0) || (game.themes && game.themes.length > 0)) && (
-            <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-5 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
-                <div className="space-y-0.5">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Tags className="w-5 h-5 text-[#00E5FF]" /> Categorias &amp; Estilos do Jogo
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    Clique em qualquer categoria para buscar e explorar outros títulos do mesmo estilo no acervo.
-                  </p>
-                </div>
-                <Link
-                  href="/categorias"
-                  className="text-xs font-semibold text-[#00E5FF] hover:text-cyan-300 flex items-center gap-1 w-fit transition-colors group"
-                >
-                  <span>Ver todas as categorias</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-
-              {/* Grid de Cards Interativos de Categorias */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {/* Gêneros do Jogo */}
-                {game.genres?.map((g) => {
-                  const { searchUrl, curatedUrl } = getCategoryHubUrl(g.name);
-                  return (
-                    <div
-                      key={g.id}
-                      className="p-3.5 rounded-2xl bg-white/5 hover:bg-cyan-950/20 border border-white/10 hover:border-cyan-500/40 transition-all group flex flex-col justify-between space-y-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 font-mono">
-                            Gênero
-                          </span>
-                          <Tag className="w-3.5 h-3.5 text-cyan-400/60 group-hover:text-cyan-400 transition-colors" />
-                        </div>
-                        <h4 className="text-base font-bold text-white group-hover:text-[#00E5FF] transition-colors">
-                          {translateGenre(g.name)}
-                        </h4>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Link
-                          href={searchUrl}
-                          className="flex-1 py-1.5 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 hover:text-white border border-cyan-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                          title={`Buscar jogos de ${translateGenre(g.name)}`}
-                        >
-                          <Search className="w-3 h-3" />
-                          <span>Buscar Jogos</span>
-                        </Link>
-                        {curatedUrl && (
-                          <Link
-                            href={curatedUrl}
-                            className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer"
-                            title="Ver página especial da categoria"
-                          >
-                            <Sparkles className="w-3 h-3 text-amber-400" />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Temas / Ambientações Principais */}
-                {game.themes?.slice(0, 4).map((t) => {
-                  const { searchUrl, curatedUrl } = getCategoryHubUrl(t);
-                  return (
-                    <div
-                      key={t}
-                      className="p-3.5 rounded-2xl bg-white/5 hover:bg-purple-950/20 border border-white/10 hover:border-purple-500/40 transition-all group flex flex-col justify-between space-y-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 font-mono">
-                            Tema / Ambientação
-                          </span>
-                          <Layers className="w-3.5 h-3.5 text-purple-400/60 group-hover:text-purple-400 transition-colors" />
-                        </div>
-                        <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
-                          {translateTheme(t)}
-                        </h4>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Link
-                          href={searchUrl}
-                          className="flex-1 py-1.5 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 hover:text-white border border-purple-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                          title={`Buscar jogos com tema ${translateTheme(t)}`}
-                        >
-                          <Search className="w-3 h-3" />
-                          <span>Buscar Jogos</span>
-                        </Link>
-                        {curatedUrl && (
-                          <Link
-                            href={curatedUrl}
-                            className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer"
-                            title="Ver página especial da categoria"
-                          >
-                            <Sparkles className="w-3 h-3 text-amber-400" />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* =====================================================================
-            COLUNA LATERAL (1 COLUNA / ~35%)
-        ===================================================================== */}
-        <div className="space-y-6">
-          {/* PAINEL DO JOGADOR (SEU REGISTRO NO VAULT) */}
-          <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 space-y-4 shadow-xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" /> Seu Registro no Vault
-            </h3>
-
-            {userGame ? (
-              <div className="space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-gray-400">Status atual:</span>
-                  <StatusBadge status={userGame.status} size="md" />
-                </div>
-
-                {userGame.userRating !== null && (
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                    <span className="text-gray-400">Sua Nota:</span>
-                    <span className="font-bold text-amber-400 text-sm">
-                      ⭐ {userGame.userRating.toFixed(1)} / 10
-                    </span>
-                  </div>
-                )}
-
-                {userGame.userPlaytimeHours !== null && (
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                    <span className="text-gray-400">Tempo jogado:</span>
-                    <span className="font-bold text-cyan-300 text-sm">
-                      {userGame.userPlaytimeHours}h
-                    </span>
-                  </div>
-                )}
-
-                {userGame.platformPlayed && (
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                    <span className="text-gray-400">Plataforma:</span>
-                    <span className="font-semibold text-gray-200">
-                      {userGame.platformPlayed}
-                    </span>
-                  </div>
-                )}
-
-                {userGame.userReview && (
-                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-gray-500 font-sans">
-                      Sua Resenha
-                    </span>
-                    <p className="text-xs text-gray-300 italic whitespace-pre-line font-sans">
-                      &quot;{userGame.userReview}&quot;
-                    </p>
-                  </div>
-                )}
-
-                {/* DLCs Concluídas ou Vinculadas */}
-                {userGame.dlcs && userGame.dlcs.length > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400">
-                      <span className="flex items-center gap-1">
-                        <Package className="w-3.5 h-3.5" /> DLCs Vinculadas
-                      </span>
-                      <span className="font-mono">
-                        {userGame.dlcs.filter((d) => d.status === "completed").length}/{userGame.dlcs.length} Zeradas
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {userGame.dlcs.map((d) => (
-                        <span
-                          key={d.id}
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
-                            d.status === "completed"
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                              : d.status === "playing"
-                              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                              : "bg-white/5 text-gray-300 border border-white/10"
-                          }`}
-                          title={`${d.name} (${d.status})`}
-                        >
-                          {d.name.length > 22 ? `${d.name.substring(0, 20)}...` : d.name}
-                          {d.playtimeHours ? ` (${d.playtimeHours}h)` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-colors mt-2"
-                >
-                  Editar Registro
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-6 space-y-3">
-                <Gamepad2 className="w-10 h-10 text-gray-600 mx-auto" />
-                <p className="text-xs text-gray-400">
-                  Você ainda não registrou este jogo.
-                </p>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="w-full py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 stroke-[3]" />
-                  Adicionar à Coleção
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* FICHA TÉCNICA RÁPIDA CONSOLIDADA */}
-          <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 space-y-5 shadow-xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-              <Monitor className="w-4 h-4 text-cyan-400" /> Ficha Técnica
-            </h3>
-
-            {/* Gêneros & Categorias */}
-            {game.genres && game.genres.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Tags className="w-3.5 h-3.5 text-cyan-400" /> Gêneros &amp; Categorias:
-                  </span>
-                  <span className="text-[10px] text-gray-500">Clique para buscar</span>
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {game.genres.map((g) => {
-                    const { searchUrl } = getCategoryHubUrl(g.name);
-                    return (
-                      <Link
-                        key={g.id}
-                        href={searchUrl}
-                        className="text-xs font-medium px-3 py-1 rounded-full bg-cyan-950/40 hover:bg-cyan-900/70 text-cyan-300 hover:text-white border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 group shadow-sm active:scale-95 cursor-pointer"
-                        title={`Buscar jogos na categoria ${translateGenre(g.name)}`}
-                      >
-                        <Search className="w-2.5 h-2.5 text-cyan-400 group-hover:text-cyan-200" />
-                        <span>{translateGenre(g.name)}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Plataformas */}
-            <div className="space-y-2 pt-3 border-t border-white/5">
-              <span className="text-xs font-semibold text-gray-400 block">Plataformas Disponíveis:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {game.platforms && game.platforms.length > 0 ? (
-                  game.platforms.map((p) => (
-                    <Link
-                      key={p.platform.id}
-                      href={`/search?platform=${encodeURIComponent(p.platform.name)}`}
-                      className="text-xs font-medium px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-white/25 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
-                      title={`Buscar jogos para ${p.platform.name}`}
-                    >
-                      <Gamepad2 className="w-3 h-3 text-cyan-400/70" />
-                      <span>{p.platform.name}</span>
-                    </Link>
-                  ))
-                ) : (
-                  <span className="text-xs text-gray-500">Múltiplas plataformas</span>
-                )}
-              </div>
-            </div>
-
-            {/* Suporte a Português do Brasil */}
-            {game.ptbrSupport && (
-              <div className="space-y-1.5 pt-3 border-t border-white/5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <Languages className="w-3.5 h-3.5 text-emerald-400" /> Português (Brasil):
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {game.ptbrSupport.audio && (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium">
-                      Áudio Dublado 🇧🇷
-                    </span>
-                  )}
-                  {game.ptbrSupport.subtitles && (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-blue-950/40 text-blue-300 border border-blue-500/20 font-medium">
-                      Legendas
-                    </span>
-                  )}
-                  {game.ptbrSupport.interface && (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium">
-                      Interface &amp; Menus
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Modos de Jogo & Perspectiva */}
-            {((game.game_modes && game.game_modes.length > 0) || (game.player_perspectives && game.player_perspectives.length > 0)) && (
-              <div className="space-y-3 pt-3 border-t border-white/5">
-                {game.game_modes && game.game_modes.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-cyan-400" /> Modos de Jogo:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {game.game_modes.map((m) => (
-                        <span key={m} className="text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-950/40 text-cyan-300 border border-cyan-500/20">
-                          {translateGameMode(m)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {game.player_perspectives && game.player_perspectives.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                      <Eye className="w-3.5 h-3.5 text-amber-400" /> Câmera / Perspectiva:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {game.player_perspectives.map((p) => (
-                        <span key={p} className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-950/40 text-amber-300 border border-amber-500/20">
-                          {translatePlayerPerspective(p)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Ambientação & Temas */}
-            {game.themes && game.themes.length > 0 && (
-              <div className="space-y-1.5 pt-3 border-t border-white/5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação &amp; Temas:
-                  </span>
-                  <span className="text-[10px] text-gray-500">Clique para buscar</span>
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {game.themes.map((t) => (
-                    <Link
-                      key={t}
-                      href={getCategorySearchUrl(t)}
-                      className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 hover:bg-purple-900/70 text-purple-300 hover:text-white border border-purple-500/20 hover:border-purple-400 transition-all flex items-center gap-1 group active:scale-95 cursor-pointer"
-                      title={`Buscar jogos com o tema ${translateTheme(t)}`}
-                    >
-                      <Search className="w-2.5 h-2.5 text-purple-400 group-hover:text-purple-200" />
-                      <span>{translateTheme(t)}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Classificação Indicativa Detalhada */}
-            {((game.age_ratings && game.age_ratings.length > 0) || isAdult) && (
-              <div className="space-y-2 pt-3 border-t border-white/5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Classificação Indicativa Oficial:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {game.age_ratings && game.age_ratings.length > 0 ? (
-                    game.age_ratings.map((ar, idx) => {
-                      const primary = getPrimaryAgeRating([ar]);
-                      return (
-                        <div
-                          key={idx}
-                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs ${
-                            primary
-                              ? `${primary.bgClass} ${primary.textClass} ${primary.borderClass || "border-white/20"}`
-                              : "bg-white/5 border-white/10 text-gray-200"
-                          }`}
-                        >
-                          <span className="font-black text-sm">{primary?.badgeText || ar.rating}</span>
-                          <div className="text-left">
-                            <p className="text-[10px] font-bold uppercase tracking-wider opacity-75">{ar.organization}</p>
-                            <p className="text-[11px] leading-tight font-medium">{primary?.description || translateAgeRatingText(ar.rating)}</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-red-950/60 border-red-500/30 text-red-300 text-xs">
-                      <span className="font-black text-sm">18</span>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Restrição Adulta</p>
-                        <p className="text-[11px] font-medium">Conteúdo Adulto / Não recomendado para menores</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Marcadores e Palavras-chave / Conteúdo */}
-            {game.keywords && game.keywords.length > 0 && (
-              <div className="space-y-1.5 pt-3 border-t border-white/5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Marcadores &amp; Conteúdo:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {game.keywords.map((kw, idx) => (
-                    <Link
-                      key={idx}
-                      href={`/search?q=${encodeURIComponent(kw)}`}
-                      className={`text-[10px] px-2 py-0.5 rounded-md border font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer ${
-                        isAdultGame({ keywords: [kw] })
-                          ? "bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300 font-bold"
-                          : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300 hover:text-white"
-                      }`}
-                      title={`Buscar jogos com a tag "${kw}"`}
-                    >
-                      #{kw}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* COMUNIDADES, WIKIS & REDES */}
-          {communityWebsites.length > 0 && (
-            <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 space-y-4 shadow-xl">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-                <Globe className="w-4 h-4 text-emerald-400" /> Comunidade &amp; Guias
-              </h3>
-              <div className="flex flex-col gap-2">
-                {communityWebsites.map((w) => {
-                  const meta = getWebsiteMeta(w.url);
-                  return (
-                    <a
-                      key={w.id}
-                      href={w.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium border transition-all ${meta.color}`}
-                      title={`Acessar ${meta.label}`}
-                    >
-                      <span>{meta.label}</span>
                       <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                     </a>
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* BANNER DE ANÚNCIO NA SIDEBAR */}
-          <AdBanner slot="GAME_DETAIL_IN_CONTENT" />
+            )}
+          </div>
         </div>
       </div>
 
       {/* =========================================================================
-          SEÇÃO DE EXPANSÕES & DLCS OFICIAIS
+          BARRA DE ABAS SEGMENTADAS PARA DISPOSITIVOS MÓVEIS (lg:hidden)
       ========================================================================= */}
-      {uniqueDlcs.length > 0 && (
-        <section className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-6 shadow-2xl animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
-            <div className="space-y-1">
-              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                <Package className="w-5 h-5 text-[#00E5FF]" /> Expansões &amp; DLCs Oficiais ({uniqueDlcs.length})
-              </h3>
-              <p className="text-xs text-gray-400">
-                Conteúdos adicionais, expansões de história e DLCs lançadas para {game.name}.
-              </p>
-            </div>
+      <div className="lg:hidden sticky top-16 z-30 -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 py-2 bg-[#0b0d12]/95 backdrop-blur-2xl border-y border-white/10 shadow-xl">
+        <div className="flex items-center justify-between gap-1 p-1 bg-white/5 rounded-2xl border border-white/10">
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setMobileTab("overview");
+            }}
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
+              mobileTab === "overview"
+                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Visão Geral</span>
+          </button>
 
-            {userGame?.dlcs && userGame.dlcs.length > 0 && (
-              <span className="px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-[#00E5FF] font-mono font-bold w-fit">
-                {userGame.dlcs.filter((d) => d.status === "completed").length} de {uniqueDlcs.length} DLCs Zeradas
-              </span>
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setMobileTab("vault");
+            }}
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] relative ${
+              mobileTab === "vault"
+                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Meu Vault</span>
+            {userGame && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#0b0d12]" />
             )}
-          </div>
+          </button>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-            {uniqueDlcs.map((dlc) => {
-              const userDlc = userGame?.dlcs?.find((d) => d.id === dlc.id);
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setMobileTab("details");
+            }}
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
+              mobileTab === "details"
+                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>Ficha</span>
+          </button>
 
-              return (
-                <div
-                  key={dlc.id}
-                  className={`group rounded-2xl border transition-all hover:scale-[1.02] flex flex-col justify-between overflow-hidden ${
-                    userDlc?.status === "completed"
-                      ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500"
-                      : userDlc?.status === "playing"
-                      ? "bg-cyan-950/20 border-cyan-500/40 hover:border-cyan-500"
-                      : "bg-white/5 border-white/10 hover:border-white/20"
-                  }`}
-                >
-                  <Link href={getGameUrl(dlc)} className="block">
-                    <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                      {dlc.coverUrl ? (
-                        <img
-                          src={dlc.coverUrl}
-                          alt={dlc.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 font-mono">
-                          DLC
-                        </div>
-                      )}
-
-                      {/* Selo se o usuário já jogou */}
-                      {userDlc && (
-                        <div className="absolute top-2 right-2 z-10">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono shadow-md ${
-                              userDlc.status === "completed"
-                                ? "bg-emerald-500 text-black"
-                                : userDlc.status === "playing"
-                                ? "bg-cyan-500 text-black"
-                                : "bg-amber-500 text-black"
-                            }`}
-                          >
-                            {userDlc.status === "completed"
-                              ? "Zerada"
-                              : userDlc.status === "playing"
-                              ? "Jogando"
-                              : "Quero"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-2.5 space-y-1">
-                      <h4
-                        className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2"
-                        title={dlc.name}
-                      >
-                        {dlc.name}
-                      </h4>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
-                        <span>{dlc.releaseDate ? dlc.releaseDate.substring(0, 4) : "DLC"}</span>
-                        {userDlc?.playtimeHours && (
-                          <span className="text-cyan-300 font-bold">{userDlc.playtimeHours}h</span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-
-                  <div className="p-2 pt-0">
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="w-full py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-[10px] font-semibold text-gray-300 hover:text-white transition-all border border-white/5"
-                    >
-                      {userDlc ? "Editar no Jogo" : "+ Anexar / Registrar"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+          <button
+            type="button"
+            onClick={() => {
+              triggerSelectionHaptic();
+              setMobileTab("media");
+            }}
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
+              mobileTab === "media"
+                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Mídia &amp; DLCs</span>
+          </button>
+        </div>
+      </div>
 
       {/* =========================================================================
-          SEÇÃO DE FRANQUIA & UNIVERSO DA SAGA
+          CONTEÚDO MOBILE (lg:hidden) ORGANIZADO POR ABAS
       ========================================================================= */}
-      {(game.franchises?.[0] || game.collections?.[0]) && (
-        <section className="rounded-[32px] border border-amber-500/25 bg-gradient-to-r from-amber-950/20 via-[#18191c] to-black p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Universo &amp; Linha do Tempo
-              </span>
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Saga {game.franchises?.[0] || game.collections?.[0]}
-              </h3>
-              <p className="text-xs text-gray-300 max-w-2xl leading-relaxed">
-                Quer mergulhar na cronologia completa? Encontre todos os títulos, edições e expansões desta franquia no acervo.
-              </p>
-            </div>
-
-            <Link
-              href={`/search?q=${encodeURIComponent(game.franchises?.[0] || game.collections?.[0] || "")}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold transition-all shadow-lg self-start sm:self-auto flex-shrink-0"
-            >
-              <span>Ver Todos os Jogos da Saga</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+      <div className="block lg:hidden space-y-6">
+        {mobileTab === "overview" && (
+          <div className="space-y-6 animate-fadeIn">
+            {renderSynopsis(true)}
+            {renderStoryline(true)}
+            {renderHltb()}
+            {renderStores(true)}
+            {renderCategories()}
           </div>
-        </section>
-      )}
+        )}
+
+        {mobileTab === "vault" && (
+          <div className="space-y-6 animate-fadeIn">
+            {renderPlayerVault(true)}
+          </div>
+        )}
+
+        {mobileTab === "details" && (
+          <div className="space-y-6 animate-fadeIn">
+            {renderTechnicalSpecs()}
+            {renderCommunity()}
+          </div>
+        )}
+
+        {mobileTab === "media" && (
+          <div className="space-y-6 animate-fadeIn">
+            {renderMediaHub()}
+            {renderDlcs()}
+            {renderUniverse()}
+            {renderSimilarGames()}
+          </div>
+        )}
+
+        <AdBanner slot="GAME_DETAIL_IN_CONTENT" />
+      </div>
 
       {/* =========================================================================
-          SEÇÃO DE JOGOS SEMELHANTES / RECOMENDAÇÕES
+          CONTEÚDO DESKTOP (hidden lg:grid) LAYOUT EM 2 COLUNAS
       ========================================================================= */}
-      {game.similar_games && game.similar_games.length > 0 && (
-        <section className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-6 shadow-2xl">
-          <div className="space-y-1 border-b border-white/5 pb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-400" /> Títulos Semelhantes Recomendados
-            </h3>
-            <p className="text-xs text-gray-400">
-              Se você curte {game.name}, talvez também vá gostar destes títulos selecionados pelo IGDB.
-            </p>
-          </div>
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          {renderMediaHub()}
+          {renderSynopsis(false)}
+          {renderStoryline(false)}
+          {renderHltb()}
+          {renderCategories()}
+        </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-            {game.similar_games.slice(0, 12).map((sg) => (
-              <div
-                key={sg.id}
-                className="group rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:border-cyan-500/40 transition-all hover:scale-[1.03] flex flex-col justify-between"
-              >
-                <Link
-                  href={getGameUrl(sg)}
-                  className="block flex-1 flex flex-col"
-                >
-                  <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                    {sg.coverUrl ? (
-                      <img
-                        src={sg.coverUrl}
-                        alt={sg.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
-                        Sem Capa
-                      </div>
-                    )}
-                    {sg.rating && (
-                      <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold font-mono text-amber-400 border border-amber-400/30">
-                        ★ {sg.rating.toFixed(1)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2.5">
-                    <h4 className="text-xs font-bold text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2">
-                      {sg.name}
-                    </h4>
-                  </div>
-                </Link>
+        <div className="space-y-6">
+          {renderPlayerVault(false)}
+          {renderTechnicalSpecs()}
+          {renderCommunity()}
+          <AdBanner slot="GAME_DETAIL_IN_CONTENT" />
+        </div>
+      </div>
 
-                <div className="p-2 pt-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setModalGame({
-                        id: sg.id,
-                        name: sg.name,
-                        background_image: sg.coverUrl,
-                        slug: String(sg.id),
-                        rating: sg.rating ? Number((sg.rating * 10).toFixed(0)) : undefined,
-                      });
-                      setIsModalOpen(true);
-                    }}
-                    className="w-full py-1.5 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black text-[10px] font-bold text-gray-200 transition-all flex items-center justify-center gap-1 border border-white/10 shadow-sm active:scale-95"
-                    title="Salvar ou registrar este jogo no seu perfil"
-                  >
-                    <Plus className="w-3 h-3 text-cyan-400 group-hover:text-black" />
-                    <span>+ Salvar</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Seções Adicionais Desktop */}
+      <div className="hidden lg:block space-y-8">
+        {renderDlcs()}
+        {renderUniverse()}
+        {renderSimilarGames()}
+      </div>
 
       {/* Modal de Registro / Atualização */}
       <GameModal
