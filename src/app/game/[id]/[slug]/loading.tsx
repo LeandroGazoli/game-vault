@@ -2,15 +2,12 @@ import React from "react";
 
 export default function GameDetailLoading() {
   return (
-    <div className="min-h-screen pb-20 animate-pulse space-y-8">
-      {/* Hero Backdrop Skeleton */}
-      <div className="relative w-full h-[320px] sm:h-[460px] bg-[#12151e] overflow-hidden -mx-4 sm:mx-0 sm:rounded-[32px] border border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d11] via-[#0b0d11]/60 to-transparent" />
-      </div>
+    <div className="min-h-screen pb-20 animate-pulse space-y-6">
+      {/* Botão Voltar Skeleton */}
+      <div className="h-5 w-20 rounded-lg bg-white/10" />
 
       {/* Main Content Layout */}
-      <div className="relative z-10 -mt-24 sm:-mt-36 max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Coluna Esquerda: Poster & Ações Rápidas */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start space-y-5">
             <div className="w-52 sm:w-64 aspect-[3/4] rounded-3xl bg-[#181c26] border-2 border-white/10 shadow-2xl" />
@@ -68,6 +65,5 @@ export default function GameDetailLoading() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

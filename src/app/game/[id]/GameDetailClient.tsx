@@ -13,6 +13,7 @@ import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
+import GameDetailLoading from "./[slug]/loading";
 import {
   ArrowLeft,
   Calendar,
@@ -433,12 +434,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     game?.background_image;
 
   if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-80 rounded-[32px] bg-[#18191c]" />
-        <div className="h-40 rounded-[32px] bg-[#18191c]" />
-      </div>
-    );
+    return <GameDetailLoading />;
   }
 
   if (!game) {
