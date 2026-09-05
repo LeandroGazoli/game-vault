@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Logo from "./Logo";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
   Download,
   X,
@@ -112,184 +113,156 @@ export default function PwaInstallPrompt() {
       {/* =========================================================
           MODAL INTERATIVO COMPLETO DE INSTALAÇÃO PWA (Sob Demanda)
       ========================================================= */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn pt-[max(env(safe-area-inset-top,0px)+1rem,1.5rem)] pb-[max(env(safe-area-inset-bottom,0px)+1rem,1.5rem)]"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-[32px] bg-[#14161b] border border-white/15 p-6 sm:p-8 space-y-6 text-white shadow-2xl overflow-hidden max-h-[90vh] flex flex-col justify-between"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botão Fechar */}
+      <AdaptiveModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="max-w-lg"
+        footer={
+          <div className="flex items-center justify-between gap-3 w-full">
             <button
+              type="button"
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-colors z-10"
-              title="Fechar"
+              className="px-4 py-2.5 rounded-full text-xs font-semibold text-gray-400 hover:text-white transition-colors cursor-pointer min-h-[44px]"
             >
-              <X className="w-5 h-5" />
+              {isStandalone ? "Fechar" : "Mais tarde"}
             </button>
 
-            {/* Conteúdo com rolagem suave se necessário */}
-            <div className="space-y-6 overflow-y-auto pr-1">
-              {/* Cabeçalho */}
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/10">
-                  <Smartphone className="w-7 h-7 text-[#00E5FF]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-extrabold text-white tracking-tight">
-                      MyGameList App
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30">
-                      OFICIAL
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Instale no seu smartphone para a melhor experiência gamer.
-                  </p>
-                </div>
-              </div>
-
-              {/* Status se já instalado */}
-              {isStandalone ? (
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <div className="text-xs">
-                    <strong className="block font-bold">Aplicativo Instalado!</strong>
-                    Você já está utilizando a versão de aplicativo em tela cheia com recursos offline ativos.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Grid de Benefícios */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold">
-                        <Zap className="w-3.5 h-3.5" />
-                        Super Rápido
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-snug">
-                        Abre instantaneamente direto da sua tela inicial.
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-bold">
-                        <WifiOff className="w-3.5 h-3.5" />
-                        Modo Offline
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-snug">
-                        Consulte sua biblioteca e backlog mesmo sem internet.
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-purple-300 text-xs font-bold">
-                        <Smartphone className="w-3.5 h-3.5" />
-                        Tela Cheia
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-snug">
-                        Sem barras de URL, igual a um app nativo da App Store.
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
-                      <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Leve (&lt;2 MB)
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-snug">
-                        Não ocupa a memória de armazenamento do celular.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Instruções específicas por plataforma */}
-                  {isIos ? (
-                    /* Guia Passo a Passo para iPhone / Safari */
-                    <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 space-y-3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                        <Share2 className="w-4 h-4 text-[#00E5FF]" />
-                        Como instalar no iPhone (Safari):
-                      </h4>
-
-                      <ol className="space-y-2.5 text-xs text-gray-300">
-                        <li className="flex items-start gap-2.5">
-                          <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                            1
-                          </span>
-                          <span>
-                            Toque no botão de <strong>Compartilhar</strong>{" "}
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white">
-                              <Share2 className="w-3 h-3 inline mr-1 text-[#00E5FF]" /> Compartilhar
-                            </span>{" "}
-                            na barra inferior do Safari.
-                          </span>
-                        </li>
-
-                        <li className="flex items-start gap-2.5">
-                          <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                            2
-                          </span>
-                          <span>
-                            Role as opções para baixo e selecione{" "}
-                            <strong className="text-white">
-                              &ldquo;Adicionar à Tela de Início&rdquo;
-                            </strong>{" "}
-                            <PlusSquare className="w-3 h-3 inline ml-1 text-emerald-400" />.
-                          </span>
-                        </li>
-
-                        <li className="flex items-start gap-2.5">
-                          <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                            3
-                          </span>
-                          <span>
-                            Toque em <strong className="text-[#00E5FF]">&ldquo;Adicionar&rdquo;</strong> no canto superior direito. Pronto! O MyGameList aparecerá junto aos seus outros aplicativos.
-                          </span>
-                        </li>
-                      </ol>
-                    </div>
-                  ) : (
-                    /* Para Android / Chrome / Computador */
-                    <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                      <p className="text-xs text-gray-300 leading-relaxed">
-                        Toque no botão abaixo para adicionar o MyGameList instantaneamente à sua tela inicial sem precisar da Play Store.
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Rodapé / Botão de Ação */}
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+            {!isStandalone && (
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2.5 rounded-full text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+                type="button"
+                onClick={handleInstallClick}
+                className="flex-1 py-3 px-6 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-amber-500/20 active:scale-95 cursor-pointer min-h-[48px]"
               >
-                {isStandalone ? "Fechar" : "Mais tarde"}
-              </button>
-
-              {!isStandalone && (
-                <button
-                  onClick={handleInstallClick}
-                  className="flex-1 py-3 px-6 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95"
-                >
-                  <Download className="w-4 h-4" />
+                <Download className="w-4 h-4 text-black stroke-[2.5]" />
+                <span>
                   {isIos
                     ? "Entendido, Adicionar no Safari"
                     : deferredPrompt
                     ? "Instalar Aplicativo Agora"
                     : "Instalar no Dispositivo"}
-                </button>
-              )}
+                </span>
+              </button>
+            )}
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {/* Cabeçalho */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/10">
+              <Smartphone className="w-7 h-7 text-[#00E5FF]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-extrabold text-white tracking-tight">
+                  MyGameList App
+                </h3>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30">
+                  PWA OFICIAL
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Experiência 100% nativa, rápida e sem barras do navegador.
+              </p>
             </div>
           </div>
+
+          {/* Vantagens / Recursos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-cyan-500/20 text-[#00E5FF] flex-shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Carregamento Instantâneo</h4>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Cache inteligente para abertura ultrarrápida.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 flex-shrink-0">
+                <WifiOff className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Suporte Offline</h4>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Acesse sua biblioteca mesmo sem conexão.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Instruções Dinâmicas por Plataforma */}
+          {isStandalone ? (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <p className="text-xs text-emerald-300 font-bold">
+                Você já está usando a versão PWA instalada do MyGameList!
+              </p>
+              <p className="text-[11px] text-gray-400">
+                Todos os recursos nativos, notificações e sincronização estão ativos.
+              </p>
+            </div>
+          ) : (
+            <>
+              {isIos ? (
+                /* Guia Especial Passo a Passo para iOS Safari */
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-cyan-950/30 to-white/[0.02] border border-cyan-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#00E5FF]">
+                    <Share2 className="w-4 h-4" />
+                    <span>Como instalar no iPhone / iPad (Safari):</span>
+                  </div>
+
+                  <ol className="space-y-2.5 text-xs text-gray-300">
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        1
+                      </span>
+                      <span>
+                        Toque no botão <strong className="text-white">Compartilhar</strong> na barra inferior do Safari{" "}
+                        <Share2 className="w-3.5 h-3.5 inline ml-1 text-cyan-400" />.
+                      </span>
+                    </li>
+
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        2
+                      </span>
+                      <span>
+                        Role um pouco para baixo e toque em{" "}
+                        <strong className="text-white">
+                          &ldquo;Adicionar à Tela de Início&rdquo;
+                        </strong>{" "}
+                        <PlusSquare className="w-3 h-3 inline ml-1 text-emerald-400" />.
+                      </span>
+                    </li>
+
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-[#00E5FF]/20 text-[#00E5FF] font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        3
+                      </span>
+                      <span>
+                        Toque em <strong className="text-[#00E5FF]">&ldquo;Adicionar&rdquo;</strong> no canto superior direito. Pronto! O MyGameList aparecerá junto aos seus outros aplicativos.
+                      </span>
+                    </li>
+                  </ol>
+                </div>
+              ) : (
+                /* Para Android / Chrome / Computador */
+                <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Toque no botão abaixo para adicionar o MyGameList instantaneamente à sua tela inicial sem precisar da Play Store.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </AdaptiveModal>
     </>
   );
 }

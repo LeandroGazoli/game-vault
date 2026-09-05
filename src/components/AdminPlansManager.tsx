@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { PlansConfig, PlanKey, DEFAULT_PLANS_CONFIG, savePlansConfig } from "@/lib/plans";
 import { auth } from "@/lib/firebase";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
   CreditCard,
   RefreshCw,
@@ -444,29 +445,20 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
       </div>
 
       {/* MODAL PARA CRIAR NOVO PREÇO NO STRIPE */}
-      {isCreatePriceOpen && (
-        <div
-          className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-          onClick={() => setIsCreatePriceOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-3xl bg-[#18191c] border border-white/15 p-6 sm:p-7 shadow-2xl space-y-5 text-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center">
-                  <Plus className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Criar Novo Preço no Stripe</h3>
+      <AdaptiveModal
+        isOpen={isCreatePriceOpen}
+        onClose={() => setIsCreatePriceOpen(false)}
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-5 text-white">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center">
+                <Plus className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setIsCreatePriceOpen(false)}
-                className="p-1.5 rounded-full bg-white/10 text-gray-300 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <h3 className="text-lg font-bold text-white">Criar Novo Preço no Stripe</h3>
             </div>
+          </div>
 
             {createSuccessMsg && (
               <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2">
@@ -543,15 +535,14 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
                 <button
                   type="submit"
                   disabled={isCreatingPrice}
-                  className="px-5 py-2 rounded-full bg-purple-500 hover:bg-purple-400 text-white text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-full bg-purple-500 hover:bg-purple-400 text-white text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer min-h-[44px]"
                 >
                   {isCreatingPrice ? "Criando no Stripe..." : "Confirmar & Criar Preço"}
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
-    </div>
+        </AdaptiveModal>
+      </div>
   );
 }

@@ -17,6 +17,7 @@ import {
   Layers,
   Award,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface GamerWrappedModalProps {
   isOpen: boolean;
@@ -91,21 +92,12 @@ export default function GamerWrappedModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
     >
-      <div
-        className="relative w-full max-w-lg rounded-[36px] bg-[#141518] border border-white/15 p-6 sm:p-8 shadow-2xl space-y-6 text-white max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="space-y-6">
 
         {/* Card Retrospectiva Estilizado (Story Mode) */}
         <div className="relative rounded-3xl overflow-hidden border border-cyan-500/30 bg-gradient-to-b from-cyan-950/40 via-[#18191c] to-black p-6 space-y-6 shadow-2xl">
@@ -211,6 +203,6 @@ export default function GamerWrappedModal({
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

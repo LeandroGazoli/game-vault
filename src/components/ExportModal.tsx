@@ -16,6 +16,7 @@ import {
   Layers,
   Star,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -95,21 +96,12 @@ export default function ExportModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
     >
-      <div
-        className="relative w-full max-w-2xl rounded-[32px] bg-[#18191c] border border-white/10 p-6 sm:p-8 shadow-2xl space-y-6 text-white max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="space-y-6">
 
         {/* Header do Modal */}
         <div className="space-y-1.5">
@@ -304,6 +296,6 @@ export default function ExportModal({
           </div>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

@@ -11,6 +11,7 @@ import {
   Tag,
   Crosshair,
 } from "lucide-react";
+import AdaptiveModal from "../ui/AdaptiveModal";
 
 interface SteamItemModalProps {
   item: SteamInventoryItem | null;
@@ -27,13 +28,13 @@ export default function SteamItemModal({ item, onClose }: SteamItemModalProps) {
   const rarityHex = item.rarityColor || "#00E5FF";
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={Boolean(item)}
+      onClose={onClose}
+      maxWidth="max-w-lg"
     >
       <div
-        className="relative z-10 w-full max-w-lg rounded-[28px] bg-[#14161a] border border-white/15 p-5 sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="space-y-5 p-1"
         style={{
           boxShadow: `0 20px 60px ${rarityHex}25, 0 0 1px ${rarityHex}`,
         }}
@@ -185,6 +186,6 @@ export default function SteamItemModal({ item, onClose }: SteamItemModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

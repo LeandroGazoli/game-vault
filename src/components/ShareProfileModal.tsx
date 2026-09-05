@@ -15,6 +15,7 @@ import {
   Lock,
   Globe,
 } from "lucide-react";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface ShareProfileModalProps {
   isOpen: boolean;
@@ -84,20 +85,12 @@ export default function ShareProfileModal({
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(profileUrl)}&bgcolor=14161a&color=00e5ff&margin=1`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div
-        className="relative z-10 w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#14161a] border border-white/15 p-6 sm:p-7 shadow-2xl space-y-5 overflow-hidden max-h-[92vh] overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-      >
-        {/* Mobile handle indicator */}
-        <div className="sm:hidden w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-1 flex-shrink-0" />
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+    >
+      <div className="space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 pb-2 border-b border-white/10">
@@ -268,6 +261,6 @@ export default function ShareProfileModal({
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

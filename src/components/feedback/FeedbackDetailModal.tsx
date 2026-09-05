@@ -46,6 +46,7 @@ import {
   AlertCircle,
   Edit3,
 } from "lucide-react";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 function formatSafeDate(
   dateVal: any,
@@ -218,22 +219,12 @@ export default function FeedbackDetailModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[100] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-3xl"
     >
-      <div
-        className="relative w-full max-w-3xl rounded-3xl bg-[#14161e] border border-white/10 p-5 sm:p-8 shadow-2xl space-y-6 text-white max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-          aria-label="Fechar"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="space-y-6">
 
         {/* Banner de Recompensa (se concedida) */}
         {item.rewarded && (
@@ -584,6 +575,6 @@ export default function FeedbackDetailModal({
           </div>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { X, ShieldAlert, Mail, Lock, User, Loader2 } from "lucide-react";
 import Logo from "./Logo";
+import AdaptiveModal from "./ui/AdaptiveModal";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -113,20 +114,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn pt-[max(env(safe-area-inset-top,0px),1rem)] pb-[max(env(safe-area-inset-bottom,0px),1rem)]"
-      onClick={onClose}
+    <AdaptiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
     >
-      <div
-        className="relative w-full max-w-md rounded-[32px] bg-[#18191c] border border-white/10 p-6 sm:p-8 shadow-2xl space-y-6 text-white"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="space-y-6">
 
         <div className="text-center space-y-2">
           <div className="flex justify-center">
@@ -256,6 +249,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </AdaptiveModal>
   );
 }

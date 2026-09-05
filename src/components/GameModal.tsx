@@ -9,6 +9,7 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
 import MetacriticBadge from "./MetacriticBadge";
 import AuthModal from "./AuthModal";
+import { triggerSelectionHaptic, triggerSuccessHaptic } from "@/lib/capacitor";
 import {
   X,
   Trophy,
@@ -30,6 +31,7 @@ import {
   Monitor,
   Package,
   Layers,
+  Bookmark,
 } from "lucide-react";
 import { CONSOLE_CATEGORIES, POPULAR_CONSOLES } from "@/lib/platformUtils";
 
@@ -368,6 +370,7 @@ export default function GameModal({
         parentGameTitle: parentGameInfo?.name || game.parent_game?.name || existingInLibrary?.parentGameTitle || null,
         includeDlcHoursInTotal: includeDlcHours,
       });
+      await triggerSuccessHaptic();
       onClose();
     } catch (err) {
       console.error("Erro ao salvar jogo:", err);
@@ -387,32 +390,23 @@ export default function GameModal({
   const modalContent = (
     <>
       <div
-        className="fixed inset-0 z-[999] !m-0 !mt-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn pt-[max(env(safe-area-inset-top,0px)+8px,0.75rem)] pb-[max(env(safe-area-inset-bottom,0px)+8px,0.75rem)]"
+        className="fixed inset-0 z-[90] flex items-end md:items-center justify-center p-0 md:p-6 overflow-hidden bg-black/80 backdrop-blur-md animate-fadeIn"
         onClick={onClose}
       >
         <div
-          className="relative w-full max-w-xl rounded-[32px] bg-[#18191c] border border-white/10 shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 text-white my-auto overflow-hidden max-h-[92dvh] flex flex-col justify-between"
+          className="relative z-[100] w-full md:max-w-2xl rounded-t-[28px] md:rounded-[32px] bg-[#14161e] border-t border-x md:border border-white/10 shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[88vh] overflow-hidden text-white transition-transform duration-200 ease-out"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Botão Fechar no Canto Superior Direito */}
-          <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
-              title="Fechar (Esc)"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          {/* Mobile Drag Handle */}
+          <div className="md:hidden pt-3 pb-1 flex justify-center flex-shrink-0 cursor-grab active:cursor-grabbing">
+            <div className="w-12 h-1.5 rounded-full bg-white/25 hover:bg-white/40 transition-colors" />
           </div>
 
-          {/* Conteúdo Rolável */}
-          <div className="space-y-6 overflow-y-auto pr-1">
-            {/* ==========================================
-                1. CABEÇALHO DO JOGO (Flex-row)
-            ========================================== */}
-            <div className="flex items-center gap-4 sm:gap-5">
+          {/* Cabeçalho do Jogo com Botão Fechar */}
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-2 sm:pt-4 pb-3 border-b border-white/10 flex-shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* Capa com cantos arredondados */}
-              <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 shadow-lg flex-shrink-0">
+              <div className="w-12 h-16 sm:w-16 sm:h-20 rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-md flex-shrink-0">
                 {game.background_image ? (
                   <img
                     src={game.background_image}
@@ -420,14 +414,14 @@ export default function GameModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">
                     Sem Capa
                   </div>
                 )}
               </div>
 
               {/* Informações do Jogo */}
-              <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+              <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                 <div className="flex items-center gap-2">
                   {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
                   {game.released && (
@@ -442,20 +436,33 @@ export default function GameModal({
                   )}
                 </div>
 
-                <h2 className="text-xl sm:text-2xl font-normal text-white tracking-tight leading-snug line-clamp-2">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug line-clamp-1">
                   {game.name}
                 </h2>
 
                 {/* Indicador e Reação da Nota */}
-                <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-lg">{reaction.emoji}</span>
-                  <span className={`text-xs font-semibold ${reaction.color}`}>
-                    {rating !== null ? `${rating.toFixed(1)} / 10 • ${reaction.text}` : "NS (Não avaliado)"}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{reaction.emoji}</span>
+                  <span className={`text-[11px] sm:text-xs font-semibold ${reaction.color}`}>
+                    {rating !== null ? `${rating.toFixed(1)} / 10 • ${reaction.text}` : "NS (Sem avaliação)"}
                   </span>
                 </div>
               </div>
             </div>
 
+            {/* Botão Fechar */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white transition-all flex-shrink-0 active:scale-95"
+              title="Fechar (Esc)"
+              aria-label="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Conteúdo Rolável */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 space-y-5">
             {/* Aviso se este jogo for uma DLC/Expansão oficial */}
             {parentGameInfo && (
               <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-200 animate-fadeIn">
@@ -476,80 +483,126 @@ export default function GameModal({
             )}
 
             {/* ==========================================
-                2. SESSÃO DE AVALIAÇÃO (Range Slider)
-            ========================================== */}
-            <div className="space-y-2.5 p-4 rounded-2xl bg-white/[0.04] border border-white/5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Sua Nota
-                </span>
-                {rating !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setRating(null)}
-                    className="text-xs text-gray-400 hover:text-white font-medium px-2 py-0.5 rounded-full hover:bg-white/10 transition-colors"
-                  >
-                    Zerar Nota (NS)
-                  </button>
-                )}
-              </div>
-
-              {/* Range Slider Interativo */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${
-                      rating === null ? "bg-white/20 text-white" : "bg-[#00E5FF] text-black"
-                    }`}>
-                      {rating !== null ? rating.toFixed(1) : "NS"}
-                    </span>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    value={rating !== null ? rating : 5}
-                    onChange={(e) => setRating(parseFloat(e.target.value))}
-                    className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF]"
-                  />
-
-                  <span className="text-xs text-gray-400 font-mono flex-shrink-0">
-                    10
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[10px] text-gray-500 font-mono px-1">
-                  <span>{rating === null ? "Deslize para avaliar > > > > > > >" : "0 (Péssimo)"}</span>
-                  <span>{rating === null ? "" : "10 (Obra-Prima)"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ==========================================
-                3. GRUPO DE STATUS (Radio Pill Group)
+                1. GRUPO DE STATUS (Padrão Stash no Mobile + Pills no Desktop)
             ========================================== */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Estado
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                  <Bookmark className="w-3.5 h-3.5 text-amber-400" /> Status do Jogo
                 </span>
                 <button
                   type="button"
-                  onClick={() => setStatus("backlog")}
-                  className="text-gray-500 hover:text-gray-300 transition-colors p-1"
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("backlog");
+                  }}
+                  className="text-gray-500 hover:text-gray-300 text-xs flex items-center gap-1 transition-colors p-1"
                   title="Resetar para Quero Jogar"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="text-[11px]">Resetar</span>
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              {/* Mobile Stash App Tactile Status Cards */}
+              <div className="space-y-2 md:hidden">
+                {[
+                  {
+                    id: "backlog" as GameStatus,
+                    label: "Desejados",
+                    subtitle: "Lista de Desejos",
+                    icon: Bookmark,
+                    activeClass: "bg-amber-400 text-black font-bold border-amber-400 shadow-lg shadow-amber-400/20",
+                    iconColor: "text-amber-400",
+                  },
+                  {
+                    id: "playing" as GameStatus,
+                    label: "Jogando",
+                    subtitle: "Jogando agora",
+                    icon: Gamepad2,
+                    activeClass: "bg-cyan-400 text-black font-bold border-cyan-400 shadow-lg shadow-cyan-400/20",
+                    iconColor: "text-cyan-400",
+                  },
+                  {
+                    id: "completed" as GameStatus,
+                    label: "Zerados",
+                    subtitle: "Jogos zerados",
+                    icon: Trophy,
+                    activeClass: "bg-emerald-400 text-black font-bold border-emerald-400 shadow-lg shadow-emerald-400/20",
+                    iconColor: "text-emerald-400",
+                  },
+                  {
+                    id: "library" as GameStatus,
+                    label: "Na Biblioteca",
+                    subtitle: "Tenho na minha coleção",
+                    icon: Package,
+                    activeClass: "bg-indigo-400 text-black font-bold border-indigo-400 shadow-lg shadow-indigo-400/20",
+                    iconColor: "text-indigo-400",
+                  },
+                  {
+                    id: "dropped" as GameStatus,
+                    label: "Dropado",
+                    subtitle: "Abandonado ou em pausa",
+                    icon: XCircle,
+                    activeClass: "bg-rose-500 text-white font-bold border-rose-500 shadow-lg shadow-rose-500/20",
+                    iconColor: "text-rose-400",
+                  },
+                ].map((item) => {
+                  const isSelected = status === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        triggerSelectionHaptic();
+                        setStatus(item.id);
+                        if (item.id === "completed" && !completionType) {
+                          setCompletionType("main_story");
+                        }
+                      }}
+                      className={`w-full min-h-[56px] px-4 py-3 rounded-2xl border transition-all flex items-center justify-between text-left active:scale-[0.99] touch-manipulation cursor-pointer ${
+                        isSelected
+                          ? item.activeClass
+                          : "bg-white/[0.04] border-white/10 hover:bg-white/[0.08] text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div
+                          className={`p-2 rounded-xl flex items-center justify-center ${
+                            isSelected ? "bg-black/20 text-current" : "bg-white/5 " + item.iconColor
+                          }`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className={`text-sm ${isSelected ? "font-black text-current" : "font-semibold text-white"}`}>
+                            {item.label}
+                          </div>
+                          <div className={`text-xs ${isSelected ? "text-current opacity-85 font-medium" : "text-neutral-400"}`}>
+                            {item.subtitle}
+                          </div>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="w-6 h-6 rounded-full bg-black/20 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Radio Pill Group */}
+              <div className="hidden md:flex flex-wrap gap-2">
                 {/* Biblioteca */}
                 <button
                   type="button"
-                  onClick={() => setStatus("library")}
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("library");
+                  }}
                   className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
                     status === "library"
                       ? "bg-indigo-400 text-black font-bold shadow-lg shadow-indigo-400/20"
@@ -560,10 +613,13 @@ export default function GameModal({
                   Biblioteca
                 </button>
 
-                {/* Quero Jogar / Backlog (Padrão) */}
+                {/* Quero Jogar */}
                 <button
                   type="button"
-                  onClick={() => setStatus("backlog")}
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("backlog");
+                  }}
                   className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
                     status === "backlog"
                       ? "bg-amber-400 text-black font-bold shadow-lg shadow-amber-400/20"
@@ -577,10 +633,13 @@ export default function GameModal({
                 {/* Jogando */}
                 <button
                   type="button"
-                  onClick={() => setStatus("playing")}
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("playing");
+                  }}
                   className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
                     status === "playing"
-                      ? "bg-blue-400 text-black font-bold shadow-lg shadow-blue-400/20"
+                      ? "bg-cyan-400 text-black font-bold shadow-lg shadow-cyan-400/20"
                       : "bg-white/10 text-gray-300 hover:bg-white/15"
                   }`}
                 >
@@ -592,12 +651,13 @@ export default function GameModal({
                 <button
                   type="button"
                   onClick={() => {
+                    triggerSelectionHaptic();
                     setStatus("completed");
                     if (!completionType) setCompletionType("main_story");
                   }}
                   className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
                     status === "completed"
-                      ? "bg-[#00E5FF] text-black font-bold shadow-lg shadow-[#00E5FF]/20"
+                      ? "bg-emerald-400 text-black font-bold shadow-lg shadow-emerald-400/20"
                       : "bg-white/10 text-gray-300 hover:bg-white/15"
                   }`}
                 >
@@ -605,10 +665,13 @@ export default function GameModal({
                   Concluído
                 </button>
 
-                {/* Dropado / Abandonado */}
+                {/* Dropado */}
                 <button
                   type="button"
-                  onClick={() => setStatus("dropped")}
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("dropped");
+                  }}
                   className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
                     status === "dropped"
                       ? "bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/20"
@@ -622,15 +685,15 @@ export default function GameModal({
             </div>
 
             {/* ==========================================
-                4. TIPO DE FINALIZAÇÃO (Quando Concluído)
+                2. TIPO DE FINALIZAÇÃO (Quando Zerado / Concluído)
             ========================================== */}
             {status === "completed" && (
-              <div className="space-y-2 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 animate-fadeIn">
+              <div className="space-y-3 p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 animate-fadeIn">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> Como você finalizou o jogo?
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Como você finalizou?
                   </span>
-                  <span className="text-[10px] text-gray-400">Preenchimento rápido</span>
+                  <span className="text-[10px] text-gray-400 font-mono">Preenchimento rápido</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -638,13 +701,13 @@ export default function GameModal({
                   <button
                     type="button"
                     onClick={() => handleSelectCompletionType("main_story")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    className={`rounded-xl sm:rounded-full px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px] touch-manipulation cursor-pointer ${
                       completionType === "main_story"
-                        ? "bg-cyan-400 text-black font-bold"
+                        ? "bg-cyan-400 text-black font-bold shadow-md shadow-cyan-400/20"
                         : "bg-white/10 text-gray-300 hover:bg-white/15"
                     }`}
                   >
-                    <Sword className="w-3 h-3" />
+                    <Sword className="w-3.5 h-3.5" />
                     História Principal
                     {(hltb?.mainStory || game.hltb?.mainStory) && (
                       <span className="opacity-75 font-mono">({(hltb?.mainStory || game.hltb?.mainStory)}h)</span>
@@ -655,13 +718,13 @@ export default function GameModal({
                   <button
                     type="button"
                     onClick={() => handleSelectCompletionType("main_extra")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    className={`rounded-xl sm:rounded-full px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px] touch-manipulation cursor-pointer ${
                       completionType === "main_extra"
-                        ? "bg-purple-400 text-black font-bold"
+                        ? "bg-purple-400 text-black font-bold shadow-md shadow-purple-400/20"
                         : "bg-white/10 text-gray-300 hover:bg-white/15"
                     }`}
                   >
-                    <Compass className="w-3 h-3" />
+                    <Compass className="w-3.5 h-3.5" />
                     História + Extras
                     {(hltb?.mainExtra || game.hltb?.mainExtra) && (
                       <span className="opacity-75 font-mono">({(hltb?.mainExtra || game.hltb?.mainExtra)}h)</span>
@@ -672,13 +735,13 @@ export default function GameModal({
                   <button
                     type="button"
                     onClick={() => handleSelectCompletionType("completionist")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    className={`rounded-xl sm:rounded-full px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px] touch-manipulation cursor-pointer ${
                       completionType === "completionist"
-                        ? "bg-amber-400 text-black font-bold"
+                        ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20"
                         : "bg-white/10 text-gray-300 hover:bg-white/15"
                     }`}
                   >
-                    <Crown className="w-3 h-3" />
+                    <Crown className="w-3.5 h-3.5" />
                     100% Completo
                     {(hltb?.completionist || game.hltb?.completionist) && (
                       <span className="opacity-75 font-mono">({(hltb?.completionist || game.hltb?.completionist)}h)</span>
@@ -689,13 +752,13 @@ export default function GameModal({
                   <button
                     type="button"
                     onClick={() => handleSelectCompletionType("platinum")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    className={`rounded-xl sm:rounded-full px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px] touch-manipulation cursor-pointer ${
                       completionType === "platinum"
-                        ? "bg-emerald-400 text-black font-bold"
+                        ? "bg-emerald-400 text-black font-bold shadow-md shadow-emerald-400/20"
                         : "bg-white/10 text-gray-300 hover:bg-white/15"
                     }`}
                   >
-                    <Trophy className="w-3 h-3" />
+                    <Trophy className="w-3.5 h-3.5" />
                     Platina / Conquistas
                   </button>
 
@@ -703,18 +766,72 @@ export default function GameModal({
                   <button
                     type="button"
                     onClick={() => handleSelectCompletionType("custom")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    className={`rounded-xl sm:rounded-full px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px] touch-manipulation cursor-pointer ${
                       completionType === "custom"
                         ? "bg-white text-black font-bold"
                         : "bg-white/10 text-gray-300 hover:bg-white/15"
                     }`}
                   >
-                    <Clock className="w-3 h-3" />
+                    <Clock className="w-3.5 h-3.5" />
                     Personalizado
                   </button>
                 </div>
               </div>
             )}
+
+            {/* ==========================================
+                3. SESSÃO DE AVALIAÇÃO (Range Slider)
+            ========================================== */}
+            <div className="space-y-2.5 p-4 rounded-2xl bg-white/[0.04] border border-white/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                  Sua Nota
+                </span>
+                {rating !== null && (
+                  <button
+                    type="button"
+                    onClick={() => setRating(null)}
+                    className="text-xs text-gray-400 hover:text-white font-medium px-2.5 py-1 rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    Zerar Nota (NS)
+                  </button>
+                )}
+              </div>
+
+              {/* Range Slider Interativo */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${
+                        rating === null ? "bg-white/20 text-white" : "bg-[#00E5FF] text-black"
+                      }`}
+                    >
+                      {rating !== null ? rating.toFixed(1) : "NS"}
+                    </span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    value={rating !== null ? rating : 5}
+                    onChange={(e) => setRating(parseFloat(e.target.value))}
+                    className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF] touch-manipulation"
+                  />
+
+                  <span className="text-xs text-gray-400 font-mono flex-shrink-0">
+                    10
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-[11px] text-gray-400 font-mono px-1">
+                  <span>{rating === null ? "Deslize para avaliar > > >" : `${reaction.emoji} ${reaction.text}`}</span>
+                  <span>{rating === null ? "" : "10 (Obra-Prima)"}</span>
+                </div>
+              </div>
+            </div>
 
             {/* ==========================================
                 4.5 EXPANSÕES & DLCS DISPONÍVEIS
@@ -1183,24 +1300,25 @@ export default function GameModal({
           </div>
 
           {/* ==========================================
-              6. RODAPÉ / CALL TO ACTION (Pill Button)
+              6. RODAPÉ / CALL TO ACTION (Padrão Stash)
           ========================================== */}
-          <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 mt-2">
+          <div className="px-4 sm:px-6 pt-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)] md:pb-4 border-t border-white/10 bg-[#10121a]/95 backdrop-blur-md flex-shrink-0 flex items-center justify-between gap-3">
             <div>
               {existingInLibrary ? (
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="text-rose-400 hover:text-rose-300 text-xs font-medium flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-rose-500/10 transition-colors"
+                  className="text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1.5 px-3 py-2.5 rounded-xl hover:bg-rose-500/10 transition-colors active:scale-95"
+                  title="Remover da biblioteca"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Remover
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden xs:inline">Remover</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-white text-xs font-medium px-3 py-2 rounded-full transition-colors"
+                  className="text-gray-400 hover:text-white text-xs font-semibold px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors active:scale-95"
                 >
                   Cancelar
                 </button>
@@ -1211,19 +1329,22 @@ export default function GameModal({
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className={`rounded-full font-bold text-xs sm:text-sm py-3 px-8 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 ${
+              className={`flex-1 py-3.5 sm:py-3 px-6 rounded-2xl font-black text-sm sm:text-base transition-all shadow-xl active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer touch-manipulation min-h-[50px] ${
                 user
-                  ? "bg-white hover:bg-gray-200 text-black"
+                  ? "bg-amber-400 hover:bg-amber-300 text-black shadow-amber-500/20"
                   : "bg-gradient-to-r from-cyan-400 to-indigo-500 text-black"
               }`}
             >
-              {isSaving
-                ? "Salvando..."
-                : !user
-                ? "Fazer Login para Salvar"
-                : existingInLibrary
-                ? "Salvar Alterações"
-                : "Adicionar Jogo"}
+              <Check className="w-5 h-5 stroke-[3]" />
+              <span>
+                {isSaving
+                  ? "Salvando..."
+                  : !user
+                  ? "Fazer Login para Salvar"
+                  : existingInLibrary
+                  ? "Salvar Alterações"
+                  : "Salvar"}
+              </span>
             </button>
           </div>
         </div>

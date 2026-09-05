@@ -120,10 +120,14 @@ function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
+                if (typeof window !== "undefined" && window.innerWidth < 768) {
+                  setIsModalOpen(true);
+                } else {
+                  setIsMenuOpen(!isMenuOpen);
+                }
               }}
               className="w-8 h-8 rounded-lg bg-[#181c25]/95 hover:bg-white text-white hover:text-black flex items-center justify-center opacity-95 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 shadow-md border border-[#2e3646] hover:border-white active:scale-95 cursor-pointer"
-              title="Ações rápidas no jogo"
+              title={userGame ? "Editar registro do jogo" : "Adicionar à biblioteca"}
               aria-label="Ações rápidas"
             >
               {userGame ? (

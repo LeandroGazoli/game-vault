@@ -458,10 +458,14 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             </button>
             <button
               onClick={() => {
-                setCustomizerInitialTab("visibility");
-                setIsCustomizerOpen(true);
+                if (typeof window !== "undefined" && window.innerWidth < 768) {
+                  router.push("/perfil/editar?tab=visibility");
+                } else {
+                  setCustomizerInitialTab("visibility");
+                  setIsCustomizerOpen(true);
+                }
               }}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-colors"
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-colors cursor-pointer active:scale-95"
             >
               Configurações
             </button>
@@ -476,12 +480,20 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         isAdmin={isAdmin}
         isPremium={isPremium}
         onOpenEditProfile={() => {
-          setCustomizerInitialTab("info");
-          setIsCustomizerOpen(true);
+          if (typeof window !== "undefined" && window.innerWidth < 768) {
+            router.push("/perfil/editar?tab=info");
+          } else {
+            setCustomizerInitialTab("info");
+            setIsCustomizerOpen(true);
+          }
         }}
         onOpenEditBio={() => {
-          setCustomizerInitialTab("info");
-          setIsCustomizerOpen(true);
+          if (typeof window !== "undefined" && window.innerWidth < 768) {
+            router.push("/perfil/editar?tab=markdown");
+          } else {
+            setCustomizerInitialTab("markdown");
+            setIsCustomizerOpen(true);
+          }
         }}
         onOpenTools={() => setIsToolsOpen(true)}
         onOpenImporter={() => setIsImporterOpen(true)}
@@ -505,8 +517,12 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           onEdit={
             isOwner
               ? () => {
-                  setCustomizerInitialTab("markdown");
-                  setIsCustomizerOpen(true);
+                  if (typeof window !== "undefined" && window.innerWidth < 768) {
+                    router.push("/perfil/editar?tab=markdown");
+                  } else {
+                    setCustomizerInitialTab("markdown");
+                    setIsCustomizerOpen(true);
+                  }
                 }
               : undefined
           }
@@ -926,12 +942,22 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onOpenManagePlan={() => setIsManagePlanOpen(true)}
             onOpenUpgrade={() => setIsUpgradeOpen(true)}
             onOpenCustomizer={() => {
-              setCustomizerInitialTab("info");
-              setIsCustomizerOpen(true);
+              if (typeof window !== "undefined" && window.innerWidth < 768) {
+                setIsToolsOpen(false);
+                router.push("/perfil/editar?tab=info");
+              } else {
+                setCustomizerInitialTab("info");
+                setIsCustomizerOpen(true);
+              }
             }}
             onOpenPrivacy={() => {
-              setCustomizerInitialTab("visibility");
-              setIsCustomizerOpen(true);
+              if (typeof window !== "undefined" && window.innerWidth < 768) {
+                setIsToolsOpen(false);
+                router.push("/perfil/editar?tab=visibility");
+              } else {
+                setCustomizerInitialTab("visibility");
+                setIsCustomizerOpen(true);
+              }
             }}
             onOpenRoulette={() => setIsRouletteOpen(true)}
             onOpenWrapped={() => setIsWrappedOpen(true)}
