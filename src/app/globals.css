@@ -345,5 +345,62 @@ div[class*="fixed"][class*="inset-0"] {
   animation: vt-progress 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ========================================================
+   EFEITO DE BORDA ANIMADA ANDANDO EM VOLTA & BRILHO IA
+======================================================== */
+@keyframes ai-border-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ai-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.35), 0 0 32px rgba(168, 85, 247, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(0, 229, 255, 0.7), 0 0 55px rgba(168, 85, 247, 0.5);
+  }
+}
+
+.ai-card-wrapper {
+  position: relative;
+  padding: 2.5px;
+  border-radius: 14px;
+  overflow: hidden;
+  animation: ai-glow-pulse 2.8s ease-in-out infinite;
+  transform: translateZ(0);
+}
+
+.ai-card-border-beam {
+  position: absolute;
+  inset: -150%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 260deg,
+    rgba(0, 229, 255, 0.3) 290deg,
+    #00E5FF 325deg,
+    #c084fc 350deg,
+    #00E5FF 360deg
+  );
+  animation: ai-border-spin 3.5s linear infinite;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-card-border-beam {
+    animation: none !important;
+  }
+  .ai-card-wrapper {
+    animation: none !important;
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+  }
+}
+
 
 

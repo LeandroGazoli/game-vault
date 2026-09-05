@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Game } from "@/lib/types";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Game, SystemSettings } from "@/lib/types";
 import GameCard from "@/components/GameCard";
-import AiRecommendationBox from "@/components/search/AiRecommendationBox";
 import {
   Search,
   Filter,
@@ -40,6 +41,32 @@ import {
   findPerspectiveFilter,
   findGameModeFilter,
 } from "@/lib/filterConstants";
+
+/**
+ * Detecta se a busca é descritiva/por intenção/estilo em vez de um título específico de jogo.
+ * Ex: "quero um jogo estilo dark souls", "jogos de corrida na chuva", "indie relaxante", etc.
+ */
+function isDescriptiveOrIntentQuery(q: string): boolean {
+  const text = q.trim().toLowerCase();
+  if (text.length < 3) return false;
+
+  const intentWords = [
+    "quero", "queria", "procuro", "busco", "gostaria", "preciso", "indique", "recomende",
+    "recomendacao", "recomendação", "sugestao", "sugestão", "indicação", "indicacoes", "indicações",
+    "jogo de", "jogos de", "jogo com", "jogos com", "jogo tipo", "jogos tipo",
+    "estilo", "parecido", "parecidos", "semelhante", "semelhantes", "melhores", "mais avaliados",
+    "para jogar", "relaxar", "desafiador", "desafiadores", "mundo aberto",
+    "souls-like", "soulslike", "roguelike", "roguelite", "metroidvania",
+    "com historia", "com história", "boa trama", "coop", "multiplayer",
+    "tela dividida", "cooperativo", "terror psicologico", "terror psicológico",
+    "gratis", "grátis", "barato", "passar o tempo", "curto", "longo"
+  ];
+
+  const hasIntentWord = intentWords.some((word) => text.includes(word));
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+  return hasIntentWord || wordCount >= 4;
+}
 
 const SEARCH_STATE_STORAGE_KEY = "MGL_SEARCH_SESSION_STATE_V1";
 
@@ -95,6 +122,24 @@ function SearchContent() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Estados do Curador Gamer por Inteligência Artificial (integrado diretamente ao Search)
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiQueriedText, setAiQueriedText] = useState<string>("");
+  const [isAiEnabled, setIsAiEnabled] = useState(true);
+
+  // Monitora a feature flag em tempo real do Admin
+  useEffect(() => {
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as SystemSettings;
+        setIsAiEnabled(Boolean(data.features?.aiRecommendations ?? true));
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Estados de UI expansível e utilitários
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -343,9 +388,65 @@ function SearchContent() {
     updateUrlParams({ q: inputValue });
   };
 
+  const triggerAiRecommendation = useCallback(
+    async (searchPrompt: string, force = false) => {
+      const text = searchPrompt.trim();
+      if (!text || text.length < 3) return;
+      if (!isAiEnabled) return;
+
+      // Evita disparar chamadas repetidas para a mesma query
+      if (!force && aiQueriedText === text.toLowerCase()) return;
+
+      setIsAiLoading(true);
+      setAiQueriedText(text.toLowerCase());
+
+      try {
+        const res = await fetch("/api/ai/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: text }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const recommended: Game[] = (data.games || []).map((g: Game) => ({
+            ...g,
+            isAiRecommended: true,
+          }));
+
+          if (recommended.length > 0) {
+            setAiExplanation(data.explanation || null);
+
+            setGames((prev) => {
+              const aiIds = new Set(recommended.map((g) => g.id));
+              // Marca os jogos existentes que a IA também recomendou
+              const existingUpdated = prev.map((g) =>
+                aiIds.has(g.id) ? { ...g, isAiRecommended: true } : g
+              );
+              const existingIds = new Set(existingUpdated.map((g) => g.id));
+              const newAiGames = recommended.filter((g) => !existingIds.has(g.id));
+
+              // Unifica colocando os achados da IA em destaque no topo
+              return [...newAiGames, ...existingUpdated];
+            });
+
+            setTotalCount((prev) => prev + recommended.length);
+          }
+        }
+      } catch (err) {
+        console.warn("Curador IA não disponível para esta consulta:", err);
+      } finally {
+        setIsAiLoading(false);
+      }
+    },
+    [aiQueriedText, isAiEnabled]
+  );
+
   const handleClearSearch = () => {
     setInputValue("");
     setQuery("");
+    setAiExplanation(null);
+    setAiQueriedText("");
     updateUrlParams({ q: "" });
   };
 
@@ -365,6 +466,12 @@ function SearchContent() {
     async function fetchGames() {
       setLoading(true);
       setPage(1);
+
+      // Limpa explicação da IA caso mude a busca
+      if (!query.trim()) {
+        setAiExplanation(null);
+        setAiQueriedText("");
+      }
 
       const params = new URLSearchParams();
       if (query.trim()) params.set("q", query.trim());
@@ -387,6 +494,16 @@ function SearchContent() {
           setGames(items);
           setTotalCount(data.total || data.count || items.length);
           setHasMore(Boolean(data.hasMore ?? (items.length >= 36)));
+
+          // Regras para acionamento do Curador Inteligente (IA):
+          // 1. Quando for busca descritiva / intenção de estilo (não título de jogo específico)
+          // 2. OU quando a busca tradicional retornar 0 resultados no catálogo
+          const isIntent = isDescriptiveOrIntentQuery(query);
+          const hadNoResults = items.length === 0;
+
+          if (isAiEnabled && (isIntent || hadNoResults) && query.trim().length >= 3) {
+            triggerAiRecommendation(query);
+          }
         }
       } catch (err: any) {
         if (err.name !== "AbortError") {
@@ -404,7 +521,7 @@ function SearchContent() {
     return () => {
       controller.abort();
     };
-  }, [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort]);
+  }, [query, selectedGenre, selectedPlatform, selectedPerspective, selectedGameMode, minRating, selectedSort, triggerAiRecommendation, isAiEnabled]);
 
   // Carregar mais jogos mantendo todos os filtros ativos
   const loadMore = async () => {
@@ -540,9 +657,6 @@ function SearchContent() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Assistente Curador Inteligente de IA (Controlado por Feature Flag no Admin) */}
-      <AiRecommendationBox />
-
       {/* ========================================================
           CABEÇALHO DE BUSCA COMPACTO E LIMPO
       ======================================================== */}
@@ -554,13 +668,13 @@ function SearchContent() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 relative z-10">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] font-semibold">
-              <Sparkles className="w-3 h-3 text-[#00E5FF]" /> Catálogo Completo IGDB
+              <Sparkles className="w-3 h-3 text-[#00E5FF]" /> Catálogo Completo IGDB &amp; IA Curadoria
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               Explorar Jogos
             </h1>
             <p className="text-xs text-gray-400">
-              Pesquise qualquer jogo do acervo mundial com notas oficiais e tempos de zeramento.
+              Pesquise por títulos ou descreva o estilo de jogo desejado para receber recomendações inteligentes.
             </p>
           </div>
         </div>
@@ -574,11 +688,11 @@ function SearchContent() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Digite o nome do jogo (Elden Ring, God of War, Zelda...)"
-              className="w-full pl-10 pr-24 py-2.5 sm:py-3 rounded-2xl bg-[#0c0e14]/90 border border-cyan-500/30 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all shadow-inner"
+              placeholder="Pesquise por título (Elden Ring...) ou descreva o que procura (estilo souls-like, relaxante...)"
+              className="w-full pl-10 pr-24 sm:pr-48 py-2.5 sm:py-3 rounded-2xl bg-[#0c0e14]/90 border border-cyan-500/30 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all shadow-inner"
             />
-            <div className="absolute right-2 flex items-center gap-1">
-              {loading ? (
+            <div className="absolute right-2 flex items-center gap-1.5">
+              {loading && !isAiLoading ? (
                 <div className="p-1">
                   <Loader2 className="w-4 h-4 text-[#00E5FF] animate-spin" />
                 </div>
@@ -593,6 +707,24 @@ function SearchContent() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               ) : null}
+
+              {/* Botão de Curadoria IA manual quando houver termo digitado */}
+              {isAiEnabled && inputValue.trim().length >= 3 && (
+                <button
+                  type="button"
+                  onClick={() => triggerAiRecommendation(inputValue, true)}
+                  disabled={isAiLoading}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-[#00E5FF] hover:text-white font-bold text-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50 shadow-sm"
+                  title="Consultar recomendações inteligentes do Curador IA"
+                >
+                  {isAiLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 text-[#00E5FF] animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 text-[#00E5FF] animate-pulse" />
+                  )}
+                  <span>{isAiLoading ? "IA Buscando..." : "Curadoria IA"}</span>
+                </button>
+              )}
 
               <button
                 type="submit"
@@ -1020,6 +1152,50 @@ function SearchContent() {
           LISTA DE RESULTADOS & PAGINAÇÃO REAL
       ======================================================== */}
       <div className="space-y-4">
+        {/* Banner do Curador IA se houver explicação */}
+        {aiExplanation && (
+          <div className="rounded-2xl bg-gradient-to-r from-cyan-950/60 via-[#101928] to-purple-950/40 border border-[#00E5FF]/40 p-4 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-md animate-fadeIn">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#00E5FF]/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-start gap-3 relative z-10">
+              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-[#00E5FF] border border-cyan-500/40 shrink-0 mt-0.5 shadow-md shadow-cyan-500/20">
+                <Sparkles className="w-5 h-5 text-[#00E5FF] animate-pulse" />
+              </div>
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#00E5FF] flex items-center gap-1.5">
+                    Curadoria Inteligente por IA
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold">
+                    Destaques com borda animada
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-200 leading-relaxed font-medium">
+                  {aiExplanation}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiExplanation(null)}
+                className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+                title="Fechar explicação"
+                aria-label="Fechar explicação"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Indicador de carregamento em background da IA */}
+        {isAiLoading && (
+          <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#0c121e] border border-cyan-500/40 text-cyan-300 text-xs shadow-lg animate-pulse">
+            <Sparkles className="w-4 h-4 text-[#00E5FF] animate-spin shrink-0" />
+            <span>
+              O Curador IA está analisando seu estilo de jogo para selecionar recomendações exclusivas no catálogo...
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-gray-400 px-1 font-mono">
           <span>
             {loading ? (
@@ -1059,7 +1235,7 @@ function SearchContent() {
                   onClickCapture={() => handleCardClick(game.id)}
                   className="h-full"
                 >
-                  <GameCard game={game} />
+                  <GameCard game={game} isAiRecommended={game.isAiRecommended} />
                 </div>
               ))}
             </div>
@@ -1089,6 +1265,20 @@ function SearchContent() {
               </div>
             )}
           </>
+        ) : isAiLoading ? (
+          <div className="rounded-[32px] border border-cyan-500/30 bg-[#121622] p-12 text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-[#00E5FF] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/20">
+              <Sparkles className="w-6 h-6 text-[#00E5FF] animate-spin" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-white">
+                Consultando o Curador Inteligente...
+              </h3>
+              <p className="text-xs text-gray-300 max-w-md mx-auto">
+                Não encontramos correspondência exata de título no catálogo. A inteligência artificial está buscando recomendações sob medida para &ldquo;<span className="text-cyan-300 font-semibold">{query}</span>&rdquo;.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-12 text-center space-y-4 shadow-2xl">
             <Search className="w-12 h-12 text-gray-600 mx-auto" />
@@ -1098,13 +1288,26 @@ function SearchContent() {
                 Não encontramos títulos correspondentes aos filtros selecionados. Tente relaxar os filtros de gênero, console ou nota.
               </p>
             </div>
-            <button
-              onClick={handleClearFilters}
-              className="px-6 py-2.5 rounded-full bg-[#00E5FF] text-black font-extrabold text-xs transition-all shadow-lg shadow-[#00E5FF]/20 hover:brightness-110 active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Limpar filtros e ver populares
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {isAiEnabled && query.trim().length >= 3 && (
+                <button
+                  type="button"
+                  onClick={() => triggerAiRecommendation(query, true)}
+                  className="px-5 py-2.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 hover:text-white font-bold text-xs border border-cyan-500/40 transition-all shadow-lg active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                  Buscar com Curador IA
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="px-6 py-2.5 rounded-full bg-[#00E5FF] text-black font-extrabold text-xs transition-all shadow-lg shadow-[#00E5FF]/20 hover:brightness-110 active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Limpar filtros e ver populares
+              </button>
+            </div>
           </div>
         )}
       </div>

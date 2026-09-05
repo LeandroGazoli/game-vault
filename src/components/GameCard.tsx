@@ -7,16 +7,17 @@ import StatusBadge from "./StatusBadge";
 import GameModal from "./GameModal";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
-import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3, Layers } from "lucide-react";
+import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3, Layers, Sparkles } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
 import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
 
 interface GameCardProps {
   game: Game;
   onOpenAuthModal?: () => void;
+  isAiRecommended?: boolean;
 }
 
-function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
+function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardProps) {
   const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame, deleteGame } = useGameLibrary();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,52 +68,64 @@ function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
     setIsMenuOpen(false);
   };
 
+  const isAi = Boolean(isAiRecommended || game.isAiRecommended);
+
   return (
     <>
       <Card3DTilt maxTilt={8} className="h-full">
-        <div className="group relative flex flex-col h-full rounded-xl bg-[#12151c] border border-[#222834] hover:border-[#384255] hover:bg-[#151922] overflow-hidden transition-colors duration-200 hover:shadow-2xl hover:shadow-black/70">
-        {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
-          <Link
-            href={getGameUrl(game)}
-            className="block w-full h-full cursor-pointer"
-            title={`Ver detalhes de ${game.name}`}
-          >
-            {game.background_image && !imgError ? (
-              <img
-                src={game.background_image}
-                alt=""
-                className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
-                decoding="async"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#181c25] to-[#0d0f14] text-neutral-500">
-                <Clock className="w-6 h-6 mb-1.5 text-neutral-600 opacity-60" />
-                <span className="text-[11px] font-semibold text-neutral-400 line-clamp-2 px-1">
-                  {game.name}
-                </span>
-              </div>
-            )}
+        <div className={isAi ? "ai-card-wrapper h-full" : "h-full"}>
+          {isAi && <div className="ai-card-border-beam" />}
+          <div className={`group relative flex flex-col h-full ${isAi ? "rounded-[12px]" : "rounded-xl border border-[#222834] hover:border-[#384255] hover:shadow-2xl hover:shadow-black/70"} bg-[#12151c] hover:bg-[#151922] overflow-hidden transition-colors duration-200`}>
+            {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
+            <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
+              <Link
+                href={getGameUrl(game)}
+                className="block w-full h-full cursor-pointer"
+                title={`Ver detalhes de ${game.name}`}
+              >
+                {game.background_image && !imgError ? (
+                  <img
+                    src={game.background_image}
+                    alt=""
+                    className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#181c25] to-[#0d0f14] text-neutral-500">
+                    <Clock className="w-6 h-6 mb-1.5 text-neutral-600 opacity-60" />
+                    <span className="text-[11px] font-semibold text-neutral-400 line-clamp-2 px-1">
+                      {game.name}
+                    </span>
+                  </div>
+                )}
 
-            {/* Gradiente sutil para transição com a base */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#12151c] via-transparent to-transparent opacity-80" />
-          </Link>
+                {/* Gradiente sutil para transição com a base */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#12151c] via-transparent to-transparent opacity-80" />
+              </Link>
 
-          {/* Metacritic Badge (Canto Superior Esquerdo) */}
-          {game.metacritic && (
-            <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-              <MetacriticBadge score={game.metacritic} size="sm" />
-            </div>
-          )}
+              {/* Badge Curadoria IA */}
+              {isAi && (
+                <div className="absolute top-2 left-2 z-20 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#081520]/95 border border-[#00E5FF]/70 text-[#00E5FF] text-[9px] font-black uppercase tracking-wider shadow-lg shadow-cyan-500/30 backdrop-blur-md">
+                  <Sparkles className="w-2.5 h-2.5 text-[#00E5FF] animate-pulse" />
+                  <span>Curadoria IA</span>
+                </div>
+              )}
 
-          {/* Status do Usuário se na Biblioteca (Canto Superior Direito) */}
-          {userGame && (
-            <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-              <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
-            </div>
-          )}
+              {/* Metacritic Badge (Canto Superior Esquerdo) */}
+              {game.metacritic && (
+                <div className={`absolute ${isAi ? "top-7 left-2" : "top-2.5 left-2.5"} z-10 pointer-events-none transition-all`}>
+                  <MetacriticBadge score={game.metacritic} size="sm" />
+                </div>
+              )}
+
+              {/* Status do Usuário se na Biblioteca (Canto Superior Direito) */}
+              {userGame && (
+                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                  <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+                </div>
+              )}
 
           {/* Botão de Micro-Ações Rápidas (...) */}
           <div ref={menuRef} className="absolute bottom-2.5 right-2.5 z-30">
@@ -299,6 +312,7 @@ function GameCardComponent({ game, onOpenAuthModal }: GameCardProps) {
               )}
             </div>
           </div>
+        </div>
         </div>
         </div>
       </Card3DTilt>

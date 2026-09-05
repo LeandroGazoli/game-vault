@@ -343,6 +343,8 @@ export interface Game {
   expansions?: DLCItem[];
   parent_game?: ParentGameItem | null;
   category?: number;
+  isAiRecommended?: boolean;
+  aiExplanation?: string;
 }
 
 export interface UserGameDLC {
