@@ -78,7 +78,7 @@ export default function LegendaryVaultCard({
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider font-sans">
-                  Nível Gamer Steam
+                  Nível Gamer Vault
                 </h3>
                 <span
                   className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${

@@ -131,7 +131,7 @@ export default function GamerXpBreakdownModal({
               <h3 className="text-base sm:text-lg font-black text-white tracking-wide uppercase flex items-center gap-2 font-sans">
                 <span>Extrato de XP Gamer</span>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2a475e] text-[#66c0f4]">
-                  STEAM
+                  VAULT HUD
                 </span>
               </h3>
               <p className="text-xs text-[#8a9eaf] font-mono">

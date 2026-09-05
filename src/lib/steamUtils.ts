@@ -79,7 +79,7 @@ export function getSteamLevelTier(level: number): SteamLevelTier {
 
   if (safeLevel < 50) {
     return {
-      tierName: "Azul Steam",
+      tierName: "Azul Safira",
       borderColor: "#428bca",
       textColor: "text-[#66c0f4]",
       bgColor: "bg-blue-500/10",
