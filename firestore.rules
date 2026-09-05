@@ -34,14 +34,16 @@ service cloud.firestore {
         isOwner(userId) &&
         request.resource.data.plan == "free" &&
         request.resource.data.isAdmin == false &&
-        request.resource.data.isPremium == false
+        request.resource.data.isPremium == false &&
+        (!('banned' in request.resource.data) || request.resource.data.banned == false) &&
+        (!('suspended' in request.resource.data) || request.resource.data.suspended == false)
       );
 
-      // Atualização de perfil: impede que o próprio usuário mude plano ou se promova a admin (Prevenção de BOPLA / Mass Assignment)
+      // Atualização de perfil: impede que o próprio usuário mude plano, se promova a admin ou remova suspensões (Prevenção de BOPLA / Mass Assignment)
       allow update: if isVerifiedAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid'
+          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'banned', 'suspended', 'moderationReason', 'moderatedAt'
         ])
       );
 
@@ -132,6 +134,18 @@ service cloud.firestore {
     match /system_notifications/{notifId} {
       allow read: if true;
       allow write: if isVerifiedAdmin();
+    }
+
+    // Trilha de Auditoria Administrativa: estritamente privada, legível apenas por admin, imutável
+    match /audit_logs/{logId} {
+      allow read: if isVerifiedAdmin();
+      // Apenas admin verificado pode criar registros de auditoria; update e delete são PROIBIDOS (imutabilidade)
+      allow create: if isVerifiedAdmin() &&
+        request.resource.data.adminEmail is string &&
+        request.resource.data.action is string &&
+        request.resource.data.action.size() <= 100 &&
+        request.resource.data.createdAt is string;
+      allow update, delete: if false;
     }
   }
 }

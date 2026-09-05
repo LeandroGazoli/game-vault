@@ -258,6 +258,122 @@ export async function updateUserPlanByAdmin(
   }
 }
 
+export async function updateUserModerationByAdmin(
+  targetUserId: string,
+  data: {
+    banned?: boolean;
+    suspended?: boolean;
+    moderationReason?: string | null;
+  }
+): Promise<void> {
+  if (!targetUserId || !db) return;
+  try {
+    await setDoc(
+      doc(db, "users", targetUserId),
+      {
+        ...data,
+        moderatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Erro ao atualizar moderação pelo admin:", e);
+    throw e;
+  }
+}
+
+// Log de Auditoria Imutável
+export async function recordAuditLog(log: Omit<import("./types").AuditLogEntry, "id" | "createdAt">): Promise<void> {
+  if (!db) return;
+  try {
+    const colRef = collection(db, "audit_logs");
+    const docRef = doc(colRef);
+    await setDoc(docRef, {
+      ...log,
+      id: docRef.id,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("Erro ao registrar log de auditoria:", e);
+  }
+}
+
+export async function getAuditLogs(limitCount = 50): Promise<import("./types").AuditLogEntry[]> {
+  if (!db) return [];
+  try {
+    const q = query(
+      collection(db, "audit_logs"),
+      orderBy("createdAt", "desc"),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    const logs: import("./types").AuditLogEntry[] = [];
+    snap.forEach((docSnap) => {
+      logs.push(docSnap.data() as import("./types").AuditLogEntry);
+    });
+    return logs;
+  } catch (e) {
+    console.error("Erro ao buscar logs de auditoria:", e);
+    return [];
+  }
+}
+
+// Configurações do Sistema
+export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
+  maintenanceMode: false,
+  maintenanceNotice: "Estamos realizando atualizações programadas no MyGameList. Voltamos em instantes!",
+  allowRegistrations: true,
+  announcementBanner: {
+    enabled: false,
+    text: "🎉 Bem-vindo à nova versão do MyGameList!",
+    linkUrl: "/planos",
+    linkLabel: "Conhecer Planos",
+    variant: "info",
+  },
+  features: {
+    aiRecommendations: true,
+    communityChat: false,
+    bountiesEnabled: true,
+    instantSyncSteam: true,
+  },
+};
+
+export async function getSystemSettings(): Promise<import("./types").SystemSettings> {
+  if (!db) return DEFAULT_SYSTEM_SETTINGS;
+  try {
+    const snap = await getDoc(doc(db, "system", "settings"));
+    if (snap.exists()) {
+      return { ...DEFAULT_SYSTEM_SETTINGS, ...snap.data() } as import("./types").SystemSettings;
+    }
+    return DEFAULT_SYSTEM_SETTINGS;
+  } catch (e) {
+    console.error("Erro ao obter configurações do sistema:", e);
+    return DEFAULT_SYSTEM_SETTINGS;
+  }
+}
+
+export async function updateSystemSettings(
+  settings: Partial<import("./types").SystemSettings>,
+  adminEmail: string
+): Promise<void> {
+  if (!db) return;
+  try {
+    await setDoc(
+      doc(db, "system", "settings"),
+      {
+        ...settings,
+        updatedAt: new Date().toISOString(),
+        updatedBy: adminEmail,
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Erro ao atualizar configurações do sistema:", e);
+    throw e;
+  }
+}
+
 // ==========================================
 // CENTRAL DE FEEDBACK, IDEIAS & RECOMPENSAS
 // ==========================================
