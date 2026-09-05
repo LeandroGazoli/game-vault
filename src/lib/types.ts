@@ -419,6 +419,7 @@ export interface UserProfile {
   visibility?: ProfileVisibility;
   isVerified?: boolean;
   gamerLevel?: number;
+  gamerXp?: number;
   premiumUntil?: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -479,19 +480,39 @@ export interface LibraryStats {
 export function calculateGamerLevel(stats?: LibraryStats | null): {
   level: number;
   xp: number;
+  currentLevelBaseXp: number;
   nextLevelXp: number;
+  xpToNextLevel: number;
   percentToNext: number;
   rankTitle: string;
   globalRank: string;
+  breakdown: {
+    completedXp: number;
+    hoursXp: number;
+    playingXp: number;
+    libraryXp: number;
+    ratingXp: number;
+  };
 } {
+  const fallbackBreakdown = {
+    completedXp: 0,
+    hoursXp: 0,
+    playingXp: 0,
+    libraryXp: 0,
+    ratingXp: 0,
+  };
+
   if (!stats) {
     return {
       level: 1,
       xp: 0,
+      currentLevelBaseXp: 0,
       nextLevelXp: 100,
+      xpToNextLevel: 100,
       percentToNext: 0,
       rankTitle: "Iniciante",
       globalRank: "Top 50%",
+      breakdown: fallbackBreakdown,
     };
   }
 
@@ -499,13 +520,15 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
   const playing = stats.playingCount || 0;
   const library = (stats.libraryCount ?? 0) + (stats.totalGames || 0);
   const hours = stats.totalPlaytimeHours || 0;
+  const rated = stats.averageRating > 0 ? Math.min(stats.totalGames, 20) : 0;
 
-  const totalXp = Math.floor(
-    completed * 60 +
-    hours * 8 +
-    playing * 20 +
-    library * 10
-  );
+  const completedXp = completed * 60;
+  const hoursXp = Math.floor(hours * 8);
+  const playingXp = playing * 20;
+  const libraryXp = library * 10;
+  const ratingXp = rated * 20;
+
+  const totalXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
 
   const calculatedLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXp / 15)) + 1));
   const currentLevelBaseXp = Math.pow(calculatedLevel - 1, 2) * 15;
@@ -513,6 +536,7 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
   const levelXpDiff = Math.max(1, nextLevelBaseXp - currentLevelBaseXp);
   const currentProgress = Math.max(0, totalXp - currentLevelBaseXp);
   const percentToNext = Math.min(100, Math.floor((currentProgress / levelXpDiff) * 100));
+  const xpToNextLevel = Math.max(0, nextLevelBaseXp - totalXp);
 
   let rankTitle = "Aspirante Gamer";
   let globalRank = "Top 50%";
@@ -534,10 +558,19 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
   return {
     level: calculatedLevel,
     xp: totalXp,
+    currentLevelBaseXp,
     nextLevelXp: nextLevelBaseXp,
+    xpToNextLevel,
     percentToNext,
     rankTitle,
     globalRank,
+    breakdown: {
+      completedXp,
+      hoursXp,
+      playingXp,
+      libraryXp,
+      ratingXp,
+    },
   };
 }
 

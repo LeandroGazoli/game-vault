@@ -94,6 +94,7 @@ export default function ManagePlanModal({
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="max-w-lg"
+      hideCloseButton={true}
     >
       <div className="space-y-6 relative">
         {/* Glow de fundo */}

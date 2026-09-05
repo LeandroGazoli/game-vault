@@ -100,6 +100,36 @@ export default function LegendaryVaultCard({
             </div>
           </div>
         </div>
+
+        {/* Barra de Progresso de XP Gamer e Status de Ranking */}
+        <div className="mt-4 pt-3.5 border-t border-white/10 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="text-gray-200 font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]" />
+              <span className="text-white">{gamerLevelInfo.rankTitle}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-emerald-400">{gamerLevelInfo.globalRank} Global</span>
+            </span>
+            <span className="text-[#00E5FF] font-black">
+              {gamerLevelInfo.xp.toLocaleString("pt-BR")} / {gamerLevelInfo.nextLevelXp.toLocaleString("pt-BR")} XP
+              <span className="text-gray-400 font-normal ml-1">({gamerLevelInfo.percentToNext}%)</span>
+            </span>
+          </div>
+
+          <div className="h-2.5 w-full rounded-full bg-black/40 border border-white/10 overflow-hidden p-[1px]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#00E5FF] via-purple-500 to-amber-400 shadow-[0_0_12px_rgba(0,229,255,0.6)] transition-all duration-700"
+              style={{ width: `${Math.max(4, gamerLevelInfo.percentToNext)}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
+            <span>Level {displayLevel}</span>
+            <span>
+              Faltam {gamerLevelInfo.xpToNextLevel.toLocaleString("pt-BR")} XP para o Level {Math.min(99, displayLevel + 1)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

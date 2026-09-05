@@ -19,6 +19,7 @@ import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
 import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
+import GamerScoreboardCard from "@/components/profile/GamerScoreboardCard";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import GameImporterModal from "@/components/importer/GameImporterModal";
 import { getThemeStyles } from "@/lib/themeStyles";
@@ -511,6 +512,9 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
       />
+
+      {/* Placar Numérico Digital Neon de Pontos e XP (Inspirado nas Referências DemoVip) */}
+      <GamerScoreboardCard stats={activeStats} />
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
       {activeUser.showcaseGameId && (
