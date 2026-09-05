@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import AdminUserDrawer from "@/components/admin/AdminUserDrawer";
+import CreateUserModal from "@/components/admin/CreateUserModal";
 import {
   Users,
   Search,
@@ -21,6 +22,7 @@ import {
   Ban,
   MoreVertical,
   Download,
+  UserPlus,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -32,7 +34,14 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleUserCreated = (newUser: UserProfile) => {
+    setUsers((prev) => [newUser, ...prev]);
+    setToastMessage(`Usuário @${newUser.username} criado com sucesso!`);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -198,6 +207,15 @@ export default function AdminUsersPage() {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-[#00E5FF] to-cyan-500 text-black font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-cyan-500/20 min-h-[44px]"
+              title="Cadastrar um novo usuário no sistema"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Novo Usuário</span>
+            </button>
+
+            <button
               onClick={exportToCSV}
               disabled={filteredUsers.length === 0}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold text-gray-300 transition-colors min-h-[44px]"
@@ -361,6 +379,13 @@ export default function AdminUsersPage() {
         }}
         onUpdatePlan={handleUpdatePlan}
         onUpdateModeration={handleUpdateModeration}
+      />
+
+      {/* Modal de Criação de Usuário */}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onUserCreated={handleUserCreated}
       />
     </div>
   );
