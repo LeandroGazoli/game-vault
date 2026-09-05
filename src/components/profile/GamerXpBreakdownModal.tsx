@@ -24,6 +24,7 @@ interface GamerXpBreakdownModalProps {
   onClose: () => void;
   stats?: LibraryStats | null;
   gamerLevel?: number;
+  realRank?: string;
 }
 
 export default function GamerXpBreakdownModal({
@@ -31,8 +32,9 @@ export default function GamerXpBreakdownModal({
   onClose,
   stats,
   gamerLevel,
+  realRank,
 }: GamerXpBreakdownModalProps) {
-  const gamerLevelInfo = calculateGamerLevel(stats);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
   const displayLevel = gamerLevel || gamerLevelInfo.level;
   const { breakdown } = gamerLevelInfo;
 

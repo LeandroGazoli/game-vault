@@ -496,7 +496,10 @@ export interface LibraryStats {
 /**
  * Calcula o Nível Gamer (1 a 99) e Ranking de Prestígio com base nas estatísticas
  */
-export function calculateGamerLevel(stats?: LibraryStats | null): {
+export function calculateGamerLevel(
+  stats?: LibraryStats | null,
+  realGlobalRank?: string
+): {
   level: number;
   xp: number;
   currentLevelBaseXp: number;
@@ -530,7 +533,7 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
       xpToNextLevel: 100,
       percentToNext: 0,
       rankTitle: "Iniciante",
-      globalRank: "Top 50%",
+      globalRank: realGlobalRank || "Iniciante",
       breakdown: fallbackBreakdown,
     };
   }
@@ -558,20 +561,16 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
   const xpToNextLevel = Math.max(0, nextLevelBaseXp - totalXp);
 
   let rankTitle = "Aspirante Gamer";
-  let globalRank = "Top 50%";
+  let globalRank = realGlobalRank || "Calculando Rank...";
 
   if (calculatedLevel >= 80) {
     rankTitle = "Lorde Supremo";
-    globalRank = "Top 1%";
   } else if (calculatedLevel >= 50) {
     rankTitle = "Mestre Lendário";
-    globalRank = "Top 3%";
   } else if (calculatedLevel >= 30) {
     rankTitle = "Veterano Hardcore";
-    globalRank = "Top 10%";
   } else if (calculatedLevel >= 15) {
     rankTitle = "Aventureiro PRO";
-    globalRank = "Top 25%";
   }
 
   return {

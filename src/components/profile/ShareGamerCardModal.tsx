@@ -25,6 +25,7 @@ interface ShareGamerCardModalProps {
   user: UserProfile;
   stats?: LibraryStats | null;
   library?: UserGame[];
+  realRank?: string;
 }
 
 type CardTheme = "neon" | "gold" | "midnight";
@@ -36,6 +37,7 @@ export default function ShareGamerCardModal({
   user,
   stats,
   library = [],
+  realRank,
 }: ShareGamerCardModalProps) {
   const [theme, setTheme] = useState<CardTheme>("neon");
   const [format, setFormat] = useState<CardFormat>("story");
@@ -43,7 +45,7 @@ export default function ShareGamerCardModal({
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const gamerLevelInfo = calculateGamerLevel(stats);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
   const displayLevel = user.gamerLevel || gamerLevelInfo.level;
   const rankTitle = gamerLevelInfo.rankTitle;
 
@@ -198,9 +200,13 @@ export default function ShareGamerCardModal({
     ctx.fillText(`LV. ${displayLevel}`, badgeX + 30, badgeY + 75);
 
     ctx.fillStyle = "#E2E8F0";
-    ctx.font = "bold 22px sans-serif";
+    ctx.font = "bold 20px sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText(rankTitle, badgeX + badgeWidth - 30, badgeY + 60);
+    ctx.fillText(rankTitle, badgeX + badgeWidth - 30, badgeY + 45);
+
+    ctx.fillStyle = theme === "neon" ? "#00E5FF" : theme === "gold" ? "#F59E0B" : "#34D399";
+    ctx.font = "bold 15px monospace";
+    ctx.fillText(gamerLevelInfo.globalRank, badgeX + badgeWidth - 30, badgeY + 75);
     ctx.textAlign = "left";
 
     // 7. Grid de Estatísticas Principais (4 Caixas)

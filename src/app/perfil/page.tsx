@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { GameStatus, UserGame, UserProfile, LibraryStats } from "@/lib/types";
+import { GameStatus, UserGame, UserProfile, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { getGamerCommunityRank, GamerRankResult } from "@/lib/firebase";
 import StatsOverview from "@/components/StatsOverview";
 import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
@@ -216,7 +217,21 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isXpBreakdownOpen, setIsXpBreakdownOpen] = useState(false);
   const [isGamerCardOpen, setIsGamerCardOpen] = useState(false);
+  const [realGamerRank, setRealGamerRank] = useState<GamerRankResult | null>(null);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
+
+  // Busca a posição real e percentual do perfil no ranking global do Firebase
+  useEffect(() => {
+    if (!activeUser?.username) return;
+    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats).xp;
+    getGamerCommunityRank({
+      uid: activeUser.uid,
+      username: activeUser.username,
+      xp: currentXp,
+    })
+      .then((res) => setRealGamerRank(res))
+      .catch((err) => console.warn("Erro ao calcular ranking global real:", err));
+  }, [activeUser?.uid, activeUser?.username, activeUser?.gamerXp, activeStats]);
 
   const profileThemeStyles = getThemeStyles(activeUser?.theme);
 
@@ -516,6 +531,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         user={activeUser}
         stats={activeStats}
         isOwner={isOwner}
+        realRank={realGamerRank?.formattedRank}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
         onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
@@ -577,7 +593,12 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
       {/* Estatísticas Gerais do Perfil (se visibilidade ativa) */}
       {activeUser.visibility?.showStats !== false && (
-        <StatsOverview stats={activeStats} activeTab={activeTab} onSelectTab={setActiveTab} />
+        <StatsOverview
+          stats={activeStats}
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          realRank={realGamerRank?.formattedRank}
+        />
       )}
 
       {/* Abas de Navegação e Filtros (Mobile-First & Touch-Friendly) */}
@@ -1091,6 +1112,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onClose={() => setIsXpBreakdownOpen(false)}
         stats={activeStats}
         gamerLevel={activeUser?.gamerLevel}
+        realRank={realGamerRank?.formattedRank}
       />
 
       {/* Modal de Geração de Card Gamer para Redes Sociais */}
@@ -1100,6 +1122,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         user={activeUser}
         stats={activeStats}
         library={activeLibrary}
+        realRank={realGamerRank?.formattedRank}
       />
 
       {/* Modal de Comemoração de Level-Up com Confetes e Haptics */}

@@ -19,12 +19,14 @@ interface StatsOverviewProps {
   stats: LibraryStats;
   activeTab?: string;
   onSelectTab?: (tab: string) => void;
+  realRank?: string;
 }
 
 export default function StatsOverview({
   stats,
   activeTab = "all",
   onSelectTab,
+  realRank,
 }: StatsOverviewProps) {
   const [metricMode, setMetricMode] = useState<"standard" | "prestige">("standard");
 
@@ -33,7 +35,7 @@ export default function StatsOverview({
       ? Math.round((stats.completedCount / stats.totalGames) * 100)
       : 0;
 
-  const gamerLevelInfo = calculateGamerLevel(stats);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
 
   // Meta estimada de zerados para o ano atual (ex: 20 jogos)
   const annualTarget = 20;
@@ -138,7 +140,10 @@ export default function StatsOverview({
 
               {/* Coluna 3: Ranking Global */}
               <div className="cursor-pointer active:scale-95 transition-transform pl-1">
-                <div className="text-2xl font-black text-emerald-400 font-mono">
+                <div
+                  className="text-base sm:text-2xl font-black text-emerald-400 font-mono truncate"
+                  title={gamerLevelInfo.globalRank}
+                >
                   {gamerLevelInfo.globalRank}
                 </div>
                 <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">
