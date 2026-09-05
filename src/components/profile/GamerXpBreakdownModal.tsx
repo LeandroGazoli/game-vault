@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { LibraryStats, calculateGamerLevel, UserPlan } from "@/lib/types";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
   Trophy,
@@ -16,6 +16,9 @@ import {
   Info,
   CheckCircle2,
   Users,
+  Crown,
+  Zap,
+  Lock,
 } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 
@@ -25,6 +28,8 @@ interface GamerXpBreakdownModalProps {
   stats?: LibraryStats | null;
   gamerLevel?: number;
   realRank?: string;
+  plan?: UserPlan;
+  onOpenUpgrade?: () => void;
 }
 
 export default function GamerXpBreakdownModal({
@@ -33,8 +38,10 @@ export default function GamerXpBreakdownModal({
   stats,
   gamerLevel,
   realRank,
+  plan,
+  onOpenUpgrade,
 }: GamerXpBreakdownModalProps) {
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, plan);
   const displayLevel = gamerLevel || gamerLevelInfo.level;
   const { breakdown } = gamerLevelInfo;
 
@@ -214,6 +221,95 @@ export default function GamerXpBreakdownModal({
                 </div>
               );
             })}
+          </div>
+
+          {/* Multiplicador e Bônus do Plano (XP Boost) */}
+          <div
+            className={`p-3.5 rounded-xl border transition-all space-y-2.5 ${
+              plan === "vip"
+                ? "bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border-amber-500/40"
+                : plan === "pro"
+                ? "bg-gradient-to-r from-cyan-500/15 to-blue-500/10 border-[#00E5FF]/40"
+                : "bg-[#141722] border-white/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {plan === "vip" ? (
+                  <Crown className="w-4 h-4 text-amber-400 fill-amber-400/30" />
+                ) : plan === "pro" ? (
+                  <Zap className="w-4 h-4 text-[#00E5FF] fill-[#00E5FF]/20" />
+                ) : (
+                  <Zap className="w-4 h-4 text-gray-400" />
+                )}
+                <div>
+                  <span className="text-xs font-bold text-white block">
+                    {plan === "vip"
+                      ? "Boost VIP Fundador (2.0x XP em Dobro)"
+                      : plan === "pro"
+                      ? "Boost PRO Ativo (+50% de XP / 1.5x)"
+                      : "Multiplicador de XP do Plano Free (1.0x)"}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-mono">
+                    {plan === "vip"
+                      ? "Evolução máxima ativada em toda a plataforma"
+                      : plan === "pro"
+                      ? "+50% de bônus em zeramentos, horas e catálogo"
+                      : "Ganho na taxa padrão sem aceleração"}
+                  </span>
+                </div>
+              </div>
+
+              <span
+                className={`text-xs font-mono font-black px-2 py-0.5 rounded-md ${
+                  plan === "vip"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                    : plan === "pro"
+                    ? "bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/40"
+                    : "bg-white/10 text-gray-300"
+                }`}
+              >
+                {gamerLevelInfo.boostLabel} BOOST
+              </span>
+            </div>
+
+            {/* Valores de Base vs Bônus */}
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-[11px] font-mono">
+              <div className="text-gray-400">
+                <span>XP Base Conquistado: </span>
+                <strong className="text-white font-bold">{breakdown.baseXp.toLocaleString("pt-BR")} XP</strong>
+              </div>
+              <div className="text-right">
+                {breakdown.boostBonusXp > 0 ? (
+                  <span className="text-emerald-400 font-bold">
+                    +{breakdown.boostBonusXp.toLocaleString("pt-BR")} XP ({gamerLevelInfo.boostPercent}%)
+                  </span>
+                ) : (
+                  <span className="text-gray-500">0 XP bônus</span>
+                )}
+              </div>
+            </div>
+
+            {/* Se for FREE: Card de incentivo / Upgrade */}
+            {(!plan || plan === "free") && (
+              <div className="pt-2 border-t border-white/10 space-y-2">
+                <div className="p-2.5 rounded-lg bg-black/40 border border-amber-500/20 text-[11px] text-amber-200/90 leading-relaxed">
+                  💡 <strong className="text-white">Quer disparar no Ranking Global?</strong> Com o plano <strong>PRO</strong> você teria agora <strong className="text-[#00E5FF]">+{Math.floor(breakdown.baseXp * 0.5).toLocaleString("pt-BR")} XP</strong> e no <strong>VIP</strong> seriam <strong className="text-amber-300">+{breakdown.baseXp.toLocaleString("pt-BR")} XP adicionais</strong>!
+                </div>
+                {onOpenUpgrade && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenUpgrade();
+                    }}
+                    className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:brightness-110 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-black" />
+                    <span>Ativar Boost de XP (PRO 1.5x / VIP 2.0x)</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Linha de Total Somado */}

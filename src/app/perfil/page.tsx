@@ -223,7 +223,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   // Busca a posição real e percentual do perfil no ranking global do Firebase
   useEffect(() => {
     if (!activeUser?.username) return;
-    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats).xp;
+    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats, undefined, activeUser.plan).xp;
     getGamerCommunityRank({
       uid: activeUser.uid,
       username: activeUser.username,
@@ -231,7 +231,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
     })
       .then((res) => setRealGamerRank(res))
       .catch((err) => console.warn("Erro ao calcular ranking global real:", err));
-  }, [activeUser?.uid, activeUser?.username, activeUser?.gamerXp, activeStats]);
+  }, [activeUser?.uid, activeUser?.username, activeUser?.gamerXp, activeUser?.plan, activeStats]);
 
   const profileThemeStyles = getThemeStyles(activeUser?.theme);
 
@@ -540,6 +540,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       {/* Placar Numérico Digital Neon de Pontos e XP (Inspirado nas Referências DemoVip) */}
       <GamerScoreboardCard
         stats={activeStats}
+        plan={activeUser.plan}
         onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
       />
 
@@ -598,6 +599,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           realRank={realGamerRank?.formattedRank}
+          plan={activeUser.plan}
         />
       )}
 
@@ -1113,6 +1115,8 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         stats={activeStats}
         gamerLevel={activeUser?.gamerLevel}
         realRank={realGamerRank?.formattedRank}
+        plan={activeUser?.plan}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
       />
 
       {/* Modal de Geração de Card Gamer para Redes Sociais */}

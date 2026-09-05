@@ -39,6 +39,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     badge: "Recorrente",
     enabled: true,
     features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) para subir no Ranking",
       "100% Livre de Anúncios e Banners",
       "Selo PRO oficial no perfil e comentários",
       "Crie até 10 títulos e insígnias personalizadas",
@@ -60,6 +61,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     badge: "Sem Renovação",
     enabled: true,
     features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) por 30 dias",
       "30 dias de todos os benefícios PRO",
       "Crie até 10 títulos e insígnias personalizadas",
       "Pagamento único sem surpresas no cartão",
@@ -81,6 +83,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     badge: "Mais Popular (Economize 33%)",
     enabled: true,
     features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) por 1 ano completo",
       "Tudo do plano PRO por 1 ano completo",
       "Crie até 10 títulos e insígnias personalizadas",
       "Equivalente a R$ 6,65 por mês",
@@ -101,6 +104,7 @@ export const DEFAULT_PLANS_CONFIG: PlansConfig = {
     badge: "Acesso Vitalício Eterno",
     enabled: true,
     features: [
+      "👑 Boost Supremo de 2.0x XP (Ganho de XP em Dobro Vitalício)",
       "Acesso PRO e VIP para toda a vida",
       "Crie até 10 títulos e insígnias personalizadas",
       "Pagamento único de R$ 149,90 sem mensalidades",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { LibraryStats, calculateGamerLevel, UserPlan } from "@/lib/types";
 import {
   Trophy,
   Gamepad2,
@@ -20,6 +20,7 @@ interface StatsOverviewProps {
   activeTab?: string;
   onSelectTab?: (tab: string) => void;
   realRank?: string;
+  plan?: UserPlan;
 }
 
 export default function StatsOverview({
@@ -27,6 +28,7 @@ export default function StatsOverview({
   activeTab = "all",
   onSelectTab,
   realRank,
+  plan,
 }: StatsOverviewProps) {
   const [metricMode, setMetricMode] = useState<"standard" | "prestige">("standard");
 
@@ -35,7 +37,7 @@ export default function StatsOverview({
       ? Math.round((stats.completedCount / stats.totalGames) * 100)
       : 0;
 
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, plan);
 
   // Meta estimada de zerados para o ano atual (ex: 20 jogos)
   const annualTarget = 20;

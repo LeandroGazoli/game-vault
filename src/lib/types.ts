@@ -494,15 +494,54 @@ export interface LibraryStats {
   topGenres: { name: string; count: number }[];
 }
 
+export interface PlanXpBoostConfig {
+  multiplier: number;
+  label: string;
+  bonusPercent: number;
+  name: string;
+  badge: string;
+}
+
+export const PLAN_XP_BOOST: Record<UserPlan, PlanXpBoostConfig> = {
+  free: {
+    multiplier: 1.0,
+    label: "1.0x",
+    bonusPercent: 0,
+    name: "Free (Padrão)",
+    badge: "1.0x XP",
+  },
+  pro: {
+    multiplier: 1.5,
+    label: "1.5x",
+    bonusPercent: 50,
+    name: "PRO (+50% XP)",
+    badge: "⚡ 1.5x XP Boost",
+  },
+  vip: {
+    multiplier: 2.0,
+    label: "2.0x",
+    bonusPercent: 100,
+    name: "VIP (2x XP em Dobro)",
+    badge: "👑 2.0x XP Boost",
+  },
+};
+
 /**
- * Calcula o Nível Gamer (1 a 99) e Ranking de Prestígio com base nas estatísticas
+ * Calcula o Nível Gamer (1 a 99) e Ranking de Prestígio com base nas estatísticas e no multiplicador do Plano
  */
 export function calculateGamerLevel(
   stats?: LibraryStats | null,
-  realGlobalRank?: string
+  realGlobalRank?: string,
+  plan?: UserPlan
 ): {
   level: number;
   xp: number;
+  baseXp: number;
+  boostMultiplier: number;
+  boostBonusXp: number;
+  boostLabel: string;
+  boostPercent: number;
+  userPlan: UserPlan;
   currentLevelBaseXp: number;
   nextLevelXp: number;
   xpToNextLevel: number;
@@ -515,20 +554,33 @@ export function calculateGamerLevel(
     playingXp: number;
     libraryXp: number;
     ratingXp: number;
+    baseXp: number;
+    boostBonusXp: number;
   };
 } {
+  const activePlan: UserPlan = plan || "free";
+  const boost = PLAN_XP_BOOST[activePlan] || PLAN_XP_BOOST.free;
+
   const fallbackBreakdown = {
     completedXp: 0,
     hoursXp: 0,
     playingXp: 0,
     libraryXp: 0,
     ratingXp: 0,
+    baseXp: 0,
+    boostBonusXp: 0,
   };
 
   if (!stats) {
     return {
       level: 1,
       xp: 0,
+      baseXp: 0,
+      boostMultiplier: boost.multiplier,
+      boostBonusXp: 0,
+      boostLabel: boost.label,
+      boostPercent: boost.bonusPercent,
+      userPlan: activePlan,
       currentLevelBaseXp: 0,
       nextLevelXp: 100,
       xpToNextLevel: 100,
@@ -551,7 +603,9 @@ export function calculateGamerLevel(
   const libraryXp = library * 10;
   const ratingXp = rated * 20;
 
-  const totalXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
+  const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
+  const boostBonusXp = Math.floor(baseXp * (boost.multiplier - 1));
+  const totalXp = Math.floor(baseXp * boost.multiplier);
 
   const calculatedLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXp / 15)) + 1));
   const currentLevelBaseXp = Math.pow(calculatedLevel - 1, 2) * 15;
@@ -577,6 +631,12 @@ export function calculateGamerLevel(
   return {
     level: calculatedLevel,
     xp: totalXp,
+    baseXp,
+    boostMultiplier: boost.multiplier,
+    boostBonusXp,
+    boostLabel: boost.label,
+    boostPercent: boost.bonusPercent,
+    userPlan: activePlan,
     currentLevelBaseXp,
     nextLevelXp: nextLevelBaseXp,
     xpToNextLevel,
@@ -589,6 +649,8 @@ export function calculateGamerLevel(
       playingXp,
       libraryXp,
       ratingXp,
+      baseXp,
+      boostBonusXp,
     },
   };
 }

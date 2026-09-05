@@ -946,7 +946,9 @@ export async function getTopGamersLeaderboard(
               const playingXp = playing * 20;
               const libraryXp = library * 10;
               const ratingXp = Math.min(rated, 20) * 20;
-              u.gamerXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
+              const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
+              const multiplier = u.plan === "vip" ? 2.0 : u.plan === "pro" ? 1.5 : 1.0;
+              u.gamerXp = Math.floor(baseXp * multiplier);
               u.gamerLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(u.gamerXp / 15)) + 1));
             } else {
               u.gamerXp = 0;
