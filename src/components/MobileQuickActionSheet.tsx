@@ -15,7 +15,9 @@ import {
   Crown,
   X,
   Plus,
+  Smartphone,
 } from "lucide-react";
+import { triggerPwaInstall } from "./PwaInstallPrompt";
 
 interface MobileQuickActionSheetProps {
   isOpen: boolean;
@@ -202,6 +204,20 @@ export default function MobileQuickActionSheet({
               </span>
             </Link>
           )}
+
+          {/* Instalar App PWA */}
+          <button
+            onClick={() => handleAction(() => triggerPwaInstall())}
+            className="w-full flex items-center justify-between p-3 rounded-2xl bg-cyan-950/20 border border-cyan-500/25 hover:border-cyan-400 text-xs font-bold text-cyan-300 transition-colors cursor-pointer active:scale-98"
+          >
+            <div className="flex items-center gap-2.5">
+              <Smartphone className="w-4 h-4 text-[#00E5FF]" />
+              <span>Instalar Aplicativo (PWA)</span>
+            </div>
+            <span className="text-[9px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] px-2 py-0.5 rounded-full border border-[#00E5FF]/30">
+              INSTALAR
+            </span>
+          </button>
         </div>
       </div>
     </div>,
