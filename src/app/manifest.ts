@@ -6,12 +6,14 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "MyGameList",
     description:
       "Seu perfil gamer definitivo: organize jogos zerados, acompanhe lançamentos, notas do Metacritic e HowLongToBeat.",
-    start_url: "/",
+    id: "/?source=pwa",
+    start_url: "/?source=pwa",
     display: "standalone",
     background_color: "#0e0f12",
     theme_color: "#0e0f12",
     orientation: "portrait",
     scope: "/",
+    lang: "pt-BR",
     icons: [
       {
         src: "/icon-192.png",
@@ -30,6 +32,38 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
+      },
+    ],
+    shortcuts: [
+      {
+        name: "Explorar Catálogo",
+        short_name: "Explorar",
+        description: "Buscar e descobrir novos jogos",
+        url: "/search?source=shortcut",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
+      },
+      {
+        name: "Calendário de Lançamentos",
+        short_name: "Lançamentos",
+        description: "Próximos lançamentos de jogos",
+        url: "/calendar?source=shortcut",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
+      },
+      {
+        name: "Meus Jogos & Backlog",
+        short_name: "Biblioteca",
+        description: "Acesse sua biblioteca de jogos zerados",
+        url: "/perfil?source=shortcut",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
+      },
+    ],
+    screenshots: [
+      {
+        src: "/og-image.jpg",
+        sizes: "1200x630",
+        type: "image/jpeg",
+        form_factor: "wide",
+        label: "MyGameList • Catálogo e Perfil Gamer",
       },
     ],
     categories: ["games", "entertainment", "lifestyle"],

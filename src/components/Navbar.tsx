@@ -485,6 +485,22 @@ export default function Navbar() {
                           </Link>
                         )}
 
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            triggerPwaInstall();
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Smartphone className="w-4 h-4 text-cyan-400" />
+                            <span>Instalar App (PWA)</span>
+                          </div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-[#00E5FF]">
+                            APP
+                          </span>
+                        </button>
+
                         <Link
                           href="/feedback"
                           onClick={() => setIsUserMenuOpen(false)}

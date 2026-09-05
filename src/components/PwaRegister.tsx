@@ -15,11 +15,18 @@ export default function PwaRegister() {
   useEffect(() => {
     // Se estiver rodando dentro do WebView nativo do Capacitor (iOS ou Android),
     // não registra o Service Worker para evitar concorrência e conflitos de cache com o app nativo.
+    // Permite testar PWA em desenvolvimento usando ?pwa=1 ou ?sw=1 na URL
+    const isTestingPwa =
+      typeof window !== "undefined" &&
+      (window.location.search.includes("pwa=1") ||
+        window.location.search.includes("sw=1") ||
+        localStorage.getItem("gamevault_force_sw") === "true");
+
     if (
       typeof window === "undefined" ||
       !("serviceWorker" in navigator) ||
       isNativePlatform() ||
-      process.env.NODE_ENV !== "production"
+      (process.env.NODE_ENV !== "production" && !isTestingPwa)
     ) {
       return;
     }
