@@ -448,22 +448,7 @@ export default function CommunityLeaderboardPage() {
         )}
       </section>
 
-      {/* ========================================================
-          BARRA FIXA INFERIOR: SUA POSIÇÃO NO RANKING
-      ======================================================== */}
-                Nível {authUser.gamerLevel || 1} • {(authUser.gamerXp || 0).toLocaleString("pt-BR")} XP acumulados
-              </p>
-            </div>
-          </div>
 
-          <Link
-            href="/perfil"
-            className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-bold text-xs transition-all shadow-md shrink-0"
-          >
-            Meu Perfil
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
