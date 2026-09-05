@@ -1,4 +1,5 @@
 import { Game, GenreItem, PlatformItem } from "./types";
+import { isAdultGame } from "./gameUtils";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "";
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
@@ -44,6 +45,58 @@ export function getIGDBImageUrl(imageId: string | undefined, size: "cover_big" |
   if (!imageId) return null;
   return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
 }
+
+export const IGDB_AGE_ORG_MAP: Record<number, string> = {
+  1: "ESRB",
+  2: "PEGI",
+  3: "CERO",
+  4: "USK",
+  5: "GRAC",
+  6: "CLASS_IND",
+  7: "ACB",
+};
+
+export const IGDB_AGE_RATING_MAP: Record<number, string> = {
+  1: "3",
+  2: "7",
+  3: "12",
+  4: "16",
+  5: "18",
+  6: "RP",
+  7: "EC",
+  8: "E",
+  9: "E10+",
+  10: "T",
+  11: "M",
+  12: "AO",
+  13: "A",
+  14: "B",
+  15: "C",
+  16: "D",
+  17: "Z",
+  18: "0",
+  19: "6",
+  20: "12",
+  21: "16",
+  22: "18",
+  23: "All",
+  24: "12",
+  25: "15",
+  26: "18",
+  27: "Testing",
+  28: "L",
+  29: "10",
+  30: "12",
+  31: "14",
+  32: "16",
+  33: "18",
+  34: "G",
+  35: "PG",
+  36: "M",
+  37: "MA15+",
+  38: "R18+",
+  39: "RC",
+};
 
 export function mapIGDBGameToGame(item: any): Game {
   const coverUrl = item.cover?.image_id
@@ -120,6 +173,7 @@ export function mapIGDBGameToGame(item: any): Game {
 
   const game_modes = item.game_modes ? (item.game_modes.map((m: any) => m.name) as string[]) : [];
   const themes = item.themes ? (item.themes.map((t: any) => t.name) as string[]) : [];
+  const keywords = item.keywords ? (item.keywords.map((k: any) => (typeof k === "string" ? k : k.name || k.slug || "")).filter(Boolean) as string[]) : [];
 
   const websites = item.websites
     ? item.websites.map((w: any) => ({
@@ -155,10 +209,19 @@ export function mapIGDBGameToGame(item: any): Game {
     : [];
 
   const age_ratings = item.age_ratings
-    ? item.age_ratings.map((ar: any) => ({
-        organization: ar.organization?.name || (typeof ar.organization === "string" ? ar.organization : "Outro"),
-        rating: ar.rating_category?.rating || ar.rating?.toString() || "",
-      })).filter((ar: any) => Boolean(ar.rating))
+    ? item.age_ratings.map((ar: any) => {
+        const org =
+          ar.organization?.name ||
+          (typeof ar.organization === "string" ? ar.organization : null) ||
+          (ar.category && IGDB_AGE_ORG_MAP[ar.category]) ||
+          "Outro";
+        const rating =
+          ar.rating_category?.rating ||
+          (typeof ar.rating === "string" ? ar.rating : null) ||
+          (ar.rating && IGDB_AGE_RATING_MAP[ar.rating]) ||
+          "";
+        return { organization: org, rating };
+      }).filter((ar: any) => Boolean(ar.rating))
     : [];
 
   // Mapear Suporte a PT-BR
@@ -226,6 +289,7 @@ export function mapIGDBGameToGame(item: any): Game {
     publishers,
     game_modes,
     themes,
+    keywords,
     websites,
     similar_games,
     age_ratings,
@@ -237,26 +301,13 @@ export function mapIGDBGameToGame(item: any): Game {
     expansions,
     parent_game,
     category: item.category,
-    isAdult: Boolean(
-      (item.themes && item.themes.some((t: any) => t.id === 42 || (typeof t === "string" && (t.toLowerCase() === "erotic" || t.toLowerCase() === "adult")) || (typeof t.name === "string" && (t.name.toLowerCase() === "erotic" || t.name.toLowerCase() === "adult")))) ||
-      age_ratings.some((ar: any) => {
-        const org = (ar.organization || "").toUpperCase();
-        const rating = (ar.rating || "").toUpperCase();
-        if (org.includes("CLASS_IND") || org.includes("CLASSIND") || org.includes("PEGI") || org.includes("USK")) {
-          return rating.includes("18") || rating === "18";
-        }
-        if (org.includes("ESRB")) {
-          return rating.includes("AO") || rating.includes("ADULTS ONLY");
-        }
-        if (org.includes("CERO")) {
-          return rating === "Z" || rating.includes("Z");
-        }
-        if (org.includes("ACB")) {
-          return rating.includes("R18") || rating.includes("18+");
-        }
-        return false;
-      })
-    ),
+    isAdult: isAdultGame({
+      isAdult: false,
+      themes,
+      keywords,
+      genres,
+      age_ratings,
+    }),
   };
 }
 
@@ -547,7 +598,7 @@ export async function searchAndFilterGamesIGDB(
   let body = "";
   const nowSec = Math.floor(Date.now() / 1000);
 
-  const fieldsList = "fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.rating;";
+  const fieldsList = "fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug, themes.id, themes.name, keywords.name, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.category, age_ratings.rating;";
 
   if (escapedQuery) {
     // Busca Textual com Filtros opcionais (em buscas textuais, IGDB não aceita cláusula sort)
@@ -688,7 +739,7 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
   const [gameData, hltbData] = await Promise.all([
     fetchIGDB(
       "games",
-      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id; where id = ${numId}; limit 1;`,
+      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, keywords.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.category, age_ratings.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id; where id = ${numId}; limit 1;`,
       TTL_CONFIG.GAME_DETAILS
     ),
     fetchIGDB(

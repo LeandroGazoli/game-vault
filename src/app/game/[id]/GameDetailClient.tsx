@@ -43,7 +43,12 @@ import {
   Plus,
   MessageSquare,
   ShieldAlert,
+  ShieldCheck,
   Lock,
+  Tags,
+  Tag,
+  Search,
+  Compass,
 } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
@@ -56,10 +61,13 @@ import {
   translatePlayerPerspective,
   translateTheme,
   translateAgeRatingText,
+  getPrimaryAgeRating,
   isLikelyEnglish,
   isAdultGame,
   isUserAdult,
   calculateAge,
+  getCategorySearchUrl,
+  getCategoryHubUrl,
 } from "@/lib/gameUtils";
 
 interface GalleryMediaItem {
@@ -70,67 +78,31 @@ interface GalleryMediaItem {
 }
 
 // Helper para selo oficial de Classificação Indicativa (CLASS_IND Brasil, ESRB, PEGI)
-function getAgeRatingBadge(ageRatings?: AgeRatingItem[]) {
-  if (!ageRatings || ageRatings.length === 0) return null;
+function getAgeRatingBadge(ageRatings?: AgeRatingItem[], isAdult?: boolean) {
+  const primary = getPrimaryAgeRating(ageRatings);
 
-  // 1. Prioridade: Classificação Indicativa Brasileira (CLASS_IND)
-  const classInd = ageRatings.find(
-    (r) => r.organization.toUpperCase().includes("CLASS_IND") || r.organization.toUpperCase().includes("CLASSIND")
-  );
-  if (classInd) {
-    const raw = classInd.rating.toUpperCase();
-    let bg = "bg-[#0c8a3f]"; // Livre - Verde
-    let text = "L";
-
-    if (raw.includes("10") || raw === "10") {
-      bg = "bg-[#0b75ba]"; // 10 anos - Azul
-      text = "10";
-    } else if (raw.includes("12") || raw === "12") {
-      bg = "bg-[#f5a200] text-black font-black"; // 12 anos - Amarelo
-      text = "12";
-    } else if (raw.includes("14") || raw === "14") {
-      bg = "bg-[#e5591f]"; // 14 anos - Laranja
-      text = "14";
-    } else if (raw.includes("16") || raw === "16") {
-      bg = "bg-[#d9222a]"; // 16 anos - Vermelho
-      text = "16";
-    } else if (raw.includes("18") || raw === "18") {
-      bg = "bg-[#111111] border border-red-500 text-red-500"; // 18 anos - Preto
-      text = "18";
-    }
-
+  if (primary) {
     return (
       <div
-        className={`w-6 h-6 rounded flex items-center justify-center font-black text-[11px] shadow-md tracking-tighter ${bg}`}
-        title={`Classificação Indicativa Brasileira (CLASS_IND): ${text}`}
+        className={`px-2 py-0.5 rounded font-black text-[10px] shadow-md tracking-tight flex items-center gap-1 border ${primary.bgClass} ${primary.textClass} ${primary.borderClass || "border-white/20"}`}
+        title={`Classificação Indicativa (${primary.organization}): ${primary.description}`}
       >
-        {text}
+        <span>{primary.badgeText}</span>
+        <span className="opacity-75 font-normal text-[9px] uppercase hidden sm:inline">
+          {primary.organization}
+        </span>
       </div>
     );
   }
 
-  // 2. Fallback: ESRB
-  const esrb = ageRatings.find((r) => r.organization.toUpperCase().includes("ESRB"));
-  if (esrb) {
+  if (isAdult) {
     return (
       <div
-        className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
-        title={`Classificação Indicativa: ${translateAgeRatingText(esrb.rating)}`}
+        className="px-2 py-0.5 rounded font-black text-[10px] bg-red-950/80 text-red-400 border border-red-500/40 shadow-md flex items-center gap-1"
+        title="Classificado para maiores de 18 anos (+18 / Conteúdo Adulto)"
       >
-        ESRB {esrb.rating}
-      </div>
-    );
-  }
-
-  // 3. Fallback: PEGI
-  const pegi = ageRatings.find((r) => r.organization.toUpperCase().includes("PEGI"));
-  if (pegi) {
-    return (
-      <div
-        className="px-2 py-0.5 rounded font-black text-[10px] bg-neutral-800 border border-white/20 text-white"
-        title={`Classificação Indicativa Europeia: PEGI +${pegi.rating} Anos`}
-      >
-        PEGI {pegi.rating}
+        <span>18</span>
+        <span className="opacity-75 font-normal text-[9px] uppercase hidden sm:inline">+18</span>
       </div>
     );
   }
@@ -782,8 +754,8 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           {/* Dados do Jogo */}
           <div className="flex-1 min-w-0 space-y-3.5">
             <div className="flex flex-wrap items-center gap-2">
-              {/* Selo Oficial de Classificação Indicativa (CLASS_IND Brasil / ESRB) */}
-              {getAgeRatingBadge(game.age_ratings)}
+              {/* Selo Oficial de Classificação Indicativa (CLASS_IND Brasil / ESRB / PEGI / +18) */}
+              {getAgeRatingBadge(game.age_ratings, isAdult)}
 
               {game.released && (
                 <span className="flex items-center gap-1 text-xs font-mono text-gray-300 bg-black/60 border border-white/10 px-3 py-1 rounded-full">
@@ -817,12 +789,27 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               )}
 
               {game.genres?.map((g) => (
-                <span
+                <Link
                   key={g.id}
-                  className="text-xs text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-3 py-1 rounded-full"
+                  href={getCategorySearchUrl(g.name)}
+                  className="inline-flex items-center gap-1.5 text-xs text-cyan-300 hover:text-white bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/30 hover:border-cyan-400 px-3 py-1 rounded-full font-medium transition-all shadow-sm hover:shadow-cyan-500/20 active:scale-95 group cursor-pointer"
+                  title={`Buscar outros jogos na categoria ${translateGenre(g.name)}`}
                 >
-                  {translateGenre(g.name)}
-                </span>
+                  <Search className="w-3 h-3 text-cyan-400/80 group-hover:text-cyan-200 transition-colors" />
+                  <span>{translateGenre(g.name)}</span>
+                </Link>
+              ))}
+
+              {game.themes?.slice(0, 2).map((t) => (
+                <Link
+                  key={t}
+                  href={getCategorySearchUrl(t)}
+                  className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-white bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/30 hover:border-purple-400 px-3 py-1 rounded-full font-medium transition-all shadow-sm hover:shadow-purple-500/20 active:scale-95 group cursor-pointer"
+                  title={`Buscar jogos com o tema ${translateTheme(t)}`}
+                >
+                  <Layers className="w-3 h-3 text-purple-400/80 group-hover:text-purple-200 transition-colors" />
+                  <span>{translateTheme(t)}</span>
+                </Link>
               ))}
             </div>
 
@@ -1217,6 +1204,118 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
           {/* 4. DURAÇÃO & RITMO DE ZERAMENTO (HOWLONGTOBEAT + CALCULADORA) */}
           <HltbCard hltb={game.hltb} userPlaytimeHours={userGame?.userPlaytimeHours} />
+
+          {/* 5. EXPLORAR CATEGORIAS & ESTILOS DO JOGO */}
+          {((game.genres && game.genres.length > 0) || (game.themes && game.themes.length > 0)) && (
+            <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-5 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Tags className="w-5 h-5 text-[#00E5FF]" /> Categorias &amp; Estilos do Jogo
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Clique em qualquer categoria para buscar e explorar outros títulos do mesmo estilo no acervo.
+                  </p>
+                </div>
+                <Link
+                  href="/categorias"
+                  className="text-xs font-semibold text-[#00E5FF] hover:text-cyan-300 flex items-center gap-1 w-fit transition-colors group"
+                >
+                  <span>Ver todas as categorias</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+
+              {/* Grid de Cards Interativos de Categorias */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Gêneros do Jogo */}
+                {game.genres?.map((g) => {
+                  const { searchUrl, curatedUrl } = getCategoryHubUrl(g.name);
+                  return (
+                    <div
+                      key={g.id}
+                      className="p-3.5 rounded-2xl bg-white/5 hover:bg-cyan-950/20 border border-white/10 hover:border-cyan-500/40 transition-all group flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 font-mono">
+                            Gênero
+                          </span>
+                          <Tag className="w-3.5 h-3.5 text-cyan-400/60 group-hover:text-cyan-400 transition-colors" />
+                        </div>
+                        <h4 className="text-base font-bold text-white group-hover:text-[#00E5FF] transition-colors">
+                          {translateGenre(g.name)}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Link
+                          href={searchUrl}
+                          className="flex-1 py-1.5 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 hover:text-white border border-cyan-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                          title={`Buscar jogos de ${translateGenre(g.name)}`}
+                        >
+                          <Search className="w-3 h-3" />
+                          <span>Buscar Jogos</span>
+                        </Link>
+                        {curatedUrl && (
+                          <Link
+                            href={curatedUrl}
+                            className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer"
+                            title="Ver página especial da categoria"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Temas / Ambientações Principais */}
+                {game.themes?.slice(0, 4).map((t) => {
+                  const { searchUrl, curatedUrl } = getCategoryHubUrl(t);
+                  return (
+                    <div
+                      key={t}
+                      className="p-3.5 rounded-2xl bg-white/5 hover:bg-purple-950/20 border border-white/10 hover:border-purple-500/40 transition-all group flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 font-mono">
+                            Tema / Ambientação
+                          </span>
+                          <Layers className="w-3.5 h-3.5 text-purple-400/60 group-hover:text-purple-400 transition-colors" />
+                        </div>
+                        <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
+                          {translateTheme(t)}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Link
+                          href={searchUrl}
+                          className="flex-1 py-1.5 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 hover:text-white border border-purple-500/30 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                          title={`Buscar jogos com tema ${translateTheme(t)}`}
+                        >
+                          <Search className="w-3 h-3" />
+                          <span>Buscar Jogos</span>
+                        </Link>
+                        {curatedUrl && (
+                          <Link
+                            href={curatedUrl}
+                            className="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs flex items-center justify-center transition-all cursor-pointer"
+                            title="Ver página especial da categoria"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* =====================================================================
@@ -1336,18 +1435,49 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               <Monitor className="w-4 h-4 text-cyan-400" /> Ficha Técnica
             </h3>
 
+            {/* Gêneros & Categorias */}
+            {game.genres && game.genres.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Tags className="w-3.5 h-3.5 text-cyan-400" /> Gêneros &amp; Categorias:
+                  </span>
+                  <span className="text-[10px] text-gray-500">Clique para buscar</span>
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.genres.map((g) => {
+                    const { searchUrl } = getCategoryHubUrl(g.name);
+                    return (
+                      <Link
+                        key={g.id}
+                        href={searchUrl}
+                        className="text-xs font-medium px-3 py-1 rounded-full bg-cyan-950/40 hover:bg-cyan-900/70 text-cyan-300 hover:text-white border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 group shadow-sm active:scale-95 cursor-pointer"
+                        title={`Buscar jogos na categoria ${translateGenre(g.name)}`}
+                      >
+                        <Search className="w-2.5 h-2.5 text-cyan-400 group-hover:text-cyan-200" />
+                        <span>{translateGenre(g.name)}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Plataformas */}
-            <div className="space-y-2">
+            <div className="space-y-2 pt-3 border-t border-white/5">
               <span className="text-xs font-semibold text-gray-400 block">Plataformas Disponíveis:</span>
               <div className="flex flex-wrap gap-1.5">
                 {game.platforms && game.platforms.length > 0 ? (
                   game.platforms.map((p) => (
-                    <span
+                    <Link
                       key={p.platform.id}
-                      className="text-xs font-medium px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300"
+                      href={`/search?platform=${encodeURIComponent(p.platform.name)}`}
+                      className="text-xs font-medium px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-white/25 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                      title={`Buscar jogos para ${p.platform.name}`}
                     >
-                      {p.platform.name}
-                    </span>
+                      <Gamepad2 className="w-3 h-3 text-cyan-400/70" />
+                      <span>{p.platform.name}</span>
+                    </Link>
                   ))
                 ) : (
                   <span className="text-xs text-gray-500">Múltiplas plataformas</span>
@@ -1419,14 +1549,88 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             {/* Ambientação & Temas */}
             {game.themes && game.themes.length > 0 && (
               <div className="space-y-1.5 pt-3 border-t border-white/5">
-                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação &amp; Temas:
+                <span className="text-xs font-semibold text-gray-400 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-purple-400" /> Ambientação &amp; Temas:
+                  </span>
+                  <span className="text-[10px] text-gray-500">Clique para buscar</span>
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {game.themes.map((t) => (
-                    <span key={t} className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20">
-                      {translateTheme(t)}
-                    </span>
+                    <Link
+                      key={t}
+                      href={getCategorySearchUrl(t)}
+                      className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 hover:bg-purple-900/70 text-purple-300 hover:text-white border border-purple-500/20 hover:border-purple-400 transition-all flex items-center gap-1 group active:scale-95 cursor-pointer"
+                      title={`Buscar jogos com o tema ${translateTheme(t)}`}
+                    >
+                      <Search className="w-2.5 h-2.5 text-purple-400 group-hover:text-purple-200" />
+                      <span>{translateTheme(t)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Classificação Indicativa Detalhada */}
+            {((game.age_ratings && game.age_ratings.length > 0) || isAdult) && (
+              <div className="space-y-2 pt-3 border-t border-white/5">
+                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Classificação Indicativa Oficial:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {game.age_ratings && game.age_ratings.length > 0 ? (
+                    game.age_ratings.map((ar, idx) => {
+                      const primary = getPrimaryAgeRating([ar]);
+                      return (
+                        <div
+                          key={idx}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs ${
+                            primary
+                              ? `${primary.bgClass} ${primary.textClass} ${primary.borderClass || "border-white/20"}`
+                              : "bg-white/5 border-white/10 text-gray-200"
+                          }`}
+                        >
+                          <span className="font-black text-sm">{primary?.badgeText || ar.rating}</span>
+                          <div className="text-left">
+                            <p className="text-[10px] font-bold uppercase tracking-wider opacity-75">{ar.organization}</p>
+                            <p className="text-[11px] leading-tight font-medium">{primary?.description || translateAgeRatingText(ar.rating)}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-red-950/60 border-red-500/30 text-red-300 text-xs">
+                      <span className="font-black text-sm">18</span>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Restrição Adulta</p>
+                        <p className="text-[11px] font-medium">Conteúdo Adulto / Não recomendado para menores</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Marcadores e Palavras-chave / Conteúdo */}
+            {game.keywords && game.keywords.length > 0 && (
+              <div className="space-y-1.5 pt-3 border-t border-white/5">
+                <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Marcadores &amp; Conteúdo:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {game.keywords.map((kw, idx) => (
+                    <Link
+                      key={idx}
+                      href={`/search?q=${encodeURIComponent(kw)}`}
+                      className={`text-[10px] px-2 py-0.5 rounded-md border font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                        isAdultGame({ keywords: [kw] })
+                          ? "bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300 font-bold"
+                          : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300 hover:text-white"
+                      }`}
+                      title={`Buscar jogos com a tag "${kw}"`}
+                    >
+                      #{kw}
+                    </Link>
                   ))}
                 </div>
               </div>

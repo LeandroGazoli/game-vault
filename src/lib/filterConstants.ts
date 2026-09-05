@@ -28,6 +28,10 @@ export const GENRE_FILTER_OPTIONS: FilterOption[] = [
   { id: "indie", name: "Indie", shortName: "Indie", igdbId: 32 },
   { id: "puzzle", name: "Puzzle", shortName: "Puzzle", igdbId: 9 },
   { id: "sports", name: "Esportes", shortName: "Esportes", igdbId: 14 },
+  { id: "simulator", name: "Simulador", shortName: "Simulador", igdbId: 13 },
+  { id: "music", name: "Música & Ritmo", shortName: "Música", igdbId: 7 },
+  { id: "arcade", name: "Arcade", shortName: "Arcade", igdbId: 33 },
+  { id: "card", name: "Cartas & Tabuleiro", shortName: "Cartas", igdbId: 35 },
   { id: "adult", name: "Adulto (+18)", shortName: "+18", igdbThemeId: 42, isAdult: true },
 ];
 
@@ -162,18 +166,24 @@ export function findGenreFilter(idOrSlug: string): FilterOption | undefined {
   );
   if (found) return found;
 
-  // Mapeamentos comuns em inglês
+  // Mapeamentos comuns em inglês e português
   if (lower.includes("rpg") || lower.includes("role-playing")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "rpg");
-  if (lower.includes("action")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "action");
-  if (lower.includes("adventure")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "adventure");
-  if (lower.includes("shooter") || lower.includes("fps")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "shooter");
-  if (lower.includes("horror") || lower.includes("terror")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "horror");
-  if (lower.includes("strategy") || lower.includes("estrategia")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "strategy");
-  if (lower.includes("puzzle")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "puzzle");
+  if (lower.includes("action") || lower.includes("hack and slash") || lower.includes("beat 'em up") || lower.includes("stealth") || lower.includes("furtividade")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "action");
+  if (lower.includes("adventure") || lower.includes("aventura")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "adventure");
+  if (lower.includes("shooter") || lower.includes("fps") || lower.includes("tiro")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "shooter");
+  if (lower.includes("horror") || lower.includes("terror") || lower.includes("survival") || lower.includes("sobrevivencia")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "horror");
+  if (lower.includes("strategy") || lower.includes("estrategia") || lower.includes("tbs") || lower.includes("rts") || lower.includes("tactical") || lower.includes("tatico")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "strategy");
+  if (lower.includes("open world") || lower.includes("mundo aberto")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "open-world");
+  if (lower.includes("puzzle") || lower.includes("quebra-cabeca")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "puzzle");
   if (lower.includes("platform") || lower.includes("plataforma")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "platform");
   if (lower.includes("indie")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "indie");
   if (lower.includes("racing") || lower.includes("corrida")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "racing");
   if (lower.includes("fighting") || lower.includes("luta")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "fighting");
+  if (lower.includes("sport") || lower.includes("esporte")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "sports");
+  if (lower.includes("simulator") || lower.includes("simulador")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "simulator");
+  if (lower.includes("music") || lower.includes("musica") || lower.includes("ritmo")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "music");
+  if (lower.includes("arcade")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "arcade");
+  if (lower.includes("card") || lower.includes("cartas") || lower.includes("board") || lower.includes("tabuleiro")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "card");
   if (lower.includes("adult") || lower.includes("18") || lower.includes("erotic") || lower.includes("eroge")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "adult");
 
   return undefined;

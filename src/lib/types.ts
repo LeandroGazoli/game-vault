@@ -330,6 +330,7 @@ export interface Game {
   publishers?: string[];
   game_modes?: string[];
   themes?: string[];
+  keywords?: string[];
   websites?: { id: number; category?: number; url: string; label?: string }[];
   similar_games?: SimilarGameItem[];
   age_ratings?: AgeRatingItem[];

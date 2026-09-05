@@ -1,4 +1,5 @@
-import { Game } from "./types";
+import { Game, AgeRatingItem } from "./types";
+import { findGenreFilter } from "./filterConstants";
 
 /**
  * Formata de forma inteligente o tempo estimado de conclusão do jogo.
@@ -231,9 +232,198 @@ export function isUserAdult(birthDate?: string | null): boolean {
   return calculateAge(birthDate) >= 18;
 }
 
+export interface PrimaryAgeRatingInfo {
+  label: string;
+  badgeText: string;
+  bgClass: string;
+  textClass: string;
+  borderClass?: string;
+  organization: string;
+  description: string;
+  isAdult: boolean;
+}
+
 /**
- * Detecta centralizadamente se um jogo possui conteúdo adulto (+18).
- * Analisa a flag isAdult, temas do IGDB (Erotic / ID 42) e classificações indicativas (CLASS_IND 18, PEGI 18, ESRB AO).
+ * Retorna as informações formatadas da classificação indicativa prioritária (CLASS_IND Brasil > ESRB > PEGI).
+ */
+export function getPrimaryAgeRating(ageRatings?: AgeRatingItem[]): PrimaryAgeRatingInfo | null {
+  if (!ageRatings || ageRatings.length === 0) return null;
+
+  // 1. Prioridade: Classificação Indicativa Brasileira (CLASS_IND)
+  const classInd = ageRatings.find(
+    (r) => r.organization.toUpperCase().includes("CLASS_IND") || r.organization.toUpperCase().includes("CLASSIND")
+  );
+  if (classInd) {
+    const raw = classInd.rating.toUpperCase();
+    if (raw.includes("18") || raw === "18") {
+      return {
+        label: "18 Anos",
+        badgeText: "18",
+        bgClass: "bg-[#111111]",
+        textClass: "text-red-500",
+        borderClass: "border-red-500",
+        organization: "CLASS_IND",
+        description: "Não recomendado para menores de 18 anos",
+        isAdult: true,
+      };
+    }
+    if (raw.includes("16") || raw === "16") {
+      return {
+        label: "16 Anos",
+        badgeText: "16",
+        bgClass: "bg-[#d9222a]",
+        textClass: "text-white font-black",
+        organization: "CLASS_IND",
+        description: "Não recomendado para menores de 16 anos",
+        isAdult: false,
+      };
+    }
+    if (raw.includes("14") || raw === "14") {
+      return {
+        label: "14 Anos",
+        badgeText: "14",
+        bgClass: "bg-[#e5591f]",
+        textClass: "text-white font-black",
+        organization: "CLASS_IND",
+        description: "Não recomendado para menores de 14 anos",
+        isAdult: false,
+      };
+    }
+    if (raw.includes("12") || raw === "12") {
+      return {
+        label: "12 Anos",
+        badgeText: "12",
+        bgClass: "bg-[#f5a200]",
+        textClass: "text-black font-black",
+        organization: "CLASS_IND",
+        description: "Não recomendado para menores de 12 anos",
+        isAdult: false,
+      };
+    }
+    if (raw.includes("10") || raw === "10") {
+      return {
+        label: "10 Anos",
+        badgeText: "10",
+        bgClass: "bg-[#0b75ba]",
+        textClass: "text-white font-black",
+        organization: "CLASS_IND",
+        description: "Não recomendado para menores de 10 anos",
+        isAdult: false,
+      };
+    }
+    return {
+      label: "Livre",
+      badgeText: "L",
+      bgClass: "bg-[#0c8a3f]",
+      textClass: "text-white font-black",
+      organization: "CLASS_IND",
+      description: "Classificação Livre para todos os públicos",
+      isAdult: false,
+    };
+  }
+
+  // 2. Fallback: ESRB (Estados Unidos)
+  const esrb = ageRatings.find((r) => r.organization.toUpperCase().includes("ESRB"));
+  if (esrb) {
+    const raw = esrb.rating.toUpperCase();
+    if (raw.includes("ADULTS ONLY") || raw.includes("AO")) {
+      return {
+        label: "ESRB AO (18+)",
+        badgeText: "AO",
+        bgClass: "bg-black",
+        textClass: "text-red-500",
+        borderClass: "border-red-500",
+        organization: "ESRB",
+        description: "ESRB Adults Only 18+",
+        isAdult: true,
+      };
+    }
+    if (raw.includes("MATURE") || raw.includes("M") || raw.includes("17")) {
+      return {
+        label: "ESRB M (17+)",
+        badgeText: "M",
+        bgClass: "bg-neutral-800",
+        textClass: "text-amber-300 font-bold",
+        borderClass: "border-amber-500/40",
+        organization: "ESRB",
+        description: "ESRB Mature 17+",
+        isAdult: false,
+      };
+    }
+    if (raw.includes("TEEN") || raw.includes("T")) {
+      return {
+        label: "ESRB T (13+)",
+        badgeText: "T",
+        bgClass: "bg-neutral-800",
+        textClass: "text-cyan-300 font-bold",
+        borderClass: "border-cyan-500/40",
+        organization: "ESRB",
+        description: "ESRB Teen 13+",
+        isAdult: false,
+      };
+    }
+    if (raw.includes("10+")) {
+      return {
+        label: "ESRB 10+",
+        badgeText: "E10+",
+        bgClass: "bg-neutral-800",
+        textClass: "text-blue-300 font-bold",
+        borderClass: "border-blue-500/40",
+        organization: "ESRB",
+        description: "ESRB Everyone 10+",
+        isAdult: false,
+      };
+    }
+    return {
+      label: "ESRB E",
+      badgeText: "E",
+      bgClass: "bg-neutral-800",
+      textClass: "text-emerald-300 font-bold",
+      borderClass: "border-emerald-500/40",
+      organization: "ESRB",
+      description: "ESRB Everyone (Livre)",
+      isAdult: false,
+    };
+  }
+
+  // 3. Fallback: PEGI (Europa)
+  const pegi = ageRatings.find((r) => r.organization.toUpperCase().includes("PEGI"));
+  if (pegi) {
+    const raw = pegi.rating.toUpperCase();
+    const is18 = raw.includes("18") || raw.includes("EIGHTEEN") || raw === "5";
+    const badge = is18
+      ? "18"
+      : raw.includes("16") || raw.includes("SIXTEEN") || raw === "4"
+      ? "16"
+      : raw.includes("12") || raw.includes("TWELVE") || raw === "3"
+      ? "12"
+      : raw.includes("7") || raw.includes("SEVEN") || raw === "2"
+      ? "7"
+      : raw.includes("3") || raw.includes("THREE") || raw === "1"
+      ? "3"
+      : pegi.rating;
+
+    return {
+      label: `PEGI ${badge}`,
+      badgeText: badge,
+      bgClass: is18 ? "bg-black" : "bg-neutral-800",
+      textClass: is18 ? "text-red-500 font-black" : "text-white font-bold",
+      borderClass: is18 ? "border-red-500" : "border-white/20",
+      organization: "PEGI",
+      description: `PEGI ${badge} Anos`,
+      isAdult: is18,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Detecta centralizadamente se um jogo possui conteúdo estritamente adulto/erótico ou pornográfico.
+ * IMPORTANTE: Jogos convencionais com classificação 18+ por violência, drogas ou crimes
+ * (como GTA V, Cyberpunk 2077, The Witcher 3, God of War) NÃO são bloqueados.
+ * Apenas títulos de cunho estritamente erótico/pornográfico (Hentai, Eroge, Pornô, IGDB Tema 42, ESRB AO)
+ * são sinalizados para bloqueio com verificação de maioridade.
  */
 export function isAdultGame(game?: Partial<Game> | null): boolean {
   if (!game) return false;
@@ -241,61 +431,76 @@ export function isAdultGame(game?: Partial<Game> | null): boolean {
   // 1. Flag direta isAdult se já mapeada
   if (game.isAdult === true) return true;
 
-  // 2. Análise de Temas (Tema 42 no IGDB é 'Erotic')
+  // 2. Análise de Temas do IGDB (Tema 42 no IGDB é 'Erotic')
   if (Array.isArray(game.themes)) {
     const hasAdultTheme = game.themes.some((t: any) => {
       if (typeof t === "string") {
         const lower = t.toLowerCase().trim();
-        return lower === "erotic" || lower === "adult" || lower === "adulto (+18)" || lower.includes("hentai") || lower.includes("eroge");
+        return (
+          lower === "erotic" ||
+          lower.includes("hentai") ||
+          lower.includes("eroge") ||
+          lower === "porn" ||
+          lower === "pornography"
+        );
       }
       if (typeof t === "object" && t !== null) {
         if (t.id === 42) return true;
         const name = (t.name || "").toLowerCase().trim();
-        return name === "erotic" || name === "adult" || name === "adulto (+18)";
+        return (
+          name === "erotic" ||
+          name.includes("hentai") ||
+          name.includes("eroge") ||
+          name === "porn" ||
+          name === "pornography"
+        );
       }
       return false;
     });
     if (hasAdultTheme) return true;
   }
 
-  // 3. Análise de Classificações Indicativas Oficiais
+  // 3. Análise de Keywords Estritas (Apenas termos explicitamente pornográficos/eróticos)
+  // NOTA: Palavras genéricas como 'nudity', 'sexual content' ou 'sex' NÃO devem bloquear o jogo,
+  // pois jogos convencionais como The Witcher 3, Cyberpunk 2077 e Baldur's Gate 3 possuem essas tags.
+  if (Array.isArray(game.keywords)) {
+    const hasAdultKeyword = game.keywords.some((kw: any) => {
+      const name = (typeof kw === "string" ? kw : kw?.name || kw?.slug || "").toLowerCase().trim();
+      return (
+        name === "erotic" ||
+        name === "erotica" ||
+        name.includes("hentai") ||
+        name.includes("eroge") ||
+        name.includes("porn") ||
+        name.includes("nsfw") ||
+        name === "adult only" ||
+        name.includes("high sexual content") ||
+        name.includes("high-sexual-content") ||
+        name === "sex game"
+      );
+    });
+    if (hasAdultKeyword) return true;
+  }
+
+  // 4. Análise de Classificações Indicativas Oficiais
+  // Apenas ESRB AO (Adults Only 18+) nos EUA é reservado para pornografia explícita comercial.
+  // Classificações gerais de 18 anos como CLASS_IND 18 (Brasil) e PEGI 18 (Europa)
+  // são atribuídas a jogos convencionais de ação/violência (GTA, Cyberpunk, God of War)
+  // e portanto NÃO acionam o bloqueio de pornografia.
   if (Array.isArray(game.age_ratings) && game.age_ratings.length > 0) {
-    const has18PlusRating = game.age_ratings.some((ar) => {
+    const hasAoRating = game.age_ratings.some((ar) => {
       const org = (ar.organization || "").toUpperCase();
       const rating = (ar.rating || "").toUpperCase();
-
-      // Classificação Brasileira (CLASS_IND)
-      if (org.includes("CLASS_IND") || org.includes("CLASSIND")) {
-        return rating.includes("18") || rating === "18";
-      }
-      // Classificação Europeia (PEGI)
-      if (org.includes("PEGI")) {
-        return rating.includes("18") || rating === "18";
-      }
-      // Classificação Americana (ESRB AO - Adults Only)
       if (org.includes("ESRB")) {
-        return rating.includes("ADULTS ONLY") || rating.includes("AO");
+        return rating.includes("ADULTS ONLY") || rating.includes("AO") || rating === "12";
       }
-      // Classificação Alemã (USK)
-      if (org.includes("USK")) {
-        return rating.includes("18");
-      }
-      // Classificação Japonesa (CERO Z - 18+)
-      if (org.includes("CERO")) {
-        return rating === "Z" || rating.includes("Z");
-      }
-      // Classificação Australiana (ACB R18+)
-      if (org.includes("ACB")) {
-        return rating.includes("R18") || rating.includes("18+");
-      }
-
       return false;
     });
 
-    if (has18PlusRating) return true;
+    if (hasAoRating) return true;
   }
 
-  // 4. Gêneros com indicação adulta explícita
+  // 5. Gêneros estritamente adultos/pornográficos
   if (Array.isArray(game.genres)) {
     const hasAdultGenre = game.genres.some((g) => {
       const gName = (g.name || "").toLowerCase();
@@ -306,4 +511,65 @@ export function isAdultGame(game?: Partial<Game> | null): boolean {
 
   return false;
 }
+
+/**
+ * Retorna a URL de busca otimizada para uma categoria, gênero ou tema de jogo.
+ * Se o termo corresponder a um filtro reconhecido, direciona para /search?genre=[id].
+ * Caso contrário, realiza uma busca textual precisa em /search?q=[termo].
+ */
+export function getCategorySearchUrl(nameOrSlug?: string | null): string {
+  if (!nameOrSlug) return "/search";
+  const trimmed = nameOrSlug.trim();
+  const filter = findGenreFilter(trimmed);
+  if (filter && filter.id !== "all") {
+    return `/search?genre=${encodeURIComponent(filter.id)}`;
+  }
+  return `/search?q=${encodeURIComponent(trimmed)}`;
+}
+
+/**
+ * Retorna tanto a URL de busca no catálogo quanto a URL de página curada (/categorias/[slug]) se houver.
+ */
+export function getCategoryHubUrl(nameOrSlug?: string | null): { searchUrl: string; curatedUrl?: string } {
+  if (!nameOrSlug) return { searchUrl: "/search" };
+  const trimmed = nameOrSlug.trim();
+  const lower = trimmed.toLowerCase();
+
+  const curatedMap: Record<string, string> = {
+    "luta": "/categorias/luta",
+    "fighting": "/categorias/luta",
+    "hack and slash": "/categorias/luta",
+    "beat 'em up": "/categorias/luta",
+    "mundo aberto": "/categorias/mundo-aberto",
+    "open world": "/categorias/mundo-aberto",
+    "boa trama": "/categorias/boa-trama",
+    "drama": "/categorias/boa-trama",
+    "narrativa": "/categorias/boa-trama",
+    "casuais": "/categorias/casuais",
+    "casual": "/categorias/casuais",
+    "corrida": "/categorias/corrida",
+    "racing": "/categorias/corrida",
+    "rpg": "/categorias/rpg",
+    "role-playing": "/categorias/rpg",
+    "terror": "/categorias/terror",
+    "horror": "/categorias/terror",
+    "tiro": "/categorias/tiro",
+    "shooter": "/categorias/tiro",
+    "indie": "/categorias/indie",
+    "plataforma": "/categorias/plataforma",
+    "platform": "/categorias/plataforma",
+  };
+
+  let curatedUrl: string | undefined;
+  for (const [key, slug] of Object.entries(curatedMap)) {
+    if (lower === key || lower.includes(key)) {
+      curatedUrl = slug;
+      break;
+    }
+  }
+
+  const searchUrl = getCategorySearchUrl(trimmed);
+  return { searchUrl, curatedUrl };
+}
+
 

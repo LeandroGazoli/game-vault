@@ -9,7 +9,7 @@ import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
 import { Clock, Plus, Check, Star, MoreHorizontal, Trophy, Play, Bookmark, Pause, XCircle, Trash2, Edit3, Layers, Sparkles } from "lucide-react";
 import Card3DTilt from "./3d/Card3DTilt";
-import { formatGameDuration, formatGenreName } from "@/lib/gameUtils";
+import { formatGameDuration, formatGenreName, getPrimaryAgeRating, isAdultGame } from "@/lib/gameUtils";
 
 interface GameCardProps {
   game: Game;
@@ -28,6 +28,8 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
   const userGame = getGameInLibrary(game.id);
   const releaseYear = game.released ? game.released.substring(0, 4) : "";
   const duration = formatGameDuration(game, userGame?.userPlaytimeHours);
+  const primaryRating = getPrimaryAgeRating(game.age_ratings);
+  const isAdult = isAdultGame(game);
 
   // Fecha o menu ao clicar fora
   useEffect(() => {
@@ -119,6 +121,39 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
                   <MetacriticBadge score={game.metacritic} size="sm" />
                 </div>
               )}
+
+              {/* Selo Oficial de Classificação Indicativa (+18, L, 10, 12, 14, 16) */}
+              {primaryRating ? (
+                <div
+                  className={`absolute ${
+                    userGame ? "top-2.5 right-11" : "top-2.5 right-2.5"
+                  } z-10 pointer-events-none transition-all`}
+                >
+                  <span
+                    className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-black shadow-lg border ${
+                      primaryRating.bgClass
+                    } ${primaryRating.textClass} ${
+                      primaryRating.borderClass || "border-white/20"
+                    }`}
+                    title={`Classificação Indicativa: ${primaryRating.description}`}
+                  >
+                    {primaryRating.badgeText}
+                  </span>
+                </div>
+              ) : isAdult ? (
+                <div
+                  className={`absolute ${
+                    userGame ? "top-2.5 right-11" : "top-2.5 right-2.5"
+                  } z-10 pointer-events-none transition-all`}
+                >
+                  <span
+                    className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-black shadow-lg border bg-black text-red-500 border-red-500/50"
+                    title="Classificação Indicativa: Conteúdo Adulto / Erótico (+18)"
+                  >
+                    18
+                  </span>
+                </div>
+              ) : null}
 
               {/* Status do Usuário se na Biblioteca (Canto Superior Direito) */}
               {userGame && (
@@ -255,21 +290,31 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
           <div>
             <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1 font-mono">
               <span className="tabular-nums">{releaseYear}</span>
-              {userGame?.dlcs && userGame.dlcs.length > 0 ? (
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
-                  title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
-                >
-                  +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
-                </span>
-              ) : game.genres && game.genres.length > 0 ? (
-                <span
-                  className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase tracking-wider text-[9px] shrink-0"
-                  title={game.genres[0].name}
-                >
-                  {formatGenreName(game.genres[0].name)}
-                </span>
-              ) : null}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {isAdult && (
+                  <span
+                    className="text-[9px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 font-mono border border-red-500/40 font-black tracking-tight"
+                    title="Conteúdo Adulto (+18)"
+                  >
+                    +18
+                  </span>
+                )}
+                {userGame?.dlcs && userGame.dlcs.length > 0 ? (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
+                    title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
+                  >
+                    +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
+                  </span>
+                ) : game.genres && game.genres.length > 0 ? (
+                  <span
+                    className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase tracking-wider text-[9px] shrink-0"
+                    title={game.genres[0].name}
+                  >
+                    {formatGenreName(game.genres[0].name)}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <Link href={getGameUrl(game)} className="block">
