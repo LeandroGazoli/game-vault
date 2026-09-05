@@ -69,10 +69,14 @@ export default function CommunityLeaderboardPage() {
   const top3 = filteredGamers[2] || null;
   const restGamers = filteredGamers.slice(3);
 
-  // Posição do usuário logado
+  // Posição do usuário logado no ranking da comunidade
   const userRankIndex = useMemo(() => {
     if (!authUser) return -1;
-    return gamers.findIndex((g) => g.uid === authUser.uid);
+    const idx = gamers.findIndex((g) => g.uid === authUser.uid);
+    if (idx !== -1) return idx;
+    const currentXp = authUser.gamerXp || 0;
+    const computedIdx = gamers.findIndex((g) => (g.gamerXp || 0) <= currentXp);
+    return computedIdx !== -1 ? computedIdx : gamers.length;
   }, [gamers, authUser]);
 
   return (

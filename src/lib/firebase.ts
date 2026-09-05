@@ -906,45 +906,137 @@ export function subscribeToSystemNotifications(
   }
 }
 
-export async function getTopGamersLeaderboard(limitCount = 50): Promise<UserProfile[]> {
+let cachedLeaderboard: { list: UserProfile[]; timestamp: number } | null = null;
+const LEADERBOARD_CACHE_TTL_MS = 45 * 1000; // 45 segundos
+
+export async function getTopGamersLeaderboard(
+  limitCount = 50,
+  forceRefresh = false
+): Promise<UserProfile[]> {
   if (!db) return [];
-  try {
-    const q = query(
-      collection(db, "users"),
-      orderBy("gamerXp", "desc"),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    const gamers: UserProfile[] = [];
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data() as UserProfile;
-      if (data.username && data.isPublic !== false) {
-        gamers.push(data);
-      }
-    });
-    if (gamers.length > 0) {
-      return gamers;
-    }
-  } catch (e) {
-    console.warn("Consulta direta por gamerXp com índice indisponível, usando fallback:", e);
+
+  const now = Date.now();
+  if (!forceRefresh && cachedLeaderboard && now - cachedLeaderboard.timestamp < LEADERBOARD_CACHE_TTL_MS) {
+    return cachedLeaderboard.list.slice(0, limitCount);
   }
 
-  // Fallback seguro em caso de índice composto ausente
   try {
-    const qAll = query(collection(db, "users"), limit(100));
-    const snapAll = await getDocs(qAll);
+    const snapAll = await getDocs(query(collection(db, "users"), limit(100)));
     const list: UserProfile[] = [];
-    snapAll.forEach((docSnap) => {
+
+    for (const docSnap of snapAll.docs) {
       const u = docSnap.data() as UserProfile;
       if (u.username && u.isPublic !== false) {
+        // Se gamerXp ainda não estiver gravado no perfil, calcula através dos jogos dele
+        if (typeof u.gamerXp !== "number" || typeof u.gamerLevel !== "number") {
+          try {
+            const gamesSnap = await getDocs(collection(db, "users", docSnap.id, "games"));
+            if (gamesSnap.size > 0) {
+              let completed = 0, playing = 0, hours = 0, rated = 0;
+              gamesSnap.forEach((g) => {
+                const d = g.data();
+                if (d.status === "completed") completed++;
+                if (d.status === "playing") playing++;
+                if (d.userPlaytimeHours) hours += d.userPlaytimeHours;
+                if (d.userRating) rated++;
+              });
+              const library = gamesSnap.size;
+              const completedXp = completed * 60;
+              const hoursXp = Math.floor(hours * 0.2);
+              const playingXp = playing * 20;
+              const libraryXp = library * 10;
+              const ratingXp = Math.min(rated, 20) * 20;
+              u.gamerXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
+              u.gamerLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(u.gamerXp / 15)) + 1));
+            } else {
+              u.gamerXp = 0;
+              u.gamerLevel = 1;
+            }
+          } catch {
+            u.gamerXp = 0;
+            u.gamerLevel = 1;
+          }
+        }
         list.push(u);
       }
-    });
-    return list.sort((a, b) => (b.gamerXp || 0) - (a.gamerXp || 0)).slice(0, limitCount);
+    }
+
+    list.sort((a, b) => (b.gamerXp || 0) - (a.gamerXp || 0));
+    cachedLeaderboard = { list, timestamp: now };
+    return list.slice(0, limitCount);
   } catch (err) {
     console.error("Erro ao listar gamers do ranking:", err);
     return [];
   }
+}
+
+export interface GamerRankResult {
+  rank: number;
+  totalGamers: number;
+  percentile: number;
+  formattedRank: string;
+  badgeLabel: string;
+}
+
+export async function getGamerCommunityRank(
+  identifier: { uid?: string; username?: string; xp?: number }
+): Promise<GamerRankResult> {
+  const leaderboard = await getTopGamersLeaderboard(100);
+  const totalGamers = Math.max(1, leaderboard.length);
+
+  let rank = -1;
+
+  // 1. Tenta encontrar pelo uid ou username
+  if (identifier.uid || identifier.username) {
+    const idx = leaderboard.findIndex(
+      (u) =>
+        (identifier.uid && u.uid === identifier.uid) ||
+        (identifier.username && u.username?.toLowerCase() === identifier.username.toLowerCase())
+    );
+    if (idx !== -1) {
+      rank = idx + 1;
+    }
+  }
+
+  // 2. Se não encontrou ou se o XP atual for maior (ex: acabou de ganhar XP), calcula por posição de XP
+  if (typeof identifier.xp === "number") {
+    const xpRank = leaderboard.findIndex((u) => (u.gamerXp || 0) <= (identifier.xp || 0)) + 1;
+    const computedRank = xpRank > 0 ? xpRank : totalGamers;
+    if (rank === -1 || computedRank < rank) {
+      rank = computedRank;
+    }
+  }
+
+  if (rank === -1) {
+    rank = totalGamers;
+  }
+
+  const percentile = Math.max(1, Math.min(100, Math.round((rank / totalGamers) * 100)));
+
+  let formattedRank = `#${rank} Global`;
+  let badgeLabel = `#${rank} no Ranking Global`;
+
+  if (rank === 1) {
+    formattedRank = "#1 Global";
+    badgeLabel = "👑 #1 Campeão Global";
+  } else if (rank === 2) {
+    formattedRank = "#2 Global";
+    badgeLabel = "🥈 #2 Vice-Campeão Global";
+  } else if (rank === 3) {
+    formattedRank = "#3 Global";
+    badgeLabel = "🥉 #3 do Pódio Global";
+  } else {
+    formattedRank = `#${rank} Global (Top ${percentile}%)`;
+    badgeLabel = `#${rank} de ${totalGamers} Gamers`;
+  }
+
+  return {
+    rank,
+    totalGamers,
+    percentile,
+    formattedRank,
+    badgeLabel,
+  };
 }
 
 

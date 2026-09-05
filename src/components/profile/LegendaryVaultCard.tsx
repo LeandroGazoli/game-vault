@@ -8,6 +8,7 @@ interface LegendaryVaultCardProps {
   user: UserProfile;
   stats?: LibraryStats | null;
   isOwner?: boolean;
+  realRank?: string;
   onOpenUpgrade?: () => void;
   onOpenManagePlan?: () => void;
   onOpenXpBreakdown?: () => void;
@@ -17,12 +18,13 @@ export default function LegendaryVaultCard({
   user,
   stats,
   isOwner,
+  realRank,
   onOpenUpgrade,
   onOpenManagePlan,
   onOpenXpBreakdown,
 }: LegendaryVaultCardProps) {
   const isVipOrPro = user.plan === "vip" || user.plan === "pro";
-  const gamerLevelInfo = calculateGamerLevel(stats);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank);
   const displayLevel = user.gamerLevel || gamerLevelInfo.level;
 
   const handleAction = () => {
@@ -120,7 +122,11 @@ export default function LegendaryVaultCard({
               <span className="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]" />
               <span className="text-white">{gamerLevelInfo.rankTitle}</span>
               <span className="text-gray-500">•</span>
-              <span className="text-emerald-400">{gamerLevelInfo.globalRank} Global</span>
+              <span className="text-emerald-400">
+                {gamerLevelInfo.globalRank.includes("Global")
+                  ? gamerLevelInfo.globalRank
+                  : `${gamerLevelInfo.globalRank} Global`}
+              </span>
             </span>
             <div className="flex items-center gap-2">
               <span className="text-[#00E5FF] font-black">
