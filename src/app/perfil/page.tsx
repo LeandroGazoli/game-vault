@@ -21,7 +21,9 @@ import ProfileHeroCard from "@/components/ProfileHeroCard";
 import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
 import GamerScoreboardCard from "@/components/profile/GamerScoreboardCard";
 import GamerBadgesCard from "@/components/profile/GamerBadgesCard";
+import GamerQuestsCard from "@/components/profile/GamerQuestsCard";
 import GamerXpBreakdownModal from "@/components/profile/GamerXpBreakdownModal";
+import LevelUpCelebrationModal from "@/components/profile/LevelUpCelebrationModal";
 import ShareGamerCardModal from "@/components/profile/ShareGamerCardModal";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import GameImporterModal from "@/components/importer/GameImporterModal";
@@ -126,7 +128,7 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const { user: authUser, updateUserProfile, updateUserBio, isAdmin, isPremium, isLoading: authLoading } = useAuth();
-  const { library: ownLibrary, stats: ownStats, isLoading: libraryLoading } = useGameLibrary();
+  const { library: ownLibrary, stats: ownStats, isLoading: libraryLoading, levelUpData, dismissLevelUp } = useGameLibrary();
   const router = useRouter();
   const params = useParams();
 
@@ -529,6 +531,21 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       <GamerBadgesCard
         stats={activeStats}
         gamerLevel={activeUser.gamerLevel}
+      />
+
+      {/* Missões & Desafios Gamers da Temporada */}
+      <GamerQuestsCard
+        stats={activeStats}
+        user={activeUser}
+        isOwner={isOwner}
+        onOpenCustomizer={() => {
+          if (typeof window !== "undefined" && window.innerWidth < 768) {
+            router.push("/perfil/editar?tab=showcase");
+          } else {
+            setCustomizerInitialTab("showcase");
+            setIsCustomizerOpen(true);
+          }
+        }}
       />
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
@@ -1084,6 +1101,21 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         stats={activeStats}
         library={activeLibrary}
       />
+
+      {/* Modal de Comemoração de Level-Up com Confetes e Haptics */}
+      {levelUpData && (
+        <LevelUpCelebrationModal
+          isOpen={Boolean(levelUpData)}
+          onClose={dismissLevelUp}
+          newLevel={levelUpData.newLevel}
+          oldLevel={levelUpData.oldLevel}
+          rankTitle={levelUpData.rankTitle}
+          onOpenGamerCard={() => {
+            dismissLevelUp();
+            setIsGamerCardOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

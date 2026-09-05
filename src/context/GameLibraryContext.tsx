@@ -16,6 +16,8 @@ interface GameLibraryContextType {
   deleteGame: (gameId: number | string) => Promise<void>;
   getGameInLibrary: (gameId: number | string) => UserGame | undefined;
   getGamesByStatus: (status: GameStatus) => UserGame[];
+  levelUpData: { newLevel: number; oldLevel: number; rankTitle: string } | null;
+  dismissLevelUp: () => void;
 }
 
 const GameLibraryContext = createContext<GameLibraryContextType | undefined>(undefined);
@@ -297,10 +299,23 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
   // Sincroniza gamerLevel e gamerXp no Firestore para persistência global
   const lastSavedGamerRef = useRef<{ level: number; xp: number } | null>(null);
+  const [levelUpData, setLevelUpData] = useState<{ newLevel: number; oldLevel: number; rankTitle: string } | null>(null);
+
+  const dismissLevelUp = useCallback(() => {
+    setLevelUpData(null);
+  }, []);
 
   useEffect(() => {
     if (!user || isLoading) return;
-    const { level, xp } = calculateGamerLevel(stats);
+    const currentInfo = calculateGamerLevel(stats);
+    const { level, xp, rankTitle } = currentInfo;
+    const oldLevel = lastSavedGamerRef.current?.level ?? user.gamerLevel ?? 1;
+
+    // Se o nível aumentou durante a sessão de uso, dispara comemoração
+    if (lastSavedGamerRef.current !== null && level > oldLevel) {
+      setLevelUpData({ newLevel: level, oldLevel, rankTitle });
+    }
+
     if (
       (user.gamerLevel !== level || user.gamerXp !== xp) &&
       (lastSavedGamerRef.current?.level !== level || lastSavedGamerRef.current?.xp !== xp)
@@ -323,6 +338,8 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       deleteGame,
       getGameInLibrary,
       getGamesByStatus,
+      levelUpData,
+      dismissLevelUp,
     }),
     [
       library,
@@ -333,6 +350,8 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       deleteGame,
       getGameInLibrary,
       getGamesByStatus,
+      levelUpData,
+      dismissLevelUp,
     ]
   );
 

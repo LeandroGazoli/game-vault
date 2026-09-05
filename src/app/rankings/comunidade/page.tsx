@@ -27,6 +27,7 @@ export default function CommunityLeaderboardPage() {
   const [gamers, setGamers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | "vip_pro" | "veteran" | "master">("all");
 
   useEffect(() => {
     async function loadLeaderboard() {
@@ -44,14 +45,24 @@ export default function CommunityLeaderboardPage() {
   }, []);
 
   const filteredGamers = useMemo(() => {
-    if (!searchQuery.trim()) return gamers;
+    let list = gamers;
+
+    if (categoryFilter === "vip_pro") {
+      list = list.filter((g) => g.plan === "vip" || g.plan === "pro");
+    } else if (categoryFilter === "veteran") {
+      list = list.filter((g) => (g.gamerLevel || 1) >= 25);
+    } else if (categoryFilter === "master") {
+      list = list.filter((g) => (g.gamerLevel || 1) >= 50);
+    }
+
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
-    return gamers.filter(
+    return list.filter(
       (g) =>
         g.username?.toLowerCase().includes(q) ||
         g.displayName?.toLowerCase().includes(q)
     );
-  }, [gamers, searchQuery]);
+  }, [gamers, categoryFilter, searchQuery]);
 
   const top1 = filteredGamers[0] || null;
   const top2 = filteredGamers[1] || null;
@@ -101,25 +112,57 @@ export default function CommunityLeaderboardPage() {
       </div>
 
       {/* ========================================================
-          BARRA DE PESQUISA POR GAMER
+          BARRA DE PESQUISA & FILTROS POR CATEGORIA
       ======================================================== */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar jogador por nome ou @username..."
-          className="w-full bg-[#11141c] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white"
-          >
-            Limpar
-          </button>
-        )}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar jogador por nome ou @username..."
+            className="w-full bg-[#11141c] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
+
+        {/* Filtros de Categoria */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          {[
+            { id: "all", label: "Top Geral", icon: Trophy },
+            { id: "vip_pro", label: "VIP & PRO", icon: Crown },
+            { id: "veteran", label: "Nível 25+", icon: Sparkles },
+            { id: "master", label: "Nível 50+", icon: Star },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = categoryFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setCategoryFilter(tab.id as any);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer border ${
+                  isActive
+                    ? "bg-[#00E5FF]/20 text-[#00E5FF] border-[#00E5FF]/40 shadow-sm"
+                    : "bg-[#11141c] text-gray-400 hover:text-white border-white/10"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ========================================================
