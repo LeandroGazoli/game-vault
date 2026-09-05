@@ -79,13 +79,14 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
       },
     });
 
-    // Modelos com cota 100% gratuita no Google AI Studio (ordenados por prioridade e compatibilidade de API)
+    // Modelos com cota 100% gratuita no Google AI Studio (ordenados pelos mais recentes e suportados)
     const CANDIDATE_MODELS = [
+      { version: "v1beta", model: "gemini-3.6-flash" },
+      { version: "v1beta", model: "gemini-3.5-flash-lite" },
+      { version: "v1beta", model: "gemini-2.5-flash" },
       { version: "v1beta", model: "gemini-2.0-flash" },
       { version: "v1beta", model: "gemini-2.0-flash-lite" },
       { version: "v1", model: "gemini-1.5-flash" },
-      { version: "v1beta", model: "gemini-1.5-flash-latest" },
-      { version: "v1beta", model: "gemini-1.5-flash" },
     ];
 
     let geminiResponse: Response | null = null;
@@ -114,7 +115,7 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
         lastErrorText = errorBody;
         console.warn(`[Gemini AI ${candidate.model} (${candidate.version})] Falhou com status ${res.status}:`, errorBody);
 
-        // Se 404 (modelo não suportado nesta versão de endpoint), tenta o próximo modelo
+        // Se 404 (modelo descontinuado ou não suportado), tenta o próximo modelo
         if (res.status === 404) {
           continue;
         }
@@ -122,7 +123,7 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
         // Se 429 (Rate Limit atingido na cota gratuita)
         if (res.status === 429) {
           return NextResponse.json(
-            { error: "A IA está recebendo muitas consultas no momento. Aguarde alguns segundos e tente novamente!" },
+            { error: "A cota gratuita temporária da IA foi atingida. Aguarde alguns segundos e tente novamente!" },
             { status: 429 }
           );
         }
@@ -149,6 +150,45 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
       } catch (networkErr: any) {
         lastErrorText = networkErr?.message || "Falha de rede";
         console.error(`[Gemini AI ${candidate.model}] Erro de rede:`, networkErr);
+      }
+    }
+
+    // Auto-descoberta dinâmica: se os modelos fixos falharem, consulta a lista de modelos ativos na conta
+    if (!geminiResponse || !geminiResponse.ok) {
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          const availableModels: string[] = (listData.models || [])
+            .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+            .map((m: any) => m.name.replace(/^models\//, ""));
+
+          console.log("[Gemini AI Auto-discovery] Modelos disponíveis na conta:", availableModels);
+
+          const dynamicModel =
+            availableModels.find((m) => m.includes("flash") && !m.includes("2.0") && !m.includes("1.5")) ||
+            availableModels.find((m) => m.includes("flash")) ||
+            availableModels[0];
+
+          if (dynamicModel) {
+            console.log(`[Gemini AI Auto-discovery] Tentando modelo dinâmico: ${dynamicModel}`);
+            const dynamicUrl = `https://generativelanguage.googleapis.com/v1beta/models/${dynamicModel}:generateContent?key=${apiKey}`;
+            const dynRes = await fetch(dynamicUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: requestBody,
+            });
+
+            if (dynRes.ok) {
+              geminiResponse = dynRes;
+            } else {
+              lastErrorText = await dynRes.text();
+              lastStatusCode = dynRes.status;
+            }
+          }
+        }
+      } catch (discoveryErr) {
+        console.warn("[Gemini AI Auto-discovery Error]:", discoveryErr);
       }
     }
 
