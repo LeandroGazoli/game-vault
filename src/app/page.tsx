@@ -33,7 +33,6 @@ import {
 
 import HomeHero from "@/components/HomeHero";
 import HomeHeroCarousel from "@/components/HomeHeroCarousel";
-import PlatformFilterChips from "@/components/PlatformFilterChips";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
@@ -102,9 +101,8 @@ export default function HomePage() {
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [selectedGameForModal, setSelectedGameForModal] = useState<Game | null>(null);
 
-  // Configurações globais (Carrossel Hero gerenciado pelo Admin) e Filtro de Plataforma Rápida
+  // Configurações globais (Carrossel Hero gerenciado pelo Admin)
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
 
   useEffect(() => {
     if (!db) {
@@ -219,82 +217,6 @@ export default function HomePage() {
     }));
   }, [library, topTenGames]);
 
-  // Helper para filtrar jogos por plataforma
-  const matchesPlatform = (game: Game, platformId: string) => {
-    if (platformId === "all") return true;
-    if (!game.platforms || game.platforms.length === 0) return true;
-
-    const target = platformId.toLowerCase();
-    return game.platforms.some((p) => {
-      const name = p.platform?.name?.toLowerCase() || "";
-      const slug = p.platform?.slug?.toLowerCase() || "";
-      const id = p.platform?.id;
-
-      if (target === "pc") {
-        return id === 6 || name.includes("pc") || name.includes("windows") || slug.includes("pc");
-      }
-      if (target === "ps5") {
-        return id === 167 || name.includes("playstation 5") || name.includes("ps5") || slug.includes("ps5");
-      }
-      if (target === "xbox-series" || target === "xbox") {
-        return id === 169 || name.includes("xbox") || slug.includes("xbox");
-      }
-      if (target === "switch") {
-        return id === 130 || name.includes("switch") || slug.includes("switch") || name.includes("nintendo");
-      }
-      if (target === "retro") {
-        const retroKeywords = [
-          "playstation (ps1)",
-          "playstation 2",
-          "ps2",
-          "playstation 3",
-          "ps3",
-          "psp",
-          "snes",
-          "nes",
-          "nintendo 64",
-          "n64",
-          "gamecube",
-          "wii",
-          "game boy",
-          "gba",
-          "sega",
-          "dreamcast",
-          "mega drive",
-          "genesis",
-        ];
-        const isRetroName = retroKeywords.some((kw) => name.includes(kw) || slug.includes(kw));
-        const year = game.released ? parseInt(game.released.slice(0, 4), 10) : null;
-        return isRetroName || (year !== null && year <= 2012);
-      }
-      return name.includes(target) || slug.includes(target);
-    });
-  };
-
-  const filteredReleases = useMemo(() => {
-    if (selectedPlatform === "all") return releases;
-    const res = releases.filter((g) => matchesPlatform(g, selectedPlatform));
-    return res.length > 0 ? res : releases;
-  }, [releases, selectedPlatform]);
-
-  const filteredPtbr = useMemo(() => {
-    if (selectedPlatform === "all") return ptbrGames;
-    const res = ptbrGames.filter((g) => matchesPlatform(g, selectedPlatform));
-    return res.length > 0 ? res : ptbrGames;
-  }, [ptbrGames, selectedPlatform]);
-
-  const filteredShortGames = useMemo(() => {
-    if (selectedPlatform === "all") return shortGames;
-    const res = shortGames.filter((g) => matchesPlatform(g, selectedPlatform));
-    return res.length > 0 ? res : shortGames;
-  }, [shortGames, selectedPlatform]);
-
-  const filteredUpcoming = useMemo(() => {
-    if (selectedPlatform === "all") return upcoming;
-    const res = upcoming.filter((g) => matchesPlatform(g, selectedPlatform));
-    return res.length > 0 ? res : upcoming;
-  }, [upcoming, selectedPlatform]);
-
   return (
     <div className="space-y-12 pb-12">
       {/* ==========================================
@@ -314,51 +236,6 @@ export default function HomePage() {
           />
         </section>
       )}
-
-      {/* ==========================================
-          CHIPS DE FILTROS DE PLATAFORMA RÁPIDA (CIANO NEON)
-      ========================================== */}
-      <section className="platform-filter-section space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="w-4 h-4 text-[#00E5FF]" />
-            <span className="text-xs font-extrabold uppercase tracking-wider text-gray-300 font-mono">
-              Plataformas em Destaque
-            </span>
-          </div>
-          {selectedPlatform !== "all" && (
-            <button
-              onClick={() => setSelectedPlatform("all")}
-              className="text-xs text-[#00E5FF] hover:underline font-bold transition-all cursor-pointer"
-            >
-              Limpar filtro
-            </button>
-          )}
-        </div>
-
-        <PlatformFilterChips
-          selectedPlatform={selectedPlatform}
-          onSelectPlatform={setSelectedPlatform}
-        />
-
-        {selectedPlatform !== "all" && (
-          <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-xs text-cyan-200 backdrop-blur-sm">
-            <div className="flex items-center gap-2 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-              <span>
-                Filtrando catálogo por <strong className="text-white uppercase font-bold">{selectedPlatform}</strong>
-              </span>
-            </div>
-            <Link
-              href={`/search?platform=${selectedPlatform}`}
-              className="text-[#00E5FF] hover:underline font-bold inline-flex items-center gap-0.5 text-xs"
-            >
-              <span>Ver todos na busca</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        )}
-      </section>
 
       {/* ==========================================
           CARD FIXO DE ANÚNCIO DO NOVO RECURSO
@@ -410,13 +287,13 @@ export default function HomePage() {
           subtitle="Jogos recém-lançados disponíveis para jogar agora"
           icon={Flame}
         />
-      ) : filteredReleases.length > 0 ? (
+      ) : releases.length > 0 ? (
         <CatalogRow
           title="Lançamentos Recentes"
           subtitle="Os títulos recém-lançados mais relevantes para jogar agora"
           icon={Flame}
-          games={filteredReleases.slice(0, 10)}
-          actionHref={selectedPlatform === "all" ? "/calendar" : `/search?platform=${selectedPlatform}&sort=recent`}
+          games={releases.slice(0, 10)}
+          actionHref="/calendar"
           actionText="Ver Todos"
         />
       ) : null}
@@ -430,13 +307,13 @@ export default function HomePage() {
           subtitle="Títulos consagrados com dublagem oficial em português do Brasil"
           icon={Languages}
         />
-      ) : filteredPtbr.length > 0 ? (
+      ) : ptbrGames.length > 0 ? (
         <CatalogRow
           title="🇧🇷 Dublados em Português"
           subtitle="Títulos consagrados com dublagem oficial em português do Brasil"
           icon={Languages}
-          games={filteredPtbr.slice(0, 10)}
-          actionHref={selectedPlatform === "all" ? "/search?q=dublado" : `/search?q=dublado&platform=${selectedPlatform}`}
+          games={ptbrGames.slice(0, 10)}
+          actionHref="/search?q=dublado"
           actionText="Ver Todos"
         />
       ) : null}
@@ -450,13 +327,13 @@ export default function HomePage() {
           subtitle="Obras-primas curtas de até 10 horas para você zerar sem enrolação"
           icon={Timer}
         />
-      ) : filteredShortGames.length > 0 ? (
+      ) : shortGames.length > 0 ? (
         <CatalogRow
           title="⏱️ Zere no Fim de Semana"
           subtitle="Obras-primas curtas de até 10 horas para você zerar sem enrolação"
           icon={Timer}
-          games={filteredShortGames.slice(0, 10)}
-          actionHref={selectedPlatform === "all" ? "/search" : `/search?platform=${selectedPlatform}`}
+          games={shortGames.slice(0, 10)}
+          actionHref="/search"
           actionText="Ver Todos"
         />
       ) : null}
@@ -470,13 +347,13 @@ export default function HomePage() {
           subtitle="Títulos aguardados que serão lançados nos próximos meses"
           icon={CalendarIcon}
         />
-      ) : filteredUpcoming.length > 0 ? (
+      ) : upcoming.length > 0 ? (
         <CatalogRow
           title="Em Breve nos Games"
           subtitle="Títulos aguardados que serão lançados nos próximos meses"
           icon={CalendarIcon}
-          games={filteredUpcoming.slice(0, 10)}
-          actionHref={selectedPlatform === "all" ? "/calendar" : `/calendar?platform=${selectedPlatform}`}
+          games={upcoming.slice(0, 10)}
+          actionHref="/calendar"
           actionText="Ver Todos"
         />
       ) : null}

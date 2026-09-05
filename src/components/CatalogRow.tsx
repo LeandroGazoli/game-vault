@@ -162,10 +162,19 @@ export default function CatalogRow({
                       {userGame ? <Check className="w-3.5 h-3.5 text-[#00E5FF]" /> : <Plus className="w-3.5 h-3.5" />}
                     </button>
 
-                    {/* Badge de Metacritic no Rodapé da Capa */}
+                    {/* Badge de Avaliação / Metacritic Estilo Poster Gamer */}
                     {game.metacritic && (
-                      <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-[#0c1f17]/90 text-emerald-300 font-bold font-mono text-[10px] border border-emerald-500/40 pointer-events-none tabular-nums">
-                        {game.metacritic}%
+                      <div
+                        className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-lg backdrop-blur-md font-mono text-[10px] font-black border flex items-center gap-1 shadow-md pointer-events-none tabular-nums ${
+                          game.metacritic >= 85
+                            ? "bg-emerald-950/80 text-emerald-400 border-emerald-500/40 shadow-emerald-950/50"
+                            : game.metacritic >= 75
+                            ? "bg-amber-950/80 text-amber-300 border-amber-500/40 shadow-amber-950/50"
+                            : "bg-neutral-900/80 text-neutral-300 border-neutral-700/40"
+                        }`}
+                      >
+                        <Star className="w-2.5 h-2.5 fill-current" />
+                        <span>{game.metacritic}</span>
                       </div>
                     )}
                   </div>

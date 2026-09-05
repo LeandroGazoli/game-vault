@@ -1,9 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { UserGame, GameStatus, LibraryStats } from "@/lib/types";
+import { UserGame, GameStatus, LibraryStats, calculateGamerLevel } from "@/lib/types";
 import { useAuth } from "./AuthContext";
-import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames } from "@/lib/firebase";
+import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames, saveUserProfile } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 import { triggerSuccessHaptic } from "@/lib/capacitor";
 
@@ -294,6 +294,24 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       topGenres,
     };
   }, [library]);
+
+  // Sincroniza gamerLevel e gamerXp no Firestore para persistência global
+  const lastSavedGamerRef = useRef<{ level: number; xp: number } | null>(null);
+
+  useEffect(() => {
+    if (!user || isLoading) return;
+    const { level, xp } = calculateGamerLevel(stats);
+    if (
+      (user.gamerLevel !== level || user.gamerXp !== xp) &&
+      (lastSavedGamerRef.current?.level !== level || lastSavedGamerRef.current?.xp !== xp)
+    ) {
+      lastSavedGamerRef.current = { level, xp };
+      saveUserProfile(user.uid, {
+        gamerLevel: level,
+        gamerXp: xp,
+      }).catch((err) => console.warn("Erro ao sincronizar nível gamer:", err));
+    }
+  }, [stats, user, isLoading]);
 
   const contextValue = useMemo(
     () => ({
