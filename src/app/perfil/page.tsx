@@ -18,6 +18,7 @@ import GamerWrappedModal from "@/components/GamerWrappedModal";
 import ProfileToolsModal from "@/components/ProfileToolsModal";
 import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
+import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import GameImporterModal from "@/components/importer/GameImporterModal";
 import { getThemeStyles } from "@/lib/themeStyles";
@@ -500,6 +501,15 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onOpenShare={() => setIsShareOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
+      />
+
+      {/* Card Nobre VIP / PRO Legendary Vault (Inspirado nas Referências DemoVip) */}
+      <LegendaryVaultCard
+        user={activeUser}
+        stats={activeStats}
+        isOwner={isOwner}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
+        onOpenManagePlan={() => setIsManagePlanOpen(true)}
       />
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}

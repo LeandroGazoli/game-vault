@@ -417,6 +417,8 @@ export interface UserProfile {
   showcaseGameId?: number | null;
   isPublic?: boolean;
   visibility?: ProfileVisibility;
+  isVerified?: boolean;
+  gamerLevel?: number;
   premiumUntil?: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -433,6 +435,9 @@ export interface AuditLogEntry {
   details?: Record<string, any>;
   ipAddress?: string;
   createdAt: string;
+  targetEmail?: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface SystemSettings {
@@ -466,6 +471,74 @@ export interface LibraryStats {
   totalPlaytimeHours: number;
   averageRating: number;
   topGenres: { name: string; count: number }[];
+}
+
+/**
+ * Calcula o Nível Gamer (1 a 99) e Ranking de Prestígio com base nas estatísticas
+ */
+export function calculateGamerLevel(stats?: LibraryStats | null): {
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+  percentToNext: number;
+  rankTitle: string;
+  globalRank: string;
+} {
+  if (!stats) {
+    return {
+      level: 1,
+      xp: 0,
+      nextLevelXp: 100,
+      percentToNext: 0,
+      rankTitle: "Iniciante",
+      globalRank: "Top 50%",
+    };
+  }
+
+  const completed = stats.completedCount || 0;
+  const playing = stats.playingCount || 0;
+  const library = (stats.libraryCount ?? 0) + (stats.totalGames || 0);
+  const hours = stats.totalPlaytimeHours || 0;
+
+  const totalXp = Math.floor(
+    completed * 60 +
+    hours * 8 +
+    playing * 20 +
+    library * 10
+  );
+
+  const calculatedLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXp / 15)) + 1));
+  const currentLevelBaseXp = Math.pow(calculatedLevel - 1, 2) * 15;
+  const nextLevelBaseXp = Math.pow(calculatedLevel, 2) * 15;
+  const levelXpDiff = Math.max(1, nextLevelBaseXp - currentLevelBaseXp);
+  const currentProgress = Math.max(0, totalXp - currentLevelBaseXp);
+  const percentToNext = Math.min(100, Math.floor((currentProgress / levelXpDiff) * 100));
+
+  let rankTitle = "Aspirante Gamer";
+  let globalRank = "Top 50%";
+
+  if (calculatedLevel >= 80) {
+    rankTitle = "Lorde Supremo";
+    globalRank = "Top 1%";
+  } else if (calculatedLevel >= 50) {
+    rankTitle = "Mestre Lendário";
+    globalRank = "Top 3%";
+  } else if (calculatedLevel >= 30) {
+    rankTitle = "Veterano Hardcore";
+    globalRank = "Top 10%";
+  } else if (calculatedLevel >= 15) {
+    rankTitle = "Aventureiro PRO";
+    globalRank = "Top 25%";
+  }
+
+  return {
+    level: calculatedLevel,
+    xp: totalXp,
+    nextLevelXp: nextLevelBaseXp,
+    percentToNext,
+    rankTitle,
+    globalRank,
+  };
 }
 
 // ==========================================

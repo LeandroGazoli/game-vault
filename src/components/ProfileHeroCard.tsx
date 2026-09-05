@@ -22,6 +22,8 @@ import {
   Trophy,
   Palette,
   Upload,
+  Check,
+  Code2,
 } from "lucide-react";
 
 interface ProfileHeroCardProps {
@@ -85,12 +87,25 @@ export default function ProfileHeroCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3.5 sm:gap-5 min-w-0">
               <div className="relative shrink-0">
-                <UserAvatar
-                  photoURL={user.photoURL}
-                  name={user.displayName}
-                  size="xl"
-                  className={`border-2 ${themeStyles.avatarBorder} shadow-xl ring-2 ${themeStyles.avatarRing}/30`}
-                />
+                <div className="rounded-[26px] overflow-hidden border-2 border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.3)] ring-2 ring-[#00E5FF]/20">
+                  <UserAvatar
+                    photoURL={user.photoURL}
+                    name={user.displayName}
+                    size="xl"
+                    className="rounded-[24px]"
+                  />
+                </div>
+                {/* Badge circular '+' (para dono trocar foto/editar perfil, conforme referências) */}
+                {isOwner && (
+                  <button
+                    onClick={onOpenEditProfile || handleEdit}
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-tr from-[#00E5FF] to-emerald-400 border-2 border-[#18191c] flex items-center justify-center text-black font-black shadow-md hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                    title="Alterar foto ou dados do perfil"
+                    aria-label="Alterar foto do perfil"
+                  >
+                    <Plus className="w-4 h-4 stroke-[3]" />
+                  </button>
+                )}
               </div>
 
               <div className="min-w-0 space-y-1">
@@ -98,6 +113,16 @@ export default function ProfileHeroCard({
                   <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight truncate">
                     {user.displayName}
                   </h1>
+                  {/* Selo Azul de Verificado Gamer */}
+                  {(user.isVerified || user.isAdmin || user.plan === "vip" || user.plan === "pro") && (
+                    <span
+                      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#00A3FF] text-white shadow-sm shrink-0"
+                      title="Gamer Verificado MGL"
+                      aria-label="Perfil Verificado"
+                    >
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </span>
+                  )}
                   <span className={`text-xs ${themeStyles.textAccent} font-mono shrink-0`}>
                     @{user.username}
                   </span>
@@ -226,49 +251,62 @@ export default function ProfileHeroCard({
           {/* Gamertags / Redes Sociais */}
           <SocialGamertagsBar socials={user.socialLinks} />
 
-          {/* Botões de Ação Simétricos */}
+          {/* Botões de Ação em Pílulas de Alta Hierarquia (Inspirado nas Referências) */}
           {isOwner ? (
-            <div className="pt-2">
-              {/* Mobile: 1 Grande em cima + 2 perfeitamente simétricos embaixo */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5">
+            <div className="pt-2 space-y-2.5">
+              {/* Linha Principal de Ação Rápida (Cápsulas Ergonômicas) */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Botão Secundário Dark: Personalizar / Temas */}
+                <button
+                  onClick={handleEdit}
+                  className={`flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} hover:border-[#00E5FF] text-xs font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm`}
+                  title="Personalizar aparência, insígnias e perfil"
+                >
+                  <Palette className={`w-4 h-4 ${themeStyles.textAccent}`} />
+                  <span>Personalizar</span>
+                </button>
+
+                {/* Botão Ciano Sólido Vibrante: Bio Estilizada */}
+                <button
+                  onClick={onOpenEditBio || handleEdit}
+                  className="flex-1 sm:flex-initial min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#00E5FF] hover:bg-[#3bf0ff] text-black font-black text-xs flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(0,229,255,0.45)] transition-all active:scale-95 cursor-pointer"
+                  title="Editar showcase gamer e bio estilizada"
+                >
+                  <Code2 className="w-4 h-4 text-black stroke-[2.5]" />
+                  <span>&lt;/&gt; Bio Estilizada</span>
+                </button>
+
+                {/* Botão de Ferramentas / Ajustes Rápidos */}
+                <button
+                  onClick={onOpenTools}
+                  className="min-h-[44px] w-11 px-0 rounded-2xl bg-white/5 border border-white/15 hover:border-white/30 text-gray-300 hover:text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                  title="Ações e Ferramentas do Perfil"
+                  aria-label="Ferramentas do perfil"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Linha de Apoio: Adicionar Jogos e Importador */}
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                 <Link
                   href="/search"
-                  className="w-full sm:w-auto min-h-[46px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-gray-200 text-black text-xs font-black transition-all shadow-xl shadow-white/10 active:scale-95"
+                  className="min-h-[40px] px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
                 >
-                  <Plus className="w-4 h-4 text-black" />
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Adicionar Jogos</span>
                 </Link>
 
                 {onOpenImporter && (
                   <button
                     onClick={onOpenImporter}
-                    className="w-full sm:w-auto min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-[#00E5FF]/40 hover:border-[#00E5FF]/70 text-[#00E5FF] text-xs font-bold transition-all shadow-md active:scale-95"
-                    title="Importar biblioteca da Steam, Epic, Xbox, PlayStation e arquivos"
+                    className="min-h-[40px] px-3.5 py-2 rounded-xl bg-cyan-950/30 hover:bg-cyan-950/60 border border-cyan-500/30 text-xs font-bold text-cyan-300 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                    title="Importar da Steam, Epic, Xbox, PSN ou arquivos"
                   >
-                    <Upload className="w-4 h-4 text-[#00E5FF]" />
-                    <span>Importar</span>
+                    <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
+                    <span>Importar Biblioteca</span>
                   </button>
                 )}
-
-                <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-                  <button
-                    onClick={handleEdit}
-                    className={`min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl ${themeStyles.bgSubtle} border ${themeStyles.borderAccent} ${themeStyles.borderHover} text-xs font-bold text-white transition-all shadow-md active:scale-95`}
-                    title="Editar dados cadastrais, bio, capa e personalizar perfil"
-                  >
-                    <Palette className={`w-4 h-4 ${themeStyles.textAccent}`} />
-                    <span>Editar &amp; Personalizar</span>
-                  </button>
-
-                  <button
-                    onClick={onOpenTools}
-                    className="min-h-[46px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/25 text-xs font-bold text-gray-300 hover:text-white transition-all shadow-md active:scale-95"
-                    title="Ações e Ferramentas do Perfil"
-                  >
-                    <SlidersHorizontal className="w-4 h-4 text-gray-400" />
-                    <span>Ferramentas</span>
-                  </button>
-                </div>
               </div>
             </div>
           ) : (
