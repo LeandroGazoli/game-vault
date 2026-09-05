@@ -14,6 +14,7 @@ import {
   Smartphone,
   Lock,
   Globe,
+  Sparkles,
 } from "lucide-react";
 import AdaptiveModal from "./ui/AdaptiveModal";
 
@@ -24,6 +25,7 @@ interface ShareProfileModalProps {
   displayName: string;
   isPublic?: boolean;
   onMakePublic?: () => Promise<void> | void;
+  onOpenGamerCard?: () => void;
 }
 
 export default function ShareProfileModal({
@@ -33,6 +35,7 @@ export default function ShareProfileModal({
   displayName,
   isPublic = true,
   onMakePublic,
+  onOpenGamerCard,
 }: ShareProfileModalProps) {
   const [copied, setCopied] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
@@ -141,6 +144,20 @@ export default function ShareProfileModal({
               </button>
             )}
           </div>
+        )}
+
+        {/* Botão de Gerar Card Gamer Estilizado */}
+        {onOpenGamerCard && (
+          <button
+            onClick={() => {
+              onClose();
+              onOpenGamerCard();
+            }}
+            className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-gradient-to-r from-purple-600/30 via-[#00E5FF]/20 to-cyan-500/30 border border-[#00E5FF]/50 text-white font-black text-xs flex items-center justify-center gap-2 hover:bg-[#00E5FF]/20 active:scale-95 transition-all shadow-lg shadow-[#00E5FF]/10 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-[#00E5FF] animate-pulse" />
+            <span>Gerar Card Gamer para Instagram &amp; Stories</span>
+          </button>
         )}
 
         {/* Botão de Compartilhamento Nativo do Celular (se disponível) */}

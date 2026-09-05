@@ -10,6 +10,7 @@ interface LegendaryVaultCardProps {
   isOwner?: boolean;
   onOpenUpgrade?: () => void;
   onOpenManagePlan?: () => void;
+  onOpenXpBreakdown?: () => void;
 }
 
 export default function LegendaryVaultCard({
@@ -18,6 +19,7 @@ export default function LegendaryVaultCard({
   isOwner,
   onOpenUpgrade,
   onOpenManagePlan,
+  onOpenXpBreakdown,
 }: LegendaryVaultCardProps) {
   const isVipOrPro = user.plan === "vip" || user.plan === "pro";
   const gamerLevelInfo = calculateGamerLevel(stats);
@@ -102,7 +104,17 @@ export default function LegendaryVaultCard({
         </div>
 
         {/* Barra de Progresso de XP Gamer e Status de Ranking */}
-        <div className="mt-4 pt-3.5 border-t border-white/10 space-y-2">
+        <div
+          onClick={onOpenXpBreakdown}
+          className={`mt-4 pt-3.5 border-t border-white/10 space-y-2 rounded-2xl p-2.5 -mx-2.5 transition-all ${
+            onOpenXpBreakdown
+              ? "cursor-pointer hover:bg-white/[0.05] active:scale-[0.99] group/xp border border-transparent hover:border-[#00E5FF]/20"
+              : ""
+          }`}
+          title={onOpenXpBreakdown ? "Clique para abrir o Extrato de XP Gamer" : undefined}
+          role={onOpenXpBreakdown ? "button" : undefined}
+          tabIndex={onOpenXpBreakdown ? 0 : undefined}
+        >
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-gray-200 font-bold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]" />
@@ -110,10 +122,17 @@ export default function LegendaryVaultCard({
               <span className="text-gray-500">•</span>
               <span className="text-emerald-400">{gamerLevelInfo.globalRank} Global</span>
             </span>
-            <span className="text-[#00E5FF] font-black">
-              {gamerLevelInfo.xp.toLocaleString("pt-BR")} / {gamerLevelInfo.nextLevelXp.toLocaleString("pt-BR")} XP
-              <span className="text-gray-400 font-normal ml-1">({gamerLevelInfo.percentToNext}%)</span>
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[#00E5FF] font-black">
+                {gamerLevelInfo.xp.toLocaleString("pt-BR")} / {gamerLevelInfo.nextLevelXp.toLocaleString("pt-BR")} XP
+                <span className="text-gray-400 font-normal ml-1">({gamerLevelInfo.percentToNext}%)</span>
+              </span>
+              {onOpenXpBreakdown && (
+                <span className="text-[10px] font-mono font-bold text-[#00E5FF] underline underline-offset-2 opacity-80 group-hover/xp:opacity-100 hidden sm:inline">
+                  Extrato ↗
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="h-2.5 w-full rounded-full bg-black/40 border border-white/10 overflow-hidden p-[1px]">

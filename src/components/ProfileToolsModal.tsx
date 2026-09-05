@@ -40,6 +40,7 @@ interface ProfileToolsModalProps {
   onOpenImporter?: () => void;
   onOpenSteamInventory?: () => void;
   onOpenShare?: () => void;
+  onOpenGamerCard?: () => void;
   onInstallPwa: () => void;
 }
 
@@ -60,6 +61,7 @@ export default function ProfileToolsModal({
   onOpenImporter,
   onOpenSteamInventory,
   onOpenShare,
+  onOpenGamerCard,
   onInstallPwa,
 }: ProfileToolsModalProps) {
   if (!isOpen) return null;
@@ -354,6 +356,34 @@ export default function ProfileToolsModal({
                   </div>
                   <p className="text-[11px] text-gray-400">
                     Visualizador de skins, armas, facas e itens colecionáveis
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+            </button>
+          )}
+
+          {/* 5.3. Gerador de Card Gamer */}
+          {onOpenGamerCard && (
+            <button
+              onClick={() => handleAction(onOpenGamerCard)}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#00E5FF]/10 via-purple-600/10 to-transparent hover:from-[#00E5FF]/20 border border-[#00E5FF]/30 hover:border-[#00E5FF]/50 transition-all text-left group active:scale-[0.99] min-h-[52px]"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 flex items-center justify-center text-[#00E5FF] flex-shrink-0 shadow-sm">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-bold text-white group-hover:text-[#00E5FF] transition-colors">
+                      Gerador de Card Gamer
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30">
+                      NOVO
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    Crie imagens 9:16 para Instagram Stories com suas estatísticas e jogos
                   </p>
                 </div>
               </div>

@@ -7,17 +7,19 @@ import { Sparkles, Trophy, ChevronRight, Zap, Target, Hourglass, Shield } from "
 interface GamerScoreboardCardProps {
   stats?: LibraryStats | null;
   onOpenRankings?: () => void;
+  onOpenXpBreakdown?: () => void;
 }
 
 export default function GamerScoreboardCard({
   stats,
   onOpenRankings,
+  onOpenXpBreakdown,
 }: GamerScoreboardCardProps) {
   const [activeSlide, setActiveSlide] = useState<0 | 1>(0);
   const gamerLevelInfo = calculateGamerLevel(stats);
 
   const completedScore = (stats?.completedCount || 0) * 120 + (stats?.totalGames || 0) * 10;
-  const hoursScore = Math.floor((stats?.totalPlaytimeHours || 0) * 8);
+  const hoursScore = gamerLevelInfo.breakdown.hoursXp;
   const prestigeScore = gamerLevelInfo.level * 150 + Math.floor(gamerLevelInfo.xp / 10);
 
   return (
@@ -44,20 +46,38 @@ export default function GamerScoreboardCard({
           </div>
         </div>
 
-        <a
-          href="/rankings"
-          className="text-xs font-bold text-[#00E5FF] hover:text-cyan-300 flex items-center gap-0.5 transition-colors cursor-pointer"
-        >
-          <span>Ver Ranking</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        <div className="flex items-center gap-3">
+          {onOpenXpBreakdown && (
+            <button
+              onClick={onOpenXpBreakdown}
+              className="text-xs font-mono font-bold text-gray-400 hover:text-white transition-colors cursor-pointer hidden sm:inline"
+            >
+              Extrato de XP ↗
+            </button>
+          )}
+          <a
+            href="/rankings/comunidade"
+            className="text-xs font-bold text-[#00E5FF] hover:text-cyan-300 flex items-center gap-0.5 transition-colors cursor-pointer"
+          >
+            <span>Ver Ranking</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
       {/* Display Numérico Digital Neon (2x2 Grid) */}
       {activeSlide === 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {/* Card 1: XP Gamer Total */}
-          <div className="rounded-2xl bg-[#131722] border border-[#00E5FF]/25 p-3.5 sm:p-4 shadow-inner">
+          <div
+            onClick={onOpenXpBreakdown}
+            className={`rounded-2xl bg-[#131722] border border-[#00E5FF]/25 p-3.5 sm:p-4 shadow-inner transition-all ${
+              onOpenXpBreakdown
+                ? "cursor-pointer hover:border-[#00E5FF] hover:bg-[#161c2b] active:scale-[0.98] group/card"
+                : ""
+            }`}
+            title={onOpenXpBreakdown ? "Clique para abrir o extrato detalhado de XP" : undefined}
+          >
             <div className="flex items-center justify-between text-gray-400 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider mb-1">
               <span>XP Total</span>
               <Sparkles className="w-3 h-3 text-[#00E5FF]" />
@@ -126,7 +146,7 @@ export default function GamerScoreboardCard({
           </div>
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
             <span className="text-gray-300">Tempo de Jogo Registrado</span>
-            <span className="font-mono font-bold text-cyan-300">+8 XP / hora</span>
+            <span className="font-mono font-bold text-cyan-300">+0.2 XP / hora</span>
           </div>
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
             <span className="text-gray-300">Avaliar &amp; Resenhar</span>

@@ -906,4 +906,45 @@ export function subscribeToSystemNotifications(
   }
 }
 
+export async function getTopGamersLeaderboard(limitCount = 50): Promise<UserProfile[]> {
+  if (!db) return [];
+  try {
+    const q = query(
+      collection(db, "users"),
+      orderBy("gamerXp", "desc"),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    const gamers: UserProfile[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as UserProfile;
+      if (data.username && data.isPublic !== false) {
+        gamers.push(data);
+      }
+    });
+    if (gamers.length > 0) {
+      return gamers;
+    }
+  } catch (e) {
+    console.warn("Consulta direta por gamerXp com índice indisponível, usando fallback:", e);
+  }
+
+  // Fallback seguro em caso de índice composto ausente
+  try {
+    const qAll = query(collection(db, "users"), limit(100));
+    const snapAll = await getDocs(qAll);
+    const list: UserProfile[] = [];
+    snapAll.forEach((docSnap) => {
+      const u = docSnap.data() as UserProfile;
+      if (u.username && u.isPublic !== false) {
+        list.push(u);
+      }
+    });
+    return list.sort((a, b) => (b.gamerXp || 0) - (a.gamerXp || 0)).slice(0, limitCount);
+  } catch (err) {
+    console.error("Erro ao listar gamers do ranking:", err);
+    return [];
+  }
+}
+
 

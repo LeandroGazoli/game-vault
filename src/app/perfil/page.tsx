@@ -20,6 +20,9 @@ import ShareProfileModal from "@/components/ShareProfileModal";
 import ProfileHeroCard from "@/components/ProfileHeroCard";
 import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
 import GamerScoreboardCard from "@/components/profile/GamerScoreboardCard";
+import GamerBadgesCard from "@/components/profile/GamerBadgesCard";
+import GamerXpBreakdownModal from "@/components/profile/GamerXpBreakdownModal";
+import ShareGamerCardModal from "@/components/profile/ShareGamerCardModal";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import GameImporterModal from "@/components/importer/GameImporterModal";
 import { getThemeStyles } from "@/lib/themeStyles";
@@ -209,6 +212,8 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isImporterOpen, setIsImporterOpen] = useState(false);
+  const [isXpBreakdownOpen, setIsXpBreakdownOpen] = useState(false);
+  const [isGamerCardOpen, setIsGamerCardOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
 
   const profileThemeStyles = getThemeStyles(activeUser?.theme);
@@ -511,10 +516,20 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         isOwner={isOwner}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
+        onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
       />
 
       {/* Placar Numérico Digital Neon de Pontos e XP (Inspirado nas Referências DemoVip) */}
-      <GamerScoreboardCard stats={activeStats} />
+      <GamerScoreboardCard
+        stats={activeStats}
+        onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
+      />
+
+      {/* Medalhas & Conquistas Desbloqueáveis do Gamer */}
+      <GamerBadgesCard
+        stats={activeStats}
+        gamerLevel={activeUser.gamerLevel}
+      />
 
       {/* Jogo em Destaque no Perfil (Se configurado) */}
       {activeUser.showcaseGameId && (
@@ -979,6 +994,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onOpenImporter={() => setIsImporterOpen(true)}
             onOpenSteamInventory={() => setActiveTab("steam_inventory")}
             onOpenShare={() => setIsShareOpen(true)}
+            onOpenGamerCard={() => setIsGamerCardOpen(true)}
             onInstallPwa={triggerPwaInstall}
           />
 
@@ -1049,6 +1065,24 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
               }
             : undefined
         }
+        onOpenGamerCard={() => setIsGamerCardOpen(true)}
+      />
+
+      {/* Modal de Extrato de XP Gamer */}
+      <GamerXpBreakdownModal
+        isOpen={isXpBreakdownOpen}
+        onClose={() => setIsXpBreakdownOpen(false)}
+        stats={activeStats}
+        gamerLevel={activeUser?.gamerLevel}
+      />
+
+      {/* Modal de Geração de Card Gamer para Redes Sociais */}
+      <ShareGamerCardModal
+        isOpen={isGamerCardOpen}
+        onClose={() => setIsGamerCardOpen(false)}
+        user={activeUser}
+        stats={activeStats}
+        library={activeLibrary}
       />
     </div>
   );

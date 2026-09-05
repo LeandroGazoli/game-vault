@@ -542,7 +542,7 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
   const rated = stats.averageRating > 0 ? Math.min(stats.totalGames, 20) : 0;
 
   const completedXp = completed * 60;
-  const hoursXp = Math.floor(hours * 8);
+  const hoursXp = Math.floor(hours * 0.2);
   const playingXp = playing * 20;
   const libraryXp = library * 10;
   const ratingXp = rated * 20;
@@ -592,6 +592,8 @@ export function calculateGamerLevel(stats?: LibraryStats | null): {
     },
   };
 }
+
+export type GamerLevelInfo = ReturnType<typeof calculateGamerLevel>;
 
 // ==========================================
 // SISTEMA DE FEEDBACK, IDEIAS & RECOMPENSAS

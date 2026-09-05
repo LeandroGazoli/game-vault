@@ -25,6 +25,7 @@ import {
   Edit3,
   BarChart3,
   Layers,
+  Users,
 } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { useAuth } from "@/context/AuthContext";
@@ -215,9 +216,26 @@ export default function RankingsSection() {
             1. HERO INSTITUCIONAL DO RANKINGS
         ========================================== */}
         <div className="rounded-3xl border border-[#242a36] bg-[#11141a] p-5 sm:p-8 space-y-4 shadow-xl text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#161a22] border border-[#262c38] text-amber-300 text-xs font-mono font-medium">
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>RANKINGS OFICIAIS // MYGAMELIST HALL DA FAMA</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#161a22] border border-[#262c38] text-amber-300 text-xs font-mono font-medium">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <span>RANKINGS OFICIAIS // MYGAMELIST HALL DA FAMA</span>
+            </div>
+
+            {/* Seletor de Abas Estilo Console */}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#161a22] border border-white/10 w-full sm:w-auto shrink-0">
+              <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-[#00E5FF]/20 to-cyan-500/20 border border-[#00E5FF] text-white shadow-[0_0_15px_rgba(0,229,255,0.4)] whitespace-nowrap">
+                <Gamepad2 className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span>Melhores Jogos</span>
+              </div>
+              <Link
+                href="/rankings/comunidade"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Top Jogadores</span>
+              </Link>
+            </div>
           </div>
 
           <div className="space-y-2">
