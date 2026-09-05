@@ -73,9 +73,10 @@ export default function CatalogRow({
             {actionHref && (
               <Link
                 href={actionHref}
-                className="text-xs font-mono font-semibold text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-1 whitespace-nowrap shrink-0"
+                className="text-xs font-bold text-[#00E5FF] hover:text-cyan-300 transition-colors inline-flex items-center gap-1 whitespace-nowrap shrink-0 group-hover/row:translate-x-0.5"
               >
-                {actionText}
+                <span>{actionText.replace(" →", "")}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#00E5FF]" />
               </Link>
             )}
 

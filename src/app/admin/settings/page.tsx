@@ -298,6 +298,254 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Card: Carrossel Hero Widescreen 16:9 (Controle do Administrador) */}
+        <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span>Carrossel Hero Widescreen 16:9 (Destaques da Home)</span>
+              </h3>
+              <p className="text-xs text-gray-400">
+                Escolha quais jogos aparecem no carrossel de capa, a ordem e o limite de itens exibidos.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs text-gray-300 font-medium">Habilitado</span>
+                <input
+                  type="checkbox"
+                  checked={settings.heroCarousel?.enabled ?? true}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      heroCarousel: {
+                        enabled: e.target.checked,
+                        maxItems: settings.heroCarousel?.maxItems || 5,
+                        items: settings.heroCarousel?.items || [],
+                      },
+                    })
+                  }
+                  className="w-5 h-5 accent-[#00E5FF] cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-mono text-gray-400 uppercase block mb-1">
+                Limite Máximo de Jogos
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={settings.heroCarousel?.maxItems || 5}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    heroCarousel: {
+                      enabled: settings.heroCarousel?.enabled ?? true,
+                      maxItems: Number(e.target.value) || 5,
+                      items: settings.heroCarousel?.items || [],
+                    },
+                  })
+                }
+                className="w-full bg-[#0d0f14] border border-white/10 rounded-2xl px-4 py-2 text-xs text-white focus:outline-none focus:border-[#00E5FF] min-h-[44px]"
+              />
+            </div>
+          </div>
+
+          {/* Lista de Jogos Configurados no Carrossel */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-gray-400 uppercase">
+                Jogos em Destaque ({settings.heroCarousel?.items?.length || 0})
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const newItem = {
+                    id: `game-${Date.now()}`,
+                    title: "Novo Jogo em Destaque",
+                    subtitle: "Descrição do jogo em destaque",
+                    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80",
+                    linkUrl: "/search",
+                    tag: "DESTAQUE",
+                  };
+                  setSettings({
+                    ...settings,
+                    heroCarousel: {
+                      enabled: settings.heroCarousel?.enabled ?? true,
+                      maxItems: settings.heroCarousel?.maxItems || 5,
+                      items: [...(settings.heroCarousel?.items || []), newItem],
+                    },
+                  });
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-bold hover:bg-[#00E5FF]/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>+ Adicionar Jogo</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(settings.heroCarousel?.items || []).map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="rounded-2xl bg-[#0d0f14] border border-white/10 p-4 space-y-3 relative group"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-white/10 text-[10px] font-mono font-bold flex items-center justify-center text-gray-300">
+                        {idx + 1}
+                      </span>
+                      <span className="text-xs font-bold text-white truncate max-w-[200px]">
+                        {item.title}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (settings.heroCarousel?.items || []).filter((_, i) => i !== idx);
+                        setSettings({
+                          ...settings,
+                          heroCarousel: {
+                            enabled: settings.heroCarousel?.enabled ?? true,
+                            maxItems: settings.heroCarousel?.maxItems || 5,
+                            items: updated,
+                          },
+                        });
+                      }}
+                      className="text-gray-500 hover:text-rose-400 p-1 text-xs transition-colors"
+                      title="Remover do Carrossel"
+                    >
+                      Remover
+                    </button>
+                  </div>
+
+                  {/* Preview do Banner 16:9 */}
+                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-black/50 border border-white/10 relative">
+                    <img
+                      src={item.bannerUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80";
+                      }}
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#00E5FF] text-black font-extrabold text-[9px]">
+                      {item.tag || "DESTAQUE"}
+                    </div>
+                  </div>
+
+                  {/* Campos Editáveis */}
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Título do Jogo"
+                      value={item.title}
+                      onChange={(e) => {
+                        const items = [...(settings.heroCarousel?.items || [])];
+                        items[idx] = { ...items[idx], title: e.target.value };
+                        setSettings({
+                          ...settings,
+                          heroCarousel: {
+                            enabled: settings.heroCarousel?.enabled ?? true,
+                            maxItems: settings.heroCarousel?.maxItems || 5,
+                            items,
+                          },
+                        });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Subtítulo ou descrição curta"
+                      value={item.subtitle || ""}
+                      onChange={(e) => {
+                        const items = [...(settings.heroCarousel?.items || [])];
+                        items[idx] = { ...items[idx], subtitle: e.target.value };
+                        setSettings({
+                          ...settings,
+                          heroCarousel: {
+                            enabled: settings.heroCarousel?.enabled ?? true,
+                            maxItems: settings.heroCarousel?.maxItems || 5,
+                            items,
+                          },
+                        });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-[#00E5FF]"
+                    />
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder="Tag (ex: GOTY)"
+                        value={item.tag || ""}
+                        onChange={(e) => {
+                          const items = [...(settings.heroCarousel?.items || [])];
+                          items[idx] = { ...items[idx], tag: e.target.value };
+                          setSettings({
+                            ...settings,
+                            heroCarousel: {
+                              enabled: settings.heroCarousel?.enabled ?? true,
+                              maxItems: settings.heroCarousel?.maxItems || 5,
+                              items,
+                            },
+                          });
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Link (ex: /search?q=gta)"
+                        value={item.linkUrl}
+                        onChange={(e) => {
+                          const items = [...(settings.heroCarousel?.items || [])];
+                          items[idx] = { ...items[idx], linkUrl: e.target.value };
+                          setSettings({
+                            ...settings,
+                            heroCarousel: {
+                              enabled: settings.heroCarousel?.enabled ?? true,
+                              maxItems: settings.heroCarousel?.maxItems || 5,
+                              items,
+                            },
+                          });
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="URL da Imagem 16:9 (Banner Widescreen)"
+                      value={item.bannerUrl}
+                      onChange={(e) => {
+                        const items = [...(settings.heroCarousel?.items || [])];
+                        items[idx] = { ...items[idx], bannerUrl: e.target.value };
+                        setSettings({
+                          ...settings,
+                          heroCarousel: {
+                            enabled: settings.heroCarousel?.enabled ?? true,
+                            maxItems: settings.heroCarousel?.maxItems || 5,
+                            items,
+                          },
+                        });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-mono text-gray-400 focus:outline-none focus:border-[#00E5FF]"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   );

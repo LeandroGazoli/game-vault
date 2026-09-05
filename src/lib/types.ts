@@ -444,6 +444,16 @@ export interface AuditLogEntry {
   updatedBy?: string;
 }
 
+export interface HeroCarouselItem {
+  id: string;
+  gameId?: number;
+  title: string;
+  subtitle?: string;
+  bannerUrl: string;
+  linkUrl: string;
+  tag?: string;
+}
+
 export interface SystemSettings {
   maintenanceMode: boolean;
   maintenanceNotice?: string;
@@ -454,6 +464,11 @@ export interface SystemSettings {
     linkUrl?: string;
     linkLabel?: string;
     variant: "info" | "warning" | "promo";
+  };
+  heroCarousel?: {
+    enabled: boolean;
+    maxItems: number;
+    items: HeroCarouselItem[];
   };
   features: {
     aiRecommendations: boolean;
