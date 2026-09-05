@@ -422,6 +422,7 @@ export interface UserProfile {
   isVerified?: boolean;
   gamerLevel?: number;
   gamerXp?: number;
+  celebratedGamerLevel?: number;
   premiumUntil?: string | null;
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;

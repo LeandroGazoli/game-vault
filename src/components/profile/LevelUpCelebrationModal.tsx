@@ -101,7 +101,7 @@ export default function LevelUpCelebrationModal({
             </span>
             {oldLevel < newLevel && (
               <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                ▲ +{newLevel - oldLevel} Nível
+                ▲ +{newLevel - oldLevel} {newLevel - oldLevel === 1 ? "Nível" : "Níveis"}
               </span>
             )}
           </div>
