@@ -26,7 +26,14 @@ import {
   SlidersHorizontal,
   ArrowUp,
   Check,
+  Lock,
+  ShieldAlert,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { isUserAdult } from "@/lib/gameUtils";
+import AuthModal from "@/components/AuthModal";
+import AgeVerificationModal from "@/components/AgeVerificationModal";
+import AdultContentModal from "@/components/AdultContentModal";
 import {
   GENRE_FILTER_OPTIONS,
   PLATFORM_FAMILIES,
@@ -70,6 +77,11 @@ function SearchContent() {
   const router = useRouter();
 
   // Estados principais de busca e filtros
+  const { user } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
+  const [isAdultWarningOpen, setIsAdultWarningOpen] = useState(false);
+
   const [query, setQuery] = useState(() => searchParams.get("q") || "");
   const [inputValue, setInputValue] = useState(() => searchParams.get("q") || "");
   const [selectedGenre, setSelectedGenre] = useState(() => {
@@ -599,8 +611,36 @@ function SearchContent() {
 
   // Manipuladores de Filtros
   const handleSelectGenre = (genreId: string) => {
-    setSelectedGenre(genreId);
-    updateUrlParams({ genre: genreId });
+    if (genreId === "adult") {
+      // 1. Não logado -> abre modal de login
+      if (!user) {
+        setIsAuthModalOpen(true);
+        return;
+      }
+
+      // 2. Logado sem data de nascimento informada -> abre modal para informar a data
+      if (!user.birthDate) {
+        setIsAgeModalOpen(true);
+        return;
+      }
+
+      // 3. Logado menor de idade -> bloqueio com mensagem
+      if (!isUserAdult(user.birthDate)) {
+        alert("Acesso restrito: De acordo com a data de nascimento cadastrada no seu perfil, você é menor de 18 anos.");
+        return;
+      }
+
+      // 4. Logado maior de idade que ainda não confirmou aviso -> abre aviso prévio
+      const hasConfirmedLocal = typeof window !== "undefined" && localStorage.getItem("mgl_adult_confirmed") === "true";
+      if (!user.adultContentConfirmedAt && !hasConfirmedLocal) {
+        setIsAdultWarningOpen(true);
+        return;
+      }
+    }
+
+    const nextGenre = selectedGenre === genreId && genreId === "adult" ? "all" : genreId;
+    setSelectedGenre(nextGenre);
+    updateUrlParams({ genre: nextGenre });
   };
 
   const handleSelectPlatform = (platformId: string) => {
@@ -929,17 +969,34 @@ function SearchContent() {
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
                 {GENRE_FILTER_OPTIONS.map((genre) => {
                   const isSelected = selectedGenre === genre.id;
+                  const isAdultFilter = genre.id === "adult";
+                  const isAdultUnlocked = Boolean(user && user.birthDate && isUserAdult(user.birthDate));
+
+                  let buttonClass = isSelected
+                    ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent";
+
+                  if (isAdultFilter) {
+                    if (isSelected) {
+                      buttonClass = "bg-gradient-to-r from-red-600 to-red-700 text-white font-black shadow-md shadow-red-600/30 border border-red-500/50";
+                    } else if (isAdultUnlocked) {
+                      buttonClass = "bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-900/40 hover:text-white";
+                    } else {
+                      buttonClass = "bg-red-950/20 text-red-400/70 border border-red-500/20 hover:bg-red-950/40 hover:text-red-300";
+                    }
+                  }
+
                   return (
                     <button
                       key={genre.id}
                       onClick={() => handleSelectGenre(genre.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                        isSelected
-                          ? "bg-[#00E5FF] text-black font-bold shadow-md shadow-[#00E5FF]/20"
-                          : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent"
-                      }`}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${buttonClass}`}
+                      title={isAdultFilter && !isAdultUnlocked ? "Requer login e verificação de maioridade (+18)" : undefined}
                     >
                       {genre.shortName || genre.name}
+                      {isAdultFilter && !isAdultUnlocked && (
+                        <Lock className="w-3 h-3 text-red-400 inline-block shrink-0" />
+                      )}
                     </button>
                   );
                 })}
@@ -1189,6 +1246,41 @@ function SearchContent() {
           LISTA DE RESULTADOS & PAGINAÇÃO REAL
       ======================================================== */}
       <div className="space-y-4">
+        {/* Banner de Conteúdo Adulto (+18) quando o filtro estiver ativo */}
+        {selectedGenre === "adult" && (
+          <div className="rounded-2xl bg-gradient-to-r from-red-950/80 via-[#18191c] to-black border border-red-500/40 p-4 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-md animate-fadeIn">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-red-600/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-black text-sm shrink-0 shadow-md shadow-red-500/20">
+                  +18
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-red-400">
+                      Filtro Adulto (+18) Ativo
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-semibold">
+                      Conteúdo Restrito
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 font-medium">
+                    Exibindo exclusivamente títulos com classificação indicativa para maiores de 18 anos.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSelectGenre("all")}
+                className="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                Desativar Filtro
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Banner do Curador IA se houver explicação */}
         {aiExplanation && (
           <div className="rounded-2xl bg-gradient-to-r from-cyan-950/60 via-[#101928] to-purple-950/40 border border-[#00E5FF]/40 p-4 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-md animate-fadeIn">
@@ -1365,6 +1457,36 @@ function SearchContent() {
         <ArrowUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 text-cyan-400 group-hover:text-white" />
         <span className="text-xs font-bold hidden sm:inline text-gray-200 group-hover:text-white">Topo</span>
       </button>
+      {/* ========================================================
+          MODAIS DE AUTENTICAÇÃO E CONTROLE ADULTO (+18)
+      ======================================================== */}
+      {isAuthModalOpen && (
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      )}
+
+      {isAgeModalOpen && (
+        <AgeVerificationModal
+          isOpen={isAgeModalOpen}
+          onClose={() => setIsAgeModalOpen(false)}
+          onVerified={() => {
+            setIsAdultWarningOpen(true);
+          }}
+        />
+      )}
+
+      {isAdultWarningOpen && (
+        <AdultContentModal
+          isOpen={isAdultWarningOpen}
+          onClose={() => setIsAdultWarningOpen(false)}
+          onConfirm={() => {
+            setSelectedGenre("adult");
+            updateUrlParams({ genre: "adult" });
+          }}
+        />
+      )}
     </div>
   );
 }

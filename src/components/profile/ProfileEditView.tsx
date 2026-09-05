@@ -21,6 +21,7 @@ import {
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
 import { isPureHtmlBio } from "@/lib/sanitizeHtml";
+import { calculateAge } from "@/lib/gameUtils";
 import {
   X,
   Palette,
@@ -55,6 +56,8 @@ import {
   MousePointer,
   FileText,
   AlertCircle,
+  AlertTriangle,
+  Calendar,
   User,
   Heart,
   SlidersHorizontal,
@@ -129,6 +132,7 @@ export default function ProfileEditView({
   const [photoUrlInput, setPhotoUrlInput] = useState<string>(user?.photoURL || "");
   const [bioInput, setBioInput] = useState<string>(user?.bio || "");
   const [favGameInput, setFavGameInput] = useState<string>(user?.favoriteGame || "");
+  const [birthDateInput, setBirthDateInput] = useState<string>(user?.birthDate || "");
 
   // Estados de Personalização
   const [selectedBanner, setSelectedBanner] = useState<string>(user?.bannerURL || PRESET_BANNERS[0].url);
@@ -193,6 +197,7 @@ export default function ProfileEditView({
       setPhotoUrlInput(user.photoURL || "");
       setBioInput(user.bio || "");
       setFavGameInput(user.favoriteGame || "");
+      setBirthDateInput(user.birthDate || "");
       setSelectedBanner(user.bannerURL || PRESET_BANNERS[0].url);
       setSelectedTheme(user.theme || "cyan");
       if (user.customTitles && Array.isArray(user.customTitles) && user.customTitles.length > 0) {
@@ -359,6 +364,7 @@ export default function ProfileEditView({
         photoURL: cleanPhotoUrl,
         bio: cleanBio,
         favoriteGame: cleanFavGame,
+        birthDate: birthDateInput.trim() || null,
         bannerURL: banner,
         theme: selectedTheme,
         profileLayout: selectedLayout,
@@ -678,6 +684,78 @@ export default function ProfileEditView({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Data de Nascimento & Controle Etário (+18) */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#00E5FF]" /> Data de Nascimento &amp; Controle Etário
+                </label>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+                  +18
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div className="space-y-1.5">
+                  <input
+                    type="date"
+                    value={birthDateInput}
+                    onChange={(e) => setBirthDateInput(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                    min="1920-01-01"
+                    className="w-full bg-[#101114] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#00E5FF] transition-colors"
+                  />
+                  <p className="text-[10px] text-gray-400">
+                    Sua data é privada e serve para desbloquear com segurança a visualização de jogos com classificação adulta (+18).
+                  </p>
+                </div>
+
+                <div>
+                  {birthDateInput ? (
+                    (() => {
+                      const age = calculateAge(birthDateInput);
+                      const isAdult = age >= 18;
+                      return (
+                        <div
+                          className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 transition-all ${
+                            isAdult
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                              : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                          }`}
+                        >
+                          {isAdult ? (
+                            <>
+                              <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                              <div>
+                                <p className="font-bold">Maior de 18 anos ({age} anos) ✅</p>
+                                <p className="text-[10px] opacity-80">Acesso a jogos e filtros +18 liberado.</p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                              <div>
+                                <p className="font-bold">Menor de 18 anos ({age} anos) ⚠️</p>
+                                <p className="text-[10px] opacity-80">Jogos e filtros +18 permanecem bloqueados.</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-gray-400 flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-gray-300">Data não informada</p>
+                        <p className="text-[10px] text-gray-500">Jogos adultos permanecem ocultos por padrão.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

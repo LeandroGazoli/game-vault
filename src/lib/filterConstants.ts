@@ -5,6 +5,7 @@ export interface FilterOption {
   igdbId?: number;
   igdbIds?: number[];
   igdbThemeId?: number;
+  isAdult?: boolean;
 }
 
 export interface PlatformFamily {
@@ -27,6 +28,7 @@ export const GENRE_FILTER_OPTIONS: FilterOption[] = [
   { id: "indie", name: "Indie", shortName: "Indie", igdbId: 32 },
   { id: "puzzle", name: "Puzzle", shortName: "Puzzle", igdbId: 9 },
   { id: "sports", name: "Esportes", shortName: "Esportes", igdbId: 14 },
+  { id: "adult", name: "Adulto (+18)", shortName: "+18", igdbThemeId: 42, isAdult: true },
 ];
 
 export const PLATFORM_FAMILIES: PlatformFamily[] = [
@@ -172,6 +174,7 @@ export function findGenreFilter(idOrSlug: string): FilterOption | undefined {
   if (lower.includes("indie")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "indie");
   if (lower.includes("racing") || lower.includes("corrida")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "racing");
   if (lower.includes("fighting") || lower.includes("luta")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "fighting");
+  if (lower.includes("adult") || lower.includes("18") || lower.includes("erotic") || lower.includes("eroge")) return GENRE_FILTER_OPTIONS.find((g) => g.id === "adult");
 
   return undefined;
 }

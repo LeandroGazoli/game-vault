@@ -237,6 +237,26 @@ export function mapIGDBGameToGame(item: any): Game {
     expansions,
     parent_game,
     category: item.category,
+    isAdult: Boolean(
+      (item.themes && item.themes.some((t: any) => t.id === 42 || (typeof t === "string" && (t.toLowerCase() === "erotic" || t.toLowerCase() === "adult")) || (typeof t.name === "string" && (t.name.toLowerCase() === "erotic" || t.name.toLowerCase() === "adult")))) ||
+      age_ratings.some((ar: any) => {
+        const org = (ar.organization || "").toUpperCase();
+        const rating = (ar.rating || "").toUpperCase();
+        if (org.includes("CLASS_IND") || org.includes("CLASSIND") || org.includes("PEGI") || org.includes("USK")) {
+          return rating.includes("18") || rating === "18";
+        }
+        if (org.includes("ESRB")) {
+          return rating.includes("AO") || rating.includes("ADULTS ONLY");
+        }
+        if (org.includes("CERO")) {
+          return rating === "Z" || rating.includes("Z");
+        }
+        if (org.includes("ACB")) {
+          return rating.includes("R18") || rating.includes("18+");
+        }
+        return false;
+      })
+    ),
   };
 }
 
@@ -459,6 +479,8 @@ export interface SearchFilterOptions {
   sort?: "popular" | "top_rated" | "recent" | "upcoming" | "name_asc" | string;
   limit?: number;
   offset?: number;
+  onlyAdult?: boolean;
+  includeAdult?: boolean;
 }
 
 // 1. Busca Geral e Filtros Adaptativos no IGDB com Paginação (TTL: 45 min)
@@ -478,10 +500,19 @@ export async function searchAndFilterGamesIGDB(
     sort = "popular",
     limit = 36,
     offset = 0,
+    onlyAdult,
+    includeAdult,
   } = options;
 
   const escapedQuery = query.replace(/"/g, "").trim();
   const whereParts: string[] = ["cover != null", "parent_game = null"];
+
+  // Tratamento de conteúdo adulto (+18): Tema 42 no IGDB é Erotic
+  if (onlyAdult) {
+    whereParts.push("themes = (42)");
+  } else if (!includeAdult) {
+    whereParts.push("themes != (42)");
+  }
 
   // Filtros de Plataforma
   if (platformIds && platformIds.length > 0) {
@@ -516,10 +547,12 @@ export async function searchAndFilterGamesIGDB(
   let body = "";
   const nowSec = Math.floor(Date.now() / 1000);
 
+  const fieldsList = "fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.rating;";
+
   if (escapedQuery) {
     // Busca Textual com Filtros opcionais (em buscas textuais, IGDB não aceita cláusula sort)
     const whereClause = whereParts.length > 0 ? `where ${whereParts.join(" & ")};` : "";
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; search "${escapedQuery}"; ${whereClause} limit ${limit}; offset ${offset};`;
+    body = `${fieldsList} search "${escapedQuery}"; ${whereClause} limit ${limit}; offset ${offset};`;
   } else {
     // Exploração Adaptativa (sem query textual, ordenação dinâmica permitida)
     const isFiltered = Boolean(
@@ -530,7 +563,8 @@ export async function searchAndFilterGamesIGDB(
       themeId ||
       (perspectiveId && perspectiveId > 0) ||
       (gameModeId && gameModeId > 0) ||
-      (minRating && minRating > 0)
+      (minRating && minRating > 0) ||
+      onlyAdult
     );
 
     let sortClause = "sort total_rating_count desc;";
@@ -557,7 +591,7 @@ export async function searchAndFilterGamesIGDB(
     }
 
     const whereClause = whereParts.length > 0 ? `where ${whereParts.join(" & ")};` : "";
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, category, parent_game.name, parent_game.id, parent_game.slug; ${whereClause} ${sortClause} limit ${limit}; offset ${offset};`;
+    body = `${fieldsList} ${whereClause} ${sortClause} limit ${limit}; offset ${offset};`;
   }
 
   const data = await fetchIGDB("games", body, TTL_CONFIG.SEARCH);
@@ -573,7 +607,7 @@ export async function getRecentReleasesIGDB(limit = 24): Promise<Game[]> {
   // Arredonda o timestamp em blocos de 30 minutos para garantir chaves de cache determinísticas
   const nowSec = Math.floor(Date.now() / (1000 * 1800)) * 1800;
   const sixtyDaysAgo = nowSec - (60 * 24 * 60 * 60);
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where first_release_date <= ${nowSec} & first_release_date >= ${sixtyDaysAgo} & cover != null & parent_game = null; sort first_release_date desc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating; where first_release_date <= ${nowSec} & first_release_date >= ${sixtyDaysAgo} & cover != null & parent_game = null & themes != (42); sort first_release_date desc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.RECENT_RELEASES);
   return data.map(mapIGDBGameToGame);
 }
@@ -582,7 +616,7 @@ export async function getRecentReleasesIGDB(limit = 24): Promise<Game[]> {
 export async function getUpcomingGamesIGDB(limit = 24): Promise<Game[]> {
   // Arredonda o timestamp em blocos de 30 minutos para garantir chaves de cache determinísticas
   const nowSec = Math.floor(Date.now() / (1000 * 1800)) * 1800;
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, hypes, screenshots.image_id; where first_release_date > ${nowSec} & cover != null & parent_game = null; sort first_release_date asc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, hypes, screenshots.image_id, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating; where first_release_date > ${nowSec} & cover != null & parent_game = null & themes != (42); sort first_release_date asc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.UPCOMING);
   return data.map(mapIGDBGameToGame);
 }
@@ -603,17 +637,18 @@ export async function getRankingsIGDB(
 
   let body = "";
   const nowSec = Math.floor(Date.now() / (1000 * 3600)) * 3600;
+  const fields = "fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating, hypes, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating;";
 
   if (category === "top_rated") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating; where aggregated_rating != null & total_rating_count > 20 & cover != null & parent_game = null; sort aggregated_rating desc; limit ${safeLimit};`;
+    body = `${fields} where aggregated_rating != null & total_rating_count > 20 & cover != null & parent_game = null & themes != (42); sort aggregated_rating desc; limit ${safeLimit};`;
   } else if (category === "hyped") {
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, hypes, rating; where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & parent_game = null; sort hypes desc; limit ${safeLimit};`;
+    body = `${fields} where hypes != null & hypes > 0 & cover != null & first_release_date > ${nowSec} & parent_game = null & themes != (42); sort hypes desc; limit ${safeLimit};`;
   } else if (category === "retro") {
     // Clássicos retrô lançados antes de 2005 (era dourada dos games)
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where first_release_date < 1104537600 & total_rating_count > 25 & cover != null & parent_game = null; sort total_rating_count desc; limit ${safeLimit};`;
+    body = `${fields} where first_release_date < 1104537600 & total_rating_count > 25 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${safeLimit};`;
   } else {
     // Mais populares por contagem total de avaliações e relevância
-    body = `fields name, slug, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating_count, rating, aggregated_rating; where total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${safeLimit};`;
+    body = `${fields} where total_rating_count > 40 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${safeLimit};`;
   }
 
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
@@ -702,10 +737,19 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     perspectiveId,
     gameModeId,
     sort = "popular",
+    onlyAdult,
+    includeAdult,
   } = options;
 
   const escapedQuery = query.replace(/"/g, "").trim();
   const whereParts: string[] = ["cover != null", "parent_game = null"];
+
+  // Tratamento de conteúdo adulto (+18): Tema 42 no IGDB é Erotic
+  if (onlyAdult) {
+    whereParts.push("themes = (42)");
+  } else if (!includeAdult) {
+    whereParts.push("themes != (42)");
+  }
 
   if (platformIds && platformIds.length > 0) {
     whereParts.push(`platforms = (${platformIds.join(",")})`);
@@ -742,7 +786,8 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     themeId ||
     (perspectiveId && perspectiveId > 0) ||
     (gameModeId && gameModeId > 0) ||
-    (minRating && minRating > 0)
+    (minRating && minRating > 0) ||
+    onlyAdult
   );
 
   if (!escapedQuery) {
@@ -800,7 +845,7 @@ export async function getGamesCountIGDB(query: string): Promise<number> {
 
 // 8. Jogos Dublados em Português Brasileiro (TTL: 36 horas)
 export async function getPtBrDubbedGamesIGDB(limit = 20): Promise<Game[]> {
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, language_supports.language.name, language_supports.language_support_type.name; where language_supports.language = 21 & language_supports.language_support_type = 1 & cover != null & total_rating_count > 10 & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, language_supports.language.name, language_supports.language_support_type.name, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating; where language_supports.language = 21 & language_supports.language_support_type = 1 & cover != null & total_rating_count > 10 & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
   return data.map(mapIGDBGameToGame);
 }
@@ -818,7 +863,7 @@ export async function getShortGamesIGDB(limit = 20): Promise<Game[]> {
   const gameIds = hltbData.map((h: any) => h.game_id).slice(0, limit).join(",");
   if (!gameIds) return [];
 
-  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where id = (${gameIds}) & cover != null; limit ${limit};`;
+  const body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating; where id = (${gameIds}) & cover != null & themes != (42); limit ${limit};`;
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);
 
   const timeMap = new Map<number, number>();
@@ -854,6 +899,10 @@ export async function getGamesByCategoryIGDB(
 
   const nowSec = Math.floor(Date.now() / 1000);
   let filterParts = ["cover != null", "parent_game = null"];
+
+  if (category.igdbThemeId !== 42) {
+    filterParts.push("themes != (42)");
+  }
 
   if (category.slug === "luta") {
     filterParts.push("genres = (4)", "genres != (5)");
@@ -920,21 +969,23 @@ export async function getGamesByCollectionIGDB(
   }
 
   let body = "";
+  const fields = "fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, themes.id, themes.name, age_ratings.organization.name, age_ratings.rating_category.rating;";
+
   if (collection.gameQueryType === "goty") {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where aggregated_rating >= 90 & total_rating_count > 200 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where aggregated_rating >= 90 & total_rating_count > 200 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else if (collection.gameQueryType === "soulslike") {
     // Soulslike principais conhecidos
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where (name ~ *"Dark Souls"* | name ~ *"Elden Ring"* | name ~ *"Bloodborne"* | name ~ *"Sekiro"* | name ~ *"Lies of P"* | name ~ *"Nioh"* | name ~ *"Lords of the Fallen"*) & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where (name ~ *"Dark Souls"* | name ~ *"Elden Ring"* | name ~ *"Bloodborne"* | name ~ *"Sekiro"* | name ~ *"Lies of P"* | name ~ *"Nioh"* | name ~ *"Lords of the Fallen"*) & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else if (collection.gameQueryType === "indie") {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where genres = (32) & (aggregated_rating >= 85 | rating >= 85) & total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where genres = (32) & (aggregated_rating >= 85 | rating >= 85) & total_rating_count > 40 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else if (collection.gameQueryType === "scifi") {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where themes = (18) & total_rating_count > 50 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where themes = (18) & total_rating_count > 50 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else if (collection.gameQueryType === "horror") {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where themes = (19) & total_rating_count > 40 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where themes = (19) & total_rating_count > 40 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else if (collection.gameQueryType === "retro") {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where first_release_date <= 978307200 & total_rating_count > 25 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where first_release_date <= 978307200 & total_rating_count > 25 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   } else {
-    body = `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id; where total_rating_count > 80 & cover != null & parent_game = null; sort total_rating_count desc; limit ${limit};`;
+    body = `${fields} where total_rating_count > 80 & cover != null & parent_game = null & themes != (42); sort total_rating_count desc; limit ${limit};`;
   }
 
   const data = await fetchIGDB("games", body, TTL_CONFIG.RANKINGS);

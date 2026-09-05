@@ -345,6 +345,7 @@ export interface Game {
   category?: number;
   isAiRecommended?: boolean;
   aiExplanation?: string;
+  isAdult?: boolean;
 }
 
 export interface UserGameDLC {
@@ -420,6 +421,8 @@ export interface UserProfile {
   isVerified?: boolean;
   gamerLevel?: number;
   premiumUntil?: string | null;
+  birthDate?: string | null;
+  adultContentConfirmedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
