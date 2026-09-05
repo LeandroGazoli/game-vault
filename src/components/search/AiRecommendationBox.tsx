@@ -67,7 +67,8 @@ export default function AiRecommendationBox() {
 
       const data = await res.json();
       if (!res.ok) {
-        setErrorMessage(data.error || "Não foi possível obter recomendações no momento.");
+        const fullMsg = data.details ? `${data.error} (${data.details})` : data.error;
+        setErrorMessage(fullMsg || "Não foi possível obter recomendações no momento.");
         return;
       }
 

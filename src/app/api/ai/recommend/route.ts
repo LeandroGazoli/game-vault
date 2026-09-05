@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
       return NextResponse.json(
         { error: "Chave da IA (GEMINI_API_KEY) não configurada no servidor." },
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Chamada oficial à API REST do Google Gemini (gemini-1.5-flash) com cota 100% gratuita
+    // 2. Chamada oficial à API REST do Google Gemini com fallback inteligente de modelos (100% gratuito)
     const systemPrompt = `Você é o curador especialista em videogames da plataforma MyGameList.
 O usuário vai descrever o que deseja jogar (gênero, clima, mecânicas, similaridade com outros jogos, tempo disponível, etc).
 Sua missão:
@@ -63,45 +63,103 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
   "recommendedTitles": ["Nome Exato do Jogo 1", "Nome Exato do Jogo 2", "Nome Exato do Jogo 3"]
 }`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const geminiResponse = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: systemPrompt },
-              { text: `Pedido do Jogador: "${prompt}"` },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          responseMimeType: "application/json",
+    const requestBody = JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: systemPrompt },
+            { text: `Pedido do Jogador: "${prompt}"` },
+          ],
         },
-      }),
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: "application/json",
+      },
     });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error("[Gemini AI Error]:", geminiResponse.status, errorText);
+    // Modelos com cota 100% gratuita no Google AI Studio (ordenados por prioridade e compatibilidade de API)
+    const CANDIDATE_MODELS = [
+      { version: "v1beta", model: "gemini-2.0-flash" },
+      { version: "v1beta", model: "gemini-2.0-flash-lite" },
+      { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-1.5-flash-latest" },
+      { version: "v1beta", model: "gemini-1.5-flash" },
+    ];
 
-      // Tratamento para limite de taxa (cota gratuita)
-      if (geminiResponse.status === 429) {
-        return NextResponse.json(
-          { error: "A IA está recebendo muitas consultas no momento. Aguarde alguns segundos e tente novamente!" },
-          { status: 429 }
-        );
+    let geminiResponse: Response | null = null;
+    let lastErrorText = "";
+    let lastStatusCode = 502;
+
+    for (const candidate of CANDIDATE_MODELS) {
+      const geminiUrl = `https://generativelanguage.googleapis.com/${candidate.version}/models/${candidate.model}:generateContent?key=${apiKey}`;
+
+      try {
+        const res = await fetch(geminiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+        });
+
+        if (res.ok) {
+          geminiResponse = res;
+          break;
+        }
+
+        const errorBody = await res.text();
+        lastStatusCode = res.status;
+        lastErrorText = errorBody;
+        console.warn(`[Gemini AI ${candidate.model} (${candidate.version})] Falhou com status ${res.status}:`, errorBody);
+
+        // Se 404 (modelo não suportado nesta versão de endpoint), tenta o próximo modelo
+        if (res.status === 404) {
+          continue;
+        }
+
+        // Se 429 (Rate Limit atingido na cota gratuita)
+        if (res.status === 429) {
+          return NextResponse.json(
+            { error: "A IA está recebendo muitas consultas no momento. Aguarde alguns segundos e tente novamente!" },
+            { status: 429 }
+          );
+        }
+
+        // Se 400 ou 403 (chave inválida ou erro de permissão)
+        if (res.status === 400 || res.status === 403) {
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(errorBody);
+          } catch {}
+          const errorMsg = parsed?.error?.message || errorBody;
+
+          if (errorMsg.includes("API key not valid") || errorMsg.includes("API_KEY_INVALID")) {
+            return NextResponse.json(
+              { error: "A chave GEMINI_API_KEY configurada na Vercel é inválida. Por favor, gere uma nova chave gratuita no Google AI Studio." },
+              { status: 401 }
+            );
+          }
+          return NextResponse.json(
+            { error: `Erro na autenticação com o Google Gemini: ${errorMsg}` },
+            { status: res.status }
+          );
+        }
+      } catch (networkErr: any) {
+        lastErrorText = networkErr?.message || "Falha de rede";
+        console.error(`[Gemini AI ${candidate.model}] Erro de rede:`, networkErr);
       }
+    }
 
+    if (!geminiResponse || !geminiResponse.ok) {
+      console.error("[Gemini AI All Candidates Failed]:", lastStatusCode, lastErrorText);
       return NextResponse.json(
-        { error: "Falha na comunicação com a inteligência artificial." },
-        { status: 502 }
+        {
+          error: "Falha na comunicação com a inteligência artificial.",
+          details: lastErrorText ? lastErrorText.slice(0, 300) : undefined,
+        },
+        { status: lastStatusCode || 502 }
       );
     }
 
@@ -117,8 +175,15 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
 
     let parsedResult: { explanation: string; recommendedTitles: string[] };
     try {
-      parsedResult = JSON.parse(candidateText);
-    } catch {
+      let cleanJson = candidateText.trim();
+      if (cleanJson.startsWith("```json")) {
+        cleanJson = cleanJson.replace(/^```json\s*/i, "").replace(/```\s*$/, "");
+      } else if (cleanJson.startsWith("```")) {
+        cleanJson = cleanJson.replace(/^```\s*/, "").replace(/```\s*$/, "");
+      }
+      parsedResult = JSON.parse(cleanJson);
+    } catch (parseErr) {
+      console.error("Erro ao analisar JSON do Gemini:", parseErr, candidateText);
       return NextResponse.json(
         { error: "Erro ao processar as recomendações geradas." },
         { status: 500 }
