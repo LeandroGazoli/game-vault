@@ -398,6 +398,10 @@ export interface UserProfile {
   isPremium?: boolean;
   isAdmin?: boolean;
   hideAds?: boolean;
+  banned?: boolean;
+  suspended?: boolean;
+  moderationReason?: string | null;
+  moderatedAt?: string | null;
   bannerURL?: string | null;
   theme?: ProfileTheme;
   profileLayout?: ProfileLayout;
@@ -414,6 +418,40 @@ export interface UserProfile {
   premiumUntil?: string | null;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  adminEmail: string;
+  adminUid: string;
+  action: string;
+  category: "users" | "plans" | "feedback" | "notifications" | "settings" | "security";
+  targetId?: string;
+  targetName?: string;
+  details?: Record<string, any>;
+  ipAddress?: string;
+  createdAt: string;
+}
+
+export interface SystemSettings {
+  maintenanceMode: boolean;
+  maintenanceNotice?: string;
+  allowRegistrations: boolean;
+  announcementBanner: {
+    enabled: boolean;
+    text: string;
+    linkUrl?: string;
+    linkLabel?: string;
+    variant: "info" | "warning" | "promo";
+  };
+  features: {
+    aiRecommendations: boolean;
+    communityChat: boolean;
+    bountiesEnabled: boolean;
+    instantSyncSteam: boolean;
+  };
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface LibraryStats {
