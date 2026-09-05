@@ -10,7 +10,9 @@ import {
   createSystemNotification,
   getSystemNotifications,
   deleteSystemNotification,
+  recordAuditLog,
 } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import {
   showLocalNotification,
   requestNotificationPermission,
@@ -33,6 +35,7 @@ import {
 } from "lucide-react";
 
 export default function AdminNotificationManager() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,25 +71,35 @@ export default function AdminNotificationManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
-      setErrorMessage("Preencha o título e a mensagem.");
+      setErrorMessage("Título e mensagem são obrigatórios.");
       return;
     }
 
     setIsSending(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       await createSystemNotification({
         title: title.trim(),
         message: message.trim(),
         category,
-        linkUrl: linkUrl.trim() || null,
-        linkLabel: linkLabel.trim() || null,
+        linkUrl: linkUrl.trim() || undefined,
+        linkLabel: linkLabel.trim() || undefined,
         isPinned,
-        sendPush,
       });
 
-      // Dispara push local imediatamente no dispositivo do admin para teste
+      if (user) {
+        await recordAuditLog({
+          adminEmail: user.email,
+          adminUid: user.uid,
+          action: `Notificação Broadcast Disparada: "${title.trim()}"`,
+          category: "notifications",
+          details: { title: title.trim(), category, isPinned, sendPush },
+        });
+      }
+
+      // Se ativado, envia push notification local no navegador do admin para teste
       if (sendPush && getNotificationPermission() === "granted") {
         await showLocalNotification(title.trim(), {
           body: message.trim(),
@@ -114,6 +127,15 @@ export default function AdminNotificationManager() {
     if (!confirm("Tem certeza que deseja excluir esta notificação?")) return;
     try {
       await deleteSystemNotification(id);
+      if (user) {
+        await recordAuditLog({
+          adminEmail: user.email,
+          adminUid: user.uid,
+          action: "Notificação do Sistema Excluída",
+          category: "notifications",
+          targetId: id,
+        });
+      }
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setSuccessMessage("Notificação excluída.");
       setTimeout(() => setSuccessMessage(null), 3000);

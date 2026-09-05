@@ -23,6 +23,7 @@ import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
 import ViewTransitionsProvider from "@/providers/ViewTransitionsProvider";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BannedUserModal from "@/components/BannedUserModal";
+import MaintenanceOverlay from "@/components/MaintenanceOverlay";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -187,6 +188,7 @@ export default function RootLayout({
             <SpotlightSearchModal />
             <PwaInstallPrompt />
             <BannedUserModal />
+            <MaintenanceOverlay />
             <CookieConsent />
 
             {/* Footer Completo e Institucional */}

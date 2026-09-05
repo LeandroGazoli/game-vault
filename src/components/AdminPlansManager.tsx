@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { PlansConfig, PlanKey, DEFAULT_PLANS_CONFIG, savePlansConfig } from "@/lib/plans";
-import { auth } from "@/lib/firebase";
+import { auth, recordAuditLog } from "@/lib/firebase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
   CreditCard,
@@ -160,6 +160,13 @@ export default function AdminPlansManager({ adminEmail }: AdminPlansManagerProps
     try {
       // 1. Salva diretamente pelo cliente autenticado no Firestore (com credencial do Google do Admin)
       await savePlansConfig(plansConfig);
+      await recordAuditLog({
+        adminEmail: adminEmail || auth.currentUser?.email || "admin",
+        adminUid: auth.currentUser?.uid || "admin",
+        action: "Tabela de Preços e Planos Atualizada",
+        category: "plans",
+        details: plansConfig,
+      });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {

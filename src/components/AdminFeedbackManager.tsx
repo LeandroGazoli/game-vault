@@ -16,6 +16,7 @@ import {
   grantFeedbackReward,
   deleteFeedbackItem,
   castFeedbackVote,
+  recordAuditLog,
 } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import UserAvatar from "@/components/UserAvatar";
@@ -80,7 +81,24 @@ export default function AdminFeedbackManager() {
     adminNote?: string
   ) => {
     try {
-      await updateFeedbackStatusAndResponse(item.id, status, adminNote);
+      await updateFeedbackStatusAndResponse(
+        item.id,
+        status,
+        adminNote !== undefined ? adminNote : undefined
+      );
+
+      if (user) {
+        await recordAuditLog({
+          adminEmail: user.email,
+          adminUid: user.uid,
+          action: `Feedback "${item.title}" movido para ${FEEDBACK_STATUSES[status].label}`,
+          category: "feedback",
+          targetId: item.id,
+          targetName: item.title,
+          details: { status, adminNote },
+        });
+      }
+
       setItems((prev) =>
         prev.map((i) =>
           i.id === item.id
@@ -88,7 +106,7 @@ export default function AdminFeedbackManager() {
                 ...i,
                 status,
                 adminResponse: adminNote !== undefined ? adminNote : i.adminResponse,
-                adminResponseAt: adminNote ? new Date().toISOString() : i.adminResponseAt,
+                adminResponseAt: new Date().toISOString(),
               }
             : i
         )
@@ -119,6 +137,17 @@ export default function AdminFeedbackManager() {
     if (!rewardItem) return;
     try {
       await grantFeedbackReward(rewardItem.id, rewardItem.authorId, rewardData);
+      if (user) {
+        await recordAuditLog({
+          adminEmail: user.email,
+          adminUid: user.uid,
+          action: `Recompensa (${rewardData.type.toUpperCase()}) concedida para ${rewardItem.authorName}`,
+          category: "feedback",
+          targetId: rewardItem.authorId,
+          targetName: rewardItem.authorName,
+          details: rewardData,
+        });
+      }
       showToast(`🏆 Recompensa concedida para ${rewardItem.authorName}!`);
       await fetchItems();
     } catch (e) {
@@ -131,6 +160,16 @@ export default function AdminFeedbackManager() {
     if (!confirm(`Tem certeza que deseja excluir a sugestão "${item.title}"?`)) return;
     try {
       await deleteFeedbackItem(item.id);
+      if (user) {
+        await recordAuditLog({
+          adminEmail: user.email,
+          adminUid: user.uid,
+          action: `Sugestão/Bug excluído: "${item.title}"`,
+          category: "feedback",
+          targetId: item.id,
+          targetName: item.title,
+        });
+      }
       setItems((prev) => prev.filter((i) => i.id !== item.id));
       if (detailItem?.id === item.id) setDetailItem(null);
       showToast("Sugestão excluída com sucesso.");
