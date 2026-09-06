@@ -31,7 +31,7 @@ import {
   Search,
 } from "lucide-react";
 
-import HomeHero from "@/components/HomeHero";
+import HomeSearchHero from "@/components/HomeSearchHero";
 import HomeHeroCarousel from "@/components/HomeHeroCarousel";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
@@ -218,14 +218,19 @@ export default function HomePage() {
   }, [library, topTenGames]);
 
   return (
-    <div className="space-y-12 pb-12">
+    <div className="space-y-8 pb-12">
       {/* ==========================================
-          1. HERO SECTION CINEMATOGRÁFICO & REFINADO
+          1. TOPO ESTILO XBOX CLOUD: SEARCH EM DESTAQUE COM BACKDROP
       ========================================== */}
-      <HomeHero onOpenRoulette={() => setIsRouletteOpen(true)} />
+      <HomeSearchHero
+        onOpenRoulette={() => setIsRouletteOpen(true)}
+        featuredBackdrop={topTenGames[0]?.background_image ?? undefined}
+        featuredGameTitle={topTenGames[0]?.name}
+      />
 
       {/* ==========================================
-          CARROSSEL HERO WIDESCREEN 16:9 (CONTROLADO PELO ADMIN)
+          2. CARROSSEL DESTAQUES WIDESCREEN 16:9
+          — Banners cinematográficos estilo Xbox
       ========================================== */}
       {(settings?.heroCarousel?.enabled ?? true) && (
         <section className="hero-carousel-section">
@@ -238,17 +243,7 @@ export default function HomePage() {
       )}
 
       {/* ==========================================
-          CARD FIXO DE ANÚNCIO DO NOVO RECURSO
-      ========================================== */}
-      <HomeFeatureAnnouncementCard />
-
-      {/* ==========================================
-          2. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
-      ========================================== */}
-      <CategoriesCarousel />
-
-      {/* ==========================================
-          PAINEL GAMER / WIDGET GAMIFICADO DO USUÁRIO
+          PAINEL GAMER / "VOLTAR A JOGAR" DO USUÁRIO
       ========================================== */}
       {user && (
         <GamerDashboardWidget
@@ -257,6 +252,17 @@ export default function HomePage() {
           onOpenRoulette={() => setIsRouletteOpen(true)}
         />
       )}
+
+      {/* ==========================================
+          3. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
+      ========================================== */}
+      <CategoriesCarousel />
+
+      {/* ==========================================
+          CARD DE ANÚNCIO DE NOVO RECURSO
+      ========================================== */}
+      <HomeFeatureAnnouncementCard />
+
 
       {/* ==========================================
           PUBLICIDADE 1: LEADERBOARD SUPERIOR
@@ -277,6 +283,26 @@ export default function HomePage() {
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
       ========================================== */}
       <AdBanner slot="HOME_IN_FEED" />
+
+      {/* ==========================================
+          MAIS POPULARES NA COMUNIDADE (POSTERS XBOX)
+      ========================================== */}
+      {loading ? (
+        <CatalogRowSkeleton
+          title="Mais Populares na Comunidade"
+          subtitle="Os títulos mais aclamados e jogados pelos membros do MGL"
+          icon={Trophy}
+        />
+      ) : topTenGames.length > 0 ? (
+        <CatalogRow
+          title="Mais Populares na Comunidade"
+          subtitle="Os títulos mais aclamados e jogados pelos membros do MGL"
+          icon={Trophy}
+          games={topTenGames.slice(0, 10)}
+          actionHref="/rankings"
+          actionText="Mostrar Tudo"
+        />
+      ) : null}
 
       {/* ==========================================
           3. LANÇAMENTOS RECENTES (Últimos 60 Dias)

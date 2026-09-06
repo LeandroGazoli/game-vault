@@ -5,14 +5,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #0b0d11;
-  --foreground: #f0f2f5;
-  --surface-0: #0b0d11;
-  --surface-1: #12151b;
-  --surface-2: #181c24;
-  --surface-3: #202631;
-  --border-subtle: #242a36;
-  --border-strong: #363e50;
+  --background: #18181c;
+  --foreground: #f4f4f5;
+  --surface-0: #18181c;
+  --surface-1: #202127;
+  --surface-2: #282932;
+  --surface-3: #32343f;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
   --accent-cyan: #00E5FF;
   --accent-amber: #FFB800;
   --accent-emerald: #10B981;
@@ -30,7 +30,7 @@ html {
 
 body {
   color: var(--foreground);
-  background-color: #0b0d11;
+  background-color: #18181c;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: 100%;
   overflow-x: clip;
@@ -39,13 +39,12 @@ body {
   position: relative;
 }
 
-/* Fundo radial pontilhado isolado em camada GPU sem forçar repaints a cada pixel de scroll */
+/* Fundo limpo e suave com leve gradiente de iluminação superior estilo console */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
   pointer-events: none;
   z-index: -1;
   transform: translateZ(0);
@@ -117,40 +116,40 @@ body::before {
 }
 
 ::-webkit-scrollbar-track {
-  background: #090a0e;
+  background: #111111;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2430;
+  background: #303030;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #484848;
 }
 
 /* Tactile Surface & Hardware Design System */
 .tactile-panel {
-  background-color: #12151b;
-  border: 1px solid #242a36;
+  background-color: #202127;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tactile-card {
-  background-color: #14171e;
-  border: 1px solid #222834;
+  background-color: #202127;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tactile-card:hover {
-  background-color: #181c25;
-  border-color: #384255;
+  background-color: #282932;
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
 /* Backward compatibility for panels */
 .glass-panel {
-  background: #13161d;
-  border: 1px solid #242a36;
+  background: #202127;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel-hover {
@@ -158,8 +157,8 @@ body::before {
 }
 
 .glass-panel-hover:hover {
-  background: #181c25;
-  border-color: #384255;
+  background: #282932;
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
