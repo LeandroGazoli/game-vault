@@ -31,12 +31,11 @@ import {
   Search,
 } from "lucide-react";
 
-import HomeHero from "@/components/HomeHero";
+import HomeSearchHero from "@/components/HomeSearchHero";
 import HomeHeroCarousel from "@/components/HomeHeroCarousel";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
-import IdentityBar from "@/components/IdentityBar";
 import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SystemSettings } from "@/lib/types";
@@ -219,10 +218,19 @@ export default function HomePage() {
   }, [library, topTenGames]);
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-8 pb-12">
       {/* ==========================================
-          1. HERO BANNER WIDESCREEN (CONTROLADO PELO ADMIN)
-          — Art dos jogos em destaque, estilo Xbox Game Pass
+          1. TOPO ESTILO XBOX CLOUD: SEARCH EM DESTAQUE COM BACKDROP
+      ========================================== */}
+      <HomeSearchHero
+        onOpenRoulette={() => setIsRouletteOpen(true)}
+        featuredBackdrop={topTenGames[0]?.background_image}
+        featuredGameTitle={topTenGames[0]?.name}
+      />
+
+      {/* ==========================================
+          2. CARROSSEL DESTAQUES WIDESCREEN 16:9
+          — Banners cinematográficos estilo Xbox
       ========================================== */}
       {(settings?.heroCarousel?.enabled ?? true) && (
         <section className="hero-carousel-section">
@@ -235,27 +243,7 @@ export default function HomePage() {
       )}
 
       {/* ==========================================
-          2. TRACKER BAR — Identidade MGL + Busca + Chips
-      ========================================== */}
-      <HomeHero onOpenRoulette={() => setIsRouletteOpen(true)} />
-
-      {/* ==========================================
-          3. IDENTITY BAR — 4 Pilares do Tracker
-      ========================================== */}
-      <IdentityBar />
-
-      {/* ==========================================
-          4. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
-      ========================================== */}
-      <CategoriesCarousel />
-
-      {/* ==========================================
-          CARD DE ANÚNCIO DE NOVO RECURSO
-      ========================================== */}
-      <HomeFeatureAnnouncementCard />
-
-      {/* ==========================================
-          PAINEL GAMER / WIDGET GAMIFICADO DO USUÁRIO
+          PAINEL GAMER / "VOLTAR A JOGAR" DO USUÁRIO
       ========================================== */}
       {user && (
         <GamerDashboardWidget
@@ -264,6 +252,17 @@ export default function HomePage() {
           onOpenRoulette={() => setIsRouletteOpen(true)}
         />
       )}
+
+      {/* ==========================================
+          3. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
+      ========================================== */}
+      <CategoriesCarousel />
+
+      {/* ==========================================
+          CARD DE ANÚNCIO DE NOVO RECURSO
+      ========================================== */}
+      <HomeFeatureAnnouncementCard />
+
 
       {/* ==========================================
           PUBLICIDADE 1: LEADERBOARD SUPERIOR
@@ -284,6 +283,26 @@ export default function HomePage() {
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
       ========================================== */}
       <AdBanner slot="HOME_IN_FEED" />
+
+      {/* ==========================================
+          MAIS POPULARES NA COMUNIDADE (POSTERS XBOX)
+      ========================================== */}
+      {loading ? (
+        <CatalogRowSkeleton
+          title="Mais Populares na Comunidade"
+          subtitle="Os títulos mais aclamados e jogados pelos membros do MGL"
+          icon={Trophy}
+        />
+      ) : topTenGames.length > 0 ? (
+        <CatalogRow
+          title="Mais Populares na Comunidade"
+          subtitle="Os títulos mais aclamados e jogados pelos membros do MGL"
+          icon={Trophy}
+          games={topTenGames.slice(0, 10)}
+          actionHref="/rankings"
+          actionText="Mostrar Tudo"
+        />
+      ) : null}
 
       {/* ==========================================
           3. LANÇAMENTOS RECENTES (Últimos 60 Dias)
