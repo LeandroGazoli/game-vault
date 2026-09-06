@@ -36,6 +36,7 @@ import HomeHeroCarousel from "@/components/HomeHeroCarousel";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
+import IdentityBar from "@/components/IdentityBar";
 import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SystemSettings } from "@/lib/types";
@@ -218,14 +219,10 @@ export default function HomePage() {
   }, [library, topTenGames]);
 
   return (
-    <div className="space-y-12 pb-12">
+    <div className="space-y-6 pb-12">
       {/* ==========================================
-          1. HERO SECTION CINEMATOGRÁFICO & REFINADO
-      ========================================== */}
-      <HomeHero onOpenRoulette={() => setIsRouletteOpen(true)} />
-
-      {/* ==========================================
-          CARROSSEL HERO WIDESCREEN 16:9 (CONTROLADO PELO ADMIN)
+          1. HERO BANNER WIDESCREEN (CONTROLADO PELO ADMIN)
+          — Art dos jogos em destaque, estilo Xbox Game Pass
       ========================================== */}
       {(settings?.heroCarousel?.enabled ?? true) && (
         <section className="hero-carousel-section">
@@ -238,14 +235,24 @@ export default function HomePage() {
       )}
 
       {/* ==========================================
-          CARD FIXO DE ANÚNCIO DO NOVO RECURSO
+          2. TRACKER BAR — Identidade MGL + Busca + Chips
       ========================================== */}
-      <HomeFeatureAnnouncementCard />
+      <HomeHero onOpenRoulette={() => setIsRouletteOpen(true)} />
 
       {/* ==========================================
-          2. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
+          3. IDENTITY BAR — 4 Pilares do Tracker
+      ========================================== */}
+      <IdentityBar />
+
+      {/* ==========================================
+          4. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
       ========================================== */}
       <CategoriesCarousel />
+
+      {/* ==========================================
+          CARD DE ANÚNCIO DE NOVO RECURSO
+      ========================================== */}
+      <HomeFeatureAnnouncementCard />
 
       {/* ==========================================
           PAINEL GAMER / WIDGET GAMIFICADO DO USUÁRIO

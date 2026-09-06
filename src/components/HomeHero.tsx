@@ -2,12 +2,10 @@
 
 import React, { useRef } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { openSpotlightSearch } from "@/components/SpotlightSearchModal";
 import { gsap, useGSAP } from "@/lib/gsap";
 import {
   Search,
-  Sparkles,
   Calendar as CalendarIcon,
   Dices,
   Languages,
@@ -15,8 +13,6 @@ import {
   Trophy,
   Gamepad2,
   ArrowRight,
-  ShieldCheck,
-  Zap,
 } from "lucide-react";
 
 interface HomeHeroProps {
@@ -26,223 +22,164 @@ interface HomeHeroProps {
 export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
   const heroRef = useRef<HTMLElement>(null);
 
-  // Sequência de entrada ("Boot Sequence") orquestrada com GSAP
   useGSAP(() => {
     const mm = gsap.matchMedia();
 
-    mm.add({
-      reduceMotion: "(prefers-reduced-motion: reduce), (max-width: 768px)",
-      allowMotion: "(prefers-reduced-motion: no-preference) and (min-width: 769px)",
-    }, (context) => {
-      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+    mm.add(
+      {
+        reduceMotion: "(prefers-reduced-motion: reduce), (max-width: 768px)",
+        allowMotion:
+          "(prefers-reduced-motion: no-preference) and (min-width: 769px)",
+      },
+      (context) => {
+        const { reduceMotion } = context.conditions as {
+          reduceMotion: boolean;
+        };
 
-      if (reduceMotion) {
-        gsap.set([".hero-badge", ".hero-title", ".hero-desc", ".hero-search", ".hero-chip", ".hero-3d"], {
-          autoAlpha: 1,
-          y: 0,
-        });
-        return;
+        if (reduceMotion) {
+          gsap.set(
+            [".hero-badge", ".hero-title", ".hero-search", ".hero-chip"],
+            { autoAlpha: 1, y: 0 }
+          );
+          return;
+        }
+
+        const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+        tl.fromTo(
+          ".hero-badge",
+          { autoAlpha: 0, y: -10, scale: 0.97 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.3 }
+        )
+          .fromTo(
+            ".hero-title",
+            { autoAlpha: 0, y: 16 },
+            { autoAlpha: 1, y: 0, duration: 0.4 },
+            "-=0.15"
+          )
+          .fromTo(
+            ".hero-search",
+            { autoAlpha: 0, y: 12, scale: 0.98 },
+            { autoAlpha: 1, y: 0, scale: 1, duration: 0.35 },
+            "-=0.2"
+          )
+          .fromTo(
+            ".hero-chip",
+            { autoAlpha: 0, y: 8, scale: 0.95 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              scale: 1,
+              stagger: 0.04,
+              duration: 0.28,
+            },
+            "-=0.15"
+          );
       }
-
-      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-
-      tl.fromTo(
-        ".hero-badge",
-        { autoAlpha: 0, y: -12, scale: 0.96 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.35 }
-      )
-      .fromTo(
-        ".hero-title",
-        { autoAlpha: 0, y: 20 },
-        { autoAlpha: 1, y: 0, duration: 0.45 },
-        "-=0.2"
-      )
-      .fromTo(
-        ".hero-desc",
-        { autoAlpha: 0, y: 15 },
-        { autoAlpha: 1, y: 0, duration: 0.35 },
-        "-=0.25"
-      )
-      .fromTo(
-        ".hero-search",
-        { autoAlpha: 0, y: 15, scale: 0.98 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.35 },
-        "-=0.2"
-      )
-      .fromTo(
-        ".hero-chip",
-        { autoAlpha: 0, y: 10, scale: 0.94 },
-        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.04, duration: 0.3 },
-        "-=0.15"
-      )
-      .fromTo(
-        ".hero-3d",
-        { autoAlpha: 0, scale: 0.95, y: 15 },
-        { autoAlpha: 1, scale: 1, y: 0, duration: 0.45 },
-        "-=0.3"
-      );
-    });
+    );
   }, { scope: heroRef });
 
   return (
     <section
       ref={heroRef}
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#111620]/90 via-[#0c0e14] to-[#0a0c10] p-6 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-xl"
+      className="relative overflow-hidden rounded-2xl bg-[#1a1a1a] border border-white/[0.08] px-6 py-8 sm:px-10 sm:py-10"
     >
-      {/* Luzes de ambientação de fundo (Neon Glows) */}
-      <div className="pointer-events-none absolute -top-32 -left-20 h-96 w-96 rounded-full bg-emerald-500/15 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/4 -right-20 h-96 w-96 rounded-full bg-cyan-500/15 blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-20 left-1/3 h-80 w-80 rounded-full bg-emerald-500/10 blur-[130px]" />
+      {/* Linha de brilho no topo */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* Lado Esquerdo: Marca MGL, Título, Busca & Ações Rápidas */}
-        <div className="lg:col-span-7 xl:col-span-7 space-y-6 text-center lg:text-left">
-          {/* Eyebrow Pill */}
-          <div className="hero-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-neutral-300 backdrop-blur-md shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10B981]" />
-            <span className="font-mono tracking-wide uppercase text-[11px] text-emerald-300 font-bold">
-              MGL // MEU GAMER LOG
+      <div className="relative z-10 max-w-3xl">
+        {/* Eyebrow badge */}
+        <div className="hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-xs font-semibold text-neutral-400 mb-5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#10B981]" />
+          <span className="font-mono tracking-widest uppercase text-[10px] text-neutral-300">
+            MGL · Meu Gamer Log
+          </span>
+        </div>
+
+        {/* Título principal */}
+        <h1 className="hero-title text-2xl sm:text-4xl font-black text-white tracking-tight leading-[1.1] font-display mb-2">
+          Descubra, Registre e Acompanhe{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+            Seus Jogos.
+          </span>
+        </h1>
+        <p className="text-sm text-neutral-400 mb-6 leading-relaxed max-w-xl">
+          Seu tracker definitivo com{" "}
+          <span className="text-neutral-300 font-medium">dublagem PT-BR</span>
+          {", "}
+          <span className="text-neutral-300 font-medium">tempo para zerar</span>
+          , notas Metacritic e estatísticas da comunidade.
+        </p>
+
+        {/* Barra de busca spotlight */}
+        <div className="hero-search mb-5 max-w-xl">
+          <div
+            onClick={() => openSpotlightSearch()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && openSpotlightSearch()}
+            className="group flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-[#111111] hover:bg-[#191919] border border-white/10 hover:border-white/20 text-neutral-500 hover:text-neutral-300 transition-all cursor-pointer active:scale-[0.99]"
+          >
+            <Search className="w-4 h-4 text-neutral-400 shrink-0 group-hover:text-neutral-200 transition-colors" />
+            <span className="text-sm text-neutral-500 group-hover:text-neutral-400 truncate">
+              Buscar por jogo, franquia, gênero ou dublagem...
             </span>
-          </div>
-
-          {/* Título Principal */}
-          <div className="space-y-3">
-            <h1 className="hero-title text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] font-display">
-              Descubra, Registre e Acompanhe <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
-                Seus Jogos Favoritos.
-              </span>
-            </h1>
-
-            <p className="hero-desc text-xs sm:text-base text-neutral-300 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              O seu acervo definitivo com <strong>jogos dublados em PT-BR</strong>, <strong>duração estimada para zerar</strong>, lançamentos ao vivo e estatísticas da comunidade.
-            </p>
-          </div>
-
-          {/* Barra de Busca Tátil Flutuante (Dispara o Spotlight ⌘K) */}
-          <div className="hero-search pt-1 max-w-xl mx-auto lg:mx-0">
-            <div
-              onClick={() => openSpotlightSearch()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && openSpotlightSearch()}
-              className="group relative flex items-center gap-3 w-full px-4 py-3.5 sm:py-4 rounded-2xl bg-[#090b10]/90 hover:bg-[#12151e] border border-white/15 hover:border-emerald-400/50 text-neutral-400 hover:text-white transition-all shadow-xl hover:shadow-emerald-500/10 cursor-pointer active:scale-[0.99]"
-            >
-              <Search className="w-5 h-5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="text-xs sm:text-sm font-medium text-neutral-400 group-hover:text-neutral-200 truncate">
-                Buscar por jogo, franquia, gênero ou dublagem...
-              </span>
-              <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 text-neutral-300 font-mono text-[11px] font-semibold border border-white/10 shadow-inner">
-                ⌘K
-              </kbd>
-            </div>
-          </div>
-
-          {/* Chips de Acesso Rápido / Gatilhos Gamers */}
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-xs">
-            <button
-              onClick={onOpenRoulette}
-              className="hero-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/40 hover:border-amber-400 font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              <Dices className="w-3.5 h-3.5 text-amber-400" />
-              <span>Roleta Gamer</span>
-            </button>
-
-            <Link
-              href="/colecoes/dublados-ptbr"
-              className="hero-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-emerald-500/40 transition-all font-medium active:scale-95"
-            >
-              <Languages className="w-3.5 h-3.5 text-emerald-400" />
-              <span>100% Dublados</span>
-            </Link>
-
-            <Link
-              href="/colecoes/hall-da-fama"
-              className="hero-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-yellow-500/40 transition-all font-medium active:scale-95"
-            >
-              <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-              <span>Hall da Fama (90+)</span>
-            </Link>
-
-            <Link
-              href="/colecoes/fim-de-semana"
-              className="hero-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-cyan-500/40 transition-all font-medium active:scale-95"
-            >
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Até 10 Horas</span>
-            </Link>
-
-            <Link
-              href="/calendar"
-              className="hero-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-indigo-500/40 transition-all font-medium active:scale-95"
-            >
-              <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Lançamentos</span>
-            </Link>
+            <kbd className="ml-auto hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.08] text-neutral-400 font-mono text-[11px] border border-white/[0.08]">
+              ⌘K
+            </kbd>
           </div>
         </div>
 
-        {/* Lado Direito: Card Oficial da Insígnia MGL (Sem 3D, com visual gamer premium) */}
-        <div className="hero-3d hidden lg:flex lg:col-span-5 xl:col-span-5 items-center justify-center">
-          <div className="relative w-full max-w-[420px] rounded-3xl border border-emerald-500/25 bg-gradient-to-b from-[#131d1a]/80 via-[#0d1413]/90 to-[#080d0c] p-6 shadow-2xl backdrop-blur-2xl hover:border-emerald-400/40 transition-all group">
-            {/* Halo Neon Esmeralda */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-teal-500/15 blur-3xl pointer-events-none" />
+        {/* Chips de acesso rápido */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <button
+            onClick={onOpenRoulette}
+            className="hero-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 hover:border-amber-400/50 font-semibold transition-all active:scale-95 cursor-pointer"
+          >
+            <Dices className="w-3.5 h-3.5" />
+            <span>Roleta Gamer</span>
+          </button>
 
-            {/* Imagem do Logo MGL Oficial em Destaque */}
-            <div className="relative z-10 flex flex-col items-center justify-center py-4">
-              <div className="relative w-full aspect-[2.3/1] max-h-[160px] flex items-center justify-center">
-                <img
-                  src="/logo-mgl.png"
-                  alt="MGL Insígnia Oficial"
-                  className="max-h-[150px] w-auto object-contain filter drop-shadow-[0_0_25px_rgba(16,185,129,0.5)] group-hover:drop-shadow-[0_0_35px_rgba(16,185,129,0.8)] transition-all duration-300 group-hover:scale-105"
-                />
-              </div>
+          <Link
+            href="/colecoes/dublados-ptbr"
+            className="hero-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-neutral-400 hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.18] transition-all font-medium active:scale-95"
+          >
+            <Languages className="w-3.5 h-3.5 text-emerald-400" />
+            <span>100% Dublados</span>
+          </Link>
 
-              {/* Destaques Rápidos da Plataforma */}
-              <div className="w-full grid grid-cols-2 gap-2.5 mt-6 pt-5 border-t border-white/10 text-xs">
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                  <Gamepad2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <div className="flex flex-col text-left">
-                    <span className="font-bold text-white text-[11px]">150.000+</span>
-                    <span className="text-[10px] text-neutral-400">Jogos no Acervo</span>
-                  </div>
-                </div>
+          <Link
+            href="/colecoes/hall-da-fama"
+            className="hero-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-neutral-400 hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.18] transition-all font-medium active:scale-95"
+          >
+            <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Hall da Fama (90+)</span>
+          </Link>
 
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                  <Languages className="w-4 h-4 text-teal-400 shrink-0" />
-                  <div className="flex flex-col text-left">
-                    <span className="font-bold text-white text-[11px]">PT-BR</span>
-                    <span className="text-[10px] text-neutral-400">Dublados Oficiais</span>
-                  </div>
-                </div>
+          <Link
+            href="/colecoes/fim-de-semana"
+            className="hero-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-neutral-400 hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.18] transition-all font-medium active:scale-95"
+          >
+            <Clock className="w-3.5 h-3.5 text-sky-400" />
+            <span>Até 10 Horas</span>
+          </Link>
 
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                  <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <div className="flex flex-col text-left">
-                    <span className="font-bold text-white text-[11px]">HowLongToBeat</span>
-                    <span className="text-[10px] text-neutral-400">Horas para Zerar</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/5">
-                  <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-                  <div className="flex flex-col text-left">
-                    <span className="font-bold text-white text-[11px]">Metacritic</span>
-                    <span className="text-[10px] text-neutral-400">Notas &amp; Rankings</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Link
+            href="/calendar"
+            className="hero-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-neutral-400 hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.18] transition-all font-medium active:scale-95"
+          >
+            <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Lançamentos</span>
+          </Link>
         </div>
       </div>
 
-      {/* Barra de Filtro Rápido por Plataforma (Embutida na base do Hero) */}
-      <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+      {/* Barra de plataformas na base */}
+      <div className="mt-8 pt-5 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth w-full sm:w-auto py-1">
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1.5">
-            <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" /> Plataformas:
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 shrink-0 mr-1 flex items-center gap-1.5">
+            <Gamepad2 className="w-3.5 h-3.5 text-neutral-500" />
+            Plataformas:
           </span>
 
           {[
@@ -257,7 +194,7 @@ export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
             <Link
               key={p.label}
               href={p.href}
-              className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/15 text-neutral-300 hover:text-white border border-white/5 hover:border-white/20 transition-all font-medium text-xs whitespace-nowrap active:scale-95 shrink-0"
+              className="px-3 py-1 rounded-full bg-white/[0.04] hover:bg-white/10 text-neutral-400 hover:text-white border border-white/[0.06] hover:border-white/15 transition-all font-medium text-xs whitespace-nowrap active:scale-95 shrink-0"
             >
               {p.label}
             </Link>
@@ -266,12 +203,15 @@ export default function HomeHero({ onOpenRoulette }: HomeHeroProps) {
 
         <Link
           href="/categorias"
-          className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:underline shrink-0"
+          className="hidden md:inline-flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-300 transition-colors shrink-0"
         >
           <span>Ver todas as categorias</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
+
+      {/* Linha de brilho na base */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
     </section>
   );
 }
