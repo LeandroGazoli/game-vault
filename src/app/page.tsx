@@ -43,6 +43,13 @@ import { SystemSettings } from "@/lib/types";
 // Franquias consagradas para a seção de exploração
 const LEGENDARY_FRANCHISES = [
   {
+    name: "Grand Theft Auto",
+    desc: "A saga definitiva da Rockstar Games • Rumo a Vice City",
+    query: "Grand Theft Auto",
+    accent: "from-[#ff2a85]/40 via-[#ff7a00]/20 to-[#121316] border-[#ff2a85]/40 text-pink-300",
+    cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2lbd.jpg",
+  },
+  {
     name: "The Witcher",
     desc: "A saga do Bruxo Geralt de Rivia",
     query: "The Witcher",
@@ -76,13 +83,6 @@ const LEGENDARY_FRANCHISES = [
     query: "Dark Souls",
     accent: "from-purple-950/70 via-[#160f1c] to-[#121316] border-purple-500/30 text-purple-300",
     cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x77.jpg",
-  },
-  {
-    name: "Grand Theft Auto",
-    desc: "Ação definitiva em mundo aberto",
-    query: "Grand Theft Auto",
-    accent: "from-green-950/70 via-[#0f1a10] to-[#121316] border-green-500/30 text-green-300",
-    cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2lbd.jpg",
   },
 ];
 
