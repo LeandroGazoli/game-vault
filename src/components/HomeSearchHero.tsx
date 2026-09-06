@@ -7,8 +7,8 @@ import { openSpotlightSearch } from "@/components/SpotlightSearchModal";
 
 interface HomeSearchHeroProps {
   onOpenRoulette: () => void;
-  featuredBackdrop?: string;
-  featuredGameTitle?: string;
+  featuredBackdrop?: string | null;
+  featuredGameTitle?: string | null;
 }
 
 export default function HomeSearchHero({

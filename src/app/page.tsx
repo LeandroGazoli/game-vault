@@ -224,7 +224,7 @@ export default function HomePage() {
       ========================================== */}
       <HomeSearchHero
         onOpenRoulette={() => setIsRouletteOpen(true)}
-        featuredBackdrop={topTenGames[0]?.background_image}
+        featuredBackdrop={topTenGames[0]?.background_image ?? undefined}
         featuredGameTitle={topTenGames[0]?.name}
       />
 
