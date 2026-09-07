@@ -1671,7 +1671,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
           {uniqueDlcs.map((dlc) => {
             const userDlc = userGame?.dlcs?.find((d) => d.id === dlc.id);
 
@@ -1804,7 +1804,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
           {game.similar_games.slice(0, 12).map((sg) => (
             <div
               key={sg.id}
@@ -2397,6 +2397,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           {renderCategories()}
           {renderUniverse()}
           {renderDlcs()}
+          {renderSimilarGames()}
         </div>
 
         <div className="space-y-6">
@@ -2405,11 +2406,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           {renderCommunity()}
           <AdBanner slot="GAME_DETAIL_IN_CONTENT" />
         </div>
-      </div>
-
-      {/* Recomendações e Títulos Semelhantes Desktop em largura total */}
-      <div className="hidden lg:block space-y-8">
-        {renderSimilarGames()}
       </div>
 
       {/* Modal de Registro / Atualização */}
