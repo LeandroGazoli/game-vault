@@ -297,8 +297,8 @@ export default function LiveSearchInput({
             placeholder={placeholder}
             className={`w-full text-white placeholder-gray-400 focus:outline-none transition-all ${
               isHero
-                ? "pl-12 pr-32 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-sm font-medium"
-                : "pl-10 pr-14 py-2 rounded-full bg-[#14161f]/90 border border-cyan-500/30 hover:border-cyan-400/60 focus:border-[#00E5FF] focus:bg-[#181a26] focus:ring-2 focus:ring-[#00E5FF]/20 focus:shadow-[0_0_20px_rgba(0,229,255,0.2)] text-xs sm:text-sm font-medium shadow-inner"
+                ? "pl-12 pr-32 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-base sm:text-sm font-medium"
+                : "pl-10 pr-14 py-2 rounded-full bg-[#14161f]/90 border border-cyan-500/30 hover:border-cyan-400/60 focus:border-[#00E5FF] focus:bg-[#181a26] focus:ring-2 focus:ring-[#00E5FF]/20 focus:shadow-[0_0_20px_rgba(0,229,255,0.2)] text-base sm:text-sm font-medium shadow-inner"
             }`}
           />
 

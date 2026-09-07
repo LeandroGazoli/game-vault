@@ -766,7 +766,7 @@ function SearchContent() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Pesquise por título (Elden Ring...) ou descreva o que procura (estilo souls-like, relaxante...)"
-              className="w-full pl-10 pr-24 sm:pr-48 py-2.5 sm:py-3 rounded-2xl bg-[#0c0e14]/90 border border-cyan-500/30 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 text-xs sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all shadow-inner"
+              className="w-full pl-10 pr-24 sm:pr-48 py-2.5 sm:py-3 rounded-2xl bg-[#0c0e14]/90 border border-cyan-500/30 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 text-base sm:text-sm font-medium text-white placeholder-gray-400 focus:outline-none transition-all shadow-inner"
             />
             <div className="absolute right-2 flex items-center gap-1.5">
               {loading && !isAiLoading ? (

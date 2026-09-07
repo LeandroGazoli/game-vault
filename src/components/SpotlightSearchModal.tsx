@@ -355,7 +355,7 @@ export default function SpotlightSearchModal() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder="Buscar por título ou descrever o que procura (ex: estilo souls-like)..."
-            className="flex-1 bg-transparent text-white placeholder:text-neutral-500 text-sm sm:text-base outline-none font-medium min-w-0"
+            className="flex-1 bg-transparent text-white placeholder:text-neutral-500 text-base outline-none font-medium min-w-0"
           />
 
           {isAiLoading ? (
