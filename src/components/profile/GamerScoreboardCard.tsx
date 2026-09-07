@@ -7,6 +7,7 @@ import { Sparkles, Trophy, ChevronRight, Zap, Target, Hourglass, Shield } from "
 interface GamerScoreboardCardProps {
   stats?: LibraryStats | null;
   plan?: UserPlan;
+  bonusXp?: number;
   onOpenRankings?: () => void;
   onOpenXpBreakdown?: () => void;
 }
@@ -14,11 +15,12 @@ interface GamerScoreboardCardProps {
 export default function GamerScoreboardCard({
   stats,
   plan,
+  bonusXp,
   onOpenRankings,
   onOpenXpBreakdown,
 }: GamerScoreboardCardProps) {
   const [activeSlide, setActiveSlide] = useState<0 | 1>(0);
-  const gamerLevelInfo = calculateGamerLevel(stats, undefined, plan);
+  const gamerLevelInfo = calculateGamerLevel(stats, undefined, plan, bonusXp);
 
   const completedScore = (stats?.completedCount || 0) * 120 + (stats?.totalGames || 0) * 10;
   const hoursScore = gamerLevelInfo.breakdown.hoursXp;

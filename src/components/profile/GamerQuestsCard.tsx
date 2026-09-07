@@ -1,8 +1,22 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { LibraryStats, UserProfile, calculateGamerLevel } from "@/lib/types";
+import {
+  LibraryStats,
+  UserProfile,
+  calculateGamerLevel,
+  GamificationMissionDef,
+  GamificationConfig,
+} from "@/lib/types";
+import { getMissionDefs, getGamificationConfig, awardGamificationXp } from "@/lib/firebase";
+import {
+  evaluateDef,
+  iconFromName,
+  getActiveSeasonMissions,
+  getDailyMissions,
+  getDateKey,
+} from "@/lib/gamification";
 import {
   Target,
   Trophy,
@@ -36,6 +50,30 @@ export default function GamerQuestsCard({
   const totalGames = (stats?.libraryCount ?? 0) + (stats?.totalGames || 0);
   const rated = stats?.averageRating ? Math.min(stats.totalGames || 0, 20) : 0;
   const hasShowcase = Boolean(user.showcaseGameId || user.customMarkdown || user.customHtml);
+
+  const [dynamicMissions, setDynamicMissions] = useState<GamificationMissionDef[]>([]);
+  const [config, setConfig] = useState<GamificationConfig | null>(null);
+  const awardedRef = useRef<Set<string>>(new Set());
+
+  const level = useMemo(
+    () => calculateGamerLevel(stats, undefined, user.plan, user.bonusXp).level,
+    [stats, user.plan, user.bonusXp]
+  );
+
+  // Carrega missões dinâmicas (temporada + diárias) e a configuração de rotação
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([getMissionDefs(), getGamificationConfig()])
+      .then(([missions, cfg]) => {
+        if (!mounted) return;
+        setDynamicMissions(missions.filter((m) => m.isActive !== false));
+        setConfig(cfg);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const quests = useMemo(() => {
     return [
@@ -117,13 +155,68 @@ export default function GamerQuestsCard({
     ];
   }, [completed, hours, totalGames, rated, hasShowcase, onOpenCustomizer]);
 
-  const completedCount = quests.filter((q) => q.isCompleted).length;
-  const totalEarnedXp = quests
+  // Missões dinâmicas criadas pelo admin: temporada ativa + diárias sorteadas do pool
+  const dynamicQuests = useMemo(() => {
+    if (dynamicMissions.length === 0) return [];
+    const now = new Date();
+    const season = getActiveSeasonMissions(dynamicMissions, now);
+    const daily = getDailyMissions(
+      dynamicMissions,
+      config?.dailyRotationCount ?? 3,
+      getDateKey(now)
+    );
+
+    const build = (m: GamificationMissionDef, tag: "TEMPORADA" | "DIÁRIA") => {
+      const ev = evaluateDef({ metric: m.metric, targetValue: m.targetValue }, { stats, level });
+      return {
+        id: `dyn_${m.id}`,
+        rewardId: m.id,
+        title: m.title,
+        description: m.description,
+        target: ev.target,
+        current: ev.current,
+        progressLabel: ev.progressText,
+        isCompleted: ev.isUnlocked,
+        rewardXp: m.rewardXp,
+        icon: iconFromName(m.iconName),
+        color: tag === "DIÁRIA" ? "text-[#00E5FF]" : "text-purple-400",
+        border: tag === "DIÁRIA" ? "border-cyan-500/30" : "border-purple-500/30",
+        actionText: "Ir para Biblioteca",
+        actionHref: "#library-tabs",
+        tag,
+      };
+    };
+
+    return [
+      ...season.map((m) => build(m, "TEMPORADA")),
+      ...daily.map((m) => build(m, "DIÁRIA")),
+    ];
+  }, [dynamicMissions, config, stats, level]);
+
+  const allQuests = useMemo(
+    () => [...quests, ...dynamicQuests],
+    [quests, dynamicQuests]
+  );
+
+  // Concede XP real (uma vez) ao dono quando uma missão dinâmica é concluída
+  useEffect(() => {
+    if (!isOwner || !user.uid || dynamicMissions.length === 0) return;
+    const claimed = new Set(user.claimedRewards || []);
+    dynamicQuests.forEach((q) => {
+      if (!q.isCompleted || !q.rewardXp || q.rewardXp <= 0) return;
+      if (claimed.has(q.rewardId) || awardedRef.current.has(q.rewardId)) return;
+      awardedRef.current.add(q.rewardId);
+      awardGamificationXp(user.uid, q.rewardId, q.rewardXp).catch(() => {});
+    });
+  }, [isOwner, user.uid, user.claimedRewards, dynamicQuests, dynamicMissions.length]);
+
+  const completedCount = allQuests.filter((q) => q.isCompleted).length;
+  const totalEarnedXp = allQuests
     .filter((q) => q.isCompleted)
     .reduce((acc, q) => acc + q.rewardXp, 0);
-  const totalPotentialXp = quests.reduce((acc, q) => acc + q.rewardXp, 0);
+  const totalPotentialXp = allQuests.reduce((acc, q) => acc + q.rewardXp, 0);
 
-  const percentComplete = Math.round((completedCount / quests.length) * 100);
+  const percentComplete = Math.round((completedCount / Math.max(1, allQuests.length)) * 100);
 
   return (
     <div className="rounded-[28px] sm:rounded-[32px] bg-[#0e1117] border border-white/10 p-4 sm:p-6 shadow-xl space-y-5 relative overflow-hidden">
@@ -140,7 +233,7 @@ export default function GamerQuestsCard({
             <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
               <span>Missões Gamers da Temporada</span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
-                {completedCount} / {quests.length} Concluídas
+                {completedCount} / {allQuests.length} Concluídas
               </span>
             </h3>
             <p className="text-xs text-gray-400">
@@ -178,9 +271,11 @@ export default function GamerQuestsCard({
 
       {/* Lista de Missões */}
       <div className="space-y-2.5">
-        {quests.map((quest) => {
+        {allQuests.map((quest) => {
           const Icon = quest.icon;
           const isDone = quest.isCompleted;
+          const tag = "tag" in quest ? quest.tag : undefined;
+          const onAction = "onAction" in quest ? quest.onAction : undefined;
 
           return (
             <div
@@ -210,6 +305,17 @@ export default function GamerQuestsCard({
                     <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
                       +{quest.rewardXp} XP
                     </span>
+                    {tag && (
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold border ${
+                          tag === "DIÁRIA"
+                            ? "bg-cyan-500/10 text-[#00E5FF] border-cyan-500/30"
+                            : "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
                     {quest.description}
@@ -224,11 +330,11 @@ export default function GamerQuestsCard({
                 </span>
 
                 {isOwner && !isDone && (
-                  quest.onAction ? (
+                  onAction ? (
                     <button
                       onClick={() => {
                         triggerSelectionHaptic();
-                        quest.onAction?.();
+                        onAction?.();
                       }}
                       className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-bold text-[#00E5FF] transition-all cursor-pointer"
                     >

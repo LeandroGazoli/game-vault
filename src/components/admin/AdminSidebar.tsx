@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ExternalLink,
   ChevronRight,
+  Trophy,
 } from "lucide-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -41,6 +42,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Ideias & Bugs",
     icon: Lightbulb,
     badge: "BOUNTY",
+  },
+  {
+    href: "/admin/gamification",
+    label: "Conquistas & Missões",
+    icon: Trophy,
+    badge: "GAME",
   },
   {
     href: "/admin/notifications",

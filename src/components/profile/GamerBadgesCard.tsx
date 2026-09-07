@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { LibraryStats, calculateGamerLevel } from "@/lib/types";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { LibraryStats, calculateGamerLevel, GamificationAchievementDef } from "@/lib/types";
+import { getAchievementDefs, awardGamificationXp } from "@/lib/firebase";
+import { evaluateDef, iconFromName } from "@/lib/gamification";
 import {
   Award,
   Trophy,
@@ -33,6 +35,7 @@ export interface GamerAchievement {
   currentValue: number;
   targetValue: number;
   progressText: string;
+  isSecret?: boolean;
 }
 
 export interface SteamBadgeItem {
@@ -51,9 +54,20 @@ export interface SteamBadgeItem {
 interface GamerBadgesCardProps {
   stats?: LibraryStats | null;
   gamerLevel?: number;
+  userId?: string;
+  isOwner?: boolean;
+  claimedRewards?: string[];
 }
 
-export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardProps) {
+export default function GamerBadgesCard({
+  stats,
+  gamerLevel,
+  userId,
+  isOwner,
+  claimedRewards,
+}: GamerBadgesCardProps) {
+  const [dynamicDefs, setDynamicDefs] = useState<GamificationAchievementDef[]>([]);
+  const awardedRef = useRef<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"achievements" | "badges">("achievements");
   const [filter, setFilter] = useState<"all" | "unlocked" | "locked" | "rare">("all");
   const [selectedAchievement, setSelectedAchievement] = useState<GamerAchievement | null>(null);
@@ -255,6 +269,81 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
     ];
   }, [completed, hours, library, rated, effectiveLevel]);
 
+  // Busca conquistas dinâmicas criadas pelo admin
+  useEffect(() => {
+    let mounted = true;
+    getAchievementDefs()
+      .then((defs) => {
+        if (mounted) setDynamicDefs(defs.filter((d) => d.isActive !== false));
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const metricToCategory = (
+    metric: GamificationAchievementDef["metric"]
+  ): GamerAchievement["category"] => {
+    switch (metric) {
+      case "hours":
+        return "hours";
+      case "library":
+        return "library";
+      case "rated":
+        return "reviews";
+      case "level":
+        return "level";
+      default:
+        return "completed";
+    }
+  };
+
+  // Mapeia as conquistas dinâmicas para o formato do card (com máscara para secretas)
+  const dynamicAchievements: GamerAchievement[] = useMemo(() => {
+    return dynamicDefs.map((def) => {
+      const ev = evaluateDef(
+        { metric: def.metric, targetValue: def.targetValue },
+        { stats, level: effectiveLevel }
+      );
+      const masked = !!def.isSecret && !ev.isUnlocked;
+      return {
+        id: `dyn_${def.id}`,
+        title: masked ? "Conquista Secreta" : def.title,
+        description: masked
+          ? "Continue evoluindo para revelar esta conquista secreta."
+          : def.description,
+        game: masked ? "???" : "Conquista Especial",
+        category: metricToCategory(def.metric),
+        globalRarity: def.globalRarity ?? 50,
+        icon: iconFromName(def.iconName),
+        isUnlocked: ev.isUnlocked,
+        currentValue: ev.current,
+        targetValue: ev.target,
+        progressText: masked ? "???" : ev.progressText,
+        isSecret: def.isSecret,
+      };
+    });
+  }, [dynamicDefs, stats, effectiveLevel]);
+
+  // Concede XP real (uma única vez) ao dono quando uma conquista dinâmica é desbloqueada
+  useEffect(() => {
+    if (!isOwner || !userId || dynamicDefs.length === 0) return;
+    const claimed = new Set(claimedRewards || []);
+    dynamicDefs.forEach((def) => {
+      if (!def.rewardXp || def.rewardXp <= 0) return;
+      if (claimed.has(def.id) || awardedRef.current.has(def.id)) return;
+      const ev = evaluateDef(
+        { metric: def.metric, targetValue: def.targetValue },
+        { stats, level: effectiveLevel }
+      );
+      if (ev.isUnlocked) {
+        awardedRef.current.add(def.id);
+        awardGamificationXp(userId, def.id, def.rewardXp).catch(() => {});
+      }
+    });
+  }, [isOwner, userId, dynamicDefs, claimedRewards, stats, effectiveLevel]);
+
   // Coleção de Insígnias Steam (Badges com Níveis 1 a 5 e +XP)
   const steamBadges: SteamBadgeItem[] = useMemo(() => {
     const zeradorLvl = completed >= 30 ? 5 : completed >= 15 ? 4 : completed >= 5 ? 3 : completed >= 1 ? 2 : 1;
@@ -322,19 +411,25 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
     ];
   }, [completed, hours, rated, library]);
 
+  // Combina conquistas fixas com as dinâmicas criadas pelo admin
+  const allAchievements: GamerAchievement[] = useMemo(
+    () => [...achievements, ...dynamicAchievements],
+    [achievements, dynamicAchievements]
+  );
+
   // As 4 Métricas Oficiais do Expositor Steam:
-  const unlockedCount = achievements.filter((a) => a.isUnlocked).length;
-  const totalAchievements = achievements.length;
-  const completionAvg = Math.round((unlockedCount / totalAchievements) * 100);
-  const rareCount = achievements.filter((a) => a.isUnlocked && a.globalRarity <= 10).length;
+  const unlockedCount = allAchievements.filter((a) => a.isUnlocked).length;
+  const totalAchievements = allAchievements.length;
+  const completionAvg = Math.round((unlockedCount / Math.max(1, totalAchievements)) * 100);
+  const rareCount = allAchievements.filter((a) => a.isUnlocked && a.globalRarity <= 10).length;
   const perfectGamesCount = Math.floor(completed / 5);
 
   const filteredAchievements = useMemo(() => {
-    if (filter === "unlocked") return achievements.filter((a) => a.isUnlocked);
-    if (filter === "locked") return achievements.filter((a) => !a.isUnlocked);
-    if (filter === "rare") return achievements.filter((a) => a.globalRarity <= 10);
-    return achievements;
-  }, [achievements, filter]);
+    if (filter === "unlocked") return allAchievements.filter((a) => a.isUnlocked);
+    if (filter === "locked") return allAchievements.filter((a) => !a.isUnlocked);
+    if (filter === "rare") return allAchievements.filter((a) => a.globalRarity <= 10);
+    return allAchievements;
+  }, [allAchievements, filter]);
 
   const visibleAchievements = isExpanded ? filteredAchievements : filteredAchievements.slice(0, 10);
 
@@ -462,7 +557,7 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
                     : "text-gray-400 hover:text-white bg-[#101822]/60"
                 }`}
               >
-                Todas ({achievements.length})
+                Todas ({allAchievements.length})
               </button>
               <button
                 onClick={() => {

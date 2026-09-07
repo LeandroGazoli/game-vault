@@ -15,12 +15,15 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
   collection,
   getDocs,
   deleteDoc,
   query,
   where,
   limit,
+  increment,
+  arrayUnion,
   runTransaction,
   writeBatch,
   orderBy,
@@ -36,7 +39,11 @@ import {
   FeedbackRewardType,
   FeedbackVote,
   FeedbackComment,
-  SystemNotification
+  SystemNotification,
+  GamificationAchievementDef,
+  GamificationMissionDef,
+  GamificationConfig,
+  DEFAULT_GAMIFICATION_CONFIG,
 } from "./types";
 
 const firebaseConfig = {
@@ -948,7 +955,9 @@ export async function getTopGamersLeaderboard(
               const ratingXp = Math.min(rated, 20) * 20;
               const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
               const multiplier = u.plan === "vip" ? 2.0 : u.plan === "pro" ? 1.5 : 1.0;
-              u.gamerXp = Math.floor(baseXp * multiplier);
+              // Inclui o XP bônus de conquistas/missões (recompensa fixa, sem multiplicador de plano)
+              // para manter o ranking consistente com o nível exibido no perfil.
+              u.gamerXp = Math.floor(baseXp * multiplier) + Math.max(0, Math.floor(u.bonusXp || 0));
               u.gamerLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(u.gamerXp / 15)) + 1));
             } else {
               u.gamerXp = 0;
@@ -1039,6 +1048,180 @@ export async function getGamerCommunityRank(
     formattedRank,
     badgeLabel,
   };
+}
+
+// ==========================================
+// GAMIFICAÇÃO: CONQUISTAS, MISSÕES & XP BÔNUS
+// Armazenado sob system/gamification/** (leitura pública, escrita admin via rules)
+// ==========================================
+
+const ACHIEVEMENTS_PATH = ["system", "gamification", "achievements"] as const;
+const MISSIONS_PATH = ["system", "gamification", "missions"] as const;
+
+// ---- Conquistas ----
+
+export async function getAchievementDefs(): Promise<GamificationAchievementDef[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(collection(db, ...ACHIEVEMENTS_PATH));
+    const list: GamificationAchievementDef[] = [];
+    snap.forEach((d) => list.push({ ...(d.data() as GamificationAchievementDef), id: d.id }));
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return list;
+  } catch (e) {
+    console.error("Erro ao carregar conquistas:", e);
+    return [];
+  }
+}
+
+export async function createAchievementDef(
+  data: Omit<GamificationAchievementDef, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
+  if (!db) throw new Error("Firestore não inicializado");
+  const ref = doc(collection(db, ...ACHIEVEMENTS_PATH));
+  const now = new Date().toISOString();
+  const payload: GamificationAchievementDef = cleanFirestoreData({
+    ...data,
+    id: ref.id,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await setDoc(ref, payload);
+  return ref.id;
+}
+
+export async function updateAchievementDef(
+  id: string,
+  data: Partial<GamificationAchievementDef>
+): Promise<void> {
+  if (!db || !id) throw new Error("Parâmetros inválidos");
+  const ref = doc(db, ...ACHIEVEMENTS_PATH, id);
+  await setDoc(
+    ref,
+    cleanFirestoreData({ ...data, updatedAt: new Date().toISOString() }),
+    { merge: true }
+  );
+}
+
+export async function deleteAchievementDef(id: string): Promise<void> {
+  if (!db || !id) return;
+  await deleteDoc(doc(db, ...ACHIEVEMENTS_PATH, id));
+}
+
+// ---- Missões (temporada + diárias) ----
+
+export async function getMissionDefs(): Promise<GamificationMissionDef[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(collection(db, ...MISSIONS_PATH));
+    const list: GamificationMissionDef[] = [];
+    snap.forEach((d) => list.push({ ...(d.data() as GamificationMissionDef), id: d.id }));
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return list;
+  } catch (e) {
+    console.error("Erro ao carregar missões:", e);
+    return [];
+  }
+}
+
+export async function createMissionDef(
+  data: Omit<GamificationMissionDef, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
+  if (!db) throw new Error("Firestore não inicializado");
+  const ref = doc(collection(db, ...MISSIONS_PATH));
+  const now = new Date().toISOString();
+  const payload: GamificationMissionDef = cleanFirestoreData({
+    ...data,
+    id: ref.id,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await setDoc(ref, payload);
+  return ref.id;
+}
+
+export async function updateMissionDef(
+  id: string,
+  data: Partial<GamificationMissionDef>
+): Promise<void> {
+  if (!db || !id) throw new Error("Parâmetros inválidos");
+  const ref = doc(db, ...MISSIONS_PATH, id);
+  await setDoc(
+    ref,
+    cleanFirestoreData({ ...data, updatedAt: new Date().toISOString() }),
+    { merge: true }
+  );
+}
+
+export async function deleteMissionDef(id: string): Promise<void> {
+  if (!db || !id) return;
+  await deleteDoc(doc(db, ...MISSIONS_PATH, id));
+}
+
+// ---- Config global de gamificação (doc system/gamification) ----
+
+export async function getGamificationConfig(): Promise<GamificationConfig> {
+  if (!db) return DEFAULT_GAMIFICATION_CONFIG;
+  try {
+    const snap = await getDoc(doc(db, "system", "gamification"));
+    if (snap.exists()) {
+      return { ...DEFAULT_GAMIFICATION_CONFIG, ...(snap.data() as GamificationConfig) };
+    }
+    return DEFAULT_GAMIFICATION_CONFIG;
+  } catch (e) {
+    console.error("Erro ao carregar config de gamificação:", e);
+    return DEFAULT_GAMIFICATION_CONFIG;
+  }
+}
+
+export async function updateGamificationConfig(
+  data: Partial<GamificationConfig>,
+  adminEmail?: string
+): Promise<void> {
+  if (!db) return;
+  await setDoc(
+    doc(db, "system", "gamification"),
+    cleanFirestoreData({
+      ...data,
+      updatedAt: new Date().toISOString(),
+      updatedBy: adminEmail || null,
+    }),
+    { merge: true }
+  );
+}
+
+// ---- Concessão idempotente de XP bônus ----
+
+/**
+ * Concede XP bônus ao usuário por uma conquista/missão específica, uma única vez.
+ * Idempotente via claimedRewards: se o rewardId já foi pago, é no-op.
+ * Retorna o XP efetivamente concedido (0 se já havia sido pago).
+ */
+export async function awardGamificationXp(
+  userId: string,
+  rewardId: string,
+  xp: number
+): Promise<number> {
+  if (!db || !userId || !rewardId || !xp || xp <= 0) return 0;
+  try {
+    const userRef = doc(db, "users", userId);
+    const granted = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(userRef);
+      if (!snap.exists()) return 0;
+      const claimed: string[] = (snap.data().claimedRewards as string[]) || [];
+      if (claimed.includes(rewardId)) return 0;
+      tx.update(userRef, {
+        bonusXp: increment(xp),
+        claimedRewards: arrayUnion(rewardId),
+        updatedAt: new Date().toISOString(),
+      });
+      return xp;
+    });
+    return granted;
+  } catch (e) {
+    console.error("Erro ao conceder XP de gamificação:", e);
+    return 0;
+  }
 }
 
 

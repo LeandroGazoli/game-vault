@@ -244,7 +244,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   // Busca a posição real e percentual do perfil no ranking global do Firebase
   useEffect(() => {
     if (!activeUser?.username) return;
-    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats, undefined, activeUser.plan).xp;
+    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats, undefined, activeUser.plan, activeUser.bonusXp).xp;
     getGamerCommunityRank({
       uid: activeUser.uid,
       username: activeUser.username,
@@ -579,7 +579,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             <Trophy className="w-4 h-4 text-amber-400" />
             <span>Conquistas &amp; Nível</span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#66c0f4]/20 text-[#66c0f4] border border-[#66c0f4]/30">
-              LV. {activeUser.gamerLevel || calculateGamerLevel(activeStats, undefined, activeUser.plan).level}
+              LV. {activeUser.gamerLevel || calculateGamerLevel(activeStats, undefined, activeUser.plan, activeUser.bonusXp).level}
             </span>
           </button>
         </div>
@@ -1081,6 +1081,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           <GamerScoreboardCard
             stats={activeStats}
             plan={activeUser.plan}
+            bonusXp={activeUser.bonusXp}
             onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
           />
 
@@ -1088,6 +1089,9 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
           <GamerBadgesCard
             stats={activeStats}
             gamerLevel={activeUser.gamerLevel}
+            userId={activeUser.uid}
+            isOwner={isOwner}
+            claimedRewards={activeUser.claimedRewards}
           />
 
           {/* Missões & Desafios Gamers da Temporada */}

@@ -423,6 +423,10 @@ export interface UserProfile {
   gamerLevel?: number;
   gamerXp?: number;
   celebratedGamerLevel?: number;
+  // XP bônus concedido por conquistas/missões dinâmicas (ledger aditivo, idempotente)
+  bonusXp?: number;
+  // IDs de conquistas/missões já recompensadas (evita pagar XP duas vezes)
+  claimedRewards?: string[];
   premiumUntil?: string | null;
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;
@@ -435,7 +439,7 @@ export interface AuditLogEntry {
   adminEmail: string;
   adminUid: string;
   action: string;
-  category: "users" | "plans" | "feedback" | "notifications" | "settings" | "security";
+  category: "users" | "plans" | "feedback" | "notifications" | "settings" | "security" | "gamification";
   targetId?: string;
   targetName?: string;
   details?: Record<string, any>;
@@ -445,6 +449,81 @@ export interface AuditLogEntry {
   updatedAt?: string;
   updatedBy?: string;
 }
+
+// ==========================================
+// GAMIFICAÇÃO: CONQUISTAS & MISSÕES DINÂMICAS
+// ==========================================
+
+/**
+ * Métricas avaliáveis contra as estatísticas rastreadas (LibraryStats) e o nível gamer.
+ * São as únicas dimensões que o site consegue medir automaticamente hoje.
+ */
+export type GamificationMetric =
+  | "completed"
+  | "hours"
+  | "library"
+  | "rated"
+  | "playing"
+  | "level";
+
+export const GAMIFICATION_METRICS: { value: GamificationMetric; label: string; unit: string }[] = [
+  { value: "completed", label: "Jogos zerados", unit: "jogos" },
+  { value: "hours", label: "Horas jogadas", unit: "horas" },
+  { value: "library", label: "Tamanho da biblioteca", unit: "jogos" },
+  { value: "rated", label: "Avaliações feitas", unit: "avaliações" },
+  { value: "playing", label: "Jogos em andamento", unit: "jogos" },
+  { value: "level", label: "Nível gamer", unit: "nível" },
+];
+
+export interface GamificationAchievementDef {
+  id: string;
+  title: string;
+  description: string;
+  iconName: string; // nome do ícone lucide (ex.: "Trophy"), resolvido no client
+  metric: GamificationMetric;
+  targetValue: number;
+  globalRarity: number; // % global estilo Steam (menor = mais raro)
+  rewardXp: number;
+  isSecret: boolean; // oculta título/descrição até desbloquear
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
+export type GamificationMissionType = "season" | "daily";
+
+export interface GamificationMissionDef {
+  id: string;
+  title: string;
+  description: string;
+  iconName: string;
+  type: GamificationMissionType;
+  metric: GamificationMetric;
+  targetValue: number;
+  rewardXp: number;
+  isActive: boolean;
+  // Somente missões de temporada: janela de validade (ISO strings)
+  startsAt?: string | null;
+  endsAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
+export interface GamificationConfig {
+  dailyRotationCount: number; // quantas missões diárias do pool aparecem por dia
+  seasonName?: string;
+  seasonEndsAt?: string | null;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_GAMIFICATION_CONFIG: GamificationConfig = {
+  dailyRotationCount: 3,
+  seasonName: "Temporada 1",
+  seasonEndsAt: null,
+};
 
 export interface HeroCarouselItem {
   id: string;
@@ -532,7 +611,8 @@ export const PLAN_XP_BOOST: Record<UserPlan, PlanXpBoostConfig> = {
 export function calculateGamerLevel(
   stats?: LibraryStats | null,
   realGlobalRank?: string,
-  plan?: UserPlan
+  plan?: UserPlan,
+  bonusXp: number = 0
 ): {
   level: number;
   xp: number;
@@ -556,6 +636,7 @@ export function calculateGamerLevel(
     ratingXp: number;
     baseXp: number;
     boostBonusXp: number;
+    bonusXp: number;
   };
 } {
   const activePlan: UserPlan = plan || "free";
@@ -569,25 +650,33 @@ export function calculateGamerLevel(
     ratingXp: 0,
     baseXp: 0,
     boostBonusXp: 0,
+    bonusXp: 0,
   };
 
+  const safeBonusXp = Math.max(0, Math.floor(bonusXp || 0));
+
   if (!stats) {
+    const totalXpNoStats = safeBonusXp;
+    const levelNoStats = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXpNoStats / 15)) + 1));
+    const curBase = Math.pow(levelNoStats - 1, 2) * 15;
+    const nextBase = Math.pow(levelNoStats, 2) * 15;
+    const diff = Math.max(1, nextBase - curBase);
     return {
-      level: 1,
-      xp: 0,
+      level: levelNoStats,
+      xp: totalXpNoStats,
       baseXp: 0,
       boostMultiplier: boost.multiplier,
       boostBonusXp: 0,
       boostLabel: boost.label,
       boostPercent: boost.bonusPercent,
       userPlan: activePlan,
-      currentLevelBaseXp: 0,
-      nextLevelXp: 100,
-      xpToNextLevel: 100,
-      percentToNext: 0,
+      currentLevelBaseXp: curBase,
+      nextLevelXp: nextBase,
+      xpToNextLevel: Math.max(0, nextBase - totalXpNoStats),
+      percentToNext: Math.min(100, Math.floor((Math.max(0, totalXpNoStats - curBase) / diff) * 100)),
       rankTitle: "Iniciante",
       globalRank: realGlobalRank || "Iniciante",
-      breakdown: fallbackBreakdown,
+      breakdown: { ...fallbackBreakdown, bonusXp: safeBonusXp },
     };
   }
 
@@ -605,7 +694,8 @@ export function calculateGamerLevel(
 
   const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
   const boostBonusXp = Math.floor(baseXp * (boost.multiplier - 1));
-  const totalXp = Math.floor(baseXp * boost.multiplier);
+  // XP bônus de conquistas/missões entra sem multiplicador de plano (recompensa fixa)
+  const totalXp = Math.floor(baseXp * boost.multiplier) + safeBonusXp;
 
   const calculatedLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXp / 15)) + 1));
   const currentLevelBaseXp = Math.pow(calculatedLevel - 1, 2) * 15;
@@ -651,6 +741,7 @@ export function calculateGamerLevel(
       ratingXp,
       baseXp,
       boostBonusXp,
+      bonusXp: safeBonusXp,
     },
   };
 }
