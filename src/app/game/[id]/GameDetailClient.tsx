@@ -167,7 +167,14 @@ function getWebsiteMeta(url: string) {
   if (u.includes("youtube.com")) {
     return { label: "Canal no YouTube", color: "bg-[#ff0000]/20 hover:bg-[#ff0000]/35 text-red-300 border-red-500/40", isStore: false };
   }
-  return { label: "Site Oficial", color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false };
+  let domainLabel = "Site Oficial";
+  try {
+    const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+    domainLabel = parsed.hostname.replace(/^www\./, "");
+  } catch {
+    // fallback
+  }
+  return { label: domainLabel, color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false };
 }
 
 interface GameDetailClientProps {
@@ -198,7 +205,14 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   }, [game?.websites]);
 
   const communityWebsites = useMemo(() => {
-    return (game?.websites || []).filter((w) => !isStoreWebsite(w.url));
+    const raw = (game?.websites || []).filter((w) => !isStoreWebsite(w.url));
+    const seen = new Set<string>();
+    return raw.filter((w) => {
+      const normalized = w.url.trim().toLowerCase().replace(/\/$/, "");
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
   }, [game?.websites]);
 
   // Estados de Mídia Rica & Galeria
@@ -2374,13 +2388,15 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       {/* =========================================================================
           CONTEÚDO DESKTOP (hidden lg:grid) LAYOUT EM 2 COLUNAS
       ========================================================================= */}
-      <div className="hidden lg:grid lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6 sm:gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
           {renderMediaHub()}
           {renderSynopsis(false)}
           {renderStoryline(false)}
           {renderHltb()}
           {renderCategories()}
+          {renderUniverse()}
+          {renderDlcs()}
         </div>
 
         <div className="space-y-6">
@@ -2391,10 +2407,8 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         </div>
       </div>
 
-      {/* Seções Adicionais Desktop */}
+      {/* Recomendações e Títulos Semelhantes Desktop em largura total */}
       <div className="hidden lg:block space-y-8">
-        {renderDlcs()}
-        {renderUniverse()}
         {renderSimilarGames()}
       </div>
 
