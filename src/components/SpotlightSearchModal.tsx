@@ -51,7 +51,8 @@ export default function SpotlightSearchModal() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [totalResults, setTotalResults] = useState(0);
 
   // Estados do Curador Gamer por Inteligência Artificial
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
@@ -137,7 +138,7 @@ export default function SpotlightSearchModal() {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 50);
-      setSelectedIndex(0);
+      setSelectedIndex(-1);
     } else {
       if (aiDebounceTimerRef.current) {
         clearTimeout(aiDebounceTimerRef.current);
@@ -199,7 +200,7 @@ export default function SpotlightSearchModal() {
             const newAiGames = recommended.filter((g) => !existingIds.has(g.id));
             return [...newAiGames, ...existingUpdated];
           });
-          setSelectedIndex(0);
+          setSelectedIndex(-1);
         }
       }
     } catch (err: any) {
@@ -270,7 +271,8 @@ export default function SpotlightSearchModal() {
           items = data.games || [];
           searchCacheRef.current.set(cacheKey, items);
           setResults(items);
-          setSelectedIndex(0);
+          setTotalResults(data.total || 0);
+          setSelectedIndex(-1);
         }
       } catch (err: any) {
         if (err.name !== "AbortError") {
@@ -314,15 +316,21 @@ export default function SpotlightSearchModal() {
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => (results.length > 0 ? (prev + 1) % results.length : 0));
+      setSelectedIndex((prev) =>
+        results.length > 0 ? (prev + 1) % results.length : -1
+      );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex((prev) => (results.length > 0 ? (prev - 1 + results.length) % results.length : 0));
+      setSelectedIndex((prev) =>
+        results.length > 0 ? (prev - 1 + results.length) % results.length : -1
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (results.length > 0 && results[selectedIndex]) {
+      if (selectedIndex >= 0 && results[selectedIndex]) {
+        // User explicitly navigated to a result with arrow keys
         handleSelectGame(results[selectedIndex]);
       } else if (query.trim()) {
+        // Default: go to full search results page
         setIsOpen(false);
         router.push(`/search?q=${encodeURIComponent(query.trim())}`);
       }
@@ -463,84 +471,101 @@ export default function SpotlightSearchModal() {
 
           {query.trim().length >= 2 ? (
             results.length > 0 ? (
-              results.map((game, index) => {
-                const isAi = Boolean(game.isAiRecommended);
-                const duration = formatGameDuration(game);
-                const isSelected = index === selectedIndex;
-                const releaseYear = game.released ? game.released.substring(0, 4) : "";
+              <>
+                {results.map((game, index) => {
+                  const isAi = Boolean(game.isAiRecommended);
+                  const duration = formatGameDuration(game);
+                  const isSelected = index === selectedIndex;
+                  const releaseYear = game.released ? game.released.substring(0, 4) : "";
 
-                return (
-                  <div
-                    key={`${game.id}-${isAi ? "ai" : "std"}`}
-                    className={isAi ? "ai-card-wrapper my-1.5" : "my-0.5"}
-                  >
-                    {isAi && <div className="ai-card-border-beam" />}
+                  return (
                     <div
-                      onClick={() => handleSelectGame(game)}
-                      onMouseEnter={() => setSelectedIndex(index)}
-                      className={`relative flex items-center justify-between gap-3 p-2.5 ${
-                        isAi ? "rounded-[12px] bg-[#121622] hover:bg-[#161c2c]" : "rounded-xl hover:bg-white/5"
-                      } cursor-pointer transition-all ${
-                        isSelected
-                          ? isAi
-                            ? "bg-[#182033] shadow-md"
-                            : "bg-[#1d2331] border border-cyan-500/30 text-white shadow-sm"
-                          : isAi
-                          ? "text-neutral-200"
-                          : "text-neutral-300 border border-transparent"
-                      }`}
+                      key={`${game.id}-${isAi ? "ai" : "std"}`}
+                      className={isAi ? "ai-card-wrapper my-1.5" : "my-0.5"}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative w-11 h-14 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0">
-                          {game.background_image ? (
-                            <img
-                              src={game.background_image}
-                              alt={game.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : null}
-                        </div>
-
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-bold text-white truncate max-w-sm">
-                              {game.name}
-                            </h4>
-                            {releaseYear && (
-                              <span className="text-[11px] text-neutral-400 font-mono">
-                                ({releaseYear})
-                              </span>
-                            )}
-                            {isAi && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-[#00E5FF] text-[9px] font-black uppercase tracking-wider border border-cyan-500/40">
-                                <Sparkles className="w-2.5 h-2.5 text-[#00E5FF] animate-pulse" />
-                                Curadoria IA
-                              </span>
-                            )}
+                      {isAi && <div className="ai-card-border-beam" />}
+                      <div
+                        onClick={() => handleSelectGame(game)}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                        className={`relative flex items-center justify-between gap-3 p-2.5 ${
+                          isAi ? "rounded-[12px] bg-[#121622] hover:bg-[#161c2c]" : "rounded-xl hover:bg-white/5"
+                        } cursor-pointer transition-all ${
+                          isSelected
+                            ? isAi
+                              ? "bg-[#182033] shadow-md"
+                              : "bg-[#1d2331] border border-cyan-500/30 text-white shadow-sm"
+                            : isAi
+                            ? "text-neutral-200"
+                            : "text-neutral-300 border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative w-11 h-14 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0">
+                            {game.background_image ? (
+                              <img
+                                src={game.background_image}
+                                alt={game.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : null}
                           </div>
 
-                          <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
-                            {game.genres && game.genres[0] && (
-                              <span className="px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase text-[9px]">
-                                {formatGenreName(game.genres[0].name)}
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-bold text-white truncate max-w-sm">
+                                {game.name}
+                              </h4>
+                              {releaseYear && (
+                                <span className="text-[11px] text-neutral-400 font-mono">
+                                  ({releaseYear})
+                                </span>
+                              )}
+                              {isAi && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-[#00E5FF] text-[9px] font-black uppercase tracking-wider border border-cyan-500/40">
+                                  <Sparkles className="w-2.5 h-2.5 text-[#00E5FF] animate-pulse" />
+                                  Curadoria IA
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
+                              {game.genres && game.genres[0] && (
+                                <span className="px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase text-[9px]">
+                                  {formatGenreName(game.genres[0].name)}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-cyan-400" />
+                                {duration.text}
                               </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-cyan-400" />
-                              {duration.text}
-                            </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
-                        <ArrowRight className={`w-4 h-4 transition-transform ${isSelected ? "translate-x-1 text-[#00E5FF]" : "text-neutral-500"}`} />
+                        <div className="flex items-center gap-3 shrink-0">
+                          {game.metacritic && <MetacriticBadge score={game.metacritic} size="sm" />}
+                          <ArrowRight className={`w-4 h-4 transition-transform ${isSelected ? "translate-x-1 text-[#00E5FF]" : "text-neutral-500"}`} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+                {totalResults > results.length && (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+                    }}
+                    onMouseEnter={() => setSelectedIndex(-1)}
+                    className="w-full flex items-center justify-center gap-2 p-3 mt-1 rounded-xl bg-white/5 hover:bg-cyan-500/10 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-colors border border-white/5 hover:border-cyan-500/20 cursor-pointer"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Ver todos os {totalResults} resultados para &ldquo;{query}&rdquo;</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </>
+
             ) : isAiLoading ? (
               <div className="p-8 text-center space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-[#00E5FF] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/20">
