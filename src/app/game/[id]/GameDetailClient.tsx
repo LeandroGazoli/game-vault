@@ -1925,19 +1925,26 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         <div className="lg:hidden relative -mt-20 sm:-mt-28 p-4 sm:p-6 space-y-4">
           <div className="flex items-end gap-3.5 sm:gap-5">
             {/* Capa Poster */}
-            <div className="w-24 sm:w-32 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/15 bg-neutral-900 flex-shrink-0 group">
+            <div className="w-24 sm:w-32 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/15 bg-neutral-900 flex-shrink-0 group relative flex flex-col justify-end">
               {game.background_image && !posterError ? (
                 <img
                   src={game.background_image}
                   alt={game.name}
                   decoding="async"
                   onError={() => setPosterError(true)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover absolute inset-0"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500">
+                <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500 absolute inset-0">
                   <Sparkles className="w-6 h-6 text-[#00E5FF]/40 mb-1" />
                   <span className="text-[10px] font-semibold text-gray-300 line-clamp-2">{game.name}</span>
+                </div>
+              )}
+
+              {/* Countdown Compacto na Capa (Mobile) */}
+              {isGameUnreleased(game) && (
+                <div className="relative z-10 w-full">
+                  <GameReleaseCountdown game={game} variant="floating" />
                 </div>
               )}
             </div>
@@ -2030,13 +2037,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             )}
           </div>
 
-          {/* Cronômetro para jogos não lançados (Mobile) */}
-          {isGameUnreleased(game) && (
-            <div className="pt-2">
-              <GameReleaseCountdown game={game} onOpenModal={() => setIsModalOpen(true)} />
-            </div>
-          )}
-
           {/* Gêneros Rápidos no Mobile */}
           {game.genres && game.genres.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -2061,19 +2061,26 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         {/* ==================== HERO DESKTOP (hidden lg:flex) ==================== */}
         <div className="hidden lg:flex relative -mt-36 p-8 flex-row items-start gap-8">
           {/* Capa Poster */}
-          <div className="w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 bg-neutral-900 flex-shrink-0 group">
+          <div className="w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 bg-neutral-900 flex-shrink-0 group relative flex flex-col justify-end">
             {game.background_image && !posterError ? (
               <img
                 src={game.background_image}
                 alt=""
                 decoding="async"
                 onError={() => setPosterError(true)}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 absolute inset-0"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500">
+              <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-[#1c222e] to-[#0f1218] text-gray-500 absolute inset-0">
                 <Sparkles className="w-8 h-8 text-[#00E5FF]/40 mb-2" />
                 <span className="text-xs font-semibold text-gray-300 line-clamp-2">{game.name}</span>
+              </div>
+            )}
+
+            {/* Countdown Compacto na Capa (Desktop) */}
+            {isGameUnreleased(game) && (
+              <div className="relative z-10 w-full">
+                <GameReleaseCountdown game={game} variant="floating" />
               </div>
             )}
           </div>
@@ -2223,13 +2230,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 )}
               </button>
             </div>
-
-            {/* Cronômetro para jogos não lançados (Desktop) */}
-            {isGameUnreleased(game) && (
-              <div className="pt-3 w-full">
-                <GameReleaseCountdown game={game} onOpenModal={() => setIsModalOpen(true)} />
-              </div>
-            )}
 
             {storeWebsites.length > 0 && (
               <div className="pt-2 flex flex-wrap items-center gap-2">
