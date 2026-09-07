@@ -95,6 +95,7 @@ export default function HomePage() {
   const [upcoming, setUpcoming] = useState<Game[]>([]);
   const [ptbrGames, setPtbrGames] = useState<Game[]>([]);
   const [shortGames, setShortGames] = useState<Game[]>([]);
+  const [gtaGames, setGtaGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Estados dos modais interativos
@@ -103,10 +104,19 @@ export default function HomePage() {
 
   // Configurações globais (Carrossel Hero gerenciado pelo Admin)
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     if (!db) {
-      getSystemSettings().then(setSettings).catch((err) => console.warn(err));
+      getSystemSettings()
+        .then((s) => {
+          setSettings(s);
+          setSettingsLoaded(true);
+        })
+        .catch((err) => {
+          console.warn(err);
+          setSettingsLoaded(true);
+        });
       return;
     }
     const unsub = onSnapshot(
@@ -117,27 +127,32 @@ export default function HomePage() {
         } else {
           setSettings(DEFAULT_SYSTEM_SETTINGS);
         }
+        setSettingsLoaded(true);
       },
       (err) => {
         console.warn("Erro ao sincronizar configurações do sistema:", err);
-        getSystemSettings().then(setSettings).catch(() => {});
+        getSystemSettings()
+          .then((s) => {
+            setSettings(s);
+            setSettingsLoaded(true);
+          })
+          .catch(() => setSettingsLoaded(true));
       }
     );
     return () => unsub();
   }, []);
 
-
-
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        const [popRes, relRes, upRes, ptbrRes, shortRes] = await Promise.all([
+        const [popRes, relRes, upRes, ptbrRes, shortRes, gtaRes] = await Promise.all([
           fetch("/api/games/rankings?category=popular&limit=10"),
           fetch("/api/games/releases"),
           fetch("/api/games/upcoming"),
           fetch("/api/games/curated?type=ptbr"),
           fetch("/api/games/curated?type=short"),
+          fetch("/api/games/search?q=Grand+Theft+Auto&pageSize=10"),
         ]);
 
         if (popRes.ok) {
@@ -163,6 +178,11 @@ export default function HomePage() {
         if (shortRes.ok) {
           const data = await shortRes.json();
           setShortGames(data.games || []);
+        }
+
+        if (gtaRes.ok) {
+          const data = await gtaRes.json();
+          setGtaGames(data.games || []);
         }
       } catch (err) {
         console.error("Erro ao carregar catálogo da home:", err);
@@ -220,19 +240,17 @@ export default function HomePage() {
   return (
     <div className="space-y-8 pb-12">
       {/* ==========================================
-          1. TOPO ESTILO XBOX CLOUD: SEARCH EM DESTAQUE COM BACKDROP
+          1. TOPO ESTILO GTA VI: SEARCH EM DESTAQUE COM BACKDROP OFICIAL
       ========================================== */}
       <HomeSearchHero
         onOpenRoulette={() => setIsRouletteOpen(true)}
-        featuredBackdrop={topTenGames[0]?.background_image ?? undefined}
-        featuredGameTitle={topTenGames[0]?.name}
       />
 
       {/* ==========================================
           2. CARROSSEL DESTAQUES WIDESCREEN 16:9
-          — Banners cinematográficos estilo Xbox
+          — Banners cinematográficos (só renderiza quando confirmado ativado no painel admin)
       ========================================== */}
-      {(settings?.heroCarousel?.enabled ?? true) && (
+      {settingsLoaded && Boolean(settings?.heroCarousel?.enabled) && (
         <section className="hero-carousel-section">
           <HomeHeroCarousel
             items={settings?.heroCarousel?.items}
@@ -300,6 +318,26 @@ export default function HomePage() {
           icon={Trophy}
           games={topTenGames.slice(0, 10)}
           actionHref="/rankings"
+          actionText="Mostrar Tudo"
+        />
+      ) : null}
+
+      {/* ==========================================
+          🌴 SAGA GRAND THEFT AUTO & ROCKSTAR (ESPECIAL GTA VI)
+      ========================================== */}
+      {loading ? (
+        <CatalogRowSkeleton
+          title="🌴 Saga Grand Theft Auto & Rockstar"
+          subtitle="Prepare-se para Vice City: confira notas e horas para zerar cada clássico"
+          icon={Sparkles}
+        />
+      ) : gtaGames.length > 0 ? (
+        <CatalogRow
+          title="🌴 Saga Grand Theft Auto & Rockstar"
+          subtitle="Prepare-se para Vice City: confira notas e horas para zerar cada clássico"
+          icon={Sparkles}
+          games={gtaGames}
+          actionHref="/search?q=Grand+Theft+Auto"
           actionText="Mostrar Tudo"
         />
       ) : null}

@@ -332,7 +332,7 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
     variant: "info",
   },
   heroCarousel: {
-    enabled: true,
+    enabled: false,
     maxItems: 5,
     items: [
       {

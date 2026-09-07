@@ -5,12 +5,12 @@
 @tailwind utilities;
 
 :root {
-  --background: #18181c;
+  --background: #131219;
   --foreground: #f4f4f5;
-  --surface-0: #18181c;
-  --surface-1: #202127;
-  --surface-2: #282932;
-  --surface-3: #32343f;
+  --surface-0: #131219;
+  --surface-1: #1c1a24;
+  --surface-2: #242230;
+  --surface-3: #2d2a3c;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
   --accent-cyan: #00E5FF;
@@ -30,7 +30,7 @@ html {
 
 body {
   color: var(--foreground);
-  background-color: #18181c;
+  background-color: #131219;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: 100%;
   overflow-x: clip;
@@ -39,12 +39,12 @@ body {
   position: relative;
 }
 
-/* Fundo limpo e suave com leve iluminação Leonida Sunset / console no topo */
+/* Fundo limpo e suave com iluminação atmosférica Vice City Sunset */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% -15%, rgba(255, 42, 133, 0.04) 0%, rgba(255, 122, 0, 0.03) 30%, transparent 70%);
+  background: radial-gradient(circle at 50% -10%, rgba(255, 42, 133, 0.07) 0%, rgba(255, 122, 0, 0.04) 35%, transparent 75%);
   pointer-events: none;
   z-index: -1;
   transform: translateZ(0);
@@ -130,25 +130,25 @@ body::before {
 
 /* Tactile Surface & Hardware Design System */
 .tactile-panel {
-  background-color: #202127;
+  background-color: #1c1a24;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tactile-card {
-  background-color: #202127;
+  background-color: #1c1a24;
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tactile-card:hover {
-  background-color: #282932;
-  border-color: rgba(255, 255, 255, 0.15);
+  background-color: #242230;
+  border-color: rgba(255, 42, 133, 0.3);
   transform: translateY(-2px);
 }
 
 /* Backward compatibility for panels */
 .glass-panel {
-  background: #202127;
+  background: #1c1a24;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -157,8 +157,8 @@ body::before {
 }
 
 .glass-panel-hover:hover {
-  background: #282932;
-  border-color: rgba(255, 255, 255, 0.15);
+  background: #242230;
+  border-color: rgba(255, 42, 133, 0.3);
   transform: translateY(-2px);
 }
 
