@@ -11,6 +11,7 @@ import StatusBadge from "@/components/StatusBadge";
 import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
+import GameReleaseCountdown, { isGameUnreleased } from "@/components/GameReleaseCountdown";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
 import GameDetailLoading from "./[slug]/loading";
@@ -2029,6 +2030,13 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             )}
           </div>
 
+          {/* Cronômetro para jogos não lançados (Mobile) */}
+          {isGameUnreleased(game) && (
+            <div className="pt-2">
+              <GameReleaseCountdown game={game} onOpenModal={() => setIsModalOpen(true)} />
+            </div>
+          )}
+
           {/* Gêneros Rápidos no Mobile */}
           {game.genres && game.genres.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -2215,6 +2223,13 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 )}
               </button>
             </div>
+
+            {/* Cronômetro para jogos não lançados (Desktop) */}
+            {isGameUnreleased(game) && (
+              <div className="pt-3 w-full">
+                <GameReleaseCountdown game={game} onOpenModal={() => setIsModalOpen(true)} />
+              </div>
+            )}
 
             {storeWebsites.length > 0 && (
               <div className="pt-2 flex flex-wrap items-center gap-2">
