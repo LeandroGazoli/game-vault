@@ -53,6 +53,8 @@ import {
   Search,
   Compass,
   CheckCircle2,
+  Share2,
+  BookOpen,
 } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 import AuthModal from "@/components/AuthModal";
@@ -128,45 +130,73 @@ function isStoreWebsite(url: string) {
   );
 }
 
+interface WebsiteMeta {
+  label: string;
+  color: string;
+  isStore: boolean;
+  category: "social" | "wiki" | "official" | "community";
+}
+
 // Helper para estilizar links oficiais e lojas de acordo com o domínio
-function getWebsiteMeta(url: string) {
+function getWebsiteMeta(url: string): WebsiteMeta {
   const u = url.toLowerCase();
   if (u.includes("steampowered.com")) {
-    return { label: "Steam", color: "bg-[#171a21] hover:bg-[#202530] text-[#66c0f4] border-[#66c0f4]/40 hover:border-[#66c0f4] shadow-md", isStore: true };
+    return { label: "Steam", color: "bg-[#171a21] hover:bg-[#202530] text-[#66c0f4] border-[#66c0f4]/40 hover:border-[#66c0f4] shadow-md", isStore: true, category: "official" };
   }
   if (u.includes("playstation.com")) {
-    return { label: "PlayStation Store", color: "bg-[#003791] hover:bg-[#004bb5] text-white border-blue-400/40 hover:border-blue-400 shadow-md", isStore: true };
+    return { label: "PlayStation Store", color: "bg-[#003791] hover:bg-[#004bb5] text-white border-blue-400/40 hover:border-blue-400 shadow-md", isStore: true, category: "official" };
   }
   if (u.includes("xbox.com")) {
-    return { label: "Xbox Store", color: "bg-[#107c10] hover:bg-[#159a15] text-white border-green-400/40 hover:border-green-400 shadow-md", isStore: true };
+    return { label: "Xbox Store", color: "bg-[#107c10] hover:bg-[#159a15] text-white border-green-400/40 hover:border-green-400 shadow-md", isStore: true, category: "official" };
   }
   if (u.includes("nintendo.com")) {
-    return { label: "Nintendo eShop", color: "bg-[#e60012] hover:bg-[#ff1a2d] text-white border-red-400/40 hover:border-red-400 shadow-md", isStore: true };
+    return { label: "Nintendo eShop", color: "bg-[#e60012] hover:bg-[#ff1a2d] text-white border-red-400/40 hover:border-red-400 shadow-md", isStore: true, category: "official" };
   }
   if (u.includes("epicgames.com")) {
-    return { label: "Epic Games Store", color: "bg-[#2a2a2a] hover:bg-[#383838] text-white border-white/30 hover:border-white shadow-md", isStore: true };
+    return { label: "Epic Games Store", color: "bg-[#2a2a2a] hover:bg-[#383838] text-white border-white/30 hover:border-white shadow-md", isStore: true, category: "official" };
   }
   if (u.includes("gog.com")) {
-    return { label: "GOG.com", color: "bg-[#6c2c8f] hover:bg-[#8537b0] text-white border-purple-400/40 hover:border-purple-400 shadow-md", isStore: true };
+    return { label: "GOG.com", color: "bg-[#6c2c8f] hover:bg-[#8537b0] text-white border-purple-400/40 hover:border-purple-400 shadow-md", isStore: true, category: "official" };
   }
-  if (u.includes("discord")) {
-    return { label: "Discord Oficial", color: "bg-[#5865F2]/20 hover:bg-[#5865F2]/35 text-[#818cf8] border-[#5865F2]/40", isStore: false };
+
+  // Redes Sociais
+  if (u.includes("twitter.com") || u.includes("x.com")) {
+    return { label: "X (Twitter)", color: "bg-black/60 hover:bg-black/80 text-white border-white/30 hover:border-white", isStore: false, category: "social" };
   }
-  if (u.includes("reddit.com")) {
-    return { label: "Subreddit (Reddit)", color: "bg-[#ff4500]/20 hover:bg-[#ff4500]/35 text-[#fb923c] border-[#ff4500]/40", isStore: false };
+  if (u.includes("instagram.com")) {
+    return { label: "Instagram", color: "bg-gradient-to-r from-[#833ab4]/30 via-[#fd1d1d]/30 to-[#fcb045]/30 hover:from-[#833ab4]/45 hover:via-[#fd1d1d]/45 hover:to-[#fcb045]/45 text-pink-300 border-pink-500/40", isStore: false, category: "social" };
   }
-  if (u.includes("twitch.tv")) {
-    return { label: "Lives na Twitch", color: "bg-[#9146FF]/20 hover:bg-[#9146FF]/35 text-[#c084fc] border-[#9146FF]/40", isStore: false };
+  if (u.includes("facebook.com")) {
+    return { label: "Facebook", color: "bg-[#1877f2]/20 hover:bg-[#1877f2]/35 text-[#60a5fa] border-[#1877f2]/40", isStore: false, category: "social" };
   }
-  if (u.includes("fandom.com") || u.includes("wiki")) {
-    return { label: "Wiki & Guias de Troféus", color: "bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border-amber-500/40", isStore: false };
+  if (u.includes("tiktok.com")) {
+    return { label: "TikTok", color: "bg-black/70 hover:bg-black/90 text-cyan-300 border-cyan-500/40", isStore: false, category: "social" };
   }
-  if (u.includes("wikipedia.org")) {
-    return { label: "Artigo na Wikipédia", color: "bg-white/10 hover:bg-white/20 text-gray-200 border-white/20", isStore: false };
+  if (u.includes("bsky.app") || u.includes("bluesky")) {
+    return { label: "Bluesky", color: "bg-[#1185fe]/20 hover:bg-[#1185fe]/35 text-[#38bdf8] border-[#1185fe]/40", isStore: false, category: "social" };
+  }
+  if (u.includes("threads.net")) {
+    return { label: "Threads", color: "bg-black/60 hover:bg-black/80 text-gray-200 border-white/30", isStore: false, category: "social" };
   }
   if (u.includes("youtube.com")) {
-    return { label: "Canal no YouTube", color: "bg-[#ff0000]/20 hover:bg-[#ff0000]/35 text-red-300 border-red-500/40", isStore: false };
+    return { label: "Canal no YouTube", color: "bg-[#ff0000]/20 hover:bg-[#ff0000]/35 text-red-300 border-red-500/40", isStore: false, category: "social" };
   }
+  if (u.includes("twitch.tv")) {
+    return { label: "Lives na Twitch", color: "bg-[#9146FF]/20 hover:bg-[#9146FF]/35 text-[#c084fc] border-[#9146FF]/40", isStore: false, category: "social" };
+  }
+  if (u.includes("discord")) {
+    return { label: "Discord Oficial", color: "bg-[#5865F2]/20 hover:bg-[#5865F2]/35 text-[#818cf8] border-[#5865F2]/40", isStore: false, category: "community" };
+  }
+  if (u.includes("reddit.com")) {
+    return { label: "Subreddit (Reddit)", color: "bg-[#ff4500]/20 hover:bg-[#ff4500]/35 text-[#fb923c] border-[#ff4500]/40", isStore: false, category: "community" };
+  }
+  if (u.includes("fandom.com") || u.includes("wiki")) {
+    return { label: "Wiki & Guias de Troféus", color: "bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border-amber-500/40", isStore: false, category: "wiki" };
+  }
+  if (u.includes("wikipedia.org")) {
+    return { label: "Artigo na Wikipédia", color: "bg-white/10 hover:bg-white/20 text-gray-200 border-white/20", isStore: false, category: "wiki" };
+  }
+
   let domainLabel = "Site Oficial";
   try {
     const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
@@ -174,7 +204,7 @@ function getWebsiteMeta(url: string) {
   } catch {
     // fallback
   }
-  return { label: domainLabel, color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false };
+  return { label: domainLabel, color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false, category: "official" };
 }
 
 interface GameDetailClientProps {
@@ -222,6 +252,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mediaFilter, setMediaFilter] = useState<"all" | "artworks" | "screenshots">("all");
   const [mediaTab, setMediaTab] = useState<"gallery" | "videos">("gallery");
+  const [communityFilter, setCommunityFilter] = useState<"all" | "social" | "community" | "wiki" | "official">("all");
   const [bannerError, setBannerError] = useState(false);
   const [posterError, setPosterError] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -1621,28 +1652,130 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const renderCommunity = () => {
     if (communityWebsites.length === 0) return null;
 
+    // Contagem de cada categoria
+    const counts = {
+      social: communityWebsites.filter((w) => getWebsiteMeta(w.url).category === "social").length,
+      community: communityWebsites.filter((w) => getWebsiteMeta(w.url).category === "community").length,
+      wiki: communityWebsites.filter((w) => getWebsiteMeta(w.url).category === "wiki").length,
+      official: communityWebsites.filter((w) => getWebsiteMeta(w.url).category === "official").length,
+    };
+
+    // Lista filtrada
+    const filteredWebsites = communityWebsites.filter((w) => {
+      if (communityFilter === "all") return true;
+      return getWebsiteMeta(w.url).category === communityFilter;
+    });
+
     return (
       <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-4 shadow-xl">
-        <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-          <Globe className="w-4 h-4 text-emerald-400" /> Comunidade &amp; Guias
-        </h3>
-        <div className="flex flex-col gap-2">
-          {communityWebsites.map((w) => {
-            const meta = getWebsiteMeta(w.url);
-            return (
-              <a
-                key={w.id}
-                href={w.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`min-h-[44px] inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium border transition-all ${meta.color}`}
-                title={`Acessar ${meta.label}`}
-              >
-                <span>{meta.label}</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-              </a>
-            );
-          })}
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Globe className="w-4 h-4 text-emerald-400" /> Comunidade &amp; Guias
+          </h3>
+          <span className="text-[11px] font-mono text-gray-400">
+            {communityWebsites.length} links
+          </span>
+        </div>
+
+        {/* Barra de Filtros Interativos */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button
+            type="button"
+            onClick={() => setCommunityFilter("all")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              communityFilter === "all"
+                ? "bg-white text-black shadow-sm"
+                : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+            }`}
+          >
+            Todos ({communityWebsites.length})
+          </button>
+
+          {counts.social > 0 && (
+            <button
+              type="button"
+              onClick={() => setCommunityFilter("social")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                communityFilter === "social"
+                  ? "bg-pink-500 text-white shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Share2 className="w-3 h-3" />
+              <span>Redes ({counts.social})</span>
+            </button>
+          )}
+
+          {counts.community > 0 && (
+            <button
+              type="button"
+              onClick={() => setCommunityFilter("community")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                communityFilter === "community"
+                  ? "bg-[#5865F2] text-white shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Users className="w-3 h-3" />
+              <span>Fóruns ({counts.community})</span>
+            </button>
+          )}
+
+          {counts.wiki > 0 && (
+            <button
+              type="button"
+              onClick={() => setCommunityFilter("wiki")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                communityFilter === "wiki"
+                  ? "bg-amber-500 text-black shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+              }`}
+            >
+              <BookOpen className="w-3 h-3" />
+              <span>Guias ({counts.wiki})</span>
+            </button>
+          )}
+
+          {counts.official > 0 && (
+            <button
+              type="button"
+              onClick={() => setCommunityFilter("official")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                communityFilter === "official"
+                  ? "bg-cyan-500 text-black shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Globe className="w-3 h-3" />
+              <span>Oficiais ({counts.official})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Lista de Links Filtrados */}
+        <div className="flex flex-col gap-2 pt-1">
+          {filteredWebsites.length > 0 ? (
+            filteredWebsites.map((w) => {
+              const meta = getWebsiteMeta(w.url);
+              return (
+                <a
+                  key={w.id}
+                  href={w.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`min-h-[44px] inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium border transition-all hover:scale-[1.01] active:scale-98 ${meta.color}`}
+                  title={`Acessar ${meta.label}`}
+                >
+                  <span className="font-semibold truncate mr-2">{meta.label}</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                </a>
+              );
+            })
+          ) : (
+            <div className="text-center py-4 text-xs text-gray-500 font-mono">
+              Nenhum link encontrado nesta categoria.
+            </div>
+          )}
         </div>
       </div>
     );
