@@ -223,10 +223,14 @@ export default function GameModal({
     if (isOpen) {
       window.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
+      document.body.style.overflowX = "hidden";
+      document.documentElement.style.overflowX = "hidden";
     }
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
+      document.body.style.overflowX = "unset";
+      document.documentElement.style.overflowX = "unset";
     };
   }, [isOpen, handleKeyDown]);
 
@@ -390,11 +394,11 @@ export default function GameModal({
   const modalContent = (
     <>
       <div
-        className="fixed inset-0 z-[90] flex items-end md:items-center justify-center p-0 md:p-6 overflow-hidden bg-black/80 backdrop-blur-md animate-fadeIn"
+        className="fixed inset-0 z-[90] flex items-end md:items-center justify-center p-0 md:p-6 overflow-x-hidden overflow-y-hidden w-full max-w-full bg-black/80 backdrop-blur-md animate-fadeIn touch-none"
         onClick={onClose}
       >
         <div
-          className="relative z-[100] w-full md:max-w-2xl rounded-t-[28px] md:rounded-[32px] bg-[#14161e] border-t border-x md:border border-white/10 shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[88vh] overflow-hidden text-white transition-transform duration-200 ease-out"
+          className="relative z-[100] w-full max-w-full md:max-w-2xl rounded-t-[28px] md:rounded-[32px] bg-[#14161e] border-t border-x md:border border-white/10 shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[88vh] overflow-hidden text-white transition-transform duration-200 ease-out box-border"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Mobile Drag Handle */}
@@ -403,7 +407,7 @@ export default function GameModal({
           </div>
 
           {/* Cabeçalho do Jogo com Botão Fechar */}
-          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-2 sm:pt-4 pb-3 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-2 sm:pt-4 pb-3 border-b border-white/10 flex-shrink-0 w-full max-w-full box-border">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* Capa com cantos arredondados */}
               <div className="w-12 h-16 sm:w-16 sm:h-20 rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-md flex-shrink-0">
@@ -462,7 +466,7 @@ export default function GameModal({
           </div>
 
           {/* Conteúdo Rolável */}
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 space-y-5">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 py-4 space-y-5 w-full max-w-full box-border touch-pan-y">
             {/* Aviso se este jogo for uma DLC/Expansão oficial */}
             {parentGameInfo && (
               <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-200 animate-fadeIn">
@@ -799,8 +803,8 @@ export default function GameModal({
               </div>
 
               {/* Range Slider Interativo */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center gap-3">
+              <div className="space-y-1.5 pt-1 w-full max-w-full box-border">
+                <div className="flex items-center gap-3 w-full max-w-full">
                   <div className="flex-shrink-0">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${
@@ -818,7 +822,7 @@ export default function GameModal({
                     step="0.5"
                     value={rating !== null ? rating : 5}
                     onChange={(e) => setRating(parseFloat(e.target.value))}
-                    className="w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF] touch-manipulation"
+                    className="flex-1 min-w-0 w-full h-2.5 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-[#00E5FF] touch-manipulation"
                   />
 
                   <span className="text-xs text-gray-400 font-mono flex-shrink-0">
@@ -827,8 +831,8 @@ export default function GameModal({
                 </div>
 
                 <div className="flex justify-between text-[11px] text-gray-400 font-mono px-1">
-                  <span>{rating === null ? "Deslize para avaliar > > >" : `${reaction.emoji} ${reaction.text}`}</span>
-                  <span>{rating === null ? "" : "10 (Obra-Prima)"}</span>
+                  <span className="truncate pr-2">{rating === null ? "Deslize para avaliar > > >" : `${reaction.emoji} ${reaction.text}`}</span>
+                  <span className="flex-shrink-0">{rating === null ? "" : "10 (Obra-Prima)"}</span>
                 </div>
               </div>
             </div>
@@ -1150,9 +1154,9 @@ export default function GameModal({
                   </div>
 
                   {/* Inputs de Tempo e Datas */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-full box-border">
                     {/* Horas Totais */}
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-xs font-medium text-gray-400 mb-1">
                         {availableDlcs.length > 0 ? "Horas (Jogo Base)" : "Horas Jogadas"}
                       </label>
@@ -1164,12 +1168,12 @@ export default function GameModal({
                           placeholder="Ex: 45"
                           value={playtime}
                           onChange={(e) => setPlaytime(e.target.value)}
-                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none"
+                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none box-border"
                         />
                         <Clock className="w-3.5 h-3.5 text-gray-500 absolute right-3.5 top-2.5" />
                       </div>
                       {dlcHoursTotal > 0 && (
-                        <p className="text-[10px] text-cyan-300 font-mono mt-1 px-1">
+                        <p className="text-[10px] text-cyan-300 font-mono mt-1 px-1 truncate">
                           Base: {playtime || "0"}h + DLCs: {dlcHoursTotal}h ={" "}
                           <strong>{effectiveTotalPlaytime}h Total</strong>
                         </p>
@@ -1177,7 +1181,7 @@ export default function GameModal({
                     </div>
 
                     {/* Data de Início */}
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-xs font-medium text-gray-400 mb-1">
                         Data de Início
                       </label>
@@ -1186,13 +1190,13 @@ export default function GameModal({
                           type="date"
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
-                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none"
+                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none box-border min-w-0"
                         />
                       </div>
                     </div>
 
                     {/* Data de Conclusão */}
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-xs font-medium text-gray-400 mb-1">
                         Data de Conclusão
                       </label>
@@ -1201,7 +1205,7 @@ export default function GameModal({
                           type="date"
                           value={completedDate}
                           onChange={(e) => setCompletedDate(e.target.value)}
-                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none"
+                          className="w-full rounded-full bg-white/10 border-transparent focus:border-white/30 px-3 py-2 text-xs text-white focus:outline-none box-border min-w-0"
                         />
                       </div>
                     </div>
@@ -1302,7 +1306,7 @@ export default function GameModal({
           {/* ==========================================
               6. RODAPÉ / CALL TO ACTION (Padrão Stash)
           ========================================== */}
-          <div className="px-4 sm:px-6 pt-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)] md:pb-4 border-t border-white/10 bg-[#10121a]/95 backdrop-blur-md flex-shrink-0 flex items-center justify-between gap-3">
+          <div className="px-4 sm:px-6 pt-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)] md:pb-4 border-t border-white/10 bg-[#10121a]/95 backdrop-blur-md flex-shrink-0 flex items-center justify-between gap-3 w-full max-w-full box-border">
             <div>
               {existingInLibrary ? (
                 <button
