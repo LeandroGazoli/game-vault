@@ -121,6 +121,7 @@ function computeLibraryStats(games: UserGame[]): LibraryStats {
     libraryCount,
     totalPlaytimeHours: totalPlaytime,
     averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
+    ratedCount,
     topGenres,
   };
 }

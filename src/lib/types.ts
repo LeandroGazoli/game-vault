@@ -702,6 +702,8 @@ export interface LibraryStats {
   libraryCount?: number;
   totalPlaytimeHours: number;
   averageRating: number;
+  /** Jogos com nota atribuída pelo usuário (userRating > 0). Ausente = não computado. */
+  ratedCount?: number;
   topGenres: { name: string; count: number }[];
 }
 
@@ -738,7 +740,30 @@ export const PLAN_XP_BOOST: Record<UserPlan, PlanXpBoostConfig> = {
 };
 
 /**
- * Calcula o Nível Gamer (1 a 99) e Ranking de Prestígio com base nas estatísticas e no multiplicador do Plano
+ * Fator da curva de nível: o XP acumulado necessário para o nível N é (N-1)² * XP_LEVEL_FACTOR.
+ * Menor = progressão mais rápida. NÃO existe nível máximo — a curva segue indefinidamente.
+ */
+export const XP_LEVEL_FACTOR = 8;
+
+/**
+ * Teto de avaliações que rendem XP base (20 notas x 20 XP = 400 XP).
+ * Preserva o limite original da economia; a métrica "rated" das conquistas não tem teto.
+ */
+export const RATED_XP_CAP = 20;
+
+/** XP acumulado necessário para alcançar o nível informado. */
+export function xpForLevel(level: number): number {
+  return Math.pow(Math.max(1, Math.floor(level)) - 1, 2) * XP_LEVEL_FACTOR;
+}
+
+/** Nível correspondente ao XP acumulado. Sem teto: cresce com a raiz do XP. */
+export function levelFromXp(xp: number): number {
+  const safeXp = Math.max(0, Math.floor(xp) || 0);
+  return Math.max(1, Math.floor(Math.sqrt(safeXp / XP_LEVEL_FACTOR)) + 1);
+}
+
+/**
+ * Calcula o Nível Gamer (sem teto máximo) e o Ranking de Prestígio a partir das estatísticas e do multiplicador do Plano
  */
 export function calculateGamerLevel(
   stats?: LibraryStats | null,
@@ -789,9 +814,9 @@ export function calculateGamerLevel(
 
   if (!stats) {
     const totalXpNoStats = safeBonusXp;
-    const levelNoStats = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXpNoStats / 15)) + 1));
-    const curBase = Math.pow(levelNoStats - 1, 2) * 15;
-    const nextBase = Math.pow(levelNoStats, 2) * 15;
+    const levelNoStats = levelFromXp(totalXpNoStats);
+    const curBase = xpForLevel(levelNoStats);
+    const nextBase = xpForLevel(levelNoStats + 1);
     const diff = Math.max(1, nextBase - curBase);
     return {
       level: levelNoStats,
@@ -814,9 +839,9 @@ export function calculateGamerLevel(
 
   const completed = stats.completedCount || 0;
   const playing = stats.playingCount || 0;
-  const library = (stats.libraryCount ?? 0) + (stats.totalGames || 0);
+  const library = stats.totalGames || 0;
   const hours = stats.totalPlaytimeHours || 0;
-  const rated = stats.averageRating > 0 ? Math.min(stats.totalGames, 20) : 0;
+  const rated = Math.min(Math.max(0, stats.ratedCount ?? 0), RATED_XP_CAP);
 
   const completedXp = completed * 60;
   const hoursXp = Math.floor(hours * 0.2);
@@ -829,9 +854,9 @@ export function calculateGamerLevel(
   // XP bônus de conquistas/missões entra sem multiplicador de plano (recompensa fixa)
   const totalXp = Math.floor(baseXp * boost.multiplier) + safeBonusXp;
 
-  const calculatedLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(totalXp / 15)) + 1));
-  const currentLevelBaseXp = Math.pow(calculatedLevel - 1, 2) * 15;
-  const nextLevelBaseXp = Math.pow(calculatedLevel, 2) * 15;
+  const calculatedLevel = levelFromXp(totalXp);
+  const currentLevelBaseXp = xpForLevel(calculatedLevel);
+  const nextLevelBaseXp = xpForLevel(calculatedLevel + 1);
   const levelXpDiff = Math.max(1, nextLevelBaseXp - currentLevelBaseXp);
   const currentProgress = Math.max(0, totalXp - currentLevelBaseXp);
   const percentToNext = Math.min(100, Math.floor((currentProgress / levelXpDiff) * 100));

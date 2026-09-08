@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { LibraryStats, calculateGamerLevel, UserPlan } from "@/lib/types";
+import { getMetricValue } from "@/lib/gamification";
 import { getSteamLevelTier } from "@/lib/steamUtils";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
@@ -48,8 +49,8 @@ export default function GamerXpBreakdownModal({
   const completedCount = stats?.completedCount || 0;
   const totalHours = stats?.totalPlaytimeHours || 0;
   const playingCount = stats?.playingCount || 0;
-  const libraryTotal = (stats?.libraryCount ?? 0) + (stats?.totalGames || 0);
-  const ratedCount = stats?.averageRating ? Math.min(stats.totalGames || 0, 20) : 0;
+  const libraryTotal = getMetricValue("library", { stats });
+  const ratedCount = getMetricValue("rated", { stats });
 
   const sources = [
     {
@@ -187,7 +188,7 @@ export default function GamerXpBreakdownModal({
 
           {gamerLevelInfo.xpToNextLevel > 0 && (
             <div className="text-[11px] text-center pt-1 border-t border-[#2a475e]/60 font-mono text-gray-300">
-              Faltam <strong className="text-[#66c0f4]">{gamerLevelInfo.xpToNextLevel.toLocaleString("pt-BR")} XP</strong> para o <strong className="text-white">Level {Math.min(99, displayLevel + 1)}</strong>
+              Faltam <strong className="text-[#66c0f4]">{gamerLevelInfo.xpToNextLevel.toLocaleString("pt-BR")} XP</strong> para o <strong className="text-white">Level {displayLevel + 1}</strong>
             </div>
           )}
         </div>

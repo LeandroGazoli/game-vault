@@ -37,9 +37,9 @@ export function getMetricValue(metric: GamificationMetric, ctx: MetricContext): 
     case "hours":
       return Math.floor(stats.totalPlaytimeHours || 0);
     case "library":
-      return (stats.libraryCount ?? 0) + (stats.totalGames || 0);
+      return stats.totalGames || 0;
     case "rated":
-      return stats.averageRating > 0 ? Math.min(stats.totalGames || 0, 20) : 0;
+      return Math.max(0, stats.ratedCount ?? 0);
     case "playing":
       return stats.playingCount || 0;
     default:
@@ -212,6 +212,7 @@ export function computeLibraryStats(games: UserGame[]): LibraryStats {
     libraryCount,
     totalPlaytimeHours: totalPlaytime,
     averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
+    ratedCount,
     topGenres,
   };
 }

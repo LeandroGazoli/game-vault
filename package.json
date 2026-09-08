@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seo:indexnow": "node scripts/indexnow.mjs",
+    "seed:gamification": "node scripts/seed-gamification.mjs",
     "cap:sync": "cap sync",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android"

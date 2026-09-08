@@ -40,6 +40,8 @@ import {
   GamificationMissionDef,
   GamificationConfig,
   DEFAULT_GAMIFICATION_CONFIG,
+  RATED_XP_CAP,
+  levelFromXp,
 } from "./types";
 
 const firebaseConfig = {
@@ -908,13 +910,13 @@ export async function getTopGamersLeaderboard(
               const hoursXp = Math.floor(hours * 0.2);
               const playingXp = playing * 20;
               const libraryXp = library * 10;
-              const ratingXp = Math.min(rated, 20) * 20;
+              const ratingXp = Math.min(rated, RATED_XP_CAP) * 20;
               const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
               const multiplier = u.plan === "vip" ? 2.0 : u.plan === "pro" ? 1.5 : 1.0;
               // Inclui o XP bônus de conquistas/missões (recompensa fixa, sem multiplicador de plano)
               // para manter o ranking consistente com o nível exibido no perfil.
               u.gamerXp = Math.floor(baseXp * multiplier) + Math.max(0, Math.floor(u.bonusXp || 0));
-              u.gamerLevel = Math.min(99, Math.max(1, Math.floor(Math.sqrt(u.gamerXp / 15)) + 1));
+              u.gamerLevel = levelFromXp(u.gamerXp);
             } else {
               u.gamerXp = 0;
               u.gamerLevel = 1;

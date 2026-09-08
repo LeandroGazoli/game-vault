@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { UserProfile, LibraryStats, UserGame, calculateGamerLevel } from "@/lib/types";
+import { getMetricValue } from "@/lib/gamification";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
   Download,
@@ -51,7 +52,7 @@ export default function ShareGamerCardModal({
 
   const completedCount = stats?.completedCount || 0;
   const totalHours = Math.floor(stats?.totalPlaytimeHours || 0);
-  const totalGames = (stats?.libraryCount ?? 0) + (stats?.totalGames || 0);
+  const totalGames = getMetricValue("library", { stats });
   const avgRating = stats?.averageRating ? stats.averageRating.toFixed(1) : "-";
 
   // Top jogos para exibir no card

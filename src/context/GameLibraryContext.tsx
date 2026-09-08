@@ -294,6 +294,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       libraryCount,
       totalPlaytimeHours: totalPlaytime,
       averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
+      ratedCount,
       topGenres,
     };
   }, [library]);
@@ -356,6 +357,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       stats.totalGames,
       Math.floor(stats.totalPlaytimeHours),
       stats.averageRating,
+      stats.ratedCount ?? 0,
     ].join("|");
 
     if (lastSyncSigRef.current !== statsSig) {

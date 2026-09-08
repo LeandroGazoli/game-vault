@@ -12,6 +12,7 @@ import {
 import { getMissionDefs, getGamificationConfig } from "@/lib/firebase";
 import {
   evaluateDef,
+  getMetricValue,
   iconFromName,
   getActiveSeasonMissions,
   getDailyMissions,
@@ -47,8 +48,8 @@ export default function GamerQuestsCard({
 }: GamerQuestsCardProps) {
   const completed = stats?.completedCount || 0;
   const hours = stats?.totalPlaytimeHours || 0;
-  const totalGames = (stats?.libraryCount ?? 0) + (stats?.totalGames || 0);
-  const rated = stats?.averageRating ? Math.min(stats.totalGames || 0, 20) : 0;
+  const totalGames = getMetricValue("library", { stats });
+  const rated = getMetricValue("rated", { stats });
   const hasShowcase = Boolean(user.showcaseGameId || user.customMarkdown || user.customHtml);
 
   const [dynamicMissions, setDynamicMissions] = useState<GamificationMissionDef[]>([]);

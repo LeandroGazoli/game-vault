@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { LibraryStats, calculateGamerLevel, GamificationAchievementDef } from "@/lib/types";
 import { getAchievementDefs } from "@/lib/firebase";
-import { evaluateDef, iconFromName } from "@/lib/gamification";
+import { evaluateDef, getMetricValue, iconFromName } from "@/lib/gamification";
 import {
   Award,
   Trophy,
@@ -72,8 +72,8 @@ export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardPr
 
   const completed = stats?.completedCount || 0;
   const hours = stats?.totalPlaytimeHours || 0;
-  const library = (stats?.libraryCount ?? 0) + (stats?.totalGames || 0);
-  const rated = stats?.averageRating ? Math.min(stats.totalGames || 0, 20) : 0;
+  const library = getMetricValue("library", { stats });
+  const rated = getMetricValue("rated", { stats });
 
   // Lista de Conquistas Estilo Steam com Raridade Global Realista
   const achievements: GamerAchievement[] = useMemo(() => {

@@ -98,7 +98,7 @@ export default function GamerScoreboardCard({
             </div>
             <div className="text-[10px] text-[#8a9eaf] font-mono mt-1 flex items-center gap-1">
               <span className="text-emerald-400">+{gamerLevelInfo.percentToNext}%</span>
-              <span>para o Nível {Math.min(99, gamerLevelInfo.level + 1)}</span>
+              <span>para o Nível {gamerLevelInfo.level + 1}</span>
             </div>
           </div>
 
