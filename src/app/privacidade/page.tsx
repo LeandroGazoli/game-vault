@@ -148,7 +148,28 @@ export default function PrivacidadePage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base sm:text-lg font-bold text-white">7. Contato do Encarregado de Dados</h2>
+            <h2 className="text-base sm:text-lg font-bold text-white">7. Assinaturas, Pagamentos e Cancelamento</h2>
+            <p>
+              Os planos pagos (PRO e VIP) são processados de forma segura pela <strong>Stripe</strong>, que trata os dados de pagamento (nós não armazenamos números de cartão). Ao contratar um plano, você concorda com as condições abaixo:
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>
+                <strong>Assinaturas recorrentes (PRO):</strong> renovam automaticamente ao fim de cada ciclo até que sejam canceladas por você. O cancelamento pode ser solicitado a qualquer momento e passa a valer ao término do período já pago — o acesso permanece ativo até essa data.
+              </li>
+              <li>
+                <strong>Ausência de reembolso:</strong> os valores já pagos, incluindo o período vigente no momento do cancelamento e as compras vitalícias/avulsas, <strong>não são reembolsáveis</strong>, total ou parcialmente, salvo quando exigido por lei aplicável.
+              </li>
+              <li>
+                <strong>Acessos concedidos (cortesia, teste, colaborador):</strong> benefícios cedidos gratuitamente pela equipe podem ter prazo de validade e ser encerrados ou ajustados a qualquer momento, sem que isso gere direito a indenização ou conversão em plano pago.
+              </li>
+              <li>
+                <strong>Expiração:</strong> ao término da vigência de um plano ou concessão, a conta retorna automaticamente ao nível gratuito, preservando seus dados e biblioteca.
+              </li>
+            </ul>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base sm:text-lg font-bold text-white">8. Contato do Encarregado de Dados</h2>
             <p>
               Caso tenha dúvidas sobre esta política ou queira exercer seus direitos de titular dos dados, entre em contato com nosso time pelo e-mail: <a href="mailto:privacidade@mygameslist.com.br" className="text-[#00E5FF] underline">privacidade@mygameslist.com.br</a>.
             </p>

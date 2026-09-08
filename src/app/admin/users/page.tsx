@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { UserProfile, UserPlan, ADMIN_EMAILS } from "@/lib/types";
-import { getAllUsersForAdmin, updateUserPlanByAdmin, updateUserModerationByAdmin, recordAuditLog } from "@/lib/firebase";
+import { getAllUsersForAdmin, updateUserModerationByAdmin, recordAuditLog, auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
-import AdminUserDrawer from "@/components/admin/AdminUserDrawer";
+import AdminUserDrawer, { GrantInput } from "@/components/admin/AdminUserDrawer";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 import {
   Users,
@@ -59,37 +59,64 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  const handleUpdatePlan = async (targetUser: UserProfile, newPlan: UserPlan) => {
+  const handleGrant = async (targetUser: UserProfile, grant: GrantInput) => {
     try {
-      await updateUserPlanByAdmin(targetUser.uid, newPlan);
-      if (currentAdmin) {
-        await recordAuditLog({
-          adminEmail: currentAdmin.email,
-          adminUid: currentAdmin.uid,
-          action: `Plano alterado para ${newPlan.toUpperCase()}`,
-          category: "plans",
-          targetId: targetUser.uid,
-          targetName: targetUser.displayName || targetUser.username,
-          details: { oldPlan: targetUser.plan, newPlan },
-        });
+      if (!auth?.currentUser) throw new Error("Sessão administrativa expirada.");
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          userId: targetUser.uid,
+          userDisplayName: targetUser.displayName || targetUser.username,
+          plan: grant.plan,
+          planSource: grant.planSource,
+          planLabel: grant.planLabel,
+          lifetime: grant.lifetime,
+          durationValue: grant.durationValue,
+          durationUnit: grant.durationUnit,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Falha ao conceder acesso.");
+
+      // Calcula premiumUntil localmente para refletir na UI de imediato
+      let premiumUntil: string | null = null;
+      if (grant.plan !== "free" && !grant.lifetime && grant.durationValue) {
+        const d = new Date();
+        const n = grant.durationValue;
+        if (grant.durationUnit === "months") d.setMonth(d.getMonth() + n);
+        else if (grant.durationUnit === "years") d.setFullYear(d.getFullYear() + n);
+        else d.setDate(d.getDate() + n);
+        premiumUntil = d.toISOString();
       }
+      const patch: Partial<UserProfile> =
+        grant.plan === "free"
+          ? { plan: "free", isPremium: false, hideAds: false, premiumUntil: null, planSource: undefined, planLabel: null }
+          : {
+              plan: grant.plan,
+              isPremium: true,
+              hideAds: true,
+              premiumUntil,
+              planSource: grant.planSource,
+              planLabel: grant.planLabel,
+            };
 
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.uid === targetUser.uid
-            ? { ...u, plan: newPlan, isPremium: newPlan === "pro" || newPlan === "vip" }
-            : u
-        )
-      );
-
+      setUsers((prev) => prev.map((u) => (u.uid === targetUser.uid ? { ...u, ...patch } : u)));
       if (selectedUser && selectedUser.uid === targetUser.uid) {
-        setSelectedUser({ ...selectedUser, plan: newPlan, isPremium: newPlan === "pro" || newPlan === "vip" });
+        setSelectedUser({ ...selectedUser, ...patch });
       }
 
-      setToastMessage(`Plano de ${targetUser.displayName} alterado para ${newPlan.toUpperCase()}`);
+      setToastMessage(
+        grant.plan === "free"
+          ? `Acesso premium de ${targetUser.displayName} revogado`
+          : `${grant.plan.toUpperCase()} concedido a ${targetUser.displayName}`
+      );
       setTimeout(() => setToastMessage(null), 3500);
-    } catch (e) {
-      console.error("Erro ao alterar plano:", e);
+    } catch (e: any) {
+      console.error("Erro ao conceder acesso:", e);
+      setToastMessage(e?.message || "Erro ao conceder acesso.");
+      setTimeout(() => setToastMessage(null), 3500);
     }
   };
 
@@ -371,13 +398,14 @@ export default function AdminUsersPage() {
 
       {/* Drawer Lateral com Ficha Completa do Usuário */}
       <AdminUserDrawer
+        key={selectedUser?.uid || "none"}
         user={selectedUser}
         isOpen={isDrawerOpen}
         onClose={() => {
           setIsDrawerOpen(false);
           setSelectedUser(null);
         }}
-        onUpdatePlan={handleUpdatePlan}
+        onGrant={handleGrant}
         onUpdateModeration={handleUpdateModeration}
       />
 

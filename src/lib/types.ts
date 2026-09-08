@@ -4,6 +4,64 @@ export type CompletionType = "main_story" | "main_extra" | "completionist" | "pl
 
 export type UserPlan = "free" | "pro" | "vip";
 
+/**
+ * Origem do acesso premium atual do usuário.
+ * - purchase: comprou via Stripe (assinatura PRO ou VIP vitalício)
+ * - trial: período de teste concedido pelo admin
+ * - courtesy: cortesia concedida pelo admin
+ * - contributor: colaborador que fez diferença no site
+ * - custom: concessão com rótulo personalizado
+ * - admin: concessão administrativa genérica
+ */
+export type PlanSource = "purchase" | "trial" | "courtesy" | "contributor" | "custom" | "admin";
+
+export interface GrantTypeMeta {
+  label: string;
+  short: string;
+  color: string; // classe tailwind de texto
+  badge: string; // classes tailwind de fundo/borda para chip
+}
+
+/** Metadados de apresentação por tipo de concessão (admin + perfil). */
+export const GRANT_TYPE_META: Record<PlanSource, GrantTypeMeta> = {
+  purchase: {
+    label: "Compra",
+    short: "Assinante",
+    color: "text-emerald-400",
+    badge: "bg-emerald-500/10 border-emerald-500/30 text-emerald-300",
+  },
+  trial: {
+    label: "Período de Teste",
+    short: "Teste",
+    color: "text-sky-400",
+    badge: "bg-sky-500/10 border-sky-500/30 text-sky-300",
+  },
+  courtesy: {
+    label: "Cortesia",
+    short: "Cortesia",
+    color: "text-pink-400",
+    badge: "bg-pink-500/10 border-pink-500/30 text-pink-300",
+  },
+  contributor: {
+    label: "Colaborador",
+    short: "Colaborador",
+    color: "text-amber-400",
+    badge: "bg-amber-500/10 border-amber-500/30 text-amber-300",
+  },
+  custom: {
+    label: "Personalizado",
+    short: "Especial",
+    color: "text-purple-400",
+    badge: "bg-purple-500/10 border-purple-500/30 text-purple-300",
+  },
+  admin: {
+    label: "Concessão Admin",
+    short: "Admin",
+    color: "text-cyan-400",
+    badge: "bg-cyan-500/10 border-cyan-500/30 text-cyan-300",
+  },
+};
+
 export type ProfileTheme = "cyan" | "gold" | "purple" | "crimson" | "emerald";
 
 export const ADMIN_EMAILS = ["leandro.gazolig@gmail.com"];
@@ -428,10 +486,79 @@ export interface UserProfile {
   // IDs de conquistas/missões já recompensadas (evita pagar XP duas vezes)
   claimedRewards?: string[];
   premiumUntil?: string | null;
+  // Controle de acesso / concessões (grants) do admin
+  planSource?: PlanSource;      // origem do acesso premium atual
+  planLabel?: string | null;    // rótulo custom exibido no badge (ex.: "Colaborador Fundador")
+  grantedBy?: string | null;    // email do admin que concedeu (auditoria)
+  grantedAt?: string | null;    // ISO da concessão
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface EffectiveAccess {
+  plan: UserPlan;          // plano EFETIVO (free se o premium expirou)
+  isPremium: boolean;
+  hideAds: boolean;
+  lifetime: boolean;       // acesso premium sem data de expiração
+  expired: boolean;        // tinha premium mas a vigência passou
+  expiresAt: string | null;
+  source: PlanSource | null;
+  label: string | null;
+}
+
+/**
+ * Calcula o acesso EFETIVO do usuário considerando a expiração (premiumUntil).
+ * Fonte única de verdade para exibir badges e liberar recursos premium na UI.
+ * Um grant/assinatura com premiumUntil no passado é tratado como free.
+ */
+export function getEffectiveAccess(
+  user?: Pick<
+    UserProfile,
+    "plan" | "isPremium" | "hideAds" | "premiumUntil" | "planSource" | "planLabel" | "isAdmin"
+  > | null
+): EffectiveAccess {
+  const rawPlan: UserPlan = user?.plan || "free";
+  const source = (user?.planSource as PlanSource | undefined) || null;
+  const label = user?.planLabel || null;
+
+  // Admins têm acesso pleno permanente
+  if (user?.isAdmin) {
+    return {
+      plan: rawPlan === "free" ? "vip" : rawPlan,
+      isPremium: true,
+      hideAds: true,
+      lifetime: true,
+      expired: false,
+      expiresAt: null,
+      source: source || "admin",
+      label,
+    };
+  }
+
+  if (rawPlan === "free") {
+    return { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: false, expiresAt: null, source, label };
+  }
+
+  const until = user?.premiumUntil ? new Date(user.premiumUntil).getTime() : null;
+  const hasExpiry = until !== null && !isNaN(until);
+  const expired = hasExpiry && until! < Date.now();
+
+  if (expired) {
+    return { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: true, expiresAt: user?.premiumUntil || null, source, label };
+  }
+
+  return {
+    plan: rawPlan,
+    isPremium: true,
+    hideAds: user?.hideAds !== false,
+    lifetime: !hasExpiry,
+    expired: false,
+    expiresAt: hasExpiry ? user?.premiumUntil || null : null,
+    source,
+    label,
+  };
 }
 
 export interface AuditLogEntry {

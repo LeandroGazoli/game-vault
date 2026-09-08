@@ -6,7 +6,7 @@ import {
   getUserProfileByUsername,
 } from "@/lib/firebase";
 import {
-  adminUpdateUserPlan,
+  adminGrantAccess,
   adminUpdateUserModeration,
   adminSaveUserProfile,
 } from "@/lib/firebaseAdmin";
@@ -89,7 +89,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, plan, banned, suspended, moderationReason, userDisplayName } = body;
+    const {
+      userId,
+      plan,
+      banned,
+      suspended,
+      moderationReason,
+      userDisplayName,
+      // Concessão de acesso (grant)
+      planSource,
+      planLabel,
+      durationValue,
+      durationUnit, // "days" | "months" | "years"
+      lifetime,
+    } = body;
 
     if (!userId || typeof userId !== "string") {
       return NextResponse.json(
@@ -101,20 +114,46 @@ export async function PATCH(request: NextRequest) {
     const adminEmail = authCheck.user.email;
     const adminUid = authCheck.user.uid;
 
-    // Atualização de Plano
+    // Concessão / alteração de plano (com tipo, rótulo e vigência)
     if (plan !== undefined) {
       if (!["free", "pro", "vip"].includes(plan)) {
         return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
       }
-      await adminUpdateUserPlan(userId, plan as UserPlan);
+
+      const validSources = ["purchase", "trial", "courtesy", "contributor", "custom", "admin"];
+      const source = validSources.includes(planSource) ? planSource : "admin";
+
+      // Calcula a vigência (premiumUntil). lifetime OU sem duração => vitalício (null).
+      let premiumUntil: string | null = null;
+      if (plan !== "free" && !lifetime && durationValue) {
+        const n = Math.max(1, Math.min(3650, Number(durationValue) || 0));
+        const unit = ["days", "months", "years"].includes(durationUnit) ? durationUnit : "days";
+        const d = new Date();
+        if (unit === "days") d.setDate(d.getDate() + n);
+        else if (unit === "months") d.setMonth(d.getMonth() + n);
+        else d.setFullYear(d.getFullYear() + n);
+        premiumUntil = d.toISOString();
+      }
+
+      await adminGrantAccess(userId, {
+        plan: plan as UserPlan,
+        source: source as any,
+        label: typeof planLabel === "string" ? planLabel : null,
+        premiumUntil,
+        grantedByEmail: adminEmail,
+      });
+
       await recordAuditLog({
         adminEmail,
         adminUid,
-        action: `Plano alterado para ${plan.toUpperCase()}`,
+        action:
+          plan === "free"
+            ? "Acesso premium revogado"
+            : `Acesso ${plan.toUpperCase()} concedido (${source}${premiumUntil ? " • até " + premiumUntil.slice(0, 10) : " • vitalício"})`,
         category: "plans",
         targetId: userId,
         targetName: userDisplayName || userId,
-        details: { newPlan: plan },
+        details: { newPlan: plan, source, premiumUntil, planLabel: planLabel || null },
       });
     }
 

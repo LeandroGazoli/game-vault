@@ -112,6 +112,50 @@ export async function adminUpdateUserPlan(
   await adminSaveUserProfile(uid, { plan, isPremium, hideAds: isPremium });
 }
 
+export type AdminPlanSource = "purchase" | "trial" | "courtesy" | "contributor" | "custom" | "admin";
+
+export interface AdminGrantInput {
+  plan: "free" | "pro" | "vip";
+  source?: AdminPlanSource;
+  label?: string | null;
+  /** ISO de expiração; null = vitalício (quando plan != free) */
+  premiumUntil?: string | null;
+  grantedByEmail?: string | null;
+}
+
+/**
+ * Admin: concede/ajusta acesso premium com tipo, rótulo e vigência (campos travados no cliente).
+ * plan="free" revoga o acesso e limpa os campos de concessão.
+ */
+export async function adminGrantAccess(uid: string, input: AdminGrantInput): Promise<void> {
+  const { plan } = input;
+  if (plan === "free") {
+    await adminSaveUserProfile(uid, {
+      plan: "free",
+      isPremium: false,
+      hideAds: false,
+      premiumUntil: null,
+      planSource: null,
+      planLabel: null,
+      grantedBy: null,
+      grantedAt: null,
+    });
+    return;
+  }
+
+  const isPremium = true;
+  await adminSaveUserProfile(uid, {
+    plan,
+    isPremium,
+    hideAds: true,
+    premiumUntil: input.premiumUntil ?? null, // null = vitalício
+    planSource: input.source || "admin",
+    planLabel: input.label ? String(input.label).slice(0, 60) : null,
+    grantedBy: input.grantedByEmail || null,
+    grantedAt: new Date().toISOString(),
+  });
+}
+
 /** Admin: aplica moderação (ban/suspensão) — campos travados no cliente. */
 export async function adminUpdateUserModeration(
   uid: string,

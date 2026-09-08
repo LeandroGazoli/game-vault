@@ -53,7 +53,7 @@ service cloud.firestore {
       allow update: if isVerifiedAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'username', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
+          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'planSource', 'planLabel', 'grantedBy', 'grantedAt', 'email', 'uid', 'username', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
           'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles'
         ])
       );

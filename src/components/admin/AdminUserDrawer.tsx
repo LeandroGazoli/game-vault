@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { UserProfile, UserPlan } from "@/lib/types";
+import { UserProfile, UserPlan, PlanSource, GRANT_TYPE_META, getEffectiveAccess } from "@/lib/types";
 import UserAvatar from "@/components/UserAvatar";
 import PlanBadge from "@/components/PlanBadge";
 import {
@@ -24,32 +24,58 @@ interface AdminUserDrawerProps {
   user: UserProfile | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdatePlan: (user: UserProfile, newPlan: UserPlan) => Promise<void>;
+  onGrant: (user: UserProfile, grant: GrantInput) => Promise<void>;
   onUpdateModeration: (
     user: UserProfile,
     action: { banned?: boolean; suspended?: boolean; reason?: string | null }
   ) => Promise<void>;
 }
 
+export interface GrantInput {
+  plan: UserPlan;
+  planSource: PlanSource;
+  planLabel: string | null;
+  lifetime: boolean;
+  durationValue?: number;
+  durationUnit?: "days" | "months" | "years";
+}
+
 export default function AdminUserDrawer({
   user,
   isOpen,
   onClose,
-  onUpdatePlan,
+  onGrant,
   onUpdateModeration,
 }: AdminUserDrawerProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [showBanInput, setShowBanInput] = useState(false);
 
+  // Estado do formulário de concessão (grant)
+  const [grantPlan, setGrantPlan] = useState<UserPlan>(user?.plan && user.plan !== "free" ? user.plan : "pro");
+  const [grantSource, setGrantSource] = useState<PlanSource>((user?.planSource as PlanSource) || "courtesy");
+  const [grantLabel, setGrantLabel] = useState<string>(user?.planLabel || "");
+  const [lifetime, setLifetime] = useState<boolean>(!user?.premiumUntil);
+  const [durationValue, setDurationValue] = useState<number>(30);
+  const [durationUnit, setDurationUnit] = useState<"days" | "months" | "years">("days");
+
   if (!isOpen || !user) return null;
 
   const currentPlan = user.plan || "free";
+  const access = getEffectiveAccess(user);
 
-  const handlePlanChange = async (plan: UserPlan) => {
+  const handleGrant = async (planOverride?: UserPlan) => {
+    const plan = planOverride ?? grantPlan;
     setIsUpdating(true);
     try {
-      await onUpdatePlan(user, plan);
+      await onGrant(user, {
+        plan,
+        planSource: grantSource,
+        planLabel: grantLabel.trim() || null,
+        lifetime: plan === "free" ? true : lifetime,
+        durationValue,
+        durationUnit,
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -151,51 +177,131 @@ export default function AdminUserDrawer({
             </div>
           </div>
 
-          {/* Alteração Rápida de Plano */}
+          {/* Concessão de Acesso (grant com tipo, prazo e rótulo) */}
           <div className="space-y-3 pt-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300 font-mono">
-              Gestão de Nível / Assinatura
+              Gestão de Nível / Acesso
             </h4>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handlePlanChange("free")}
-                disabled={isUpdating || currentPlan === "free"}
-                className={`p-3 rounded-2xl border text-center transition-all text-xs font-bold min-h-[44px] ${
-                  currentPlan === "free"
-                    ? "bg-white/15 border-white/30 text-white"
-                    : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                Free
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePlanChange("pro")}
-                disabled={isUpdating || currentPlan === "pro"}
-                className={`p-3 rounded-2xl border text-center transition-all text-xs font-bold min-h-[44px] flex flex-col items-center justify-center gap-1 ${
-                  currentPlan === "pro"
-                    ? "bg-cyan-500/20 border-cyan-500/40 text-[#00E5FF]"
-                    : "bg-white/5 border-white/5 text-gray-400 hover:text-[#00E5FF] hover:bg-cyan-500/10"
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Ativar PRO</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePlanChange("vip")}
-                disabled={isUpdating || currentPlan === "vip"}
-                className={`p-3 rounded-2xl border text-center transition-all text-xs font-bold min-h-[44px] flex flex-col items-center justify-center gap-1 ${
-                  currentPlan === "vip"
-                    ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                    : "bg-white/5 border-white/5 text-gray-400 hover:text-amber-300 hover:bg-amber-500/10"
-                }`}
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span>Ativar VIP</span>
-              </button>
+
+            {/* Acesso atual */}
+            <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-3 text-[11px] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Acesso atual</span>
+                <span className={`font-bold ${access.plan === "free" ? "text-gray-400" : GRANT_TYPE_META[access.source || "admin"].color}`}>
+                  {access.plan.toUpperCase()}
+                  {access.expired && " (expirado)"}
+                </span>
+              </div>
+              {user.planSource && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Tipo</span>
+                  <span className="text-gray-200">{GRANT_TYPE_META[user.planSource as PlanSource]?.label || user.planSource}{user.planLabel ? ` — "${user.planLabel}"` : ""}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Vigência</span>
+                <span className="text-gray-200">
+                  {currentPlan === "free" ? "—" : user.premiumUntil ? `até ${new Date(user.premiumUntil).toLocaleDateString("pt-BR")}` : "Vitalício"}
+                </span>
+              </div>
             </div>
+
+            {/* Seleção de plano */}
+            <div className="grid grid-cols-3 gap-2">
+              {(["free", "pro", "vip"] as UserPlan[]).map((p) => {
+                const selected = grantPlan === p;
+                const Icon = p === "vip" ? Crown : p === "pro" ? Sparkles : Ban;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setGrantPlan(p)}
+                    className={`p-2.5 rounded-2xl border text-center transition-all text-xs font-bold min-h-[44px] flex flex-col items-center justify-center gap-1 ${
+                      selected
+                        ? p === "vip"
+                          ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                          : p === "pro"
+                          ? "bg-cyan-500/20 border-cyan-500/40 text-[#00E5FF]"
+                          : "bg-white/15 border-white/30 text-white"
+                        : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    {p !== "free" && <Icon className="w-3.5 h-3.5" />}
+                    <span>{p === "free" ? "Free (revogar)" : p.toUpperCase()}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Detalhes do grant (só quando não é revogação) */}
+            {grantPlan !== "free" && (
+              <div className="space-y-3 rounded-2xl bg-white/[0.03] border border-white/10 p-3">
+                {/* Tipo de concessão */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wide text-gray-400 mb-1.5">Tipo de acesso</label>
+                  <select
+                    value={grantSource}
+                    onChange={(e) => setGrantSource(e.target.value as PlanSource)}
+                    className="w-full rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00E5FF]/50"
+                  >
+                    {(Object.keys(GRANT_TYPE_META) as PlanSource[]).map((s) => (
+                      <option key={s} value={s}>{GRANT_TYPE_META[s].label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Vigência */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={lifetime} onChange={(e) => setLifetime(e.target.checked)} className="accent-amber-400" />
+                    <span className="text-xs font-bold text-white">Vitalício (sem expiração)</span>
+                  </label>
+                  {!lifetime && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        value={durationValue}
+                        onChange={(e) => setDurationValue(Number(e.target.value))}
+                        className="w-24 rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00E5FF]/50"
+                      />
+                      <select
+                        value={durationUnit}
+                        onChange={(e) => setDurationUnit(e.target.value as "days" | "months" | "years")}
+                        className="flex-1 rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00E5FF]/50"
+                      >
+                        <option value="days">dias</option>
+                        <option value="months">meses</option>
+                        <option value="years">anos</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rótulo custom */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wide text-gray-400 mb-1.5">Rótulo no perfil (opcional)</label>
+                  <input
+                    type="text"
+                    value={grantLabel}
+                    onChange={(e) => setGrantLabel(e.target.value)}
+                    maxLength={60}
+                    placeholder='Ex.: "Colaborador Fundador", "Cortesia VIP"'
+                    className="w-full rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF]/50"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleGrant()}
+              disabled={isUpdating}
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl bg-[#00E5FF] text-black text-sm font-black min-h-[46px] hover:brightness-110 disabled:opacity-50 transition-all"
+            >
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              {grantPlan === "free" ? "Revogar acesso premium" : `Conceder ${grantPlan.toUpperCase()}`}
+            </button>
           </div>
 
           {/* Área de Moderação e Segurança */}

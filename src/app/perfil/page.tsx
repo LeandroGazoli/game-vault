@@ -1176,6 +1176,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             isOpen={isManagePlanOpen}
             onClose={() => setIsManagePlanOpen(false)}
             user={user}
+            onUpgrade={() => setIsUpgradeOpen(true)}
           />
 
           {!isPremium && (

@@ -18,7 +18,15 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { UserProfile } from "@/lib/types";
-import { getAllUsersForAdmin, getAuditLogs } from "@/lib/firebase";
+import { getAllUsersForAdmin, getAuditLogs, auth } from "@/lib/firebase";
+
+interface StripeRevenue {
+  mrr: number;
+  grossTotal: number;
+  activeSubscriptions: number;
+  currency: string;
+  approxCharges: boolean;
+}
 import PlanBadge from "@/components/PlanBadge";
 import UserAvatar from "@/components/UserAvatar";
 import AdminAnalyticsCharts from "@/components/admin/AdminAnalyticsCharts";
@@ -27,6 +35,7 @@ export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [revenue, setRevenue] = useState<StripeRevenue | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -41,6 +50,19 @@ export default function AdminDashboardPage() {
       console.error("Erro ao carregar dados do dashboard:", e);
     } finally {
       setIsLoading(false);
+    }
+
+    // Receita REAL do Stripe (separada — não bloqueia o dashboard se o Stripe demorar/falhar)
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        const res = await fetch("/api/admin/stripe/revenue", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setRevenue(await res.json());
+      }
+    } catch (e) {
+      console.warn("Receita do Stripe indisponível:", e);
     }
   };
 
@@ -127,18 +149,24 @@ export default function AdminDashboardPage() {
           <div className="text-[11px] text-gray-400">Fundadores &amp; Vitalícios</div>
         </Link>
 
-        {/* MRR Estimado */}
+        {/* MRR real do Stripe (com fallback à estimativa) */}
         <div className="rounded-3xl bg-[#14161d] border border-emerald-500/30 p-5 space-y-2 shadow-xl bg-gradient-to-b from-emerald-950/20 to-transparent">
           <div className="flex items-center justify-between text-gray-400">
-            <span className="text-xs font-medium text-emerald-300">MRR Recorrente</span>
+            <span className="text-xs font-medium text-emerald-300">
+              {revenue ? "MRR Real (Stripe)" : "MRR Estimado"}
+            </span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-3xl font-black text-emerald-400">
             {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-              estimatedMRR
+              revenue ? revenue.mrr : estimatedMRR
             )}
           </div>
-          <div className="text-[11px] text-gray-400">Receita Recorrente Mensal</div>
+          <div className="text-[11px] text-gray-400">
+            {revenue
+              ? `${revenue.activeSubscriptions} assinatura(s) ativa(s) • Bruto: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(revenue.grossTotal)}${revenue.approxCharges ? "+" : ""}`
+              : "Estimativa (Stripe indisponível)"}
+          </div>
         </div>
       </div>
 

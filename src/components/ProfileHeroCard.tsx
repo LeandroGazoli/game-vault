@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { UserProfile } from "@/lib/types";
+import { UserProfile, getEffectiveAccess, GRANT_TYPE_META } from "@/lib/types";
 import { getThemeStyles } from "@/lib/themeStyles";
 import { useAuth } from "@/context/AuthContext";
 import UserAvatar from "./UserAvatar";
@@ -135,42 +135,53 @@ export default function ProfileHeroCard({
                   </div>
                 </div>
 
-                {/* Selo Nobre Único e Interativo (Sem Duplicações) */}
-                {user.plan === "vip" ? (
-                  <div
-                    onClick={isOwner ? onOpenManagePlan : undefined}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit shadow-sm ${
-                      isOwner ? "cursor-pointer hover:bg-amber-500/20 active:scale-95 transition-all" : ""
-                    }`}
-                    title={isOwner ? "Clique para gerenciar seu plano VIP" : "Membro Fundador VIP"}
-                  >
-                    <Crown className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Membro VIP Vitalício</span>
-                  </div>
-                ) : user.plan === "pro" ? (
-                  <div
-                    onClick={isOwner ? onOpenManagePlan : undefined}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit shadow-sm ${
-                      isOwner ? "cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all" : ""
-                    }`}
-                    title={isOwner ? "Clique para gerenciar sua assinatura PRO" : "Assinante PRO"}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>
-                      Assinante PRO
-                      {user.premiumUntil && (
-                        <span className="text-gray-300 font-normal ml-1">
-                          • Válido até{" "}
-                          {new Date(user.premiumUntil).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                ) : (
+                {/* Selo de acesso (efetivo): considera expiração, tipo de concessão e rótulo custom */}
+                {(() => {
+                  const access = getEffectiveAccess(user);
+                  const validity = access.lifetime
+                    ? "Vitalício"
+                    : access.expiresAt
+                    ? `Válido até ${new Date(access.expiresAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+                    : null;
+                  // Tipo de concessão (só mostra o "chip" quando não é compra)
+                  const grantChip =
+                    access.source && access.source !== "purchase"
+                      ? GRANT_TYPE_META[access.source].short
+                      : null;
+
+                  if (access.plan === "vip") {
+                    return (
+                      <div
+                        onClick={isOwner ? onOpenManagePlan : undefined}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold w-fit shadow-sm ${
+                          isOwner ? "cursor-pointer hover:bg-amber-500/20 active:scale-95 transition-all" : ""
+                        }`}
+                        title={isOwner ? "Clique para gerenciar seu acesso VIP" : "Membro VIP"}
+                      >
+                        <Crown className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{access.label || "Membro VIP"}</span>
+                        {grantChip && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-[9px] font-mono uppercase">{grantChip}</span>}
+                        {validity && <span className="text-gray-300 font-normal ml-1">• {validity}</span>}
+                      </div>
+                    );
+                  }
+                  if (access.plan === "pro") {
+                    return (
+                      <div
+                        onClick={isOwner ? onOpenManagePlan : undefined}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] text-xs font-bold w-fit shadow-sm ${
+                          isOwner ? "cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all" : ""
+                        }`}
+                        title={isOwner ? "Clique para gerenciar seu acesso PRO" : "Assinante PRO"}
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+                        <span>{access.label || "Assinante PRO"}</span>
+                        {grantChip && <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-[9px] font-mono uppercase">{grantChip}</span>}
+                        {validity && <span className="text-gray-300 font-normal ml-1">• {validity}</span>}
+                      </div>
+                    );
+                  }
+                  return (
                   <div
                     onClick={isOwner ? onOpenUpgrade : undefined}
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium w-fit shadow-sm ${
@@ -186,7 +197,8 @@ export default function ProfileHeroCard({
                       </span>
                     )}
                   </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
 

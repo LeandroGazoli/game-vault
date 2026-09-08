@@ -19,7 +19,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
-import { UserProfile, UserPlan, ADMIN_EMAILS } from "@/lib/types";
+import { UserProfile, UserPlan, ADMIN_EMAILS, getEffectiveAccess } from "@/lib/types";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -51,10 +51,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase())
   );
 
-  // VIP / PRO baseado estritamente no plano atual (ou se for o Admin Master verificado)
-  const isPremium = Boolean(
-    isAdmin || (user && (user.plan === "pro" || user.plan === "vip"))
-  );
+  // VIP / PRO considerando a EXPIRAÇÃO (acesso concedido/assinatura que venceu vira free)
+  const isPremium = Boolean(isAdmin || getEffectiveAccess(user).isPremium);
+
+  // Reconciliação de expiração: se um acesso CONCEDIDO expirou, pede ao servidor para
+  // rebaixar de fato o usuário (Admin SDK). Roda uma vez por sessão, só quando necessário.
+  const reconciledRef = React.useRef(false);
+  useEffect(() => {
+    if (!user || isAdmin) return;
+    const access = getEffectiveAccess(user);
+    // Chama o servidor quando um acesso com validade expirou (exceto compras recorrentes,
+    // que seguem o webhook do Stripe). Cobre grants e passes avulsos legados (sem planSource).
+    if (access.expired && user.planSource !== "purchase" && !reconciledRef.current) {
+      reconciledRef.current = true;
+      (async () => {
+        try {
+          const token = await firebaseUser?.getIdToken();
+          if (!token) return;
+          await fetch("/api/user/reconcile-access", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          // O onSnapshot do doc do usuário atualiza a UI automaticamente após o downgrade.
+        } catch {
+          /* silencioso */
+        }
+      })();
+    }
+  }, [user, isAdmin, firebaseUser]);
 
   useEffect(() => {
     if (auth && db) {
