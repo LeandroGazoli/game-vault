@@ -179,3 +179,121 @@ export async function collectSitemapUrls(): Promise<string[]> {
   }
   return parseSitemapXml(await response.text());
 }
+
+/* ------------------------------------------------------------------ *
+ * Envio incremental (delta)
+ * ------------------------------------------------------------------ */
+
+/**
+ * O IndexNow existe para avisar sobre conteúdo novo ou atualizado — reenviar as mesmas
+ * URLs a cada execução é desperdício e leva a `429`. Guardamos então o `updatedAt` da
+ * última página enviada e, na execução seguinte, só sobem as páginas mais novas que isso.
+ *
+ * O estado mora em um único documento (`system/indexnow`), lido/escrito pelo Admin SDK.
+ */
+const STATE_DOC = { collection: "system", doc: "indexnow" };
+
+export interface IndexNowState {
+  lastSubmittedAt: string | null;
+  lastRunAt?: string | null;
+  lastSubmittedCount?: number;
+}
+
+export async function getIndexNowState(): Promise<IndexNowState> {
+  try {
+    const { getAdminDb } = await import("./firebaseAdmin");
+    const snap = await getAdminDb()
+      .collection(STATE_DOC.collection)
+      .doc(STATE_DOC.doc)
+      .get();
+
+    const data = snap.exists ? snap.data() || {} : {};
+    return {
+      lastSubmittedAt: data.lastSubmittedAt ? String(data.lastSubmittedAt) : null,
+      lastRunAt: data.lastRunAt ? String(data.lastRunAt) : null,
+      lastSubmittedCount: Number(data.lastSubmittedCount || 0),
+    };
+  } catch (error: any) {
+    console.warn(`[indexnow] Estado indisponível (${error?.message || error}).`);
+    return { lastSubmittedAt: null };
+  }
+}
+
+async function saveIndexNowState(state: IndexNowState): Promise<void> {
+  try {
+    const { getAdminDb } = await import("./firebaseAdmin");
+    await getAdminDb()
+      .collection(STATE_DOC.collection)
+      .doc(STATE_DOC.doc)
+      .set({ ...state, lastRunAt: new Date().toISOString() }, { merge: true });
+  } catch (error: any) {
+    console.warn(`[indexnow] Não foi possível salvar o estado (${error?.message || error}).`);
+  }
+}
+
+export interface DeltaResult extends IndexNowResult {
+  mode: "delta";
+  since: string | null;
+  cursor: string | null;
+  /** true quando o lote encheu — ainda há fila, vale rodar de novo. */
+  hasMore: boolean;
+  /** Amostra do que seria enviado; preenchida apenas em `dryRun`. */
+  sample?: string[];
+}
+
+/**
+ * Envia apenas as páginas de jogos registradas depois do último envio bem-sucedido.
+ * O cursor só avança se o IndexNow aceitar o lote — falha significa reenviar na próxima.
+ */
+export async function submitDeltaToIndexNow(
+  options: { limit?: number; dryRun?: boolean } = {}
+): Promise<DeltaResult> {
+  const limit = options.limit ?? 2_000;
+  const { getRegisteredGamePages } = await import("./gameRegistry");
+  const state = await getIndexNowState();
+
+  const pages = await getRegisteredGamePages({
+    since: state.lastSubmittedAt,
+    limit,
+    direction: "asc",
+  });
+
+  const base = {
+    mode: "delta" as const,
+    since: state.lastSubmittedAt,
+    keyLocation: getKeyLocation(),
+    hasMore: pages.length >= limit,
+  };
+
+  if (pages.length === 0) {
+    return { ...base, ok: true, submitted: 0, skipped: [], batches: [], cursor: state.lastSubmittedAt };
+  }
+
+  // `updatedAt` é ISO em UTC, então a ordem lexicográfica é a ordem cronológica.
+  const cursor = pages.reduce(
+    (max, p) => (p.updatedAt > max ? p.updatedAt : max),
+    pages[0].updatedAt
+  );
+
+  if (options.dryRun) {
+    const { valid, skipped } = normalizeIndexNowUrls(pages.map((p) => p.path));
+    return {
+      ...base,
+      ok: true,
+      submitted: 0,
+      skipped,
+      batches: [],
+      cursor,
+      count: valid.length,
+      sample: valid.slice(0, 20),
+    } as DeltaResult & { count: number };
+  }
+
+  const result = await submitToIndexNow(pages.map((p) => p.path));
+
+  if (result.ok && cursor) {
+    await saveIndexNowState({ lastSubmittedAt: cursor, lastSubmittedCount: result.submitted });
+  }
+
+  return { ...base, ...result, mode: "delta", since: state.lastSubmittedAt, cursor };
+}

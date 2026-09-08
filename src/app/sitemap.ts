@@ -3,6 +3,24 @@ import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
 import { slugify, getGameUrl } from "@/lib/routes";
+import { getRegisteredGamePages } from "@/lib/gameRegistry";
+
+/**
+ * O sitemap era estático (gerado só no build), então páginas de jogos novas ficavam de
+ * fora até o próximo deploy. Com ISR ele se regenera sozinho; 24h mantém a lista fresca
+ * sem varrer o Firestore a cada requisição.
+ */
+export const revalidate = 86400;
+
+/**
+ * Teto de páginas de jogos vindas do registro. O padrão é o limite do próprio formato
+ * (um sitemap único aceita no máximo 50.000 URLs, com margem) — truncar abaixo disso só
+ * esconderia páginas que existem. Em 2026-09-08 o registro tinha 11.802 jogos.
+ *
+ * O custo é uma leitura no Firestore por documento a cada regeneração (1x/dia via ISR).
+ * Baixe `SITEMAP_GAME_LIMIT` se essas leituras pesarem na cota.
+ */
+const REGISTRY_GAME_LIMIT = Number(process.env.SITEMAP_GAME_LIMIT || 45_000);
 
 const POPULAR_FALLBACK_IDS = [
   1942,   // The Witcher 3
@@ -149,5 +167,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   }
 
-  return [...staticPages, ...categoryPages, ...collectionPages, ...gamePages];
+  // 5. Páginas de jogos já registradas (todo jogo cuja página renderizou e ganhou
+  // tradução PT-BR). É o que faz o catálogo real aparecer no sitemap, e não apenas os
+  // ~60 títulos de rankings acima. Falha aqui nunca derruba o sitemap.
+  const registryPages: MetadataRoute.Sitemap = (
+    await getRegisteredGamePages({ limit: REGISTRY_GAME_LIMIT, direction: "desc" })
+  ).map((page) => {
+    // Um `updatedAt` corrompido geraria Invalid Date e quebraria a serialização do
+    // sitemap inteiro — na dúvida, usa a data da geração.
+    const parsed = page.updatedAt ? new Date(page.updatedAt) : null;
+    return {
+      url: `${baseUrl}${page.path}`,
+      lastModified: parsed && !Number.isNaN(parsed.getTime()) ? parsed : lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    };
+  });
+
+  // Dedupe por URL — um jogo popular também está no registro. A primeira ocorrência
+  // vence, então rankings (priority 0.7) têm precedência sobre o registro (0.6).
+  const byUrl = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const entry of [
+    ...staticPages,
+    ...categoryPages,
+    ...collectionPages,
+    ...gamePages,
+    ...registryPages,
+  ]) {
+    if (!byUrl.has(entry.url)) byUrl.set(entry.url, entry);
+  }
+
+  return Array.from(byUrl.values());
 }

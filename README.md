@@ -99,6 +99,52 @@ Variáveis relacionadas: `INDEXNOW_KEY` (opcional — a chave do repositório é
 `INDEXNOW_SECRET` (necessária apenas para disparos automatizados). Se trocar a chave,
 renomeie também o arquivo em `public/` para bater com o novo valor.
 
+### Páginas de jogos (URLs dinâmicas)
+
+`/game/[id]/[slug]` renderiza sob demanda, então não existe lista estática dessas URLs.
+A coleção **`game_translations`** funciona como registro: `src/lib/gameApi.ts` a grava
+sempre que uma página de jogo renderiza e gera tradução, guardando `gameId`, `gameName` e
+`updatedAt`. `src/lib/gameRegistry.ts` lê isso com o Admin SDK e monta o slug canônico via
+`getGameUrl` — sem chamar o IGDB.
+
+Ter tradução funciona como filtro de qualidade: significa que a página tem sinopse em
+PT-BR própria, e não apenas o texto em inglês espelhado da API.
+
+Esse registro alimenta duas coisas:
+
+- **O sitemap** passa a listar o catálogo real (não só os ~60 títulos de rankings) e agora
+  usa ISR — `revalidate = 86400`, uma regeneração por dia, sem depender de deploy. O teto
+  vem de `SITEMAP_GAME_LIMIT`, cujo padrão (45.000) acompanha o limite de 50.000 URLs de
+  um sitemap único. **Cada documento custa uma leitura no Firestore por regeneração** — em
+  2026-09-08 o registro tinha 11.802 jogos, ou ~11,8 mil leituras/dia. Se isso pesar na
+  cota, baixe a variável; se o registro passar de 50.000, o sitemap precisa virar índice
+  paginado.
+
+- **O envio incremental** (`mode: "delta"`), que é a forma correta de rotina:
+  ```bash
+  npm run seo:indexnow -- --delta            # só o que mudou desde a última vez
+  npm run seo:indexnow -- --delta --dry-run  # mostra sem enviar
+  ```
+  O cursor do último envio fica em `system/indexnow` no Firestore e **só avança se o
+  IndexNow aceitar o lote** — falha significa reenviar na próxima. Isso evita repetir as
+  mesmas URLs, que é o que rende `429`. Se a resposta traz `hasMore: true`, o lote encheu
+  (2.000 por padrão) e vale rodar de novo.
+
+  O lote é pequeno de propósito: em domínio novo no IndexNow é melhor subir aos poucos que
+  despejar o catálogo de uma vez. Com 11.802 páginas registradas, a primeira carga leva ~6
+  execuções — ou passe `{"mode":"delta","limit":10000}` para acelerar (10.000 é o máximo
+  por requisição que o IndexNow aceita).
+
+  `updatedAt` é gravado quando a tradução é criada, não a cada render, então uma página já
+  enviada não volta para a fila. A exceção é ganhar tradução de enredo depois da sinopse:
+  aí o `updatedAt` sobe e a página é reenviada — o que é semanticamente correto, já que o
+  conteúdo mudou de fato.
+
+No painel, **Enviar novidades** faz o delta e **Tudo** reenvia o sitemap inteiro.
+
+Sem `FIREBASE_SERVICE_ACCOUNT_KEY` o registro simplesmente devolve lista vazia: o sitemap
+continua saindo com as rotas fixas e o delta responde zero, sem quebrar nada.
+
 ---
 
 ## 🛠️ Tecnologias Utilizadas

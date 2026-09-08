@@ -27,7 +27,7 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [indexNow, setIndexNow] = useState<{
-    isPinging: boolean;
+    isPinging: false | "delta" | "all";
     ok: boolean;
     message: string | null;
   }>({ isPinging: false, ok: true, message: null });
@@ -74,8 +74,8 @@ export default function AdminSettingsPage() {
    * Notifica Bing/Yandex/Seznam/Naver (IndexNow) com todas as URLs do sitemap.
    * Fica fora do <form> para não disparar o submit das configurações.
    */
-  const handleIndexNowPing = async () => {
-    setIndexNow({ isPinging: true, ok: true, message: null });
+  const handleIndexNowPing = async (mode: "delta" | "all") => {
+    setIndexNow({ isPinging: mode, ok: true, message: null });
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("Sessão expirada. Entre novamente para continuar.");
@@ -83,7 +83,7 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/indexnow", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ all: true }),
+        body: JSON.stringify(mode === "delta" ? { mode: "delta" } : { all: true }),
       });
       const data = await res.json();
 
@@ -91,10 +91,15 @@ export default function AdminSettingsPage() {
         throw new Error(data?.error || data?.batches?.[0]?.message || "Falha ao notificar o IndexNow.");
       }
 
+      const nothingNew = mode === "delta" && data.submitted === 0;
       setIndexNow({
         isPinging: false,
         ok: true,
-        message: `${data.submitted} URL(s) enviadas ao IndexNow.`,
+        message: nothingNew
+          ? "Nada novo desde o último envio — nenhuma notificação necessária."
+          : `${data.submitted} URL(s) enviadas ao IndexNow.${
+              data.hasMore ? " Ainda há fila: rode novamente para continuar." : ""
+            }`,
       });
     } catch (e: any) {
       console.error("Erro ao acionar o IndexNow:", e);
@@ -600,24 +605,43 @@ export default function AdminSettingsPage() {
               <span>Indexação Instantânea (IndexNow)</span>
             </h3>
             <p className="text-xs text-gray-400 max-w-xl">
-              Avisa Bing, Yandex, Seznam e Naver sobre todas as URLs do sitemap de uma só vez.
-              Use após publicar novidades — o Google não usa IndexNow e continua pelo sitemap.
+              Avisa Bing, Yandex, Seznam e Naver sobre páginas novas ou atualizadas.
+              <strong className="text-gray-300"> Enviar novidades</strong> manda só o que mudou
+              desde a última vez — é a opção do dia a dia. O Google não usa IndexNow e continua
+              sendo atendido pelo sitemap.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleIndexNowPing}
-            disabled={indexNow.isPinging}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs transition-all min-h-[44px] shrink-0 disabled:opacity-60"
-          >
-            {indexNow.isPinging ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 text-[#00E5FF]" />
-            )}
-            <span>{indexNow.isPinging ? "Enviando..." : "Notificar buscadores"}</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleIndexNowPing("delta")}
+              disabled={Boolean(indexNow.isPinging)}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#00E5FF] hover:bg-[#00cbe3] text-black font-bold text-xs transition-all min-h-[44px] disabled:opacity-60"
+            >
+              {indexNow.isPinging === "delta" ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              <span>{indexNow.isPinging === "delta" ? "Enviando..." : "Enviar novidades"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleIndexNowPing("all")}
+              disabled={Boolean(indexNow.isPinging)}
+              title="Reenvia todas as URLs do sitemap, ignorando o cursor do último envio"
+              className="flex items-center gap-2 px-4 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs transition-all min-h-[44px] disabled:opacity-60"
+            >
+              {indexNow.isPinging === "all" ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Globe className="w-4 h-4 text-gray-400" />
+              )}
+              <span>Tudo</span>
+            </button>
+          </div>
         </div>
 
         {indexNow.message && (

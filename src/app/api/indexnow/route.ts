@@ -5,7 +5,9 @@ import {
   collectSitemapUrls,
   getIndexNowKey,
   getKeyLocation,
+  getIndexNowState,
   normalizeIndexNowUrls,
+  submitDeltaToIndexNow,
   submitToIndexNow,
 } from "@/lib/indexnow";
 
@@ -60,12 +62,14 @@ export async function GET(request: NextRequest) {
   const shouldSubmitAll = params.get("all") === "1" || params.get("all") === "true";
 
   if (!shouldSubmitAll) {
+    const state = await getIndexNowState();
     return NextResponse.json({
       configured: Boolean(getIndexNowKey()),
       keyLocation: getKeyLocation(),
       keyPreview: `${getIndexNowKey().slice(0, 6)}…${getIndexNowKey().slice(-4)}`,
       secretConfigured: Boolean(process.env.INDEXNOW_SECRET),
       endpoint: "https://api.indexnow.org/indexnow",
+      delta: state,
     });
   }
 
@@ -88,6 +92,31 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     body = {};
+  }
+
+  // Modo padrão de rotina: só as páginas de jogos registradas desde o último envio.
+  if (body?.mode === "delta") {
+    const result = await submitDeltaToIndexNow({
+      limit: typeof body?.limit === "number" ? body.limit : undefined,
+      dryRun: body?.dryRun === true,
+    });
+
+    if (result.submitted > 0 && auth.via === "admin" && auth.email) {
+      await recordAuditLog({
+        adminEmail: auth.email,
+        adminUid: auth.uid || "",
+        action: "IndexNow acionado (delta)",
+        category: "settings",
+        details: {
+          since: result.since,
+          cursor: result.cursor,
+          submitted: result.submitted,
+          hasMore: result.hasMore,
+        },
+      });
+    }
+
+    return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   }
 
   let urls: string[] = Array.isArray(body?.urls) ? body.urls.map(String) : [];

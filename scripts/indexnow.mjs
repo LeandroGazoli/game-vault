@@ -4,11 +4,17 @@
  *
  * Uso:
  *   node scripts/indexnow.mjs                       # lê o sitemap.xml publicado e envia tudo
+ *   node scripts/indexnow.mjs --delta               # só o que mudou desde o último envio
  *   node scripts/indexnow.mjs /game/1942/the-witcher-3-wild-hunt /rankings
  *   node scripts/indexnow.mjs https://www.mygameslist.com.br/calendar
  *
+ * `--delta` é a forma indicada para rotina/cron: ele chama a API do site, que consulta o
+ * registro de jogos e mantém o cursor do último envio — evita reenviar as mesmas URLs
+ * (o que rende `429`). Exige INDEXNOW_SECRET, a mesma configurada no host.
+ *
  * Variáveis de ambiente:
  *   INDEXNOW_KEY         chave (default: a chave publicada em public/<chave>.txt)
+ *   INDEXNOW_SECRET      obrigatória para --delta (autoriza a chamada à API do site)
  *   NEXT_PUBLIC_SITE_URL origem do site (default: https://www.mygameslist.com.br)
  */
 
@@ -40,9 +46,55 @@ function normalize(list) {
   return [...seen];
 }
 
+/**
+ * Delegado à API do site: só ela tem acesso ao registro de jogos no Firestore e ao
+ * cursor do último envio.
+ */
+async function runDelta(dryRun) {
+  const secret = process.env.INDEXNOW_SECRET;
+  if (!secret) {
+    console.error("--delta exige INDEXNOW_SECRET (a mesma definida no host).");
+    process.exit(1);
+  }
+
+  const res = await fetch(`${SITE_URL}/api/indexnow`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-indexnow-secret": secret },
+    body: JSON.stringify({ mode: "delta", dryRun }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.error(`HTTP ${res.status}:`, data?.error || data);
+    process.exit(1);
+  }
+
+  if (data.submitted === 0 && !dryRun) {
+    console.log(`Nada novo desde ${data.since || "o início"} — nenhum envio necessário.`);
+  } else {
+    console.log(
+      `${dryRun ? "[dry-run] " : ""}${dryRun ? data.count : data.submitted} URL(s) | desde: ${
+        data.since || "início"
+      } | novo cursor: ${data.cursor || "-"}`
+    );
+    (data.sample || []).forEach((u) => console.log("  ", u));
+  }
+
+  if (data.hasMore) {
+    console.log("Ainda há fila (lote cheio) — rode novamente para continuar.");
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
-  const urlList = normalize(args.length > 0 ? args : await urlsFromSitemap());
+  const dryRun = args.includes("--dry-run");
+
+  if (args.includes("--delta")) {
+    return runDelta(dryRun);
+  }
+
+  const positional = args.filter((a) => !a.startsWith("--"));
+  const urlList = normalize(positional.length > 0 ? positional : await urlsFromSitemap());
 
   if (urlList.length === 0) {
     console.error("Nenhuma URL válida para enviar.");
