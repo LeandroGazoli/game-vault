@@ -59,6 +59,14 @@ export default function ProfileHeroCard({
   const handleEdit = onOpenEditProfile || onOpenEditBio || onOpenTools;
   const themeStyles = getThemeStyles(user.theme);
 
+  // Acesso EFETIVO (considera expiração, tipo de concessão e rótulo custom)
+  const access = getEffectiveAccess(user);
+  const accessValidity = access.lifetime
+    ? "Vitalício"
+    : access.expiresAt
+    ? `até ${new Date(access.expiresAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+    : null;
+
   // Insígnias do usuário
   const titlesToDisplay =
     user.customTitles && user.customTitles.length > 0
@@ -116,7 +124,7 @@ export default function ProfileHeroCard({
                     {user.displayName}
                   </h1>
                   {/* Selo Azul de Verificado Gamer */}
-                  {(user.isVerified || user.isAdmin || user.plan === "vip" || user.plan === "pro") && (
+                  {(user.isVerified || user.isAdmin || access.plan === "vip" || access.plan === "pro") && (
                     <span
                       className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#00A3FF] text-white shadow-sm shrink-0"
                       title="Gamer Verificado MGL"
@@ -437,15 +445,15 @@ export default function ProfileHeroCard({
                   <span className={`text-xs ${themeStyles.textAccent} font-mono`}>@{user.username}</span>
                 </div>
 
-                {user.plan === "vip" ? (
+                {access.plan === "vip" ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
                     <Crown className="w-3.5 h-3.5 text-amber-400" />
-                    <span>VIP Member</span>
+                    <span>{access.label || "VIP Member"}</span>
                   </div>
-                ) : user.plan === "pro" ? (
+                ) : access.plan === "pro" ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-[#00E5FF] text-xs font-bold">
                     <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>PRO Pass</span>
+                    <span>{access.label || "PRO Pass"}</span>
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs">
@@ -652,18 +660,18 @@ export default function ProfileHeroCard({
         </div>
 
         {/* Faixa de Prestígio Neon */}
-        {user.plan === "vip" ? (
+        {access.plan === "vip" ? (
           <div className="relative z-10 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent border border-amber-500/40 flex items-center gap-2">
             <Crown className="w-4 h-4 text-amber-400 shrink-0" />
             <span className="text-xs font-mono font-black text-amber-300 uppercase tracking-wide">
-              MEMBRO FUNDADOR VIP • ACESSO VITALÍCIO
+              {access.label ? `${access.label} • VIP` : "MEMBRO VIP"} • {accessValidity === "Vitalício" ? "ACESSO VITALÍCIO" : accessValidity?.toUpperCase()}
             </span>
           </div>
-        ) : user.plan === "pro" ? (
+        ) : access.plan === "pro" ? (
           <div className={`relative z-10 p-2.5 rounded-xl bg-gradient-to-r ${themeStyles.bgSubtle} via-white/5 to-transparent border ${themeStyles.borderAccent} flex items-center gap-2`}>
             <Sparkles className={`w-4 h-4 ${themeStyles.textAccent} shrink-0`} />
             <span className={`text-xs font-mono font-black ${themeStyles.textAccent} uppercase tracking-wide`}>
-              VAULT OPERATIVE PRO • ACESSO TOTAL
+              {access.label ? `${access.label} • PRO` : "VAULT OPERATIVE PRO"} • {accessValidity === "Vitalício" ? "ACESSO TOTAL" : accessValidity?.toUpperCase()}
             </span>
           </div>
         ) : (
@@ -783,13 +791,13 @@ export default function ProfileHeroCard({
               @{user.username}
             </p>
             <div className="pt-0.5">
-              {user.plan === "vip" ? (
+              {access.plan === "vip" ? (
                 <span className="text-[11px] font-bold text-amber-300 tracking-wide uppercase">
-                  Membro VIP Vitalício
+                  {access.label || "Membro VIP"}{accessValidity ? ` • ${accessValidity}` : ""}
                 </span>
-              ) : user.plan === "pro" ? (
+              ) : access.plan === "pro" ? (
                 <span className="text-[11px] font-bold text-cyan-300 tracking-wide uppercase">
-                  Assinante PRO
+                  {access.label || "Assinante PRO"}{accessValidity ? ` • ${accessValidity}` : ""}
                 </span>
               ) : (
                 <span className="text-[11px] text-gray-500 uppercase tracking-wide">

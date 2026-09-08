@@ -55,7 +55,10 @@ export default function AdminUserDrawer({
   const [grantPlan, setGrantPlan] = useState<UserPlan>(user?.plan && user.plan !== "free" ? user.plan : "pro");
   const [grantSource, setGrantSource] = useState<PlanSource>((user?.planSource as PlanSource) || "courtesy");
   const [grantLabel, setGrantLabel] = useState<string>(user?.planLabel || "");
-  const [lifetime, setLifetime] = useState<boolean>(!user?.premiumUntil);
+  // Padrão = acesso por período (a maioria dos brindes tem prazo). Vitalício só se já era vitalício.
+  const [lifetime, setLifetime] = useState<boolean>(
+    user?.plan !== "free" && !user?.premiumUntil && !!user?.planSource
+  );
   const [durationValue, setDurationValue] = useState<number>(30);
   const [durationUnit, setDurationUnit] = useState<"days" | "months" | "years">("days");
 

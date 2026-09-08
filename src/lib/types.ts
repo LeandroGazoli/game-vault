@@ -522,9 +522,35 @@ export function getEffectiveAccess(
   const rawPlan: UserPlan = user?.plan || "free";
   const source = (user?.planSource as PlanSource | undefined) || null;
   const label = user?.planLabel || null;
+  const isAdmin = !!user?.isAdmin;
 
-  // Admins têm acesso pleno permanente
-  if (user?.isAdmin) {
+  // Calcula o acesso REAL (concessão/compra) primeiro, respeitando a vigência
+  let result: EffectiveAccess;
+  if (rawPlan === "free") {
+    result = { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: false, expiresAt: null, source, label };
+  } else {
+    const until = user?.premiumUntil ? new Date(user.premiumUntil).getTime() : null;
+    const hasExpiry = until !== null && !isNaN(until);
+    const expired = hasExpiry && until! < Date.now();
+    if (expired) {
+      result = { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: true, expiresAt: user?.premiumUntil || null, source, label };
+    } else {
+      result = {
+        plan: rawPlan,
+        isPremium: true,
+        hideAds: user?.hideAds !== false,
+        lifetime: !hasExpiry,
+        expired: false,
+        expiresAt: hasExpiry ? user?.premiumUntil || null : null,
+        source,
+        label,
+      };
+    }
+  }
+
+  // Admin sempre tem acesso: se o acesso real NÃO for premium (free/expirado), concede acesso
+  // administrativo vitalício. Se o admin tiver uma concessão/compra real ativa, mostra a real.
+  if (isAdmin && !result.isPremium) {
     return {
       plan: rawPlan === "free" ? "vip" : rawPlan,
       isPremium: true,
@@ -537,28 +563,7 @@ export function getEffectiveAccess(
     };
   }
 
-  if (rawPlan === "free") {
-    return { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: false, expiresAt: null, source, label };
-  }
-
-  const until = user?.premiumUntil ? new Date(user.premiumUntil).getTime() : null;
-  const hasExpiry = until !== null && !isNaN(until);
-  const expired = hasExpiry && until! < Date.now();
-
-  if (expired) {
-    return { plan: "free", isPremium: false, hideAds: false, lifetime: false, expired: true, expiresAt: user?.premiumUntil || null, source, label };
-  }
-
-  return {
-    plan: rawPlan,
-    isPremium: true,
-    hideAds: user?.hideAds !== false,
-    lifetime: !hasExpiry,
-    expired: false,
-    expiresAt: hasExpiry ? user?.premiumUntil || null : null,
-    source,
-    label,
-  };
+  return result;
 }
 
 export interface AuditLogEntry {
