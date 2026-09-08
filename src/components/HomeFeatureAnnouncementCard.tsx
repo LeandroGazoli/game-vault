@@ -73,7 +73,7 @@ export default function HomeFeatureAnnouncementCard() {
       {/* Botão de Fechar no Canto */}
       <button
         onClick={handleDismiss}
-        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+        className="absolute top-3 right-3 z-30 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors active:scale-95 cursor-pointer"
         title="Dispensar aviso"
         aria-label="Dispensar aviso"
       >
@@ -82,7 +82,7 @@ export default function HomeFeatureAnnouncementCard() {
 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Lado Esquerdo: Badges, Título e Explicação */}
-        <div className="space-y-3 max-w-3xl pr-6">
+        <div className="space-y-3 max-w-3xl pr-10 sm:pr-12">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 text-[#00E5FF] text-xs font-black uppercase tracking-wider font-mono shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />

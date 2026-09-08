@@ -23,6 +23,10 @@ export default function MobileBottomNav() {
 
   const profileHref = user?.username ? getProfileUrl(user.username) : "/perfil";
 
+  // Telas cheias que já possuem barra de ações fixa própria (ex.: editor de perfil)
+  // não exibem a navegação inferior — senão ela cobre o rodapé com o botão Salvar.
+  if (pathname?.startsWith("/perfil/editar")) return null;
+
   return (
     <>
       <nav

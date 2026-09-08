@@ -2001,7 +2001,7 @@ export default function ProfileEditView({
         </main>
 
         {/* Fixed Footer Bar */}
-        <div className="fixed bottom-0 inset-x-0 z-40 bg-[#101217]/95 backdrop-blur-xl border-t border-white/10 px-4 sm:px-8 py-3.5 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)] shadow-2xl">
+        <div className="fixed bottom-0 inset-x-0 z-[60] bg-[#101217]/95 backdrop-blur-xl border-t border-white/10 px-4 sm:px-8 py-3.5 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)] shadow-2xl">
           <div className="max-w-4xl mx-auto">
             {footerContent}
           </div>
