@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { SystemSettings } from "@/lib/types";
-import { getSystemSettings, updateSystemSettings, recordAuditLog } from "@/lib/firebase";
+import { getSystemSettings, updateSystemSettings, recordAuditLog, auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import {
   Settings,
@@ -16,6 +16,8 @@ import {
   Bot,
   MessageSquare,
   RefreshCw,
+  Globe,
+  Send,
 } from "lucide-react";
 
 export default function AdminSettingsPage() {
@@ -24,6 +26,11 @@ export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [indexNow, setIndexNow] = useState<{
+    isPinging: boolean;
+    ok: boolean;
+    message: string | null;
+  }>({ isPinging: false, ok: true, message: null });
 
   const fetchSettings = async () => {
     setIsLoading(true);
@@ -60,6 +67,42 @@ export default function AdminSettingsPage() {
       console.error("Erro ao salvar configurações:", e);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * Notifica Bing/Yandex/Seznam/Naver (IndexNow) com todas as URLs do sitemap.
+   * Fica fora do <form> para não disparar o submit das configurações.
+   */
+  const handleIndexNowPing = async () => {
+    setIndexNow({ isPinging: true, ok: true, message: null });
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Sessão expirada. Entre novamente para continuar.");
+
+      const res = await fetch("/api/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.batches?.[0]?.message || "Falha ao notificar o IndexNow.");
+      }
+
+      setIndexNow({
+        isPinging: false,
+        ok: true,
+        message: `${data.submitted} URL(s) enviadas ao IndexNow.`,
+      });
+    } catch (e: any) {
+      console.error("Erro ao acionar o IndexNow:", e);
+      setIndexNow({
+        isPinging: false,
+        ok: false,
+        message: e?.message || "Erro inesperado ao acionar o IndexNow.",
+      });
     }
   };
 
@@ -547,6 +590,53 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </form>
+
+      {/* Card: IndexNow (fora do form — o botão não deve submeter as configurações) */}
+      <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#00E5FF]" />
+              <span>Indexação Instantânea (IndexNow)</span>
+            </h3>
+            <p className="text-xs text-gray-400 max-w-xl">
+              Avisa Bing, Yandex, Seznam e Naver sobre todas as URLs do sitemap de uma só vez.
+              Use após publicar novidades — o Google não usa IndexNow e continua pelo sitemap.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleIndexNowPing}
+            disabled={indexNow.isPinging}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs transition-all min-h-[44px] shrink-0 disabled:opacity-60"
+          >
+            {indexNow.isPinging ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 text-[#00E5FF]" />
+            )}
+            <span>{indexNow.isPinging ? "Enviando..." : "Notificar buscadores"}</span>
+          </button>
+        </div>
+
+        {indexNow.message && (
+          <div
+            className={`p-3 rounded-2xl border text-xs font-semibold flex items-center gap-2 ${
+              indexNow.ok
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+                : "bg-rose-500/15 border-rose-500/30 text-rose-300"
+            }`}
+          >
+            {indexNow.ok ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{indexNow.message}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

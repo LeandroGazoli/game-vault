@@ -64,6 +64,43 @@ NEXT_PUBLIC_FIREBASE_APP_ID=seu_app_id
 
 ---
 
+## 🔎 SEO — IndexNow (Bing, Yandex, Seznam, Naver)
+
+A chave IndexNow do site é `48fc588eda9f43cbb2e5d4e272fe41d2` e fica publicada em
+`public/48fc588eda9f43cbb2e5d4e272fe41d2.txt` — é esse arquivo que prova a posse do
+domínio. **Ele precisa estar no ar (deploy feito) antes de qualquer envio**, senão o
+IndexNow responde `403`.
+
+> O Google **não** participa do IndexNow: ele continua sendo atendido pelo
+> `sitemap.xml` + Search Console. O IndexNow acelera Bing/Copilot, Yandex e afins.
+
+### Três formas de notificar
+
+1. **Painel admin** → `/admin/settings` → card *Indexação Instantânea (IndexNow)*.
+   Envia todas as URLs do `sitemap.ts` e registra o disparo na auditoria.
+
+2. **Linha de comando** (útil em CI ou após publicar algo específico):
+   ```bash
+   npm run seo:indexnow                                   # sitemap.xml inteiro
+   npm run seo:indexnow -- /game/1942/the-witcher-3-wild-hunt /rankings
+   ```
+
+3. **API** `POST /api/indexnow` — aceita admin autenticado (`Bearer <idToken>`) ou
+   automação via header `x-indexnow-secret`:
+   ```bash
+   curl -X POST https://www.mygameslist.com.br/api/indexnow \
+     -H "x-indexnow-secret: $INDEXNOW_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{"all": true}'
+   ```
+   Corpo alternativo: `{"urls": ["/game/119277/elden-ring"]}`.
+
+Variáveis relacionadas: `INDEXNOW_KEY` (opcional — a chave do repositório é o padrão) e
+`INDEXNOW_SECRET` (necessária apenas para disparos automatizados). Se trocar a chave,
+renomeie também o arquivo em `public/` para bater com o novo valor.
+
+---
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **Next.js 15 (App Router)** + **React 19** + **TypeScript**

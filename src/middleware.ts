@@ -45,7 +45,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt, icon.svg, manifest.webmanifest, manifest.json, sw.js, offline.html
+     * - a chave de verificacao do IndexNow na raiz (<32 hex>.txt), que precisa ser
+     *   servida crua para Bing/Yandex validarem a posse do dominio
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|icon.svg|manifest.webmanifest|manifest.json|sw.js|offline.html).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|icon.svg|manifest.webmanifest|manifest.json|sw.js|offline.html|[a-f0-9]{32}\.txt).*)",
   ],
 };
