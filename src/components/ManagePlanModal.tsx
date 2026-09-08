@@ -135,7 +135,7 @@ export default function ManagePlanModal({ isOpen, onClose, user, onUpgrade }: Ma
 
   return (
     <AdaptiveModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg" hideCloseButton={true}>
-      <div className="space-y-6 relative">
+      <div className="space-y-6 relative overflow-x-hidden max-w-full">
         <div className={`absolute -top-24 -right-24 w-60 h-60 rounded-full blur-3xl pointer-events-none ${isVip ? "bg-amber-500/15" : "bg-[#00E5FF]/15"}`} />
 
         {/* Cabeçalho */}
@@ -248,19 +248,20 @@ export default function ManagePlanModal({ isOpen, onClose, user, onUpgrade }: Ma
             </button>
           )}
 
-          {/* Gerenciar cartão/faturas no Stripe (assinatura recorrente) */}
-          {recurring && (
+          {/* Gerenciar no Stripe: disponível para QUALQUER acesso de compra (recorrente ou não) —
+              caminho universal e confiável para gerenciar/cancelar/faturas. Não aparece para brindes. */}
+          {isPurchase && !loadingSub && (
             <button
               onClick={handleOpenPortal}
               disabled={portalLoading}
               className="w-full py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 border border-white/10"
             >
               {portalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 text-[#00E5FF]" />}
-              Cartão e faturas
+              {recurring ? "Gerenciar assinatura, cartão e faturas" : "Gerenciar assinatura no Stripe"}
             </button>
           )}
 
-          {/* Cancelar assinatura (só recorrente e ainda não cancelada) */}
+          {/* Cancelamento inline (quando há assinatura recorrente ativa detectada) */}
           {recurring && !sub?.cancelAtPeriodEnd && !cancelDone && (
             confirmCancel ? (
               <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-3 space-y-2">

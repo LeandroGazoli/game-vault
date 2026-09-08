@@ -54,14 +54,16 @@ export async function GET(request: NextRequest) {
     const amount = typeof price?.unit_amount === "number" ? price.unit_amount / 100 : null;
     const interval = price?.recurring?.interval || null;
 
+    // O fim do período pode estar no nível da assinatura (APIs antigas) ou do item (APIs novas)
+    const periodEndTs =
+      (relevant as any).current_period_end || (item as any)?.current_period_end || null;
+
     return NextResponse.json({
       hasSubscription: true,
       customerId,
       subscriptionId: relevant.id,
       status: relevant.status,
-      currentPeriodEnd: (relevant as any).current_period_end
-        ? new Date((relevant as any).current_period_end * 1000).toISOString()
-        : null,
+      currentPeriodEnd: periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null,
       cancelAtPeriodEnd: relevant.cancel_at_period_end,
       canceledAt: relevant.canceled_at ? new Date(relevant.canceled_at * 1000).toISOString() : null,
       amount,
