@@ -21,7 +21,6 @@ import {
   query,
   where,
   limit,
-  runTransaction,
   writeBatch,
   orderBy,
   onSnapshot,
@@ -551,83 +550,32 @@ export async function castFeedbackVote(
   userId: string,
   targetVote: 1 | -1
 ): Promise<{ userVote: 1 | -1 | 0; score: number; upvotes: number; downvotes: number }> {
-  if (!feedbackId || !userId || !db) {
+  if (!feedbackId) {
     throw new Error("Parâmetros inválidos para votação");
   }
   if (!auth?.currentUser || auth.currentUser.uid !== userId) {
     throw new Error("Você precisa estar conectado com sua conta para votar.");
   }
 
-  const feedbackRef = doc(db, "feedback", feedbackId);
-  const voteRef = doc(db, "feedback", feedbackId, "votes", userId);
-
-  return await runTransaction(db, async (transaction) => {
-    const feedbackSnap = await transaction.get(feedbackRef);
-    if (!feedbackSnap.exists()) {
-      throw new Error("Feedback não encontrado");
-    }
-
-    const feedbackData = feedbackSnap.data() as FeedbackItem;
-    let upvotes = feedbackData.upvotesCount || 0;
-    let downvotes = feedbackData.downvotesCount || 0;
-
-    const voteSnap = await transaction.get(voteRef);
-    let newUserVote: 1 | -1 | 0 = targetVote;
-
-    if (!voteSnap.exists()) {
-      // Primeiro voto deste usuário
-      if (targetVote === 1) upvotes += 1;
-      else downvotes += 1;
-
-      transaction.set(voteRef, {
-        vote: targetVote,
-        userId,
-        updatedAt: new Date().toISOString(),
-      });
-    } else {
-      const existingVote = voteSnap.data().vote as 1 | -1;
-
-      if (existingVote === targetVote) {
-        // Usuário clicou novamente no mesmo botão -> cancela o voto!
-        newUserVote = 0;
-        if (targetVote === 1) upvotes = Math.max(0, upvotes - 1);
-        else downvotes = Math.max(0, downvotes - 1);
-
-        transaction.delete(voteRef);
-      } else {
-        // Usuário trocou de voto (ex: de Upvote para Downvote)
-        if (targetVote === 1) {
-          upvotes += 1;
-          downvotes = Math.max(0, downvotes - 1);
-        } else {
-          downvotes += 1;
-          upvotes = Math.max(0, upvotes - 1);
-        }
-
-        transaction.set(voteRef, {
-          vote: targetVote,
-          userId,
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    const newScore = upvotes - downvotes;
-
-    transaction.update(feedbackRef, {
-      upvotesCount: upvotes,
-      downvotesCount: downvotes,
-      score: newScore,
-      updatedAt: new Date().toISOString(),
-    });
-
-    return {
-      userVote: newUserVote,
-      score: newScore,
-      upvotes,
-      downvotes,
-    };
+  // Contagem de votos é feita no SERVIDOR (Admin SDK) para impedir forja de score/contadores.
+  // As Security Rules bloqueiam a escrita direta dos contadores e do ledger pelo cliente.
+  const token = await auth.currentUser.getIdToken();
+  const res = await fetch("/api/feedback/vote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ feedbackId, targetVote }),
   });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error || "Erro ao registrar voto.");
+  }
+  return {
+    userVote: data.userVote as 1 | -1 | 0,
+    score: data.score,
+    upvotes: data.upvotes,
+    downvotes: data.downvotes,
+  };
 }
 
 export async function getUserFeedbackVotes(
@@ -925,7 +873,18 @@ export async function getTopGamersLeaderboard(
   }
 
   try {
-    const snapAll = await getDocs(query(collection(db, "users"), limit(100)));
+    // Ordena pelo XP real (gamerXp gravado pelo servidor) para um ranking global consistente,
+    // em vez de amostrar 100 usuários arbitrários. Usa índice de campo único automático.
+    // Fallback defensivo: se o índice ainda não estiver pronto, cai para a query sem ordenação.
+    let snapAll;
+    try {
+      snapAll = await getDocs(
+        query(collection(db, "users"), orderBy("gamerXp", "desc"), limit(100))
+      );
+    } catch (idxErr) {
+      console.warn("Ranking: orderBy(gamerXp) indisponível, usando fallback sem ordenação.", idxErr);
+      snapAll = await getDocs(query(collection(db, "users"), limit(100)));
+    }
     const list: UserProfile[] = [];
 
     for (const docSnap of snapAll.docs) {

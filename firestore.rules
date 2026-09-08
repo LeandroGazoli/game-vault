@@ -53,7 +53,7 @@ service cloud.firestore {
       allow update: if isVerifiedAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
+          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'username', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
           'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles'
         ])
       );
@@ -105,17 +105,21 @@ service cloud.firestore {
         request.resource.data.description.size() >= 15 &&
         request.resource.data.description.size() <= 3000;
 
-      // Atualização: Admin verificado tem controle total (status, notas da equipe e concessão de prêmios).
-      // Usuários autenticados podem atualizar contadores de votos ou o próprio autor pode editar seu texto
+      // Atualização: Admin verificado tem controle total. Os CONTADORES DE VOTO (upvotesCount,
+      // downvotesCount, score) NÃO são mais graváveis pelo cliente — só pelo servidor via Admin SDK
+      // (/api/feedback/vote), impedindo forja de score. Cliente comum só pode:
+      //  - incrementar commentsCount (ao criar comentário), ou
+      //  - o próprio autor editar o texto (sem tocar em status/recompensa/contadores de voto).
       allow update: if isVerifiedAdmin() || (
         isAuthenticated() && (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'upvotesCount', 'downvotesCount', 'score', 'commentsCount', 'updatedAt'
+            'commentsCount', 'updatedAt'
           ]) ||
           (
             resource.data.authorId == request.auth.uid &&
             !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-              'status', 'adminResponse', 'adminResponseAt', 'rewarded', 'rewardType', 'rewardTitle', 'rewardGrantedAt', 'authorId'
+              'status', 'adminResponse', 'adminResponseAt', 'rewarded', 'rewardType', 'rewardTitle', 'rewardGrantedAt', 'authorId',
+              'upvotesCount', 'downvotesCount', 'score'
             ])
           )
         )
@@ -124,10 +128,11 @@ service cloud.firestore {
       // Deleção permitida apenas pelo autor da sugestão ou admin verificado
       allow delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
 
-      // Votação individual: cada usuário gerencia exclusivamente seu documento de voto
+      // Ledger de voto: leitura pública (a UI mostra o voto do usuário), mas escrita só pelo
+      // servidor (Admin SDK) — impede manipular o próprio ledger para reinflar contadores.
       match /votes/{userId} {
         allow read: if true;
-        allow write: if isOwner(userId) || isVerifiedAdmin();
+        allow write: if isVerifiedAdmin();
       }
 
       // Discussões e comentários da comunidade
