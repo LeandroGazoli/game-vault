@@ -15,15 +15,12 @@ import {
   doc,
   setDoc,
   getDoc,
-  updateDoc,
   collection,
   getDocs,
   deleteDoc,
   query,
   where,
   limit,
-  increment,
-  arrayUnion,
   runTransaction,
   writeBatch,
   orderBy,
@@ -1190,38 +1187,9 @@ export async function updateGamificationConfig(
   );
 }
 
-// ---- Concessão idempotente de XP bônus ----
-
-/**
- * Concede XP bônus ao usuário por uma conquista/missão específica, uma única vez.
- * Idempotente via claimedRewards: se o rewardId já foi pago, é no-op.
- * Retorna o XP efetivamente concedido (0 se já havia sido pago).
- */
-export async function awardGamificationXp(
-  userId: string,
-  rewardId: string,
-  xp: number
-): Promise<number> {
-  if (!db || !userId || !rewardId || !xp || xp <= 0) return 0;
-  try {
-    const userRef = doc(db, "users", userId);
-    const granted = await runTransaction(db, async (tx) => {
-      const snap = await tx.get(userRef);
-      if (!snap.exists()) return 0;
-      const claimed: string[] = (snap.data().claimedRewards as string[]) || [];
-      if (claimed.includes(rewardId)) return 0;
-      tx.update(userRef, {
-        bonusXp: increment(xp),
-        claimedRewards: arrayUnion(rewardId),
-        updatedAt: new Date().toISOString(),
-      });
-      return xp;
-    });
-    return granted;
-  } catch (e) {
-    console.error("Erro ao conceder XP de gamificação:", e);
-    return 0;
-  }
-}
+// ---- Concessão de XP bônus ----
+// A concessão de XP foi movida 100% para o servidor (Admin SDK) em
+// /api/gamification/sync, para impedir forja client-side de bonusXp/claimedRewards.
+// As Security Rules bloqueiam a escrita desses campos pelo cliente.
 
 

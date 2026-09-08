@@ -36,14 +36,25 @@ service cloud.firestore {
         request.resource.data.isAdmin == false &&
         request.resource.data.isPremium == false &&
         (!('banned' in request.resource.data) || request.resource.data.banned == false) &&
-        (!('suspended' in request.resource.data) || request.resource.data.suspended == false)
+        (!('suspended' in request.resource.data) || request.resource.data.suspended == false) &&
+        (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false) &&
+        (!('hideAds' in request.resource.data) || request.resource.data.hideAds == false) &&
+        (!('gamerXp' in request.resource.data) || request.resource.data.gamerXp == 0) &&
+        (!('gamerLevel' in request.resource.data) || request.resource.data.gamerLevel <= 1) &&
+        (!('bonusXp' in request.resource.data) || request.resource.data.bonusXp == 0) &&
+        (!('claimedRewards' in request.resource.data) || request.resource.data.claimedRewards.size() == 0) &&
+        (!('customTitles' in request.resource.data) || request.resource.data.customTitles.size() == 0) &&
+        (!('createdCustomTitles' in request.resource.data) || request.resource.data.createdCustomTitles.size() == 0)
       );
 
-      // Atualização de perfil: impede que o próprio usuário mude plano, se promova a admin ou remova suspensões (Prevenção de BOPLA / Mass Assignment)
+      // Atualização de perfil: impede que o próprio usuário mude plano, se promova a admin, remova
+      // suspensões, forje XP/nível, se auto-verifique, remova anúncios ou conceda títulos/recompensas.
+      // (Prevenção de BOPLA / Mass Assignment). Estes campos só são escritos pelo servidor (Admin SDK).
       allow update: if isVerifiedAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'banned', 'suspended', 'moderationReason', 'moderatedAt'
+          'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'email', 'uid', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
+          'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles'
         ])
       );
 
@@ -61,6 +72,7 @@ service cloud.firestore {
     match /game_translations/{gameId} {
       allow read: if true;
       allow create, update: if
+        isAuthenticated() &&
         request.resource.data.source == "free_engine" &&
         request.resource.data.keys().hasOnly([
           'gameId', 'gameName', 'originalText', 'translatedText',
@@ -125,8 +137,15 @@ service cloud.firestore {
           request.resource.data.authorId == request.auth.uid &&
           request.resource.data.content is string &&
           request.resource.data.content.size() >= 3 &&
-          request.resource.data.content.size() <= 1000;
-        allow update, delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+          request.resource.data.content.size() <= 1000 &&
+          // Impede que usuário comum se passe por resposta oficial da equipe
+          (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false || isVerifiedAdmin());
+        // Autor pode editar o próprio comentário, mas não pode se auto-promover a admin nem trocar o autor
+        allow update: if isVerifiedAdmin() || (
+          isAuthenticated() && resource.data.authorId == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'authorId'])
+        );
+        allow delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       }
     }
 

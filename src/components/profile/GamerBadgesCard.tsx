@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { LibraryStats, calculateGamerLevel, GamificationAchievementDef } from "@/lib/types";
-import { getAchievementDefs, awardGamificationXp } from "@/lib/firebase";
+import { getAchievementDefs } from "@/lib/firebase";
 import { evaluateDef, iconFromName } from "@/lib/gamification";
 import {
   Award,
@@ -54,20 +54,14 @@ export interface SteamBadgeItem {
 interface GamerBadgesCardProps {
   stats?: LibraryStats | null;
   gamerLevel?: number;
+  // Mantidos por compatibilidade com o chamador; a concessão de XP agora é 100% no servidor.
   userId?: string;
   isOwner?: boolean;
   claimedRewards?: string[];
 }
 
-export default function GamerBadgesCard({
-  stats,
-  gamerLevel,
-  userId,
-  isOwner,
-  claimedRewards,
-}: GamerBadgesCardProps) {
+export default function GamerBadgesCard({ stats, gamerLevel }: GamerBadgesCardProps) {
   const [dynamicDefs, setDynamicDefs] = useState<GamificationAchievementDef[]>([]);
-  const awardedRef = useRef<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"achievements" | "badges">("achievements");
   const [filter, setFilter] = useState<"all" | "unlocked" | "locked" | "rare">("all");
   const [selectedAchievement, setSelectedAchievement] = useState<GamerAchievement | null>(null);
@@ -325,24 +319,6 @@ export default function GamerBadgesCard({
       };
     });
   }, [dynamicDefs, stats, effectiveLevel]);
-
-  // Concede XP real (uma única vez) ao dono quando uma conquista dinâmica é desbloqueada
-  useEffect(() => {
-    if (!isOwner || !userId || dynamicDefs.length === 0) return;
-    const claimed = new Set(claimedRewards || []);
-    dynamicDefs.forEach((def) => {
-      if (!def.rewardXp || def.rewardXp <= 0) return;
-      if (claimed.has(def.id) || awardedRef.current.has(def.id)) return;
-      const ev = evaluateDef(
-        { metric: def.metric, targetValue: def.targetValue },
-        { stats, level: effectiveLevel }
-      );
-      if (ev.isUnlocked) {
-        awardedRef.current.add(def.id);
-        awardGamificationXp(userId, def.id, def.rewardXp).catch(() => {});
-      }
-    });
-  }, [isOwner, userId, dynamicDefs, claimedRewards, stats, effectiveLevel]);
 
   // Coleção de Insígnias Steam (Badges com Níveis 1 a 5 e +XP)
   const steamBadges: SteamBadgeItem[] = useMemo(() => {

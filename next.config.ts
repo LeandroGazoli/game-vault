@@ -143,6 +143,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // firebase-admin usa dependências nativas (gRPC) — nunca deve ser empacotado no bundle.
+  serverExternalPackages: ["firebase-admin"],
   experimental: {
     optimizePackageImports: ["lucide-react", "canvas-confetti"],
   },

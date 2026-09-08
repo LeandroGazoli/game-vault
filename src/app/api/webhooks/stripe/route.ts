@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { saveUserProfile, getUserProfile } from "@/lib/firebase";
+import { adminSaveUserProfile } from "@/lib/firebaseAdmin";
 import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -53,12 +54,11 @@ export async function POST(request: NextRequest) {
             ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
             : null;
 
-          await saveUserProfile(userId, {
+          await adminSaveUserProfile(userId, {
             plan,
             isPremium: true,
             hideAds: true,
             premiumUntil,
-            updatedAt: new Date().toISOString(),
           });
           console.log(`Usuário ${userId} atualizado com sucesso para plano ${plan} (avulso: ${isSingleMonth})!`);
         }
@@ -70,11 +70,10 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
 
         if (userId) {
-          await saveUserProfile(userId, {
+          await adminSaveUserProfile(userId, {
             plan: "free",
             isPremium: false,
             hideAds: false,
-            updatedAt: new Date().toISOString(),
           });
           console.log(`Assinatura do usuário ${userId} cancelada.`);
         }

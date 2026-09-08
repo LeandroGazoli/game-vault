@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LibraryStats,
@@ -9,7 +9,7 @@ import {
   GamificationMissionDef,
   GamificationConfig,
 } from "@/lib/types";
-import { getMissionDefs, getGamificationConfig, awardGamificationXp } from "@/lib/firebase";
+import { getMissionDefs, getGamificationConfig } from "@/lib/firebase";
 import {
   evaluateDef,
   iconFromName,
@@ -53,7 +53,6 @@ export default function GamerQuestsCard({
 
   const [dynamicMissions, setDynamicMissions] = useState<GamificationMissionDef[]>([]);
   const [config, setConfig] = useState<GamificationConfig | null>(null);
-  const awardedRef = useRef<Set<string>>(new Set());
 
   const level = useMemo(
     () => calculateGamerLevel(stats, undefined, user.plan, user.bonusXp).level,
@@ -197,18 +196,8 @@ export default function GamerQuestsCard({
     () => [...quests, ...dynamicQuests],
     [quests, dynamicQuests]
   );
-
-  // Concede XP real (uma vez) ao dono quando uma missão dinâmica é concluída
-  useEffect(() => {
-    if (!isOwner || !user.uid || dynamicMissions.length === 0) return;
-    const claimed = new Set(user.claimedRewards || []);
-    dynamicQuests.forEach((q) => {
-      if (!q.isCompleted || !q.rewardXp || q.rewardXp <= 0) return;
-      if (claimed.has(q.rewardId) || awardedRef.current.has(q.rewardId)) return;
-      awardedRef.current.add(q.rewardId);
-      awardGamificationXp(user.uid, q.rewardId, q.rewardXp).catch(() => {});
-    });
-  }, [isOwner, user.uid, user.claimedRewards, dynamicQuests, dynamicMissions.length]);
+  // A concessão de XP das missões dinâmicas é feita 100% no servidor (/api/gamification/sync),
+  // acionada pelo GameLibraryContext quando as estatísticas mudam. Aqui apenas exibimos.
 
   const completedCount = allQuests.filter((q) => q.isCompleted).length;
   const totalEarnedXp = allQuests

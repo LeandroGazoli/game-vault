@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { saveUserProfile, getUserProfile } from "@/lib/firebase";
+import { adminSaveUserProfile } from "@/lib/firebaseAdmin";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -51,13 +52,12 @@ export async function GET(request: NextRequest) {
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
-    // 3. Atualiza perfil no Firestore
-    await saveUserProfile(userId, {
+    // 3. Atualiza perfil no Firestore via Admin SDK (ignora Security Rules; campos travados no cliente)
+    await adminSaveUserProfile(userId, {
       plan,
       isPremium: true,
       hideAds: true,
       premiumUntil,
-      updatedAt: new Date().toISOString(),
     });
 
     console.log(

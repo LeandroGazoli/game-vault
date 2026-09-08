@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, useCall
 import { UserGame, GameStatus, LibraryStats, calculateGamerLevel } from "@/lib/types";
 import { useAuth } from "./AuthContext";
 import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames, saveUserProfile } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 import { triggerSuccessHaptic } from "@/lib/capacitor";
 
@@ -300,7 +301,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   // Controle de persistência de nível e comemoração única de Level-Up
   const isHydratedRef = useRef(false);
   const celebratedLevelRef = useRef<number>(0);
-  const lastSavedGamerRef = useRef<{ level: number; xp: number } | null>(null);
+  const lastSyncSigRef = useRef<string | null>(null);
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; oldLevel: number; rankTitle: string } | null>(null);
 
   // Reseta referências se o usuário mudar ou deslogar
@@ -310,7 +311,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       currentUserIdRef.current = user?.uid ?? null;
       isHydratedRef.current = false;
       celebratedLevelRef.current = 0;
-      lastSavedGamerRef.current = null;
+      lastSyncSigRef.current = null;
       setLevelUpData(null);
     }
   }, [user?.uid]);
@@ -324,13 +325,46 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     setLevelUpData(null);
   }, [user, levelUpData]);
 
+  // Dispara o recálculo/persistência de XP e nível NO SERVIDOR (Admin SDK).
+  // O cliente não grava mais gamerXp/gamerLevel/bonusXp — as Security Rules bloqueiam.
+  // O resultado volta para a UI automaticamente via onSnapshot do doc do usuário (AuthContext).
+  const syncGamificationServer = useCallback(async () => {
+    if (!auth?.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await fetch("/api/gamification/sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (err) {
+      console.warn("Erro ao sincronizar gamificação no servidor:", err);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user || isLoading) return;
     const currentInfo = calculateGamerLevel(stats, undefined, user.plan, user.bonusXp);
-    const { level, xp, rankTitle } = currentInfo;
+    const { level, rankTitle } = currentInfo;
 
-    // 1. Fase de Hidratação Inicial:
-    // NUNCA dispara comemoração no carregamento da página, F5 ou login.
+    // Assinatura baseada SOMENTE nas estatísticas (não no bonusXp) para evitar loop:
+    // o servidor grava bonusXp -> onSnapshot atualiza o user -> este efeito roda de novo,
+    // mas a assinatura não muda, então não re-dispara o sync.
+    const statsSig = [
+      stats.completedCount,
+      stats.playingCount,
+      stats.libraryCount ?? 0,
+      stats.totalGames,
+      Math.floor(stats.totalPlaytimeHours),
+      stats.averageRating,
+    ].join("|");
+
+    if (lastSyncSigRef.current !== statsSig) {
+      lastSyncSigRef.current = statsSig;
+      // Recalcula e concede XP no servidor sempre que as estatísticas mudarem
+      void syncGamificationServer();
+    }
+
+    // 1. Fase de Hidratação Inicial: NUNCA dispara comemoração no carregamento/F5/login.
     if (!isHydratedRef.current) {
       isHydratedRef.current = true;
 
@@ -341,7 +375,6 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       } catch {}
 
       const firestoreCelebrated = user.celebratedGamerLevel || user.gamerLevel || 0;
-      // Define a base como o maior nível registrado ou o nível atual
       const baseCelebrated = Math.max(storedCelebrated, firestoreCelebrated, level);
       celebratedLevelRef.current = baseCelebrated;
 
@@ -349,24 +382,16 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(baseCelebrated));
       } catch {}
 
-      lastSavedGamerRef.current = { level, xp };
-
-      if (
-        user.gamerLevel !== level ||
-        user.gamerXp !== xp ||
-        user.celebratedGamerLevel !== baseCelebrated
-      ) {
-        saveUserProfile(user.uid, {
-          gamerLevel: level,
-          gamerXp: xp,
-          celebratedGamerLevel: baseCelebrated,
-        }).catch((err) => console.warn("Erro ao sincronizar nível gamer inicial:", err));
+      // celebratedGamerLevel continua sendo escrito pelo cliente (cosmético, permitido pelas rules)
+      if (user.celebratedGamerLevel !== baseCelebrated) {
+        saveUserProfile(user.uid, { celebratedGamerLevel: baseCelebrated }).catch((err) =>
+          console.warn("Erro ao sincronizar celebração de nível:", err)
+        );
       }
       return;
     }
 
-    // 2. Fase Ativa:
-    // O jogador subiu de nível durante a sessão ativa (ex: adicionou/zerou jogo ou somou horas)
+    // 2. Fase Ativa: subiu de nível durante a sessão -> comemora uma única vez.
     if (level > celebratedLevelRef.current) {
       const oldLevel = celebratedLevelRef.current;
       celebratedLevelRef.current = level;
@@ -375,30 +400,13 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(level));
       } catch {}
 
-      lastSavedGamerRef.current = { level, xp };
-      saveUserProfile(user.uid, {
-        gamerLevel: level,
-        gamerXp: xp,
-        celebratedGamerLevel: level,
-      }).catch((err) => console.warn("Erro ao persistir nível gamer conquistado:", err));
+      saveUserProfile(user.uid, { celebratedGamerLevel: level }).catch((err) =>
+        console.warn("Erro ao persistir celebração de nível:", err)
+      );
 
-      // Dispara a comemoração UMA ÚNICA VEZ
       setLevelUpData({ newLevel: level, oldLevel, rankTitle });
-      return;
     }
-
-    // 3. Atualização de XP apenas (sem subir de nível)
-    if (
-      (user.gamerLevel !== level || user.gamerXp !== xp) &&
-      (lastSavedGamerRef.current?.level !== level || lastSavedGamerRef.current?.xp !== xp)
-    ) {
-      lastSavedGamerRef.current = { level, xp };
-      saveUserProfile(user.uid, {
-        gamerLevel: level,
-        gamerXp: xp,
-      }).catch((err) => console.warn("Erro ao sincronizar XP gamer:", err));
-    }
-  }, [stats, user, isLoading]);
+  }, [stats, user, isLoading, syncGamificationServer]);
 
   const contextValue = useMemo(
     () => ({

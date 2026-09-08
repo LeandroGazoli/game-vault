@@ -229,20 +229,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserBio = useCallback(async (bio: string, favoriteGame?: string) => {
     if (!user) return;
-    const updated = { ...user, bio, ...(favoriteGame ? { favoriteGame } : {}) };
-    setUser(updated);
-    await saveUserProfile(user.uid, updated);
+    const patch = { bio, ...(favoriteGame ? { favoriteGame } : {}), updatedAt: new Date().toISOString() };
+    setUser({ ...user, ...patch });
+    // Grava SOMENTE os campos alterados (não reescreve campos travados como gamerXp/plan/hideAds)
+    await saveUserProfile(user.uid, patch);
   }, [user]);
 
   const updateUserProfile = useCallback(async (data: Partial<UserProfile>) => {
     if (!user) return;
-    const updated: UserProfile = {
-      ...user,
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    setUser(updated);
-    await saveUserProfile(user.uid, updated);
+    const patch = { ...data, updatedAt: new Date().toISOString() };
+    setUser({ ...user, ...patch });
+    // Grava SOMENTE os campos alterados — evita reescrever campos travados e rejeição por valor obsoleto
+    await saveUserProfile(user.uid, patch);
   }, [user]);
 
   const upgradePlan = useCallback(async (plan: UserPlan, hideAds = true) => {

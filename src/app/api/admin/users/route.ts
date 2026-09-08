@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
 import {
   getAllUsersForAdmin,
-  updateUserPlanByAdmin,
-  updateUserModerationByAdmin,
   recordAuditLog,
   getUserProfileByUsername,
-  saveUserProfile,
 } from "@/lib/firebase";
+import {
+  adminUpdateUserPlan,
+  adminUpdateUserModeration,
+  adminSaveUserProfile,
+} from "@/lib/firebaseAdmin";
 import { UserPlan, UserProfile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -104,7 +106,7 @@ export async function PATCH(request: NextRequest) {
       if (!["free", "pro", "vip"].includes(plan)) {
         return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
       }
-      await updateUserPlanByAdmin(userId, plan as UserPlan);
+      await adminUpdateUserPlan(userId, plan as UserPlan);
       await recordAuditLog({
         adminEmail,
         adminUid,
@@ -118,7 +120,7 @@ export async function PATCH(request: NextRequest) {
 
     // Atualização de Moderação
     if (banned !== undefined || suspended !== undefined || moderationReason !== undefined) {
-      await updateUserModerationByAdmin(userId, {
+      await adminUpdateUserModeration(userId, {
         banned: banned !== undefined ? Boolean(banned) : undefined,
         suspended: suspended !== undefined ? Boolean(suspended) : undefined,
         moderationReason: moderationReason ? String(moderationReason).slice(0, 500) : null,
@@ -300,7 +302,7 @@ export async function POST(request: NextRequest) {
       suspended: false,
     };
 
-    await saveUserProfile(localId, newProfile);
+    await adminSaveUserProfile(localId, newProfile);
 
     // 9. Registro imutável de auditoria administrativa
     const adminEmail = authCheck.user.email;
