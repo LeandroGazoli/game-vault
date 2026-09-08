@@ -8,6 +8,10 @@ import {
   GamificationMetric,
   GamificationConfig,
   GAMIFICATION_METRICS,
+  DEFAULT_RANK_TIERS,
+  normalizeRankTiers,
+  rankTitleForLevel,
+  type RankTier,
 } from "@/lib/types";
 import {
   getAchievementDefs,
@@ -43,9 +47,11 @@ import {
   Save,
   X,
   Star,
+  Crown,
+  ArrowUpDown,
 } from "lucide-react";
 
-type TabKey = "achievements" | "season" | "daily";
+type TabKey = "achievements" | "season" | "daily" | "titles";
 
 interface FormState {
   title: string;
@@ -110,6 +116,10 @@ export default function GamificationManager() {
   const [seasonEndsAt, setSeasonEndsAt] = useState("");
   const [savingConfig, setSavingConfig] = useState(false);
 
+  // Escada de títulos de prestígio
+  const [tiers, setTiers] = useState<RankTier[]>(DEFAULT_RANK_TIERS);
+  const [savingTiers, setSavingTiers] = useState(false);
+
   const seasonMissions = useMemo(
     () => missions.filter((m) => m.type === "season"),
     [missions]
@@ -133,6 +143,7 @@ export default function GamificationManager() {
       setDailyCount(cfg.dailyRotationCount ?? 3);
       setSeasonName(cfg.seasonName ?? "");
       setSeasonEndsAt(toDateInput(cfg.seasonEndsAt));
+      setTiers(normalizeRankTiers(cfg.rankTiers));
     } catch (e) {
       console.error("Erro ao carregar gamificação:", e);
     } finally {
@@ -331,6 +342,44 @@ export default function GamificationManager() {
     }
   };
 
+  const handleSaveTiers = async () => {
+    setSavingTiers(true);
+    setErrorMessage(null);
+    try {
+      const cleaned = normalizeRankTiers(tiers);
+      const dupes = cleaned.filter((t, i) => cleaned.findIndex((o) => o.minLevel === t.minLevel) !== i);
+      if (dupes.length > 0) {
+        setErrorMessage(
+          `Dois degraus começam no mesmo nível (${dupes.map((d) => d.minLevel).join(", ")}). Cada nível inicial precisa ser único.`
+        );
+        return;
+      }
+      await updateGamificationConfig({ rankTiers: cleaned }, user?.email);
+      await logAudit("Escada de títulos de prestígio atualizada", { rankTiers: cleaned });
+      await fetchAll();
+      flashSuccess("Títulos salvos. Cada perfil recebe o novo título no próximo sync.");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Erro ao salvar títulos.");
+    } finally {
+      setSavingTiers(false);
+    }
+  };
+
+  const updateTier = (index: number, patch: Partial<RankTier>) => {
+    setTiers((prev) => prev.map((t, i) => (i === index ? { ...t, ...patch } : t)));
+  };
+
+  const removeTier = (index: number) => {
+    setTiers((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addTier = () => {
+    setTiers((prev) => {
+      const top = prev.reduce((max, t) => Math.max(max, t.minLevel), 0);
+      return [{ minLevel: top + 10, title: "" }, ...prev];
+    });
+  };
+
   const previewEval = useMemo(
     () => evaluateDef({ metric: form.metric, targetValue: Number(form.targetValue) || 1 }, { stats: null, level: 1 }),
     [form.metric, form.targetValue]
@@ -343,6 +392,7 @@ export default function GamificationManager() {
     { key: "achievements", label: "Conquistas", icon: Trophy },
     { key: "season", label: "Missões da Temporada", icon: CalendarClock },
     { key: "daily", label: "Missões Diárias", icon: Target },
+    { key: "titles", label: "Títulos de Prestígio", icon: Crown },
   ];
 
   const inputCls =
@@ -460,7 +510,131 @@ export default function GamificationManager() {
         </div>
       )}
 
+      {/* Escada de títulos de prestígio */}
+      {activeTab === "titles" && (
+        <div className="rounded-[28px] bg-[#14161d] border border-white/10 p-5 sm:p-6 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-black text-white">
+                <Crown className="w-4 h-4 text-amber-400" />
+                Escada de Títulos
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5 max-w-prose">
+                O título aparece no perfil, no card de compartilhar e na comemoração de nível.
+                Vale o degrau de maior nível que o usuário já alcançou. Não existe nível máximo,
+                então o degrau mais alto é o título terminal — quem passa dele continua com ele.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTiers(DEFAULT_RANK_TIERS)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold min-h-[44px]"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+                Restaurar padrão
+              </button>
+              <button
+                type="button"
+                onClick={addTier}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold min-h-[44px]"
+              >
+                <Plus className="w-4 h-4" />
+                Novo degrau
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-200/90">
+            Título é só o rótulo. Para o degrau também <strong>conceder XP</strong>, cadastre uma
+            conquista na aba Conquistas com métrica <code className="font-mono">Nível gamer</code> e
+            alvo igual ao nível inicial do degrau.
+          </div>
+
+          <div className="space-y-2">
+            {tiers.length === 0 && (
+              <p className="text-xs text-gray-500 py-4 text-center">
+                Nenhum degrau. Sem degraus, o site volta para a escada padrão.
+              </p>
+            )}
+            {tiers.map((t, i) => {
+              const xpNeeded = Math.pow(Math.max(1, t.minLevel) - 1, 2) * 8;
+              const isTop = i === 0;
+              return (
+                <div
+                  key={`${t.minLevel}-${i}`}
+                  className="flex flex-wrap items-end gap-3 rounded-2xl bg-black/30 border border-white/10 px-4 py-3"
+                >
+                  <div className="w-24">
+                    <label className={labelCls}>Do nível</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={t.minLevel}
+                      onChange={(e) => updateTier(i, { minLevel: Number(e.target.value) })}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[180px]">
+                    <label className={labelCls}>Título exibido</label>
+                    <input
+                      type="text"
+                      maxLength={40}
+                      value={t.title}
+                      onChange={(e) => updateTier(i, { title: e.target.value })}
+                      placeholder="ex: Arconte do Vault"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 pb-2.5">
+                    <span className="font-mono text-[11px] text-gray-500 tabular-nums whitespace-nowrap">
+                      {xpNeeded.toLocaleString("pt-BR")} XP
+                    </span>
+                    {isTop && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-amber-400 whitespace-nowrap">
+                        terminal
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeTier(i)}
+                      aria-label={`Remover degrau ${t.title || t.minLevel}`}
+                      className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl bg-black/30 border border-white/10 p-4 space-y-2">
+            <div className={labelCls}>Prévia</div>
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+              {[1, 15, 30, 50, 80, 100, 150, 200, 260].map((lvl) => (
+                <span key={lvl} className="font-mono text-[11px] text-gray-400 tabular-nums">
+                  <span className="text-gray-500">nv {lvl}</span>{" "}
+                  <span className="text-white">{rankTitleForLevel(lvl, normalizeRankTiers(tiers))}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveTiers}
+            disabled={savingTiers}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-[#00c4dd] text-black text-xs font-black min-h-[44px] disabled:opacity-50"
+          >
+            {savingTiers ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar títulos
+          </button>
+        </div>
+      )}
+
       {/* Formulário de criação/edição */}
+      {activeTab !== "titles" && (
       <form
         onSubmit={handleSubmit}
         className="rounded-[28px] bg-[#14161d] border border-white/10 p-5 sm:p-6 space-y-5"
@@ -687,9 +861,10 @@ export default function GamificationManager() {
           {editingId ? "Salvar alterações" : "Criar"}
         </button>
       </form>
+      )}
 
       {/* Listas */}
-      {isLoading ? (
+      {activeTab === "titles" ? null : isLoading ? (
         <div className="flex items-center justify-center py-12 text-gray-400">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>

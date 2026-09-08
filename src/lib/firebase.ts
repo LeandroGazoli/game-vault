@@ -42,6 +42,7 @@ import {
   DEFAULT_GAMIFICATION_CONFIG,
   RATED_XP_CAP,
   levelFromXp,
+  setRankTiers,
 } from "./types";
 
 const firebaseConfig = {
@@ -1123,8 +1124,12 @@ export async function getGamificationConfig(): Promise<GamificationConfig> {
   try {
     const snap = await getDoc(doc(db, "system", "gamification"));
     if (snap.exists()) {
-      return { ...DEFAULT_GAMIFICATION_CONFIG, ...(snap.data() as GamificationConfig) };
+      const cfg = { ...DEFAULT_GAMIFICATION_CONFIG, ...(snap.data() as GamificationConfig) };
+      // Instala a escada de títulos que o admin cadastrou (ou o padrão, se não houver).
+      setRankTiers(cfg.rankTiers);
+      return cfg;
     }
+    setRankTiers(null);
     return DEFAULT_GAMIFICATION_CONFIG;
   } catch (e) {
     console.error("Erro ao carregar config de gamificação:", e);

@@ -1,5 +1,5 @@
 /**
- * Plano de conteúdo da gamificação — 37 conquistas, 8 missões de temporada, 24 diárias.
+ * Plano de conteúdo da gamificação — 43 conquistas, 8 missões de temporada, 24 diárias.
  *
  * Este arquivo é só DADO: edite títulos, alvos e XP aqui e rode `npm run seed:gamification`.
  * Os ids são derivados de `<prefixo>-<metric>-<targetValue>`, então re-rodar o seed
@@ -65,6 +65,12 @@ export const ACHIEVEMENTS = [
   { metric: "level", targetValue: 30, rewardXp: 400,  globalRarity: 18,  iconName: "Swords",   title: "Veterano Hardcore",  description: "Alcance o nível 30." },
   { metric: "level", targetValue: 50, rewardXp: 900,  globalRarity: 5,   iconName: "Crown",    title: "Mestre Lendário",    description: "Alcance o nível 50." },
   { metric: "level", targetValue: 80, rewardXp: 2000, globalRarity: 0.5, iconName: "Sparkles", title: "Lorde Supremo",      description: "Alcance o nível 80." },
+  { metric: "level", targetValue: 90,  rewardXp: 2400,  globalRarity: 0.4,  iconName: "Shield", title: "Arconte do Vault",   description: "Alcance o nível 90 e o título de Arconte do Vault." },
+  { metric: "level", targetValue: 100, rewardXp: 3000,  globalRarity: 0.3,  iconName: "Medal",  title: "Lenda Viva",         description: "Nível 100. Você virou Lenda Viva." },
+  { metric: "level", targetValue: 115, rewardXp: 4000,  globalRarity: 0.2,  iconName: "Zap",    title: "Titã do Backlog",    description: "Alcance o nível 115 e o título de Titã do Backlog." },
+  { metric: "level", targetValue: 130, rewardXp: 5000,  globalRarity: 0.12, iconName: "Ghost",  title: "Oráculo dos Mundos", description: "Alcance o nível 130 e o título de Oráculo dos Mundos." },
+  { metric: "level", targetValue: 150, rewardXp: 6500,  globalRarity: 0.06, iconName: "Flame",  title: "Soberano Eterno",    description: "Alcance o nível 150 e o título de Soberano Eterno." },
+  { metric: "level", targetValue: 200, rewardXp: 10000, globalRarity: 0.02, iconName: "Trophy", title: "Fim dos Créditos",   description: "Nível 200. Não há degrau acima deste." },
 
   // Secretas — título e descrição ocultos até desbloquear
   { metric: "completed", targetValue: 15,  rewardXp: 350,  globalRarity: 22, iconName: "Ghost",  isSecret: true, title: "Zerador Silencioso",   description: "Zerou 15 jogos sem alarde." },

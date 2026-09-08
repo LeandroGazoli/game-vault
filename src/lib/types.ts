@@ -647,6 +647,8 @@ export interface GamificationConfig {
   dailyRotationCount: number; // quantas missões diárias do pool aparecem por dia
   seasonName?: string;
   seasonEndsAt?: string | null;
+  /** Escada de títulos de prestígio. Ausente = DEFAULT_RANK_TIERS. */
+  rankTiers?: RankTier[];
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -762,6 +764,75 @@ export function levelFromXp(xp: number): number {
   return Math.max(1, Math.floor(Math.sqrt(safeXp / XP_LEVEL_FACTOR)) + 1);
 }
 
+/** Um degrau da escada de prestígio: a partir de `minLevel`, o usuário exibe `title`. */
+export interface RankTier {
+  minLevel: number;
+  title: string;
+}
+
+/**
+ * Escada de títulos de prestígio, do topo para a base — o primeiro degrau que couber vence.
+ * Como não existe nível máximo, "Fim dos Créditos" é o título terminal: quem passa de 200
+ * continua com ele. O admin sobrescreve esta escada em system/gamification.rankTiers.
+ *
+ * Os cinco degraus de baixo (1/15/30/50/80) são os originais e não mudaram: seus nomes
+ * aparecem nas descrições das conquistas de nível já cadastradas.
+ */
+export const DEFAULT_RANK_TIERS: RankTier[] = [
+  { minLevel: 200, title: "Fim dos Créditos" },
+  { minLevel: 150, title: "Soberano Eterno" },
+  { minLevel: 130, title: "Oráculo dos Mundos" },
+  { minLevel: 115, title: "Titã do Backlog" },
+  { minLevel: 100, title: "Lenda Viva" },
+  { minLevel: 90, title: "Arconte do Vault" },
+  { minLevel: 80, title: "Lorde Supremo" },
+  { minLevel: 50, title: "Mestre Lendário" },
+  { minLevel: 30, title: "Veterano Hardcore" },
+  { minLevel: 15, title: "Aventureiro PRO" },
+  { minLevel: 1, title: "Aspirante Gamer" },
+];
+
+/**
+ * Escada ativa. Config global (não por usuário), então um registro de módulo é seguro:
+ * o app chama setRankTiers() uma vez ao carregar system/gamification e todas as telas
+ * que derivam o título passam a refletir o que o admin cadastrou, sem mudar assinatura.
+ * Sem chamada, vale DEFAULT_RANK_TIERS.
+ */
+let activeRankTiers: RankTier[] = DEFAULT_RANK_TIERS;
+
+/** Normaliza e instala a escada vinda do Firestore. Lista vazia/inválida volta ao padrão. */
+export function setRankTiers(tiers?: RankTier[] | null): void {
+  activeRankTiers = normalizeRankTiers(tiers);
+}
+
+export function getRankTiers(): RankTier[] {
+  return activeRankTiers;
+}
+
+/**
+ * Descarta degraus malformados e ordena do maior minLevel para o menor, que é a ordem que
+ * rankTitleForLevel assume. Garante um degrau em minLevel 1 para nunca faltar título.
+ */
+export function normalizeRankTiers(tiers?: RankTier[] | null): RankTier[] {
+  if (!Array.isArray(tiers)) return DEFAULT_RANK_TIERS;
+  const clean = tiers
+    .filter((t) => t && typeof t.title === "string" && t.title.trim().length > 0)
+    .map((t) => ({ minLevel: Math.max(1, Math.floor(Number(t.minLevel) || 1)), title: t.title.trim() }))
+    .sort((a, b) => b.minLevel - a.minLevel);
+  if (clean.length === 0) return DEFAULT_RANK_TIERS;
+  if (clean[clean.length - 1].minLevel > 1) {
+    clean.push({ minLevel: 1, title: clean[clean.length - 1].title });
+  }
+  return clean;
+}
+
+/** Título de prestígio do nível. Usa a escada ativa, ou a que for passada explicitamente. */
+export function rankTitleForLevel(level: number, tiers: RankTier[] = activeRankTiers): string {
+  const list = tiers.length > 0 ? tiers : DEFAULT_RANK_TIERS;
+  const tier = list.find((t) => level >= t.minLevel);
+  return (tier ?? list[list.length - 1]).title;
+}
+
 /**
  * Calcula o Nível Gamer (sem teto máximo) e o Ranking de Prestígio a partir das estatísticas e do multiplicador do Plano
  */
@@ -831,7 +902,7 @@ export function calculateGamerLevel(
       nextLevelXp: nextBase,
       xpToNextLevel: Math.max(0, nextBase - totalXpNoStats),
       percentToNext: Math.min(100, Math.floor((Math.max(0, totalXpNoStats - curBase) / diff) * 100)),
-      rankTitle: "Iniciante",
+      rankTitle: rankTitleForLevel(levelNoStats),
       globalRank: realGlobalRank || "Iniciante",
       breakdown: { ...fallbackBreakdown, bonusXp: safeBonusXp },
     };
@@ -862,18 +933,8 @@ export function calculateGamerLevel(
   const percentToNext = Math.min(100, Math.floor((currentProgress / levelXpDiff) * 100));
   const xpToNextLevel = Math.max(0, nextLevelBaseXp - totalXp);
 
-  let rankTitle = "Aspirante Gamer";
-  let globalRank = realGlobalRank || "Calculando Rank...";
-
-  if (calculatedLevel >= 80) {
-    rankTitle = "Lorde Supremo";
-  } else if (calculatedLevel >= 50) {
-    rankTitle = "Mestre Lendário";
-  } else if (calculatedLevel >= 30) {
-    rankTitle = "Veterano Hardcore";
-  } else if (calculatedLevel >= 15) {
-    rankTitle = "Aventureiro PRO";
-  }
+  const rankTitle = rankTitleForLevel(calculatedLevel);
+  const globalRank = realGlobalRank || "Calculando Rank...";
 
   return {
     level: calculatedLevel,

@@ -10,6 +10,7 @@ import {
 import {
   calculateGamerLevel,
   DEFAULT_GAMIFICATION_CONFIG,
+  setRankTiers,
   type UserGame,
   type UserPlan,
   type GamificationAchievementDef,
@@ -110,6 +111,8 @@ export async function POST(request: NextRequest) {
       ...DEFAULT_GAMIFICATION_CONFIG,
       ...((cfgSnap.data() as GamificationConfig) || {}),
     };
+    // Escada de títulos cadastrada pelo admin (config global, não por usuário).
+    setRankTiers(config.rankTiers);
 
     const now = new Date();
     const seasonMissions = getActiveSeasonMissions(missions, now);
