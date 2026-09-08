@@ -31,13 +31,14 @@ export interface GameLinkParams {
  */
 export function getGameUrl(game: GameLinkParams): string {
   const id = String(game.id).trim();
-  const slug = game.slug
-    ? String(game.slug).trim()
-    : game.name
-    ? slugify(game.name)
-    : game.title
-    ? slugify(game.title)
-    : "jogo";
+  // Slug SEMPRE derivado do nome (limpo e determinístico). O ID já garante unicidade, então
+  // ignoramos o slug cru do IGDB (que traz sufixos de desambiguação como "god-of-war--1").
+  // Isso mantém a canônica idêntica em todo lugar (links, sitemap, redirect) → indexação correta.
+  const slug =
+    (game.name && slugify(game.name)) ||
+    (game.title && slugify(game.title)) ||
+    (game.slug && slugify(String(game.slug))) ||
+    "jogo";
 
   return `/game/${id}/${slug}`;
 }

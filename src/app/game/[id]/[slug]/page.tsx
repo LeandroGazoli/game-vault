@@ -76,12 +76,14 @@ export default async function GameSlugPage({ params }: PageProps) {
     notFound();
   }
 
-  // 301 Permanent Redirect se o slug na URL estiver desatualizado ou incorreto
-  if (game.slug && slug !== game.slug) {
-    permanentRedirect(getGameUrl(game));
+  // 301 Permanent Redirect se o slug na URL divergir do slug CANÔNICO (getGameUrl).
+  // Compara contra o slug canônico (não o slug cru do IGDB) para evitar loop de redirecionamento.
+  const canonicalPath = getGameUrl(game);
+  if (`/game/${id}/${slug}` !== canonicalPath) {
+    permanentRedirect(canonicalPath);
   }
 
-  const canonicalUrl = `${SITE_URL}${getGameUrl(game)}`;
+  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
   const videoGameSchema = {
     "@context": "https://schema.org",

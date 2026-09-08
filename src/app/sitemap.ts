@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
-import { slugify } from "@/lib/routes";
+import { slugify, getGameUrl } from "@/lib/routes";
 
 const POPULAR_FALLBACK_IDS = [
   1942,   // The Witcher 3
@@ -133,7 +133,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     gamePages = Array.from(uniqueGames.values()).map((g) => ({
-      url: `${baseUrl}/game/${g.id}/${g.slug}`,
+      // Usa getGameUrl para gerar o MESMO slug canônico da página (evita URLs do sitemap
+      // que redirecionam / divergem da canônica).
+      url: `${baseUrl}${getGameUrl({ id: g.id, name: g.name, slug: g.slug })}`,
       lastModified,
       changeFrequency: "weekly",
       priority: 0.7,
