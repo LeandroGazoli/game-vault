@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb, verifyIdToken } from "@/lib/firebaseAdmin";
+import { getAdminApp, getAdminDb, verifyIdToken } from "@/lib/firebaseAdmin";
 import {
   computeLibraryStats,
   evaluateDef,
@@ -19,6 +19,24 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+/**
+ * GET /api/gamification/sync — health check (sem auth, sem tocar no Firestore).
+ * Serve para verificar, ANTES de publicar as Security Rules, se a service account
+ * (FIREBASE_SERVICE_ACCOUNT_KEY) está configurada e o Admin SDK inicializa.
+ * { ok: true } => pronto para publicar as rules. { ok: false } => corrigir o env antes.
+ */
+export async function GET() {
+  try {
+    getAdminApp();
+    return NextResponse.json({ ok: true, adminSdk: "initialized" });
+  } catch (error: any) {
+    return NextResponse.json(
+      { ok: false, error: error?.message || "Falha ao inicializar o Admin SDK." },
+      { status: 503 }
+    );
+  }
+}
 
 /**
  * POST /api/gamification/sync
