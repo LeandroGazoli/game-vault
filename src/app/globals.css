@@ -239,6 +239,21 @@ body::before {
   animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Previne que modais e overlays com fixed inset-0 recebam margin-top de containers space-y */
 .fixed.inset-0,
 div[class*="fixed"][class*="inset-0"] {

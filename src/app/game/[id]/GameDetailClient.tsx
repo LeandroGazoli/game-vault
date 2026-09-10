@@ -10,6 +10,7 @@ import MetacriticBadge from "@/components/MetacriticBadge";
 import StatusBadge from "@/components/StatusBadge";
 import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
+import MobileGameStatusSheet from "@/components/MobileGameStatusSheet";
 import AdBanner from "@/components/ads/AdBanner";
 import GameReleaseCountdown, { isGameUnreleased } from "@/components/GameReleaseCountdown";
 import Link from "next/link";
@@ -226,8 +227,10 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const [game, setGame] = useState<Game | null>(initialGame || null);
   const [loading, setLoading] = useState(!initialGame);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [modalGame, setModalGame] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Filtros de Websites por Categoria
   const storeWebsites = useMemo(() => {
@@ -271,6 +274,14 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   useEffect(() => {
@@ -472,6 +483,16 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     (game?.artworks && game.artworks[0]) ||
     (game?.screenshots && game.screenshots[0]) ||
     game?.background_image;
+
+  // Opens the correct modal: mobile sheet on small screens, full GameModal on desktop
+  const openModal = (overrideGame?: any) => {
+    if (overrideGame) setModalGame(overrideGame);
+    if (isMobile) {
+      setIsMobileSheetOpen(true);
+    } else {
+      setIsModalOpen(true);
+    }
+  };
 
   if (loading) {
     return <GameDetailLoading />;
@@ -1355,7 +1376,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               type="button"
               onClick={() => {
                 triggerSelectionHaptic();
-                setIsModalOpen(true);
+                openModal();
               }}
               className="w-full min-h-[48px] py-3 rounded-2xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/30 text-xs font-bold text-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 active:scale-98"
             >
@@ -1380,7 +1401,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               type="button"
               onClick={() => {
                 triggerSelectionHaptic();
-                setIsModalOpen(true);
+                openModal();
               }}
               className="w-full min-h-[50px] py-3.5 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
@@ -1875,7 +1896,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                     type="button"
                     onClick={() => {
                       triggerSelectionHaptic();
-                      setIsModalOpen(true);
+                      openModal();
                     }}
                     className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/15 text-[10px] font-semibold text-gray-300 hover:text-white transition-all border border-white/5 min-h-[36px]"
                   >
@@ -1979,14 +2000,13 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                     e.preventDefault();
                     e.stopPropagation();
                     triggerSelectionHaptic();
-                    setModalGame({
+                    openModal({
                       id: sg.id,
                       name: sg.name,
                       background_image: sg.coverUrl,
                       slug: String(sg.id),
                       rating: sg.rating ? Number((sg.rating * 10).toFixed(0)) : undefined,
                     });
-                    setIsModalOpen(true);
                   }}
                   className="w-full min-h-[36px] py-1.5 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black text-[10px] font-bold text-gray-200 transition-all flex items-center justify-center gap-1 border border-white/10 shadow-sm active:scale-95"
                   title="Salvar ou registrar este jogo no seu perfil"
@@ -2151,7 +2171,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 type="button"
                 onClick={() => {
                   triggerSelectionHaptic();
-                  setIsModalOpen(true);
+                  openModal();
                 }}
                 className="w-full min-h-[48px] flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-lg"
               >
@@ -2174,7 +2194,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 type="button"
                 onClick={() => {
                   triggerSelectionHaptic();
-                  setIsModalOpen(true);
+                  openModal();
                 }}
                 className="w-full min-h-[50px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
               >
@@ -2360,7 +2380,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 type="button"
                 onClick={() => {
                   triggerSelectionHaptic();
-                  setIsModalOpen(true);
+                  openModal();
                 }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
               >
@@ -2545,13 +2565,27 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         {renderSimilarGames()}
       </div>
 
-      {/* Modal de Registro / Atualização */}
+      {/* Modal de Registro / Atualização — Desktop */}
       <GameModal
         game={modalGame || game}
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setModalGame(null);
+        }}
+      />
+
+      {/* Bottom Sheet de Status — Mobile */}
+      <MobileGameStatusSheet
+        game={modalGame || game}
+        isOpen={isMobileSheetOpen}
+        onClose={() => {
+          setIsMobileSheetOpen(false);
+          setModalGame(null);
+        }}
+        onOpenFullModal={() => {
+          setIsMobileSheetOpen(false);
+          setIsModalOpen(true);
         }}
       />
 
