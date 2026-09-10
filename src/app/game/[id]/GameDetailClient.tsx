@@ -55,6 +55,8 @@ import {
   CheckCircle2,
   Share2,
   BookOpen,
+  Award,
+  Check,
 } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 import AuthModal from "@/components/AuthModal";
@@ -216,7 +218,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const router = useRouter();
 
   const { user, isLoading: authLoading, updateUserProfile } = useAuth();
-  const { getGameInLibrary } = useGameLibrary();
+  const { getGameInLibrary, addOrUpdateGame } = useGameLibrary();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
@@ -266,6 +268,49 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const [mobileTab, setMobileTab] = useState<"overview" | "vault" | "details" | "media">("overview");
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isStorylineExpanded, setIsStorylineExpanded] = useState(false);
+  const [isVaultExpanded, setIsVaultExpanded] = useState(true);
+  const [copiedToast, setCopiedToast] = useState(false);
+
+  const handleShareGame = () => {
+    triggerSelectionHaptic();
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({
+        title: game?.name,
+        url: typeof window !== "undefined" ? window.location.href : "",
+      }).catch(() => {});
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 2000);
+    }
+  };
+
+  const handleQuickWishlist = async () => {
+    triggerSelectionHaptic();
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!game) return;
+
+    try {
+      if (userGame?.status === "backlog") {
+        setIsModalOpen(true);
+      } else {
+        await addOrUpdateGame({
+          gameId: game.id,
+          gameTitle: game.name,
+          gameCover: game.background_image,
+          status: "backlog",
+          userRating: userGame?.userRating ?? null,
+          userPlaytimeHours: userGame?.userPlaytimeHours ?? null,
+          platformPlayed: userGame?.platformPlayed ?? game.platforms?.[0]?.platform?.name ?? "",
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao gerenciar lista de desejos:", e);
+    }
+  };
 
   const userGame = game ? getGameInLibrary(game.id) : undefined;
 
@@ -1262,132 +1307,184 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   // 7. PAINEL DO JOGADOR ("SEU REGISTRO NO VAULT")
   const renderPlayerVault = (isMobile = false) => {
     return (
-      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-4 shadow-xl">
-        <div className="flex items-center justify-between border-b border-white/5 pb-3">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-400" /> Seu Registro no Vault
-          </h3>
-          {userGame && (
-            <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-              Na Coleção
-            </span>
-          )}
-        </div>
-
-        {userGame ? (
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-              <span className="text-gray-400 font-sans">Status atual:</span>
-              <StatusBadge status={userGame.status} completionType={userGame.completionType} size="md" />
+      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#141822] p-5 sm:p-6 space-y-4 shadow-xl">
+        <button
+          type="button"
+          onClick={() => {
+            triggerSelectionHaptic();
+            setIsVaultExpanded(!isVaultExpanded);
+          }}
+          className="w-full flex items-center justify-between border-b border-white/5 pb-3 text-left transition-colors cursor-pointer group"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <div>
+              <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
+                Meu Vault
+              </h3>
+              {game.metacritic && game.metacritic >= 90 && (
+                <span className="text-[11px] text-amber-400/90 font-medium">
+                  ⭐ Obra-Prima ({game.metacritic}+ Metacritic)
+                </span>
+              )}
             </div>
-
-            {userGame.userRating !== null && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-gray-400 font-sans">Sua Nota:</span>
-                <span className="font-bold text-amber-400 text-sm">
-                  ⭐ {userGame.userRating.toFixed(1)} / 10
-                </span>
-              </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {userGame ? (
+              <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                Na Coleção
+              </span>
+            ) : (
+              <span className="text-[10px] uppercase font-bold text-gray-400 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
+                Não Adicionado
+              </span>
             )}
-
-            {userGame.userPlaytimeHours !== null && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-gray-400 font-sans">Tempo jogado:</span>
-                <span className="font-bold text-cyan-300 text-sm">
-                  {userGame.userPlaytimeHours}h
-                </span>
-              </div>
+            {isVaultExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
             )}
+          </div>
+        </button>
 
-            {userGame.platformPlayed && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-gray-400 font-sans">Plataforma:</span>
-                <span className="font-semibold text-gray-200">
-                  {userGame.platformPlayed}
-                </span>
+        {isVaultExpanded && (
+          userGame ? (
+            <div className="space-y-3 font-mono text-xs">
+              {/* SPEC SHEET DO VAULT COMPACTA (Estilo Print 2) */}
+              <div className="rounded-2xl bg-[#0f1218] border border-white/[0.08] p-4 divide-y divide-white/[0.06]">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-neutral-400 font-sans font-medium">Status no Vault</span>
+                  <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+                </div>
+
+                {userGame.userRating !== null && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-neutral-400 font-sans font-medium">Sua Avaliação</span>
+                    <span className="font-bold text-amber-400 text-sm">
+                      ⭐ {userGame.userRating.toFixed(1)} / 10
+                    </span>
+                  </div>
+                )}
+
+                {userGame.userPlaytimeHours !== null && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-neutral-400 font-sans font-medium">Tempo Dedicado</span>
+                    <span className="font-bold text-cyan-300 text-sm">
+                      {userGame.userPlaytimeHours} horas
+                    </span>
+                  </div>
+                )}
+
+                {userGame.platformPlayed && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-neutral-400 font-sans font-medium">Plataforma</span>
+                    <span className="font-semibold text-gray-200">
+                      {userGame.platformPlayed}
+                    </span>
+                  </div>
+                )}
+
+                {game.hltb?.mainStory ? (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-neutral-400 font-sans font-medium flex items-center gap-1">
+                      <span>Duração Média</span>
+                      <span className="text-[10px] text-neutral-500" title="HowLongToBeat">ⓘ</span>
+                    </span>
+                    <span className="text-neutral-300">~{game.hltb.mainStory}h Campanha</span>
+                  </div>
+                ) : null}
+
+                {game.released && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-neutral-400 font-sans font-medium">Lançamento Oficial</span>
+                    <span className="text-neutral-300">
+                      {new Date(game.released).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
 
-            {userGame.userReview && (
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-500 font-sans">
-                  Sua Resenha
-                </span>
-                <p className="text-xs text-gray-300 italic whitespace-pre-line font-sans">
-                  &quot;{userGame.userReview}&quot;
+              {userGame.userReview && (
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-500 font-sans">
+                    Sua Resenha
+                  </span>
+                  <p className="text-xs text-gray-300 italic whitespace-pre-line font-sans">
+                    &quot;{userGame.userReview}&quot;
+                  </p>
+                </div>
+              )}
+
+              {/* DLCs Concluídas ou Vinculadas */}
+              {userGame.dlcs && userGame.dlcs.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 space-y-1.5 font-sans">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400">
+                    <span className="flex items-center gap-1">
+                      <Package className="w-3.5 h-3.5" /> DLCs Vinculadas
+                    </span>
+                    <span className="font-mono">
+                      {userGame.dlcs.filter((d) => d.status === "completed").length}/{userGame.dlcs.length} Zeradas
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {userGame.dlcs.map((d) => (
+                      <span
+                        key={d.id}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
+                          d.status === "completed"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : d.status === "playing"
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                            : "bg-white/5 text-gray-300 border border-white/10"
+                        }`}
+                        title={`${d.name} (${d.status})`}
+                      >
+                        {d.name.length > 22 ? `${d.name.substring(0, 20)}...` : d.name}
+                        {d.playtimeHours ? ` (${d.playtimeHours}h)` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setIsModalOpen(true);
+                }}
+                className="w-full min-h-[48px] py-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-bold text-emerald-300 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 active:scale-98"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Editar Registro no Vault</span>
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-6 sm:py-8 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-emerald-400 shadow-inner">
+                <Gamepad2 className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-white">
+                  Adicione este jogo ao seu Vault
+                </h4>
+                <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                  Acompanhe seu progresso, registre suas horas jogadas, avalie com notas e organize seu backlog.
                 </p>
               </div>
-            )}
-
-            {/* DLCs Concluídas ou Vinculadas */}
-            {userGame.dlcs && userGame.dlcs.length > 0 && (
-              <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 space-y-1.5 font-sans">
-                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-cyan-400">
-                  <span className="flex items-center gap-1">
-                    <Package className="w-3.5 h-3.5" /> DLCs Vinculadas
-                  </span>
-                  <span className="font-mono">
-                    {userGame.dlcs.filter((d) => d.status === "completed").length}/{userGame.dlcs.length} Zeradas
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {userGame.dlcs.map((d) => (
-                    <span
-                      key={d.id}
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
-                        d.status === "completed"
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          : d.status === "playing"
-                          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                          : "bg-white/5 text-gray-300 border border-white/10"
-                      }`}
-                      title={`${d.name} (${d.status})`}
-                    >
-                      {d.name.length > 22 ? `${d.name.substring(0, 20)}...` : d.name}
-                      {d.playtimeHours ? ` (${d.playtimeHours}h)` : ""}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                triggerSelectionHaptic();
-                setIsModalOpen(true);
-              }}
-              className="w-full min-h-[48px] py-3 rounded-2xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/30 text-xs font-bold text-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 active:scale-98"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Editar Registro no Vault</span>
-            </button>
-          </div>
-        ) : (
-          <div className="text-center py-6 sm:py-8 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-cyan-400 shadow-inner">
-              <Gamepad2 className="w-7 h-7" />
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSelectionHaptic();
+                  setIsModalOpen(true);
+                }}
+                className="w-full min-h-[50px] py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-black transition-all shadow-xl shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Adicionar ao Meu Vault</span>
+              </button>
             </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-white">
-                Adicione este jogo à sua coleção
-              </h4>
-              <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-                Controle o que você está jogando, anote suas notas, registre suas horas e acompanhe os títulos que já zerou.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                triggerSelectionHaptic();
-                setIsModalOpen(true);
-              }}
-              className="w-full min-h-[50px] py-3.5 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Adicionar à Coleção</span>
-            </button>
-          </div>
+          )
         )}
       </div>
     );
@@ -2068,11 +2165,11 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-16">
-      {/* Botão Voltar */}
+      {/* Botão Voltar (Visível no Desktop, no mobile fica flutuando no hero) */}
       <button
         type="button"
         onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+        className="hidden lg:inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Voltar
       </button>
@@ -2113,9 +2210,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
       {/* =========================================================================
           HERO HEADER DO JOGO (RESPONSIVO: COMPACTO NO MOBILE, COMPLETO NO DESKTOP)
       ========================================================================= */}
-      <div className="relative rounded-[28px] sm:rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
+      <div className="relative rounded-[28px] sm:rounded-[32px] overflow-hidden border border-white/10 bg-[#141822] shadow-2xl">
         {/* Backdrop Banner */}
-        <div className="relative h-44 sm:h-72 lg:h-96 w-full overflow-hidden bg-neutral-950">
+        <div className="relative h-48 sm:h-72 lg:h-96 w-full overflow-hidden bg-neutral-950">
           {backdropImage && !bannerError ? (
             <img
               src={backdropImage}
@@ -2129,14 +2226,54 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             <div className="w-full h-full bg-gradient-to-r from-cyan-950 via-[#18191c] to-black" />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-[#18191c]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-[#141822]/60 to-transparent" />
+
+          {/* Top Floating Action Bar (Mobile < lg) */}
+          <div className="lg:hidden absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-20">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white shadow-xl active:scale-95 transition-all cursor-pointer"
+              title="Voltar"
+            >
+              <ChevronLeft className="w-6 h-6 -ml-0.5" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareGame}
+                className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white shadow-xl active:scale-95 transition-all cursor-pointer"
+                title="Compartilhar Jogo"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleQuickWishlist}
+                className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center shadow-xl active:scale-95 transition-all cursor-pointer ${
+                  userGame?.status === "backlog"
+                    ? "bg-pink-500 text-white border-pink-400"
+                    : "bg-black/60 hover:bg-black/80 text-white border-white/20"
+                }`}
+                title={userGame?.status === "backlog" ? "Na lista de desejos" : "Adicionar aos desejos"}
+              >
+                <Heart
+                  className={`w-4 h-4 ${
+                    userGame?.status === "backlog" ? "fill-white text-white" : "text-white"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* ==================== HERO MOBILE (< lg) ==================== */}
-        <div className="lg:hidden relative -mt-20 sm:-mt-28 p-4 sm:p-6 space-y-4">
+        <div className="lg:hidden relative -mt-16 sm:-mt-24 p-4 sm:p-6 space-y-4">
           <div className="flex items-end gap-3.5 sm:gap-5">
             {/* Capa Poster */}
-            <div className="w-24 sm:w-32 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/15 bg-neutral-900 flex-shrink-0 group relative flex flex-col justify-end">
+            <div className="w-28 sm:w-36 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 bg-neutral-900 flex-shrink-0 group relative flex flex-col justify-end">
               {game.background_image && !posterError ? (
                 <img
                   src={game.background_image}
@@ -2183,75 +2320,112 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 )}
               </div>
 
-              <h1 className="text-lg sm:text-2xl font-black text-white leading-tight tracking-tight line-clamp-2">
+              <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight line-clamp-2">
                 {game.name}
               </h1>
 
               {game.developers && game.developers[0] && (
-                <p className="text-[11px] text-gray-400 font-medium truncate">
+                <p className="text-xs text-gray-400 font-medium truncate">
                   {game.developers[0]}
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                {game.metacritic && (
-                  <MetacriticBadge score={game.metacritic} size="sm" showLabel />
-                )}
+              {game.metacritic && (
+                <div className="pt-0.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Metacritic</span>
+                    <span className="text-xs font-black font-mono">{game.metacritic}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
-                {game.rating && (
-                  <span className="flex items-center gap-1 text-[11px] font-mono text-amber-400 font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
-                    <Star className="w-3 h-3 fill-amber-400" />
-                    {game.rating.toFixed(1)}
-                  </span>
-                )}
+          {/* Barra de Estatísticas em 3 Colunas (Estilo App Nativo - Prints 1 e 4) */}
+          <div className="grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-[#0f1218]/90 border border-white/10 p-3 text-center shadow-inner">
+            {/* 1. Avaliação */}
+            <div className="flex flex-col items-center justify-center px-1">
+              <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Avaliação</span>
+              <div className="flex items-center gap-1 text-xs sm:text-sm font-black text-white font-mono">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{game.rating ? game.rating.toFixed(1) : "—"}</span>
+                <span className="text-[10px] text-gray-500 font-normal">/5</span>
+              </div>
+            </div>
+
+            {/* 2. Metacritic */}
+            <div className="flex flex-col items-center justify-center px-1">
+              <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Metacritic</span>
+              <div className="flex items-center gap-1 text-xs sm:text-sm font-black text-emerald-400 font-mono">
+                <Award className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{game.metacritic ?? "—"}</span>
+              </div>
+            </div>
+
+            {/* 3. Campanha HLTB */}
+            <div className="flex flex-col items-center justify-center px-1">
+              <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Campanha</span>
+              <div className="flex items-center gap-1 text-xs sm:text-sm font-black text-cyan-400 font-mono">
+                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{game.hltb?.mainStory ? `${game.hltb.mainStory}h` : "—"}</span>
               </div>
             </div>
           </div>
 
-          {/* Botão de Ação Primário na Thumb Zone do Mobile (Estilo App Nativo Print 2) */}
-          <div className="pt-1">
-            {userGame ? (
-              <button
-                type="button"
-                onClick={() => {
-                  triggerSelectionHaptic();
-                  setIsModalOpen(true);
-                }}
-                className="w-full min-h-[50px] flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-lg"
-              >
-                <div className="flex items-center gap-2.5">
+          {/* Botões Duplos de Ação (Estilo App Nativo - Prints 1 e 4) */}
+          <div className="grid grid-cols-12 gap-2 pt-1">
+            {/* Botão Secundário: Desejar / Desejado */}
+            <button
+              type="button"
+              onClick={handleQuickWishlist}
+              className={`col-span-4 min-h-[48px] flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl border text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-md ${
+                userGame?.status === "backlog"
+                  ? "bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border-pink-500/50"
+                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+              }`}
+            >
+              <Heart
+                className={`w-4 h-4 ${
+                  userGame?.status === "backlog" ? "fill-pink-400 text-pink-400" : "text-gray-400"
+                }`}
+              />
+              <span className="truncate">
+                {userGame?.status === "backlog" ? "Desejado" : "Desejar"}
+              </span>
+            </button>
+
+            {/* Botão Primário: Adicionar ou Editar Vault */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerSelectionHaptic();
+                setIsModalOpen(true);
+              }}
+              className={`col-span-8 min-h-[48px] flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all active:scale-[0.98] cursor-pointer shadow-xl ${
+                userGame
+                  ? "bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300"
+                  : "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/25"
+              }`}
+            >
+              {userGame ? (
+                <>
                   <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
-                  <span className="text-white font-extrabold text-sm">Seu Registro</span>
-                  {userGame.userRating && (
-                    <span className="text-amber-400 font-mono text-xs font-bold">
-                      ⭐ {userGame.userRating.toFixed(1)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 text-emerald-300 font-black text-xs bg-emerald-500/20 px-2.5 py-1 rounded-xl">
-                  <span>Editar</span>
-                  <Edit3 className="w-3.5 h-3.5" />
-                </div>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  triggerSelectionHaptic();
-                  setIsModalOpen(true);
-                }}
-                className="w-full min-h-[50px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-black shadow-xl shadow-emerald-500/25 transition-all active:scale-[0.98] cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-black stroke-[3]" />
-                <span>Adicionar ao Meu Vault</span>
-              </button>
-            )}
+                  <span className="truncate font-black">Editar no Vault</span>
+                  <Edit3 className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 text-black stroke-[3]" />
+                  <span>Adicionar ao Meu Vault</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Gêneros Rápidos no Mobile */}
           {game.genres && game.genres.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              {game.genres.slice(0, 3).map((g) => (
+              {game.genres.slice(0, 4).map((g) => (
                 <Link
                   key={g.id}
                   href={getCategorySearchUrl(g.name)}
@@ -2260,9 +2434,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                   {translateGenre(g.name)}
                 </Link>
               ))}
-              {game.genres.length > 3 && (
+              {game.genres.length > 4 && (
                 <span className="text-[10px] text-gray-500 font-mono px-1">
-                  +{game.genres.length - 3}
+                  +{game.genres.length - 4}
                 </span>
               )}
             </div>
@@ -2550,6 +2724,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         {mobileTab === "overview" && (
           <div className="space-y-6 animate-fadeIn">
             {renderSynopsis(true)}
+            {renderPlayerVault(true)}
             {renderStoryline(true)}
             {renderHltb()}
             {renderStores(true)}
@@ -2733,6 +2908,14 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Toast flutuante de link copiado */}
+      {copiedToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-black font-black text-xs px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Link copiado para a área de transferência!</span>
+        </div>
       )}
     </div>
   );
