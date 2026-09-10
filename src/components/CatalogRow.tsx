@@ -66,9 +66,10 @@ export default function CatalogRow({
           {actionHref && (
             <Link
               href={actionHref}
-              className="text-xs sm:text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="text-xs sm:text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-0.5 group/btn"
             >
-              {actionText}
+              <span>{actionText === "Mostrar Tudo" ? "Ver todos" : actionText}</span>
+              <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
             </Link>
           )}
         </div>
@@ -98,7 +99,7 @@ export default function CatalogRow({
               return (
                 <div
                   key={game.id}
-                  className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden bg-[#202127] border border-white/[0.06] hover:border-white/20 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:z-20 cursor-pointer select-none"
+                  className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/80 hover:z-20 cursor-pointer select-none"
                 >
                   <Link
                     href={getGameUrl(game)}

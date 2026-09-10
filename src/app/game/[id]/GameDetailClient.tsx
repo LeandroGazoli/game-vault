@@ -1398,10 +1398,74 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     return (
       <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-5 shadow-xl">
         <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/5 pb-3">
-          <Monitor className="w-4 h-4 text-cyan-400" /> Ficha Técnica
+          <Monitor className="w-4 h-4 text-emerald-400" /> Ficha Técnica
         </h3>
 
-        {/* Desenvolvedora & Distribuidora */}
+        {/* FICHA TÉCNICA KEY-VALUE COMPACTA (Estilo Prints 2, 3 e 4) */}
+        <div className="rounded-2xl bg-[#11141c] border border-white/[0.08] p-4 divide-y divide-white/[0.06] text-xs">
+          {/* Linha 1: Gênero Principal */}
+          {game.genres && game.genres[0] && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium">Gênero Principal</span>
+              <span className="text-white font-bold">{translateGenre(game.genres[0].name)}</span>
+            </div>
+          )}
+
+          {/* Linha 2: Lançamento */}
+          {game.released && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium">Data de Lançamento</span>
+              <span className="text-white font-mono font-bold">
+                {new Date(game.released).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
+            </div>
+          )}
+
+          {/* Linha 3: Desenvolvedora */}
+          {game.developers && game.developers[0] && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium">Desenvolvedora</span>
+              <span className="text-emerald-400 font-bold">{game.developers[0]}</span>
+            </div>
+          )}
+
+          {/* Linha 4: Publicadora */}
+          {game.publishers && game.publishers[0] && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium">Distribuidora</span>
+              <span className="text-neutral-200 font-medium">{game.publishers[0]}</span>
+            </div>
+          )}
+
+          {/* Linha 5: Duração HLTB */}
+          {game.hltb?.mainStory ? (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium flex items-center gap-1">
+                <span>Campanha (HLTB)</span>
+                <span className="text-[10px] text-neutral-500" title="HowLongToBeat">ⓘ</span>
+              </span>
+              <span className="text-cyan-400 font-mono font-bold">{game.hltb.mainStory} horas</span>
+            </div>
+          ) : null}
+
+          {/* Linha 6: Classificação Indicativa */}
+          <div className="flex items-center justify-between py-2">
+            <span className="text-neutral-400 font-medium">Classificação</span>
+            <div>{getAgeRatingBadge(game.age_ratings, isAdult) || <span className="text-neutral-400">Livre</span>}</div>
+          </div>
+
+          {/* Linha 7: Localização PT-BR */}
+          {game.ptbrSupport && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-neutral-400 font-medium">Português (Brasil)</span>
+              <span className="text-emerald-300 font-medium">
+                {game.ptbrSupport.audio ? "Dublado & Legendado 🇧🇷" : game.ptbrSupport.subtitles ? "Legendado 🇧🇷" : "Interface"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Desenvolvedora & Distribuidora Detalhada */}
         {(game.developers?.length || game.publishers?.length) ? (
           <div className="space-y-2">
             <span className="text-xs font-semibold text-gray-400 block">Produção &amp; Distribuição:</span>
@@ -2144,7 +2208,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             </div>
           </div>
 
-          {/* Botão de Ação Primário na Thumb Zone do Mobile */}
+          {/* Botão de Ação Primário na Thumb Zone do Mobile (Estilo App Nativo Print 2) */}
           <div className="pt-1">
             {userGame ? (
               <button
@@ -2153,7 +2217,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                   triggerSelectionHaptic();
                   setIsModalOpen(true);
                 }}
-                className="w-full min-h-[48px] flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-lg"
+                className="w-full min-h-[50px] flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-lg"
               >
                 <div className="flex items-center gap-2.5">
                   <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
@@ -2164,7 +2228,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-amber-300 font-black text-xs bg-amber-400/20 px-2.5 py-1 rounded-xl">
+                <div className="flex items-center gap-1 text-emerald-300 font-black text-xs bg-emerald-500/20 px-2.5 py-1 rounded-xl">
                   <span>Editar</span>
                   <Edit3 className="w-3.5 h-3.5" />
                 </div>
@@ -2176,7 +2240,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                   triggerSelectionHaptic();
                   setIsModalOpen(true);
                 }}
-                className="w-full min-h-[50px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full min-h-[50px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-black shadow-xl shadow-emerald-500/25 transition-all active:scale-[0.98] cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-black stroke-[3]" />
                 <span>Adicionar ao Meu Vault</span>
@@ -2362,7 +2426,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                   triggerSelectionHaptic();
                   setIsModalOpen(true);
                 }}
-                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl sm:rounded-full bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-black shadow-xl shadow-emerald-500/25 transition-all active:scale-[0.98] cursor-pointer"
               >
                 {userGame ? (
                   <>
@@ -2418,7 +2482,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             }}
             className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
               mobileTab === "overview"
-                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/25 font-black"
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -2434,7 +2498,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             }}
             className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] relative ${
               mobileTab === "vault"
-                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/25 font-black"
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -2453,7 +2517,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             }}
             className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
               mobileTab === "details"
-                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/25 font-black"
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -2469,7 +2533,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             }}
             className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[44px] ${
               mobileTab === "media"
-                ? "bg-[#00E5FF] text-black shadow-md shadow-[#00E5FF]/20"
+                ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/25 font-black"
                 : "text-gray-400 hover:text-white"
             }`}
           >

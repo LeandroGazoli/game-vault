@@ -43,19 +43,19 @@ export default function MobileBottomNav() {
             <Flame
               className={`w-5 h-5 transition-transform ${
                 pathname === "/"
-                  ? "text-orange-400 scale-110 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]"
+                  ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                   : "text-neutral-400"
               }`}
             />
             <span
               className={`text-[10px] font-medium tracking-tight mt-0.5 ${
-                pathname === "/" ? "text-white font-bold" : "text-neutral-400"
+                pathname === "/" ? "text-emerald-400 font-bold" : "text-neutral-400"
               }`}
             >
               Início
             </span>
             {pathname === "/" && (
-              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
+              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10B981]" />
             )}
           </Link>
 
@@ -72,19 +72,19 @@ export default function MobileBottomNav() {
             <Search
               className={`w-5 h-5 transition-transform ${
                 pathname === "/search"
-                  ? "text-[#00E5FF] scale-110 drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]"
+                  ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                   : "text-neutral-400"
               }`}
             />
             <span
               className={`text-[10px] font-medium tracking-tight mt-0.5 ${
-                pathname === "/search" ? "text-white font-bold" : "text-neutral-400"
+                pathname === "/search" ? "text-emerald-400 font-bold" : "text-neutral-400"
               }`}
             >
               Buscar
             </span>
             {pathname === "/search" && (
-              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
+              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10B981]" />
             )}
           </Link>
 
@@ -95,13 +95,13 @@ export default function MobileBottomNav() {
                 triggerSelectionHaptic();
                 setIsActionSheetOpen(true);
               }}
-              className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-[#00E5FF] via-[#00c8e6] to-[#008ba3] text-black shadow-[0_4px_22px_rgba(0,229,255,0.6)] border-4 border-[#0b0d12] active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer"
+              className="relative group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 text-black shadow-[0_4px_22px_rgba(16,185,129,0.55)] border-4 border-[#0b0d12] active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer"
               title="Ações Rápidas Gamer"
               aria-label="Abrir menu de ações rápidas gamer"
             >
-              <Gamepad2 className="w-7 h-7 text-black fill-black/20 stroke-[2.2] group-hover:rotate-6 transition-transform" />
-              {/* Anel pulsante de neon */}
-              <span className="absolute inset-0 rounded-full border border-white/40 animate-pulse pointer-events-none" />
+              <Gamepad2 className="w-7 h-7 text-black fill-black/10 stroke-[2.2] group-hover:rotate-6 transition-transform" />
+              {/* Anel pulsante sutil */}
+              <span className="absolute inset-0 rounded-full border border-white/30 animate-pulse pointer-events-none" />
             </button>
           </div>
 
@@ -118,19 +118,19 @@ export default function MobileBottomNav() {
             <Trophy
               className={`w-5 h-5 transition-transform ${
                 pathname?.startsWith("/perfil")
-                  ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                  ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                   : "text-neutral-400"
               }`}
             />
             <span
               className={`text-[10px] font-medium tracking-tight mt-0.5 ${
-                pathname?.startsWith("/perfil") ? "text-white font-bold" : "text-neutral-400"
+                pathname?.startsWith("/perfil") ? "text-emerald-400 font-bold" : "text-neutral-400"
               }`}
             >
               Meus Jogos
             </span>
             {pathname?.startsWith("/perfil") && (
-              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
+              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10B981]" />
             )}
           </Link>
 
@@ -148,7 +148,7 @@ export default function MobileBottomNav() {
               <Star
                 className={`w-5 h-5 transition-transform ${
                   pathname === "/rankings"
-                    ? "text-yellow-400 scale-110 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"
+                    ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                     : "text-neutral-400"
                 }`}
               />
@@ -158,8 +158,8 @@ export default function MobileBottomNav() {
                   pathname === "/planos"
                     ? "text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
                     : "text-neutral-400"
-                }`}
-              />
+              }`}
+            />
             )}
             <span
               className={`text-[10px] font-medium tracking-tight mt-0.5 ${
@@ -169,7 +169,7 @@ export default function MobileBottomNav() {
               {isPremium ? "Rankings" : "PRO"}
             </span>
             {(pathname === "/planos" || pathname === "/rankings") && (
-              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_6px_#00E5FF]" />
+              <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10B981]" />
             )}
           </Link>
         </div>

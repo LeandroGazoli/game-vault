@@ -77,7 +77,7 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
       <Card3DTilt maxTilt={8} className="h-full">
         <div className={isAi ? "ai-card-wrapper h-full" : "h-full"}>
           {isAi && <div className="ai-card-border-beam" />}
-          <div className={`group relative flex flex-col h-full ${isAi ? "rounded-[12px]" : "rounded-xl border border-[#222834] hover:border-[#384255] hover:shadow-2xl hover:shadow-black/70"} bg-[#12151c] hover:bg-[#151922] overflow-hidden transition-colors duration-200`}>
+          <div className={`group relative flex flex-col h-full ${isAi ? "rounded-2xl" : "rounded-2xl border border-white/[0.07] hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-black/70"} bg-[#141822] hover:bg-[#181d28] overflow-hidden transition-all duration-200`}>
             {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
               <Link
@@ -104,7 +104,7 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
                 )}
 
                 {/* Gradiente sutil para transição com a base */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#12151c] via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-black/20 to-transparent opacity-90" />
               </Link>
 
               {/* Badge Curadoria IA */}
@@ -115,18 +115,18 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
                 </div>
               )}
 
-              {/* Metacritic Badge (Canto Superior Esquerdo) */}
-              {game.metacritic && (
-                <div className={`absolute ${isAi ? "top-7 left-2" : "top-2.5 left-2.5"} z-10 pointer-events-none transition-all`}>
+              {/* Metacritic Badge Discreto (Canto Superior Esquerdo) */}
+              {game.metacritic && !isAi && (
+                <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none transition-all">
                   <MetacriticBadge score={game.metacritic} size="sm" />
                 </div>
               )}
 
-              {/* Selo Oficial de Classificação Indicativa (+18, L, 10, 12, 14, 16) */}
-              {primaryRating ? (
+              {/* Selo Oficial de Classificação Indicativa (+18, etc) se não tiver Metacritic */}
+              {!game.metacritic && primaryRating ? (
                 <div
                   className={`absolute ${
-                    userGame ? "top-2.5 right-11" : "top-2.5 right-2.5"
+                    userGame ? "top-2.5 right-11" : "top-2.5 left-2.5"
                   } z-10 pointer-events-none transition-all`}
                 >
                   <span
@@ -140,10 +140,10 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
                     {primaryRating.badgeText}
                   </span>
                 </div>
-              ) : isAdult ? (
+              ) : !game.metacritic && isAdult ? (
                 <div
                   className={`absolute ${
-                    userGame ? "top-2.5 right-11" : "top-2.5 right-2.5"
+                    userGame ? "top-2.5 right-11" : "top-2.5 left-2.5"
                   } z-10 pointer-events-none transition-all`}
                 >
                   <span
@@ -285,74 +285,73 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
           </div>
         </div>
 
-        {/* Informações do Jogo */}
-        <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2">
-          <div>
-            <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1 font-mono">
-              <span className="tabular-nums">{releaseYear}</span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {isAdult && (
-                  <span
-                    className="text-[9px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 font-mono border border-red-500/40 font-black tracking-tight"
-                    title="Conteúdo Adulto (+18)"
-                  >
-                    +18
-                  </span>
-                )}
-                {userGame?.dlcs && userGame.dlcs.length > 0 ? (
-                  <span
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-[#00E5FF] font-mono border border-cyan-500/30 font-bold"
-                    title={`${userGame.dlcs.filter((d) => d.status === "completed").length} de ${userGame.dlcs.length} DLCs zeradas`}
-                  >
-                    +{userGame.dlcs.length} DLC{userGame.dlcs.length > 1 ? "s" : ""}
-                  </span>
-                ) : game.genres && game.genres.length > 0 ? (
-                  <span
-                    className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 font-bold uppercase tracking-wider text-[9px] shrink-0"
-                    title={game.genres[0].name}
-                  >
-                    {formatGenreName(game.genres[0].name)}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
+        {/* Informações do Jogo Estilo Print 1 (Compacto e Clean) */}
+        <div className="p-3 flex-1 flex flex-col justify-between gap-2 bg-[#141822]">
+          <div className="space-y-0.5">
+            {/* Título em destaque */}
             <Link href={getGameUrl(game)} className="block">
               <h3
-                className="font-semibold text-xs sm:text-sm text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 h-8 sm:h-9 leading-snug"
+                className="font-bold text-xs sm:text-sm text-white group-hover:text-emerald-400 transition-colors line-clamp-1 leading-snug"
                 title={game.name}
               >
                 {game.name}
               </h3>
             </Link>
+
+            {/* Subtítulo: Desenvolvedora ou Gênero + Ano */}
+            <p className="text-[11px] text-neutral-400 font-medium truncate">
+              {game.developers && game.developers.length > 0
+                ? game.developers[0]
+                : game.genres && game.genres.length > 0
+                ? formatGenreName(game.genres[0].name)
+                : releaseYear || "Game"}
+              {releaseYear && game.developers && game.developers.length > 0 ? ` • ${releaseYear}` : ""}
+            </p>
           </div>
 
-          {/* Mini Info de Tempo HLTB ou Horas Registradas & Avaliação */}
-          <div className="pt-2 border-t border-[#222834] flex items-center justify-between text-xs font-mono">
-            {/* Tempos HLTB ou Horas do Jogador */}
-            <div
-              className="flex items-center gap-1.5 text-neutral-400 text-[11px] tabular-nums"
-              title={duration.isEstimated ? (duration.isTbd ? "Lançamento futuro / Duração a definir" : "Média de duração no HowLongToBeat") : "Suas horas dedicadas"}
-            >
-              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className={duration.isTbd ? "text-neutral-400 font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-white/5 border border-white/10" : ""}>
-                {duration.text}
-              </span>
-            </div>
+          {/* Rodapé Compacto: Pill de Nota / Duração & Ação Rápida */}
+          <div className="pt-1.5 border-t border-white/[0.06] flex items-center justify-between text-xs">
+            {/* Pill de Avaliação (Estilo Print 1 com Estrela Amarela) */}
+            {userGame && userGame.userRating !== null ? (
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-400/10 border border-amber-400/25 text-amber-400 font-mono font-bold text-[11px]">
+                <Star className="w-3 h-3 fill-amber-400" />
+                <span>{userGame.userRating.toFixed(1)}</span>
+              </div>
+            ) : game.rating ? (
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-amber-400 font-mono font-bold text-[11px]">
+                <Star className="w-3 h-3 fill-amber-400" />
+                <span>{(game.rating > 10 ? game.rating / 10 : game.rating).toFixed(1)}</span>
+              </div>
+            ) : duration.text && !duration.isTbd ? (
+              <div
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-neutral-300 font-mono text-[10px]"
+                title="Média de duração no HowLongToBeat"
+              >
+                <Clock className="w-3 h-3 text-emerald-400" />
+                <span>{duration.text}</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-neutral-400 font-mono text-[10px]">
+                <span>{releaseYear || "TBD"}</span>
+              </div>
+            )}
 
-            {/* Avaliação do Usuário ou Botão */}
+            {/* Ação rápida / status */}
             <div>
-              {userGame && userGame.userRating !== null ? (
-                <div className="flex items-center gap-1 text-amber-400 font-mono font-bold text-xs tabular-nums">
-                  <Star className="w-3 h-3 fill-amber-400" />
-                  <span>{userGame.userRating.toFixed(1)}</span>
-                </div>
+              {userGame ? (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px] flex items-center gap-0.5 transition-colors cursor-pointer"
+                >
+                  <Check className="w-3 h-3" />
+                  <span>Salvo</span>
+                </button>
               ) : (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="text-neutral-400 hover:text-white font-medium text-xs transition-colors cursor-pointer"
+                  className="text-neutral-400 hover:text-white font-medium text-[11px] transition-colors cursor-pointer"
                 >
-                  {userGame ? "Editar" : "+ Lista"}
+                  + Lista
                 </button>
               )}
             </div>
