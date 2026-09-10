@@ -283,8 +283,8 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         />
 
         {/* Hero Desktop */}
-        <div className="hidden lg:block relative rounded-[32px] overflow-hidden border border-white/10 bg-[#18191c] shadow-2xl">
-          <div className="relative h-72 lg:h-96 w-full overflow-hidden bg-neutral-950">
+        <div className="hidden lg:block relative rounded-[32px] overflow-hidden border border-white/10 bg-[#141822] shadow-2xl">
+          <div className="relative h-64 lg:h-80 w-full overflow-hidden bg-neutral-950">
             {backdropImage && !bannerError ? (
               <img
                 src={backdropImage}
@@ -292,12 +292,12 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 loading="eager"
                 decoding="async"
                 onError={() => setBannerError(true)}
-                className="w-full h-full object-cover object-center filter brightness-[0.45] contrast-105"
+                className="w-full h-full object-cover object-center filter brightness-[0.4] contrast-105"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-cyan-950 via-[#18191c] to-black" />
+              <div className="w-full h-full bg-gradient-to-r from-cyan-950 via-[#141822] to-black" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#18191c] via-[#18191c]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-[#141822]/70 to-transparent" />
           </div>
 
           <GameHeroDesktop
@@ -308,6 +308,8 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             userGame={userGame}
             storeWebsites={storeWebsites}
             onOpenModal={() => setIsModalOpen(true)}
+            onQuickWishlist={handleQuickWishlist}
+            onShare={handleShareGame}
           />
         </div>
 
