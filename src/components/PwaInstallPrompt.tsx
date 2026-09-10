@@ -120,21 +120,8 @@ export default function PwaInstallPrompt() {
       }
       setDeferredPrompt(null);
       globalDeferredPrompt = null;
-    } else if (isIos) {
-      // No iOS, tenta abrir a folha de compartilhamento nativa onde fica "Adicionar à Tela de Início"
-      if (typeof navigator !== "undefined" && navigator.share) {
-        try {
-          await navigator.share({
-            title: "MyGameList • Meu Gamer Log",
-            text: "Adicione o MyGameList à sua tela de início!",
-            url: window.location.origin,
-          });
-        } catch {
-          // Fechou o menu de compartilhamento
-        }
-      }
-      setIsModalOpen(false);
     } else {
+      // No iOS Safari ou navegadores sem prompt automático, apenas fecha o modal com o usuário ciente dos passos
       setIsModalOpen(false);
     }
   };
@@ -165,12 +152,7 @@ export default function PwaInstallPrompt() {
               onClick={handleInstallClick}
               className="w-full py-3.5 px-4 rounded-2xl bg-[#00E5FF] hover:bg-[#33ebff] active:scale-[0.98] text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#00E5FF]/20 transition-all cursor-pointer min-h-[46px]"
             >
-              {isIos ? (
-                <>
-                  <Share2 className="w-4 h-4 text-black stroke-[2.5]" />
-                  <span>Compartilhar para Adicionar</span>
-                </>
-              ) : deferredPrompt ? (
+              {deferredPrompt ? (
                 <>
                   <Download className="w-4 h-4 text-black stroke-[2.5]" />
                   <span>Instalar Aplicativo Agora</span>
@@ -178,7 +160,7 @@ export default function PwaInstallPrompt() {
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black stroke-[2.5]" />
-                  <span>Entendido</span>
+                  <span>Entendido, vou adicionar</span>
                 </>
               )}
             </button>
