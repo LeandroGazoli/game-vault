@@ -377,7 +377,7 @@ export default function HomePage() {
           subtitle="Títulos consagrados com dublagem oficial em português do Brasil"
           icon={Languages}
           games={ptbrGames.slice(0, 10)}
-          actionHref="/search?q=dublado"
+          actionHref="/colecoes/dublados-ptbr"
           actionText="Ver Todos"
         />
       ) : null}
@@ -397,7 +397,7 @@ export default function HomePage() {
           subtitle="Obras-primas curtas de até 10 horas para você zerar sem enrolação"
           icon={Timer}
           games={shortGames.slice(0, 10)}
-          actionHref="/search"
+          actionHref="/colecoes/fim-de-semana"
           actionText="Ver Todos"
         />
       ) : null}

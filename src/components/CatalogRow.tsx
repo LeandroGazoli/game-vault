@@ -51,17 +51,36 @@ export default function CatalogRow({
       <section ref={sectionRef} className="space-y-3 relative group/row">
         {/* Cabeçalho Limpo Estilo Xbox Cloud Gaming */}
         <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="w-5 h-5 text-neutral-400" />}
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
-              {title}
-            </h2>
-            {subtitle && (
-              <span className="hidden sm:inline text-xs text-neutral-400 font-normal ml-2">
-                • {subtitle}
-              </span>
-            )}
-          </div>
+          {actionHref ? (
+            <Link
+              href={actionHref}
+              className="flex items-center gap-2 group/header hover:opacity-90 transition-opacity"
+            >
+              {Icon && (
+                <Icon className="w-5 h-5 text-neutral-400 group-hover/header:text-emerald-400 transition-colors" />
+              )}
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display group-hover/header:text-emerald-400 transition-colors">
+                {title}
+              </h2>
+              {subtitle && (
+                <span className="hidden sm:inline text-xs text-neutral-400 font-normal ml-2">
+                  • {subtitle}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              {Icon && <Icon className="w-5 h-5 text-neutral-400" />}
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
+                {title}
+              </h2>
+              {subtitle && (
+                <span className="hidden sm:inline text-xs text-neutral-400 font-normal ml-2">
+                  • {subtitle}
+                </span>
+              )}
+            </div>
+          )}
 
           {actionHref && (
             <Link
