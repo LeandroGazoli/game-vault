@@ -25,7 +25,7 @@ import AdBanner from "@/components/ads/AdBanner";
 import GameDetailLoading from "./[slug]/loading";
 
 // Componentes Modulares de Jogo
-import { GalleryMediaItem, isStoreWebsite } from "@/components/game/gameDetailHelpers";
+import { GalleryMediaItem, isStoreWebsite, getFeaturedBackdropImage } from "@/components/game/gameDetailHelpers";
 import GameAgeGate from "@/components/game/GameAgeGate";
 import GameHeroMobile from "@/components/game/GameHeroMobile";
 import GameHeroDesktop from "@/components/game/GameHeroDesktop";
@@ -201,12 +201,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     });
   }, [game?.dlcs, game?.expansions]);
 
-  const backdropImage =
-    game?.backdrop_image ||
-    (game?.artworks && game.artworks[0]) ||
-    (game?.screenshots && game.screenshots[0]) ||
-    game?.background_image ||
-    null;
+  const backdropImage = useMemo(() => getFeaturedBackdropImage(game), [game]);
 
   if (loading) return <GameDetailLoading />;
 
@@ -227,19 +222,27 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
 
   return (
     <GameAgeGate isAdult={isAdult}>
-      <div className="space-y-6 sm:space-y-8 pb-16">
-        {/* Botão Voltar (Desktop) */}
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="hidden lg:inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" /> Voltar
-        </button>
+      <div className="space-y-6 sm:space-y-8 pb-16 relative">
+        {/* Breadcrumb & Ação Voltar (Desktop) */}
+        <div className="hidden lg:flex items-center justify-between mb-2 relative z-20">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-xs font-medium text-zinc-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Voltar para Navegação</span>
+          </button>
+          <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
+            <span>ID #{game.id}</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-semibold">MGL Vault</span>
+          </div>
+        </div>
 
         {/* Banner Informativo se o título for DLC Oficial */}
         {game.parent_game && (
-          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-fadeIn">
+          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-fadeIn relative z-20">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
                 <Package className="w-5 h-5" />
@@ -282,36 +285,19 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           onOpenModal={() => setIsModalOpen(true)}
         />
 
-        {/* Hero Desktop */}
-        <div className="hidden lg:block relative rounded-[32px] overflow-hidden border border-white/10 bg-[#141822] shadow-2xl">
-          <div className="relative h-64 lg:h-80 w-full overflow-hidden bg-neutral-950">
-            {backdropImage && !bannerError ? (
-              <img
-                src={backdropImage}
-                alt=""
-                loading="eager"
-                decoding="async"
-                onError={() => setBannerError(true)}
-                className="w-full h-full object-cover object-center filter brightness-[0.4] contrast-105"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-r from-cyan-950 via-[#141822] to-black" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-[#141822]/70 to-transparent" />
-          </div>
-
-          <GameHeroDesktop
-            game={game}
-            posterError={posterError}
-            onPosterError={() => setPosterError(true)}
-            isAdult={isAdult}
-            userGame={userGame}
-            storeWebsites={storeWebsites}
-            onOpenModal={() => setIsModalOpen(true)}
-            onQuickWishlist={handleQuickWishlist}
-            onShare={handleShareGame}
-          />
-        </div>
+        {/* Hero Desktop (Spotlight Card Unificado) */}
+        <GameHeroDesktop
+          game={game}
+          backdropImage={backdropImage}
+          posterError={posterError}
+          onPosterError={() => setPosterError(true)}
+          isAdult={isAdult}
+          userGame={userGame}
+          storeWebsites={storeWebsites}
+          onOpenModal={() => setIsModalOpen(true)}
+          onQuickWishlist={handleQuickWishlist}
+          onShare={handleShareGame}
+        />
 
         {/* Barra de Abas Segmentadas para Dispositivos Móveis */}
         <div className="lg:hidden sticky top-16 z-30 -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 py-2 bg-[#0b0d12]/95 backdrop-blur-2xl border-y border-white/10 shadow-xl">

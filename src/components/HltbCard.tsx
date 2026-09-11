@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { HLTBData } from "@/lib/types";
-import { Clock, Sword, Compass, Crown, Calculator, Calendar, CheckCircle2 } from "lucide-react";
+import { Clock, Sword, Compass, Crown, CheckCircle2 } from "lucide-react";
 
 interface HltbCardProps {
   hltb: HLTBData | null | undefined;
@@ -11,13 +11,13 @@ interface HltbCardProps {
 }
 
 export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: HltbCardProps) {
-  const [dailyHours, setDailyHours] = useState<number>(2);
+  const [dailyHours, setDailyHours] = useState<number>(1);
 
   if (!hltb || (!hltb.mainStory && !hltb.mainExtra && !hltb.completionist)) {
     return (
-      <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3 text-center text-xs text-gray-400">
-        <Clock className="w-4 h-4 mx-auto mb-1 opacity-50" />
-        Tempo de jogo ainda não estimado
+      <div className="glass-card rounded-2xl p-5 text-center text-xs text-zinc-400 border border-white/10">
+        <Clock className="w-4 h-4 mx-auto mb-1 opacity-50 text-cyan-400" />
+        Tempo de jogo ainda não estimado pela comunidade
       </div>
     );
   }
@@ -29,7 +29,7 @@ export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: H
           <div className="text-[10px] uppercase font-semibold text-blue-300 flex items-center justify-center gap-1">
             <Sword className="w-3 h-3" /> Principal
           </div>
-          <div className="text-sm font-bold text-white mt-0.5">
+          <div className="text-sm font-bold text-white mt-0.5 font-mono">
             {hltb.mainStory ? `${hltb.mainStory}h` : "--"}
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: H
           <div className="text-[10px] uppercase font-semibold text-purple-300 flex items-center justify-center gap-1">
             <Compass className="w-3 h-3" /> + Extras
           </div>
-          <div className="text-sm font-bold text-white mt-0.5">
+          <div className="text-sm font-bold text-white mt-0.5 font-mono">
             {hltb.mainExtra ? `${hltb.mainExtra}h` : "--"}
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: H
           <div className="text-[10px] uppercase font-semibold text-amber-300 flex items-center justify-center gap-1">
             <Crown className="w-3 h-3" /> 100%
           </div>
-          <div className="text-sm font-bold text-white mt-0.5">
+          <div className="text-sm font-bold text-white mt-0.5 font-mono">
             {hltb.completionist ? `${hltb.completionist}h` : "--"}
           </div>
         </div>
@@ -58,95 +58,81 @@ export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: H
   const extraDays = hltb.mainExtra ? Math.ceil(hltb.mainExtra / dailyHours) : null;
   const platDays = hltb.completionist ? Math.ceil(hltb.completionist / dailyHours) : null;
 
-  // Cálculo do Progresso Pessoal
+  // Progresso pessoal se o usuário tiver horas registradas
   const hasPlaytime = typeof userPlaytimeHours === "number" && userPlaytimeHours > 0;
   const storyProgress = hasPlaytime && hltb.mainStory
     ? Math.min(100, Math.round((userPlaytimeHours / hltb.mainStory) * 100))
     : 0;
 
   return (
-    <div className="rounded-[32px] border border-white/10 bg-[#18191c] p-6 sm:p-8 space-y-6 shadow-2xl">
+    <section className="glass-card rounded-2xl p-6 lg:p-7 border border-white/10 space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-4">
-        <div className="space-y-1">
-          <h4 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-            <div className="p-1.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Clock className="w-5 h-5" />
-            </div>
-            Duração Média para Zerar (HowLongToBeat)
-          </h4>
-          <p className="text-xs text-gray-400">
-            Estimativa calculada pela comunidade com base no estilo de jogo.
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold">
+            <Clock className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Duração Média para Zerar</h2>
+            <p className="text-xs text-zinc-400">Dados integrados e aferidos pela comunidade HowLongToBeat</p>
+          </div>
         </div>
-        <span className="text-xs font-mono font-medium text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 w-fit">
-          {hltb.source || "IGDB / HLTB"}
+        <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-semibold">
+          {hltb.source || "IGDB Community Time"}
         </span>
       </div>
 
-      {/* Grid com os 3 Modos de Duração */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        {/* História Principal */}
-        <div className="group rounded-2xl border border-blue-500/20 bg-gradient-to-b from-blue-950/25 to-blue-900/5 p-4 transition-all hover:border-blue-500/40 shadow-lg">
-          <div className="flex items-center justify-between text-blue-400 mb-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Sword className="w-4 h-4" /> Campanha Principal
-            </span>
-          </div>
-          <div className="text-3xl font-black text-white mt-1">
+      {/* Os 3 Pilares Principais de Duração */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Campanha Principal */}
+        <div className="p-4 rounded-xl bg-gradient-to-b from-[#141d2d] to-[#121622] border border-cyan-500/20 text-center">
+          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Campanha Principal</div>
+          <div className="text-3xl font-black font-mono text-cyan-300 tracking-tight">
             {hltb.mainStory ? (
               <>
-                {hltb.mainStory} <span className="text-sm font-medium text-gray-400">horas</span>
+                {hltb.mainStory} <span className="text-base text-zinc-400 font-medium font-sans">horas</span>
               </>
             ) : (
-              <span className="text-gray-500 text-lg">--</span>
+              <span className="text-zinc-500 text-lg">--</span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-1.5">Foco direto na história e objetivos principais</p>
+          <div className="text-[11px] text-zinc-400 mt-1">Foco direto no enredo e missões primárias</div>
         </div>
 
-        {/* Principal + Extras */}
-        <div className="group rounded-2xl border border-purple-500/20 bg-gradient-to-b from-purple-950/25 to-purple-900/5 p-4 transition-all hover:border-purple-500/40 shadow-lg">
-          <div className="flex items-center justify-between text-purple-400 mb-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Compass className="w-4 h-4" /> História + Extras
-            </span>
-          </div>
-          <div className="text-3xl font-black text-white mt-1">
+        {/* História + Extras */}
+        <div className="p-4 rounded-xl bg-gradient-to-b from-[#1c1c2a] to-[#121622] border border-purple-500/20 text-center">
+          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">História + Extras</div>
+          <div className="text-3xl font-black font-mono text-purple-300 tracking-tight">
             {hltb.mainExtra ? (
               <>
-                {hltb.mainExtra} <span className="text-sm font-medium text-gray-400">horas</span>
+                {hltb.mainExtra} <span className="text-base text-zinc-400 font-medium font-sans">horas</span>
               </>
             ) : (
-              <span className="text-gray-500 text-lg">--</span>
+              <span className="text-zinc-500 text-lg">--</span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-1.5">Campanha principal + missões e conteúdo secundário</p>
+          <div className="text-[11px] text-zinc-400 mt-1">Missões paralelas, assaltos e hobbies</div>
         </div>
 
-        {/* 100% Complecionista */}
-        <div className="group rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-950/25 to-amber-900/5 p-4 transition-all hover:border-amber-500/40 shadow-lg">
-          <div className="flex items-center justify-between text-amber-400 mb-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Crown className="w-4 h-4" /> 100% / Platina
-            </span>
-          </div>
-          <div className="text-3xl font-black text-white mt-1">
+        {/* 100% / Platina */}
+        <div className="p-4 rounded-xl bg-gradient-to-b from-[#251e1e] to-[#121622] border border-amber-500/20 text-center">
+          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">100% / Platina</div>
+          <div className="text-3xl font-black font-mono text-amber-300 tracking-tight">
             {hltb.completionist ? (
               <>
-                {hltb.completionist} <span className="text-sm font-medium text-gray-400">horas</span>
+                {hltb.completionist} <span className="text-base text-zinc-400 font-medium font-sans">horas</span>
               </>
             ) : (
-              <span className="text-gray-500 text-lg">--</span>
+              <span className="text-zinc-500 text-lg">--</span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-1.5">Todos os troféus, segredos, colecionáveis e desafios</p>
+          <div className="text-[11px] text-zinc-400 mt-1">Todos os troféus, colecionáveis e segredos</div>
         </div>
       </div>
 
-      {/* Progresso Pessoal do Usuário (se registrado no perfil) */}
+      {/* Progresso Pessoal do Jogador (se tiver horas registradas) */}
       {hasPlaytime && hltb.mainStory && (
-        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 sm:p-5 space-y-2.5">
+        <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-4 space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-cyan-400" />
@@ -159,84 +145,65 @@ export default function HltbCard({ hltb, compact = false, userPlaytimeHours }: H
             </span>
           </div>
 
-          <div className="w-full h-3 rounded-full bg-black/60 overflow-hidden border border-white/10 p-0.5">
+          <div className="w-full h-2.5 rounded-full bg-black/60 overflow-hidden border border-white/10 p-0.5">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700 shadow-sm"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-700"
               style={{ width: `${storyProgress}%` }}
             />
           </div>
-
-          <p className="text-[11px] text-gray-400">
-            {storyProgress >= 100
-              ? "🎉 Você já superou o tempo médio de campanha principal deste jogo!"
-              : `Faltam aproximadamente ${Math.max(0, hltb.mainStory - userPlaytimeHours)} horas para concluir a história principal com base na média.`}
-          </p>
         </div>
       )}
 
-      {/* Calculadora de Ritmo de Jogo: "Quanto tempo levo para zerar?" */}
-      <div className="rounded-2xl border border-white/5 bg-[#121316] p-4 sm:p-5 space-y-4">
+      {/* Calculadora Interativa de Backlog */}
+      <div className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-amber-400" />
-            <h5 className="text-xs font-bold text-white uppercase tracking-wider">
-              Planejamento de Backlog: Quanto tempo levo?
-            </h5>
+          <div>
+            <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-emerald-400 font-mono">⚡</span> Planejador de Backlog: Quanto tempo levo?
+            </div>
+            <div className="text-[11px] text-zinc-400">Selecione sua média de tempo diário para estimar o término:</div>
           </div>
 
-          <div className="flex items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/10 text-xs">
-            <span className="text-[10px] text-gray-400 px-2 font-medium">Jogando por dia:</span>
+          <div className="flex items-center gap-1.5">
             {[1, 2, 3, 4].map((h) => (
               <button
                 key={h}
+                type="button"
                 onClick={() => setDailyHours(h)}
-                className={`px-2.5 py-0.5 rounded-lg font-bold font-mono transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   dailyHours === h
-                    ? "bg-amber-400 text-black shadow-sm"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-emerald-500 text-black shadow"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-300"
                 }`}
               >
-                {h}h
+                {h}h/dia
               </button>
             ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          {storyDays && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-              <Calendar className="w-4 h-4 text-blue-400 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="text-gray-400 block text-[10px]">Campanha</span>
-                <strong className="text-white font-bold">~{storyDays} dias</strong>{" "}
-                <span className="text-[10px] text-gray-400">({(storyDays / 7).toFixed(1)} sem.)</span>
-              </div>
-            </div>
-          )}
-
-          {extraDays && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-              <Calendar className="w-4 h-4 text-purple-400 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="text-gray-400 block text-[10px]">História + Extras</span>
-                <strong className="text-white font-bold">~{extraDays} dias</strong>{" "}
-                <span className="text-[10px] text-gray-400">({(extraDays / 7).toFixed(1)} sem.)</span>
-              </div>
-            </div>
-          )}
-
-          {platDays && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-              <Calendar className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="text-gray-400 block text-[10px]">100% Complecionista</span>
-                <strong className="text-white font-bold">~{platDays} dias</strong>{" "}
-                <span className="text-[10px] text-gray-400">({(platDays / 7).toFixed(1)} sem.)</span>
-              </div>
-            </div>
-          )}
+        {/* Resultados das Estimativas */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/40 border border-white/5 text-xs">
+            <span className="text-zinc-400">Só a Campanha:</span>
+            <span className="font-mono font-bold text-emerald-400">
+              {storyDays ? `~${storyDays} dias (${(storyDays / 7).toFixed(1)} sem.)` : "—"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/40 border border-white/5 text-xs">
+            <span className="text-zinc-400">História + Extras:</span>
+            <span className="font-mono font-bold text-purple-400">
+              {extraDays ? `~${extraDays} dias (${(extraDays / 7).toFixed(1)} sem.)` : "—"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/40 border border-white/5 text-xs">
+            <span className="text-zinc-400">Platina Total:</span>
+            <span className="font-mono font-bold text-amber-400">
+              {platDays ? `~${platDays} dias (${(platDays / 7).toFixed(1)} sem.)` : "—"}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

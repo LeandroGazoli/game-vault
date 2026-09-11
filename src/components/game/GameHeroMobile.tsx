@@ -131,21 +131,20 @@ export default function GameHeroMobile({
               {getAgeRatingBadge(game.age_ratings, isAdult)}
 
               {game.released && (
-                <span className="text-[11px] font-mono text-gray-300 bg-black/60 border border-white/10 px-2 py-0.5 rounded-md">
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-zinc-200 text-xs font-semibold flex items-center gap-1">
                   {game.released.substring(0, 4)}
                 </span>
               )}
 
-              {game.ptbrSupport?.audio && (
-                <span className="text-[10px] text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md font-medium">
-                  🇧🇷 Dublado
+              {game.ptbrSupport?.audio ? (
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1 backdrop-blur-md">
+                  <span>🇧🇷</span> Dublado
                 </span>
-              )}
-              {game.ptbrSupport?.subtitles && !game.ptbrSupport?.audio && (
-                <span className="text-[10px] text-blue-300 bg-blue-950/60 border border-blue-500/30 px-2 py-0.5 rounded-md font-medium">
-                  🇧🇷 Legendado
+              ) : game.ptbrSupport?.subtitles ? (
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1 backdrop-blur-md">
+                  <span>🇧🇷</span> Legendado
                 </span>
-              )}
+              ) : null}
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight line-clamp-2">

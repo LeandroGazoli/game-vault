@@ -1,5 +1,5 @@
 import React from "react";
-import { Trophy, ChevronUp, ChevronDown, Edit3, Gamepad2, Plus } from "lucide-react";
+import { ChevronUp, ChevronDown, Edit3, Gamepad2, Plus, Check } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
 import { Game, UserGame } from "@/lib/types";
 
@@ -19,135 +19,127 @@ export default function GameVaultCard({
   onOpenModal,
 }: GameVaultCardProps) {
   return (
-    <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#141822] p-5 sm:p-6 space-y-4 shadow-xl">
-      <button
-        type="button"
-        onClick={onToggleExpanded}
-        className="w-full flex items-center justify-between border-b border-white/5 pb-3 text-left transition-colors cursor-pointer group"
-      >
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-amber-400" />
-          <div>
-            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
-              Meu Vault
-            </h3>
-            {game.metacritic && game.metacritic >= 90 && (
-              <span className="text-[11px] text-amber-400/90 font-medium">
-                ⭐ Obra-Prima ({game.metacritic}+ Metacritic)
-              </span>
-            )}
-          </div>
-        </div>
+    <div
+      className={`glass-card rounded-2xl p-5 lg:p-6 relative overflow-hidden transition-all ${
+        userGame
+          ? "border-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.06)]"
+          : "border-white/10"
+      }`}
+    >
+      {/* Brilho radial de fundo verde esmeralda */}
+      {userGame && (
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      )}
+
+      {/* Cabeçalho do Card */}
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/10 mb-4">
+        <button
+          type="button"
+          onClick={onToggleExpanded}
+          className="flex items-center gap-2 text-left cursor-pointer group"
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <h3 className="font-black text-sm text-white uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
+            Meu Registro no Vault
+          </h3>
+        </button>
+
         <div className="flex items-center gap-2">
           {userGame ? (
-            <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-              Na Coleção
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              NA COLEÇÃO
             </span>
           ) : (
-            <span className="text-[10px] uppercase font-bold text-gray-400 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
-              Não Adicionado
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-zinc-400 border border-white/10">
+              DISPONÍVEL
             </span>
           )}
-          {isVaultExpanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-          )}
+
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            className="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-white cursor-pointer transition-colors"
+            title={isVaultExpanded ? "Recolher card" : "Expandir card"}
+          >
+            {isVaultExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
-      </button>
+      </div>
 
       {isVaultExpanded && (
         userGame ? (
-          <div className="space-y-3 font-mono text-xs">
-            {/* SPEC SHEET DO VAULT COMPACTA (Estilo Print 2) */}
-            <div className="rounded-2xl bg-[#0f1218] border border-white/[0.08] p-4 divide-y divide-white/[0.06]">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-neutral-400 font-sans font-medium">Status no Vault</span>
-                <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+          <div className="space-y-4">
+            {/* Lista Key-Value dos Dados do Jogador */}
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                <span className="text-zinc-400">Status Atual:</span>
+                <div className="flex items-center gap-1.5">
+                  <StatusBadge status={userGame.status} completionType={userGame.completionType} size="sm" />
+                </div>
               </div>
 
-              {userGame.userRating !== null && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-neutral-400 font-sans font-medium">Sua Avaliação</span>
-                  <span className="font-bold text-amber-400 text-sm">
-                    ⭐ {userGame.userRating.toFixed(1)} / 10
-                  </span>
-                </div>
-              )}
-
-              {userGame.userPlaytimeHours !== null && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-neutral-400 font-sans font-medium">Tempo Dedicado</span>
-                  <span className="font-bold text-cyan-300 text-sm">
-                    {userGame.userPlaytimeHours} horas
-                  </span>
-                </div>
-              )}
-
               {userGame.platformPlayed && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-neutral-400 font-sans font-medium">Plataforma</span>
-                  <span className="font-semibold text-gray-200">
-                    {userGame.platformPlayed}
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <span className="text-zinc-400">Plataforma Jogada:</span>
+                  <span className="font-bold text-white font-mono">{userGame.platformPlayed}</span>
+                </div>
+              )}
+
+              {userGame.userPlaytimeHours !== null && userGame.userPlaytimeHours > 0 && (
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <span className="text-zinc-400">Tempo Registrado:</span>
+                  <span className="font-bold text-cyan-300 font-mono">
+                    {userGame.userPlaytimeHours} horas gravadas
                   </span>
                 </div>
               )}
 
-              {game.hltb?.mainStory ? (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-neutral-400 font-sans font-medium flex items-center gap-1">
-                    <span>Duração Média</span>
-                    <span className="text-[10px] text-neutral-500" title="HowLongToBeat">ⓘ</span>
-                  </span>
-                  <span className="text-neutral-300">~{game.hltb.mainStory}h Campanha</span>
-                </div>
-              ) : null}
-
-              {game.released && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-neutral-400 font-sans font-medium">Lançamento Oficial</span>
-                  <span className="text-neutral-300">
-                    {new Date(game.released).getFullYear()}
+              {userGame.userRating !== null && (
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <span className="text-zinc-400">Sua Avaliação:</span>
+                  <span className="font-bold text-amber-400 font-mono flex items-center gap-1">
+                    ★ {userGame.userRating.toFixed(1)} / 10
                   </span>
                 </div>
               )}
 
               {userGame.userReview && (
-                <div className="pt-2">
-                  <span className="text-neutral-400 font-sans font-medium block mb-1">Notas Pessoais:</span>
-                  <p className="text-neutral-200 italic font-sans text-xs bg-white/5 p-2.5 rounded-xl border border-white/5">
+                <div className="pt-1">
+                  <span className="text-zinc-400 block mb-1">Notas Pessoais:</span>
+                  <p className="text-zinc-200 italic text-xs bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
                     &quot;{userGame.userReview}&quot;
                   </p>
                 </div>
               )}
             </div>
 
+            {/* Botão de Edição Rápida */}
             <button
               type="button"
               onClick={onOpenModal}
-              className="w-full min-h-[48px] py-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-bold text-emerald-300 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 active:scale-98"
+              className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>Editar Registro no Vault</span>
+              <span>Editar Registro Pessoal</span>
             </button>
           </div>
         ) : (
-          <div className="text-center py-6 sm:py-8 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-emerald-400 shadow-inner">
-              <Gamepad2 className="w-7 h-7" />
+          <div className="text-center py-4 space-y-3.5">
+            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-emerald-400 shadow-inner">
+              <Gamepad2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-white">
-                Adicione este jogo ao seu Vault
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Adicione ao seu Vault
               </h4>
-              <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-                Acompanhe seu progresso, registre suas horas jogadas, avalie com notas e organize seu backlog.
+              <p className="text-[11px] text-zinc-400 max-w-xs mx-auto leading-relaxed">
+                Acompanhe seu progresso, registre horas jogadas e organize seu backlog.
               </p>
             </div>
             <button
               type="button"
               onClick={onOpenModal}
-              className="w-full min-h-[50px] py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-black transition-all shadow-xl shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black text-xs font-extrabold transition-all shadow-lg shadow-emerald-950/40 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Adicionar ao Meu Vault</span>

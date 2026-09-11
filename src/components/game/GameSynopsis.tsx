@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Languages, ChevronUp, ChevronDown, Layers } from "lucide-react";
+import { Languages, ChevronUp, ChevronDown, BookOpen } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";
 import { isLikelyEnglish } from "@/lib/gameUtils";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
@@ -37,40 +37,46 @@ export default function GameSynopsis({
   return (
     <div className="space-y-6">
       {/* 1. Sobre o Jogo (Sinopse) */}
-      <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-4 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-          <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#00E5FF]" /> Sobre o Jogo
-          </h3>
+      <section className="glass-card rounded-2xl p-6 lg:p-7 border border-white/10 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+              🎮
+            </div>
+            <h2 className="text-lg font-bold text-white tracking-tight">Sobre o Jogo</h2>
+          </div>
+
           <div className="flex items-center gap-2">
             {isTranslating ? (
-              <span className="text-[11px] text-cyan-300 bg-cyan-950/50 border border-cyan-500/30 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 animate-pulse">
-                <Sparkles className="w-3.5 h-3.5" /> Traduzindo...
+              <span className="text-xs text-cyan-300 bg-cyan-950/50 border border-cyan-500/30 px-3 py-1 rounded-full font-mono font-medium flex items-center gap-1.5 animate-pulse">
+                Traduzindo...
               </span>
             ) : descriptionRaw && isLikelyEnglish(descriptionRaw) && onTranslateOnDemand ? (
               <button
                 type="button"
                 onClick={onTranslateOnDemand}
-                className="text-[11px] px-3 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                className="text-xs px-3 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-medium transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
                 title="Buscar tradução em Português Brasileiro"
               >
-                <Languages className="w-3.5 h-3.5" /> Traduzir para PT-BR
+                <Languages className="w-3.5 h-3.5" />
+                <span>Traduzir para PT-BR</span>
               </button>
             ) : descriptionRaw ? (
-              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium flex items-center gap-1">
-                🇧🇷 Traduzido para PT-BR
+              <span className="px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span>Traduzido PT-BR</span>
               </span>
             ) : null}
           </div>
         </div>
 
         <div className="relative">
-          <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+          <p className="text-sm lg:text-base text-zinc-300 leading-relaxed whitespace-pre-line">
             {displayDesc}
           </p>
 
           {isMobile && isLongDesc && !isDescriptionExpanded && (
-            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#18191c] to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#121620] to-transparent pointer-events-none" />
           )}
         </div>
 
@@ -81,38 +87,35 @@ export default function GameSynopsis({
               triggerSelectionHaptic();
               setIsDescriptionExpanded(!isDescriptionExpanded);
             }}
-            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-cyan-300 border border-white/10 transition-all active:scale-95 cursor-pointer"
+            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-emerald-400 border border-white/10 transition-all active:scale-95 cursor-pointer"
           >
             <span>{isDescriptionExpanded ? "Mostrar menos" : "Ler sinopse completa"}</span>
-            {isDescriptionExpanded ? (
-              <ChevronUp className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
-            )}
+            {isDescriptionExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         )}
-      </div>
+      </section>
 
       {/* 2. Enredo & Narrativa (Storyline, se existir) */}
       {storylineText && (
-        <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-4 shadow-xl">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <Layers className="w-5 h-5 text-purple-400" /> Enredo &amp; Narrativa
-            </h3>
+        <section className="glass-card rounded-2xl p-6 lg:p-7 border border-white/10 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <h2 className="text-lg font-bold text-white tracking-tight">Enredo &amp; Narrativa</h2>
+            </div>
             {!isLikelyEnglish(storyline) && (
-              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-950/40 text-purple-300 border border-purple-500/20 font-medium flex items-center gap-1">
-                🇧🇷 Traduzido para PT-BR
-              </span>
+              <span className="text-xs text-zinc-400 font-mono">História Oficial</span>
             )}
           </div>
 
           <div className="relative">
-            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
               {displayStory}
             </p>
             {isMobile && isLongStory && !isStorylineExpanded && (
-              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#18191c] to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#121620] to-transparent pointer-events-none" />
             )}
           </div>
 
@@ -123,17 +126,13 @@ export default function GameSynopsis({
                 triggerSelectionHaptic();
                 setIsStorylineExpanded(!isStorylineExpanded);
               }}
-              className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-purple-300 border border-white/10 transition-all active:scale-95 cursor-pointer"
+              className="w-full min-h-[44px] flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-indigo-400 border border-white/10 transition-all active:scale-95 cursor-pointer"
             >
               <span>{isStorylineExpanded ? "Mostrar menos" : "Ler enredo completo"}</span>
-              {isStorylineExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5" />
-              )}
+              {isStorylineExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           )}
-        </div>
+        </section>
       )}
     </div>
   );
