@@ -162,3 +162,48 @@ export function getWebsiteMeta(url: string): WebsiteMeta {
   }
   return { label: domainLabel, color: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40", isStore: false, category: "official" };
 }
+
+/**
+ * Seleciona a imagem de destaque para o fundo / mural atmosférico do jogo.
+ * Regra Obrigatória: Sempre seleciona a 2ª ou 3ª imagem da lista de artes (nunca a 1ª imagem).
+ * Se não houver artes oficiais suficientes, busca a 2ª ou 3ª captura de tela.
+ */
+export function getFeaturedBackdropImage(game?: Game | null): string | null {
+  if (!game) return null;
+
+  // 1. Sempre prioriza a 2ª ou 3ª arte oficial da lista (nunca a 1ª)
+  if (game.artworks && game.artworks.length > 1) {
+    const art2 = game.artworks[1];
+    const art3 = game.artworks[2];
+    // Se a 2ª for idêntica à capa frontal (background_image), dá preferência para a 3ª se existir
+    if (art2 && art2 === game.background_image && art3) {
+      return art3;
+    }
+    return art2 || art3 || null;
+  }
+
+  // 2. Se artworks não tiver pelo menos 2 imagens, busca a 2ª ou 3ª screenshot (nunca a 1ª)
+  if (game.screenshots && game.screenshots.length > 1) {
+    const shot2 = game.screenshots[1];
+    const shot3 = game.screenshots[2];
+    if (shot2 && shot2 === game.background_image && shot3) {
+      return shot3;
+    }
+    return shot2 || shot3 || null;
+  }
+
+  if (game.short_screenshots && game.short_screenshots.length > 1) {
+    const s2 = game.short_screenshots[1]?.image;
+    const s3 = game.short_screenshots[2]?.image;
+    return s2 || s3 || null;
+  }
+
+  // 3. Fallback de contingência caso o jogo só tenha 1 única imagem cadastrada no banco
+  return (
+    game.backdrop_image ||
+    (game.artworks && game.artworks[0]) ||
+    (game.screenshots && game.screenshots[0]) ||
+    game.background_image ||
+    null
+  );
+}

@@ -25,7 +25,7 @@ import AdBanner from "@/components/ads/AdBanner";
 import GameDetailLoading from "./[slug]/loading";
 
 // Componentes Modulares de Jogo
-import { GalleryMediaItem, isStoreWebsite } from "@/components/game/gameDetailHelpers";
+import { GalleryMediaItem, isStoreWebsite, getFeaturedBackdropImage } from "@/components/game/gameDetailHelpers";
 import GameAgeGate from "@/components/game/GameAgeGate";
 import GameHeroMobile from "@/components/game/GameHeroMobile";
 import GameHeroDesktop from "@/components/game/GameHeroDesktop";
@@ -201,12 +201,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
     });
   }, [game?.dlcs, game?.expansions]);
 
-  const backdropImage =
-    game?.backdrop_image ||
-    (game?.artworks && game.artworks[0]) ||
-    (game?.screenshots && game.screenshots[0]) ||
-    game?.background_image ||
-    null;
+  const backdropImage = useMemo(() => getFeaturedBackdropImage(game), [game]);
 
   if (loading) return <GameDetailLoading />;
 
@@ -228,15 +223,19 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   return (
     <GameAgeGate isAdult={isAdult}>
       <div className="space-y-6 sm:space-y-8 pb-16 relative">
-        {/* Fundo com a Arte do Jogo (Backdrop Cinematográfico Ambiência Sutil) */}
+        {/* Fundo com a Arte do Jogo (Degrade ao transparente: Esquerda transparente -> Direita aparecendo) */}
         {backdropImage && !bannerError && (
-          <div className="hidden lg:block absolute -top-8 -left-8 -right-8 h-[600px] pointer-events-none overflow-hidden z-0 hero-glow-radial">
-            <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-[#10141e]/50 via-[#0b0d12]/90 to-[#0b0d12] z-10" />
+          <div className="hidden lg:block absolute -top-8 -left-8 -right-8 h-[650px] pointer-events-none overflow-hidden z-0">
+            {/* Arte do jogo ancorada à direita com máscara linear (Esquerda transparente / Direita visível) */}
             <div
-              className="w-full h-[600px] bg-cover bg-center opacity-20 scale-105 filter blur-[14px] transition-transform duration-1000"
-              style={{ backgroundImage: `url("${backdropImage}")`, backgroundPosition: "50% 15%" }}
+              className="absolute inset-0 bg-no-repeat bg-cover opacity-40 lg:opacity-50 filter contrast-105 [mask-image:linear-gradient(to_right,transparent_0%,transparent_30%,black_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,transparent_30%,black_100%)] transition-all duration-700"
+              style={{ backgroundImage: `url("${backdropImage}")`, backgroundPosition: "right 20%" }}
             />
-            <div className="absolute inset-0 backdrop-pattern z-10 opacity-25" />
+            {/* Gradiente horizontal reforçando esquerda 100% escura/transparente */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d12] via-[#0b0d12]/90 to-transparent" />
+            {/* Gradiente vertical fundindo suavemente com o fundo da página (#0b0d12) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0b0d12]/30 via-transparent to-[#0b0d12]" />
+            <div className="absolute inset-0 backdrop-pattern z-10 opacity-20" />
           </div>
         )}
 

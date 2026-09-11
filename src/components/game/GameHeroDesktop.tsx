@@ -6,19 +6,13 @@ import {
   Building2,
   Globe,
   Star,
-  Heart,
-  Plus,
-  Edit3,
-  Share2,
-  ExternalLink,
-  Check,
 } from "lucide-react";
 import { Game, UserGame } from "@/lib/types";
 import { translateGenre } from "@/lib/gameUtils";
-import { STATUS_CONFIG } from "@/components/StatusBadge";
 import GameReleaseCountdown, { isGameUnreleased } from "@/components/GameReleaseCountdown";
-import { getAgeRatingBadge, getWebsiteMeta, GameWebsite } from "./gameDetailHelpers";
+import { getAgeRatingBadge, GameWebsite } from "./gameDetailHelpers";
 import GameDesktopMetrics from "./GameDesktopMetrics";
+import GameDesktopActions from "./GameDesktopActions";
 
 interface GameHeroDesktopProps {
   game: Game;
@@ -45,22 +39,21 @@ export default function GameHeroDesktop({
   onQuickWishlist,
   onShare,
 }: GameHeroDesktopProps) {
-  const isBacklog = userGame?.status === "backlog";
   const primaryGenre = game.genres?.[0]?.name ? translateGenre(game.genres[0].name) : null;
 
   return (
     <div className="hidden lg:block relative z-20">
       {/* Spotlight Card Unificado com Linha Superior de Luz Esmeralda */}
       <div className="glass-card rounded-3xl p-6 lg:p-8 relative overflow-hidden border border-white/10 shadow-2xl">
-        {/* Split Artwork Mural Backdrop (Mural Lateral com Gradiente de Fusão Atmosférico) */}
+        {/* Split Artwork Mural Backdrop (Degrade ao transparente: Esquerda transparente -> Direita aparecendo) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           {backdropImage && (
-            <div className="absolute inset-y-0 right-0 w-full lg:w-3/5 xl:w-7/12 pointer-events-none">
+            <div className="absolute inset-y-0 right-0 w-full lg:w-3/5 xl:w-2/3 pointer-events-none [mask-image:linear-gradient(to_right,transparent_0%,transparent_15%,black_80%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,transparent_15%,black_80%)]">
               <img
                 src={backdropImage}
                 alt=""
                 aria-hidden="true"
-                className="w-full h-full object-cover object-top lg:object-center opacity-40 lg:opacity-50 scale-105 filter brightness-105 contrast-110"
+                className="w-full h-full object-cover object-top lg:object-center opacity-55 lg:opacity-70 scale-105 filter brightness-105 contrast-110"
               />
               {/* Tint Atmosférico e Luz Ambiente */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d12] via-transparent to-transparent opacity-90" />
@@ -68,8 +61,8 @@ export default function GameHeroDesktop({
             </div>
           )}
 
-          {/* Gradientes Suaves de Máscara para Fundir Atrás dos Metadados */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d12] via-[#0b0d12]/95 lg:via-[#0b0d12]/80 to-transparent" />
+          {/* Gradientes Suaves de Máscara para Fundir Atrás dos Metadados (Esquerda 100% escura/transparente) */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d12] via-[#0b0d12]/95 lg:via-[#0b0d12]/75 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0b0d12]/60 via-transparent to-[#0b0d12]/90" />
         </div>
 
@@ -226,86 +219,14 @@ export default function GameHeroDesktop({
               hltbCompletionist={game.hltb?.completionist}
             />
 
-            {/* Action Toolbar Compacta */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-white/10">
-              {/* Botão Primário: Vault */}
-              <button
-                type="button"
-                onClick={onOpenModal}
-                className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-extrabold text-sm flex items-center gap-2.5 transition-all shadow-lg shadow-emerald-950/40 active:scale-98 cursor-pointer"
-              >
-                {userGame ? (
-                  <>
-                    <Check className="w-5 h-5 text-black stroke-[3]" />
-                    <span>No Meu Vault ({STATUS_CONFIG[userGame.status]?.label || "Salvo"})</span>
-                    <Edit3 className="w-3.5 h-3.5 ml-1 text-black/70" />
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-5 h-5 text-black stroke-[3]" />
-                    <span>Adicionar ao Meu Vault</span>
-                  </>
-                )}
-              </button>
-
-              {/* Botão Secundário: Desejar */}
-              <button
-                type="button"
-                onClick={onQuickWishlist}
-                className={`px-4 py-3 rounded-xl border font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-                  isBacklog
-                    ? "bg-pink-500/20 text-pink-300 border-pink-500/50 hover:bg-pink-500/30"
-                    : "bg-white/5 hover:bg-white/10 border-white/10 hover:border-pink-500/40 text-white"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isBacklog ? "fill-pink-400 text-pink-400" : "text-pink-400"}`} />
-                <span>{isBacklog ? "Desejado" : "Desejar"}</span>
-              </button>
-
-              {/* Botão Avaliar */}
-              <button
-                type="button"
-                onClick={onOpenModal}
-                className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/40 text-white font-bold text-sm flex items-center gap-2 transition-all cursor-pointer"
-              >
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                <span>{userGame?.userRating ? `Nota: ${userGame.userRating}/10` : "Avaliar Jogo"}</span>
-              </button>
-
-              {/* Botão Compartilhar */}
-              <button
-                type="button"
-                onClick={onShare}
-                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all ml-auto cursor-pointer"
-                title="Compartilhar este jogo"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Onde Comprar (Lojas Digitais) */}
-            {storeWebsites.length > 0 && (
-              <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-zinc-400 font-medium mr-1">Onde Comprar:</span>
-                {storeWebsites.slice(0, 5).map((w) => {
-                  const meta = getWebsiteMeta(w.url);
-                  return (
-                    <a
-                      key={w.id}
-                      href={w.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/40 text-zinc-300 hover:text-emerald-300 flex items-center gap-1.5 transition-all text-xs"
-                      title={`Página oficial na ${meta.label}`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span>{meta.label}</span>
-                      <ExternalLink className="w-3 h-3 text-zinc-500" />
-                    </a>
-                  );
-                })}
-              </div>
-            )}
+            {/* Action Toolbar & Onde Comprar */}
+            <GameDesktopActions
+              userGame={userGame}
+              storeWebsites={storeWebsites}
+              onOpenModal={onOpenModal}
+              onQuickWishlist={onQuickWishlist}
+              onShare={onShare}
+            />
           </div>
         </div>
       </div>
