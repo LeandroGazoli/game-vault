@@ -19,6 +19,7 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import { isAdultGame, isLikelyEnglish } from "@/lib/gameUtils";
 import { getGameUrl } from "@/lib/routes";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
@@ -46,6 +47,7 @@ interface GameDetailClientProps {
 
 export default function GameDetailClient({ initialGame, id }: GameDetailClientProps) {
   const router = useRouter();
+  const handleBack = useBackNavigation("/search");
   const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame } = useGameLibrary();
 
@@ -227,8 +229,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         <div className="hidden lg:flex items-center justify-between mb-2 relative z-20">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 text-xs font-medium text-zinc-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer"
+            title="Voltar para a tela anterior ou catálogo de jogos"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar para Navegação</span>
@@ -279,7 +282,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
           onPosterError={() => setPosterError(true)}
           isAdult={isAdult}
           userGame={userGame}
-          onBack={() => router.back()}
+          onBack={handleBack}
           onShare={handleShareGame}
           onQuickWishlist={handleQuickWishlist}
           onOpenModal={() => setIsModalOpen(true)}

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { ShieldAlert, Calendar, Lock, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { calculateAge, isUserAdult } from "@/lib/gameUtils";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import AuthModal from "@/components/AuthModal";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
 import AdultContentModal from "@/components/AdultContentModal";
@@ -14,6 +15,7 @@ interface GameAgeGateProps {
 
 export default function GameAgeGate({ children, isAdult }: GameAgeGateProps) {
   const router = useRouter();
+  const handleBack = useBackNavigation("/search");
   const { user, isLoading: authLoading, updateUserProfile } = useAuth();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -57,7 +59,7 @@ export default function GameAgeGate({ children, isAdult }: GameAgeGateProps) {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={handleBack}
               className="w-full sm:w-auto px-6 py-2.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-semibold transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 inline mr-1.5" />
@@ -108,7 +110,7 @@ export default function GameAgeGate({ children, isAdult }: GameAgeGateProps) {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={handleBack}
               className="w-full sm:w-auto px-6 py-2.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-semibold transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 inline mr-1.5" />
@@ -214,7 +216,7 @@ export default function GameAgeGate({ children, isAdult }: GameAgeGateProps) {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={handleBack}
               className="w-full sm:w-auto px-6 py-2.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-semibold transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 inline mr-1.5" />

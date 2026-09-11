@@ -21,6 +21,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import CapacitorInit from "@/components/CapacitorInit";
 import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
 import ViewTransitionsProvider from "@/providers/ViewTransitionsProvider";
+import NavigationTracker from "@/components/NavigationTracker";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BannedUserModal from "@/components/BannedUserModal";
 import MaintenanceOverlay from "@/components/MaintenanceOverlay";
@@ -175,6 +176,7 @@ export default function RootLayout({
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
         <ClientSpaceDustCanvas />
+        <NavigationTracker />
         <ViewTransitionsProvider>
           <AuthProvider>
             <CapacitorInit />
