@@ -223,22 +223,6 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   return (
     <GameAgeGate isAdult={isAdult}>
       <div className="space-y-6 sm:space-y-8 pb-16 relative">
-        {/* Fundo com a Arte do Jogo (Degrade ao transparente: Esquerda transparente -> Direita aparecendo) */}
-        {backdropImage && !bannerError && (
-          <div className="hidden lg:block absolute -top-8 -left-8 -right-8 h-[650px] pointer-events-none overflow-hidden z-0">
-            {/* Arte do jogo ancorada à direita com máscara linear (Esquerda transparente / Direita visível) */}
-            <div
-              className="absolute inset-0 bg-no-repeat bg-cover opacity-40 lg:opacity-50 filter contrast-105 [mask-image:linear-gradient(to_right,transparent_0%,transparent_30%,black_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,transparent_30%,black_100%)] transition-all duration-700"
-              style={{ backgroundImage: `url("${backdropImage}")`, backgroundPosition: "right 20%" }}
-            />
-            {/* Gradiente horizontal reforçando esquerda 100% escura/transparente */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d12] via-[#0b0d12]/90 to-transparent" />
-            {/* Gradiente vertical fundindo suavemente com o fundo da página (#0b0d12) */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0b0d12]/30 via-transparent to-[#0b0d12]" />
-            <div className="absolute inset-0 backdrop-pattern z-10 opacity-20" />
-          </div>
-        )}
-
         {/* Breadcrumb & Ação Voltar (Desktop) */}
         <div className="hidden lg:flex items-center justify-between mb-2 relative z-20">
           <button
