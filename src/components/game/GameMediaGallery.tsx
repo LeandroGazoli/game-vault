@@ -122,7 +122,7 @@ export default function GameMediaGallery({
   }
 
   return (
-    <section className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-6 shadow-2xl">
+    <section className="glass-card rounded-2xl p-6 lg:p-7 border border-white/10 space-y-6">
       {/* Header com Abas da Mídia */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit text-xs">

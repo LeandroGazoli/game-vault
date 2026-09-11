@@ -30,12 +30,13 @@ export default function GameCommunityLinks({
   });
 
   return (
-    <div className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-6 space-y-4 shadow-xl">
-      <div className="flex items-center justify-between border-b border-white/5 pb-3">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
-          <Globe className="w-4 h-4 text-emerald-400" /> Comunidade &amp; Guias
+    <div className="glass-card rounded-2xl p-5 lg:p-6 border border-white/10 space-y-4">
+      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <h3 className="font-black text-sm text-white uppercase tracking-wider flex items-center gap-2">
+          <span>🌐</span>
+          <span>Comunidade &amp; Guias</span>
         </h3>
-        <span className="text-[11px] font-mono text-gray-400">
+        <span className="text-[10px] font-mono text-zinc-400">
           {communityWebsites.length} links
         </span>
       </div>

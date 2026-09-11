@@ -22,7 +22,7 @@ export default function GameDlcsSection({
   if (uniqueDlcs.length === 0) return null;
 
   return (
-    <section className="rounded-[28px] sm:rounded-[32px] border border-white/10 bg-[#18191c] p-5 sm:p-8 space-y-6 shadow-2xl animate-fadeIn">
+    <section className="glass-card rounded-2xl p-6 lg:p-7 border border-white/10 space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
         <div className="space-y-1">
           <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
