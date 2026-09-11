@@ -228,15 +228,15 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   return (
     <GameAgeGate isAdult={isAdult}>
       <div className="space-y-6 sm:space-y-8 pb-16 relative">
-        {/* Fundo com a Arte do Jogo (Backdrop Cinematográfico Ambiência) */}
+        {/* Fundo com a Arte do Jogo (Backdrop Cinematográfico Ambiência Sutil) */}
         {backdropImage && !bannerError && (
-          <div className="hidden lg:block absolute -top-8 -left-8 -right-8 h-[650px] pointer-events-none overflow-hidden z-0 hero-glow-radial">
-            <div className="absolute top-0 left-0 right-0 h-[650px] bg-gradient-to-b from-[#141b2b]/40 via-[#0b0d12]/90 to-[#0b0d12] z-10" />
+          <div className="hidden lg:block absolute -top-8 -left-8 -right-8 h-[600px] pointer-events-none overflow-hidden z-0 hero-glow-radial">
+            <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-[#10141e]/50 via-[#0b0d12]/90 to-[#0b0d12] z-10" />
             <div
-              className="w-full h-[600px] bg-cover bg-center opacity-30 mix-blend-screen scale-105 filter blur-[2px] transition-transform duration-1000"
+              className="w-full h-[600px] bg-cover bg-center opacity-20 scale-105 filter blur-[14px] transition-transform duration-1000"
               style={{ backgroundImage: `url("${backdropImage}")`, backgroundPosition: "50% 15%" }}
             />
-            <div className="absolute inset-0 backdrop-pattern z-10 opacity-35" />
+            <div className="absolute inset-0 backdrop-pattern z-10 opacity-25" />
           </div>
         )}
 
@@ -305,6 +305,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
         {/* Hero Desktop (Spotlight Card Unificado) */}
         <GameHeroDesktop
           game={game}
+          backdropImage={backdropImage}
           posterError={posterError}
           onPosterError={() => setPosterError(true)}
           isAdult={isAdult}

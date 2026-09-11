@@ -6,8 +6,6 @@ import {
   Building2,
   Globe,
   Star,
-  Award,
-  Clock,
   Heart,
   Plus,
   Edit3,
@@ -20,9 +18,11 @@ import { translateGenre } from "@/lib/gameUtils";
 import { STATUS_CONFIG } from "@/components/StatusBadge";
 import GameReleaseCountdown, { isGameUnreleased } from "@/components/GameReleaseCountdown";
 import { getAgeRatingBadge, getWebsiteMeta, GameWebsite } from "./gameDetailHelpers";
+import GameDesktopMetrics from "./GameDesktopMetrics";
 
 interface GameHeroDesktopProps {
   game: Game;
+  backdropImage?: string | null;
   posterError: boolean;
   onPosterError: () => void;
   isAdult?: boolean;
@@ -35,6 +35,7 @@ interface GameHeroDesktopProps {
 
 export default function GameHeroDesktop({
   game,
+  backdropImage,
   posterError,
   onPosterError,
   isAdult,
@@ -47,21 +48,35 @@ export default function GameHeroDesktop({
   const isBacklog = userGame?.status === "backlog";
   const primaryGenre = game.genres?.[0]?.name ? translateGenre(game.genres[0].name) : null;
 
-  // Rótulo dinâmico para nota do Metacritic
-  const getMetacriticLabel = (score: number) => {
-    if (score >= 90) return "Aclamação Universal";
-    if (score >= 75) return "Geralmente Favorável";
-    if (score >= 50) return "Misto ou Mediano";
-    return "Avaliação Baixa";
-  };
-
   return (
     <div className="hidden lg:block relative z-20">
       {/* Spotlight Card Unificado com Linha Superior de Luz Esmeralda */}
       <div className="glass-card rounded-3xl p-6 lg:p-8 relative overflow-hidden border border-white/10 shadow-2xl">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent pointer-events-none" />
+        {/* Split Artwork Mural Backdrop (Mural Lateral com Gradiente de Fusão Atmosférico) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          {backdropImage && (
+            <div className="absolute inset-y-0 right-0 w-full lg:w-3/5 xl:w-7/12 pointer-events-none">
+              <img
+                src={backdropImage}
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover object-top lg:object-center opacity-40 lg:opacity-50 scale-105 filter brightness-105 contrast-110"
+              />
+              {/* Tint Atmosférico e Luz Ambiente */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d12] via-transparent to-transparent opacity-90" />
+              <div className="absolute inset-0 bg-radial from-emerald-500/10 via-transparent to-transparent mix-blend-screen" />
+            </div>
+          )}
 
-        <div className="grid grid-cols-12 gap-8 items-start">
+          {/* Gradientes Suaves de Máscara para Fundir Atrás dos Metadados */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d12] via-[#0b0d12]/95 lg:via-[#0b0d12]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0b0d12]/60 via-transparent to-[#0b0d12]/90" />
+        </div>
+
+        {/* Linha Superior de Acento Esmeralda */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent pointer-events-none z-10" />
+
+        <div className="grid grid-cols-12 gap-8 items-start relative z-10">
           {/* Coluna 1: Capa Oficial & Selos (3.5 colunas) */}
           <div className="col-span-4 xl:col-span-3 flex flex-col items-center">
             <div className="relative group w-full max-w-[260px] aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/15 bg-neutral-950 flex flex-col justify-end">
@@ -112,27 +127,27 @@ export default function GameHeroDesktop({
 
           {/* Coluna 2: Dados Principais & Métricas (8.5 colunas) */}
           <div className="col-span-8 xl:col-span-9 flex flex-col justify-between space-y-5">
-            {/* Badges Row Enxuta e Alinhada */}
+            {/* Badges Row Padronizada e Alinhada */}
             <div className="flex flex-wrap items-center gap-2">
               {getAgeRatingBadge(game.age_ratings, isAdult)}
 
               {game.released && (
-                <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-200 text-xs font-mono font-semibold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  {game.released.substring(0, 4)}
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-zinc-200 text-xs font-semibold flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>{game.released.substring(0, 4)}</span>
                 </span>
               )}
 
               {primaryGenre && (
-                <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-200 text-xs font-semibold">
-                  {primaryGenre}
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-zinc-200 text-xs font-semibold flex items-center gap-1.5">
+                  <span>{primaryGenre}</span>
                 </span>
               )}
 
               {(game.franchises?.[0] || game.collections?.[0]) && (
                 <Link
                   href={`/search?q=${encodeURIComponent(game.franchises?.[0] || game.collections?.[0] || "")}`}
-                  className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 backdrop-blur-md transition-colors"
                 >
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   <span>Saga {game.franchises?.[0] || game.collections?.[0]}</span>
@@ -140,19 +155,21 @@ export default function GameHeroDesktop({
               )}
 
               {game.ptbrSupport?.audio ? (
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
-                  <span>🇧🇷</span> Dublado &amp; Legendado PT-BR
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 backdrop-blur-md">
+                  <span className="text-xs">🇧🇷</span>
+                  <span>Totalmente Dublado &amp; Legendado PT-BR</span>
                 </span>
               ) : game.ptbrSupport?.subtitles ? (
-                <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5">
-                  <span>🇧🇷</span> Legendado PT-BR
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 backdrop-blur-md">
+                  <span className="text-xs">🇧🇷</span>
+                  <span>Totalmente Legendado PT-BR</span>
                 </span>
               ) : null}
             </div>
 
             {/* Título & Créditos de Estúdios */}
             <div>
-              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight text-white mb-2 leading-tight">
+              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight text-white mb-2 leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
                 {game.name}
               </h1>
               {game.developers?.length || game.publishers?.length ? (
@@ -200,61 +217,14 @@ export default function GameHeroDesktop({
               ) : null}
             </div>
 
-            {/* Key Metrics Bar (3 Cards Flutuantes) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Card 1: Avaliação da Comunidade */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-3.5 hover:border-amber-500/40 transition-colors">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl font-black flex-shrink-0">
-                  ★
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold">
-                    Avaliação MGL
-                  </div>
-                  <div className="text-xl font-extrabold text-white flex items-baseline gap-1 font-mono">
-                    {game.rating ? game.rating.toFixed(1) : "—"}
-                    <span className="text-xs text-zinc-400 font-normal font-sans">/10</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-400 font-mono">
-                    {game.ratings_count ? `${game.ratings_count.toLocaleString("pt-BR")} votos` : "Avaliações da comunidade"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: Metascore Oficial */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-3.5 hover:border-emerald-500/40 transition-colors">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl font-black font-mono shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-shrink-0">
-                  {game.metacritic ?? "—"}
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold">
-                    Metascore Oficial
-                  </div>
-                  <div className="text-xs font-bold text-emerald-400 truncate">
-                    {game.metacritic ? getMetacriticLabel(game.metacritic) : "Sem nota de crítica"}
-                  </div>
-                  <div className="text-[10px] text-zinc-400 font-mono">Críticas da Mídia</div>
-                </div>
-              </div>
-
-              {/* Card 3: Campanha HLTB */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-3.5 hover:border-cyan-500/40 transition-colors">
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl font-mono font-black flex-shrink-0">
-                  <Clock className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold">
-                    Campanha (HLTB)
-                  </div>
-                  <div className="text-xl font-extrabold text-cyan-300 font-mono flex items-baseline gap-1">
-                    {game.hltb?.mainStory ? `~${game.hltb.mainStory}h` : "—"}
-                  </div>
-                  <div className="text-[10px] text-zinc-400 font-mono">
-                    {game.hltb?.completionist ? `Completo: ~${game.hltb.completionist}h` : "Média de conclusão"}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Key Metrics Bar (3 Floating Cards com Alto Contraste) */}
+            <GameDesktopMetrics
+              rating={game.rating}
+              ratingsCount={game.ratings_count}
+              metacritic={game.metacritic}
+              hltbMainStory={game.hltb?.mainStory}
+              hltbCompletionist={game.hltb?.completionist}
+            />
 
             {/* Action Toolbar Compacta */}
             <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-white/10">

@@ -24,28 +24,56 @@ export function getAgeRatingBadge(ageRatings?: AgeRatingItem[], isAdult?: boolea
   const primary = getPrimaryAgeRating(ageRatings);
 
   if (primary) {
+    let displayText = primary.label;
+    let badgeStyle = "bg-zinc-800/80 border-white/10 text-zinc-200";
+    let icon: React.ReactNode = null;
+
+    const raw = (primary.badgeText || primary.label || "").toUpperCase();
+
+    if (raw.includes("18") || primary.isAdult || raw === "AO") {
+      displayText = "18+ Anos";
+      badgeStyle = "bg-red-950/70 border-red-500/30 text-red-300";
+      icon = <span className="text-sm leading-none">🔞</span>;
+    } else if (raw.includes("16")) {
+      displayText = "16+ Anos";
+      badgeStyle = "bg-orange-950/70 border-orange-500/30 text-orange-300";
+    } else if (raw.includes("14") || raw === "M" || raw.includes("17")) {
+      displayText = raw.includes("17") ? "17+ Anos" : "14+ Anos";
+      badgeStyle = "bg-amber-950/70 border-amber-500/30 text-amber-300";
+    } else if (raw.includes("12") || raw === "T" || raw.includes("13")) {
+      displayText = raw === "T" || raw.includes("13") ? "13+ Anos" : "12+ Anos";
+      badgeStyle = "bg-yellow-950/60 border-yellow-500/30 text-yellow-300";
+    } else if (raw.includes("10") || raw === "E10+") {
+      displayText = "10+ Anos";
+      badgeStyle = "bg-blue-950/70 border-blue-500/30 text-blue-300";
+    } else if (raw === "L" || raw === "E" || raw.includes("LIVRE") || raw.includes("EVERYONE")) {
+      displayText = "Livre (Todos)";
+      badgeStyle = "bg-emerald-950/70 border-emerald-500/30 text-emerald-300";
+    } else {
+      displayText = primary.label || primary.badgeText;
+      badgeStyle = "bg-zinc-800/80 border-white/10 text-zinc-300";
+    }
+
     return (
-      <div
-        className={`px-2 py-0.5 rounded font-black text-[10px] shadow-md tracking-tight flex items-center gap-1 border ${primary.bgClass} ${primary.textClass} ${primary.borderClass || "border-white/20"}`}
+      <span
+        className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 backdrop-blur-md transition-all ${badgeStyle}`}
         title={`Classificação Indicativa (${primary.organization}): ${primary.description}`}
       >
-        <span>{primary.badgeText}</span>
-        <span className="opacity-75 font-normal text-[9px] uppercase hidden sm:inline">
-          {primary.organization}
-        </span>
-      </div>
+        {icon}
+        <span>{displayText}</span>
+      </span>
     );
   }
 
   if (isAdult) {
     return (
-      <div
-        className="px-2 py-0.5 rounded font-black text-[10px] bg-red-950/80 text-red-400 border border-red-500/40 shadow-md flex items-center gap-1"
+      <span
+        className="px-2.5 py-1 rounded-lg bg-red-950/70 border border-red-500/30 text-red-300 text-xs font-bold flex items-center gap-1.5 backdrop-blur-md"
         title="Classificado para maiores de 18 anos (+18 / Conteúdo Adulto)"
       >
-        <span>18</span>
-        <span className="opacity-75 font-normal text-[9px] uppercase hidden sm:inline">+18</span>
-      </div>
+        <span className="text-sm leading-none">🔞</span>
+        <span>18+ Anos</span>
+      </span>
     );
   }
 
