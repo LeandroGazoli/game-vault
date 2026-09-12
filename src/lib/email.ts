@@ -81,6 +81,13 @@ export function generateEmailHtml({
   const ctaUrl = templateOverride?.ctaUrl || "https://www.mygameslist.com.br/perfil";
   const displayMessage = customMessage?.trim() || templateOverride?.defaultMessage?.trim() || "";
 
+  const preheader = templateOverride?.preheader?.trim() || "";
+  const secondaryCtaText = templateOverride?.secondaryCtaText?.trim() || "";
+  const secondaryCtaUrl = templateOverride?.secondaryCtaUrl?.trim() || "";
+  const footerText =
+    templateOverride?.footerText?.trim() ||
+    `Você recebeu esta notificação porque sua conta foi atualizada no <a href="https://www.mygameslist.com.br" style="color: #6b7280; text-decoration: underline;">MyGameList</a>.`;
+
   const html = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -93,11 +100,21 @@ export function generateEmailHtml({
       .container { width: 100% !important; padding: 16px !important; }
       .card { padding: 24px 20px !important; }
       .title { font-size: 22px !important; }
-      .cta-button { width: 100% !important; box-sizing: border-box !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+      .cta-container { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
     }
   </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0c0d12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e5e7eb;">
+  <!-- Preheader oculto para clientes de email -->
+  ${
+    preheader
+      ? `<div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #0c0d12; opacity: 0;">
+          ${escapeHtml(preheader)}
+        </div>`
+      : ""
+  }
+
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0c0d12; padding: 48px 12px;">
     <tr>
       <td align="center">
@@ -175,7 +192,7 @@ export function generateEmailHtml({
                           (benefit) => `
                       <tr>
                         <td style="padding: 6px 0; vertical-align: top; width: 22px;">
-                          <span style="color: #10B981; font-weight: bold; font-size: 15px; line-height: 1;">✓</span>
+                          <span style="color: ${accentColor}; font-weight: bold; font-size: 15px; line-height: 1;">✓</span>
                         </td>
                         <td style="padding: 6px 0; font-size: 14px; color: #d1d5db; line-height: 1.45;">
                           ${escapeHtml(benefit)}
@@ -187,12 +204,28 @@ export function generateEmailHtml({
                   </td>
                 </tr>
 
-                <!-- Botão de Ação CTA (Linear Style) -->
+                <!-- Botões de Ação CTA (Linear Style) -->
                 <tr>
                   <td style="padding-top: 32px; text-align: left;">
-                    <a href="${escapeHtml(ctaUrl)}" class="cta-button" style="display: inline-block; background-color: #10B981; color: #000000; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 12px; text-align: center; transition: all 0.2s ease;">
-                      ${escapeHtml(ctaText)}
-                    </a>
+                    <table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse: separate;">
+                      <tr>
+                        <td style="border-radius: 12px; background-color: ${accentColor}; text-align: center;">
+                          <a href="${escapeHtml(ctaUrl)}" class="cta-button" style="display: inline-block; background-color: ${accentColor}; color: #000000; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 12px; text-align: center; border: 1px solid ${accentColor};">
+                            ${escapeHtml(ctaText)}
+                          </a>
+                        </td>
+                        ${
+                          secondaryCtaText && secondaryCtaUrl
+                            ? `
+                        <td style="padding-left: 12px;">
+                          <a href="${escapeHtml(secondaryCtaUrl)}" class="cta-button" style="display: inline-block; background-color: rgba(255,255,255,0.06); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                            ${escapeHtml(secondaryCtaText)}
+                          </a>
+                        </td>`
+                            : ""
+                        }
+                      </tr>
+                    </table>
                   </td>
                 </tr>
 
@@ -204,8 +237,7 @@ export function generateEmailHtml({
           <tr>
             <td style="padding: 32px 12px 0 12px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #4b5563; line-height: 1.5;">
-                Você recebeu esta notificação porque sua conta foi atualizada no 
-                <a href="https://www.mygameslist.com.br" style="color: #6b7280; text-decoration: underline;">MyGameList</a>.
+                ${footerText}
               </p>
               <p style="margin: 6px 0 0 0; font-size: 11px; color: #374151;">
                 © 2026 MyGameList. Todos os direitos reservados.

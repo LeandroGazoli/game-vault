@@ -715,14 +715,18 @@ export interface SystemSettings {
 
 export interface EmailTemplateConfig {
   subject: string;
+  preheader?: string;
   badgeText?: string;
   heading?: string;
   subheading?: string;
   defaultMessage?: string;
   ctaText?: string;
   ctaUrl?: string;
+  secondaryCtaText?: string;
+  secondaryCtaUrl?: string;
   accentColor?: string;
   benefits?: string[];
+  footerText?: string;
 }
 
 export interface LibraryStats {
