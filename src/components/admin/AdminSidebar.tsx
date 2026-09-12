@@ -15,6 +15,7 @@ import {
   ExternalLink,
   ChevronRight,
   Trophy,
+  Mail,
 } from "lucide-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -54,6 +55,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Notificações",
     icon: Bell,
     badge: "PUSH",
+  },
+  {
+    href: "/admin/emails",
+    label: "Templates de E-mail",
+    icon: Mail,
+    badge: "RESEND",
   },
   {
     href: "/admin/audit",

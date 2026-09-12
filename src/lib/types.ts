@@ -705,8 +705,24 @@ export interface SystemSettings {
     bountiesEnabled: boolean;
     instantSyncSteam: boolean;
   };
+  emailTemplates?: {
+    vipWelcome?: EmailTemplateConfig;
+    proWelcome?: EmailTemplateConfig;
+  };
   updatedAt?: string;
   updatedBy?: string;
+}
+
+export interface EmailTemplateConfig {
+  subject: string;
+  badgeText?: string;
+  heading?: string;
+  subheading?: string;
+  defaultMessage?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  accentColor?: string;
+  benefits?: string[];
 }
 
 export interface LibraryStats {

@@ -383,6 +383,40 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
     bountiesEnabled: true,
     instantSyncSteam: true,
   },
+  emailTemplates: {
+    vipWelcome: {
+      subject: "👑 Você recebeu acesso VIP no MyGameList!",
+      badgeText: "👑 ACESSO VIP CONCEDIDO",
+      heading: "Parabéns, {username}!",
+      subheading: "Você acabou de receber acesso exclusivo de nível VIP Vitalício no MyGameList.",
+      defaultMessage: "Concedemos a você acesso de Membro VIP no MyGameList com 2.0x XP em dobro, sem anúncios e todos os recursos liberados.",
+      ctaText: "Acessar Meu Perfil VIP →",
+      ctaUrl: "https://www.mygameslist.com.br/perfil",
+      accentColor: "#F59E0B",
+      benefits: [
+        "Zero Anúncios em toda a plataforma",
+        "2.0x de XP em Dobro para subir de nível",
+        "Insígnia Dourada e destaque exclusivo no seu perfil",
+        "Estatísticas Avançadas e backup total da sua biblioteca",
+      ],
+    },
+    proWelcome: {
+      subject: "⚡ Seu acesso PRO foi ativado no MyGameList!",
+      badgeText: "⚡ ACESSO PRO ATIVADO",
+      heading: "Parabéns, {username}!",
+      subheading: "Você acabou de receber acesso exclusivo de nível PRO no MyGameList.",
+      defaultMessage: "Seu acesso PRO está liberado com 1.5x de XP Boost e navegação 100% livre de anúncios.",
+      ctaText: "Acessar Plataforma →",
+      ctaUrl: "https://www.mygameslist.com.br/perfil",
+      accentColor: "#00E5FF",
+      benefits: [
+        "Zero Anúncios em toda a plataforma",
+        "1.5x de XP Boost nas atividades",
+        "Insígnia Ciano PRO no seu perfil",
+        "Acesso antecipado a novos recursos",
+      ],
+    },
+  },
 };
 
 export async function getSystemSettings(): Promise<import("./types").SystemSettings> {

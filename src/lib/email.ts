@@ -4,6 +4,7 @@
  */
 
 import { Resend } from "resend";
+import { EmailTemplateConfig } from "./types";
 
 let resendClient: Resend | null = null;
 
@@ -26,32 +27,59 @@ export interface SendVipWelcomeEmailParams {
   customSubject?: string;
   customMessage?: string;
   lifetime?: boolean;
+  templateOverride?: EmailTemplateConfig;
 }
 
 /**
- * Dispara e-mail de concessão VIP/PRO estilizado com visual obsidian dark e verde esmeralda / dourado.
+ * Gera o HTML do e-mail com base nas opções e configurações do template.
  */
-export async function sendVipWelcomeEmail({
-  to,
+export function generateEmailHtml({
   userName,
   plan,
-  customSubject,
   customMessage,
-  lifetime,
-}: SendVipWelcomeEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
-  try {
-    const resend = getResendClient();
-    if (!resend) {
-      return { success: false, error: "Serviço de e-mail não configurado." };
-    }
+  templateOverride,
+}: {
+  userName: string;
+  plan: "vip" | "pro";
+  customMessage?: string;
+  templateOverride?: EmailTemplateConfig;
+}): { html: string; subject: string } {
+  const isVip = plan === "vip";
+  const defaultSubject = isVip
+    ? "👑 Você recebeu acesso VIP no MyGameList!"
+    : "⚡ Seu acesso PRO foi ativado no MyGameList!";
 
-    const isVip = plan === "vip";
-    const planName = isVip ? "VIP Vitalício" : "PRO";
-    const badgeColor = isVip ? "#F59E0B" : "#00E5FF";
-    const badgeBg = isVip ? "rgba(245, 158, 11, 0.15)" : "rgba(0, 229, 255, 0.15)";
-    const subject = customSubject?.trim() || `👑 Você recebeu acesso ${plan.toUpperCase()} no MyGameList!`;
+  const subject = templateOverride?.subject
+    ? templateOverride.subject.replace("{username}", userName)
+    : defaultSubject;
 
-    const html = `
+  const badgeText =
+    templateOverride?.badgeText || (isVip ? "👑 ACESSO VIP CONCEDIDO" : "⚡ ACESSO PRO ATIVADO");
+  const badgeColor = templateOverride?.accentColor || (isVip ? "#F59E0B" : "#00E5FF");
+  const badgeBg = isVip ? "rgba(245, 158, 11, 0.15)" : "rgba(0, 229, 255, 0.15)";
+
+  const rawHeading = templateOverride?.heading || "Parabéns, {username}!";
+  const heading = rawHeading.replace("{username}", escapeHtml(userName));
+
+  const planName = isVip ? "VIP Vitalício" : "PRO";
+  const subheading =
+    templateOverride?.subheading ||
+    `Você acabou de receber acesso exclusivo de nível <strong>${planName}</strong> no MyGameList.`;
+
+  const benefits = templateOverride?.benefits?.length
+    ? templateOverride.benefits
+    : [
+        "Zero Anúncios em toda a plataforma",
+        isVip ? "2.0x de XP em Dobro para subir de nível" : "1.5x de XP Boost nas atividades",
+        "Insígnia Dourada e destaque exclusivo no seu perfil",
+        "Estatísticas Avançadas e backup total da sua biblioteca",
+      ];
+
+  const ctaText = templateOverride?.ctaText || "Acessar Meu Perfil VIP →";
+  const ctaUrl = templateOverride?.ctaUrl || "https://www.mygameslist.com.br/perfil";
+  const displayMessage = customMessage?.trim() || templateOverride?.defaultMessage?.trim() || "";
+
+  const html = `
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -70,20 +98,20 @@ export async function sendVipWelcomeEmail({
           <tr>
             <td style="padding: 32px 32px 24px 32px; text-align: center; background: radial-gradient(circle at top, rgba(16, 185, 129, 0.15), transparent 70%);">
               <div style="display: inline-block; padding: 8px 16px; border-radius: 9999px; background-color: ${badgeBg}; border: 1px solid ${badgeColor}; color: ${badgeColor}; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px;">
-                ${isVip ? "👑 ACESSO VIP CONCEDIDO" : "⚡ ACESSO PRO ATIVADO"}
+                ${escapeHtml(badgeText)}
               </div>
               <h1 style="margin: 0; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
-                Parabéns, ${escapeHtml(userName)}!
+                ${heading}
               </h1>
               <p style="margin: 10px 0 0 0; font-size: 14px; color: #9ca3af; line-height: 1.5;">
-                Você acabou de receber acesso exclusivo de nível <strong>${planName}</strong> no MyGameList.
+                ${subheading}
               </p>
             </td>
           </tr>
 
           <!-- Mensagem Personalizada do Admin (se houver) -->
           ${
-            customMessage?.trim()
+            displayMessage
               ? `
           <tr>
             <td style="padding: 0 32px 24px 32px;">
@@ -92,7 +120,7 @@ export async function sendVipWelcomeEmail({
                   Mensagem da Moderação:
                 </div>
                 <div style="font-size: 14px; color: #e5e7eb; line-height: 1.6; white-space: pre-wrap;">
-                  ${escapeHtml(customMessage.trim())}
+                  ${escapeHtml(displayMessage)}
                 </div>
               </div>
             </td>
@@ -109,33 +137,23 @@ export async function sendVipWelcomeEmail({
                   Vantagens Ativadas na sua Conta:
                 </h3>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  ${benefits
+                    .map(
+                      (b) => `
                   <tr>
                     <td style="padding: 6px 0; font-size: 13px; color: #d1d5db;">
-                      ✨ <strong>Zero Anúncios</strong> em toda a plataforma
+                      ✨ ${escapeHtml(b)}
                     </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 6px 0; font-size: 13px; color: #d1d5db;">
-                      ⚡ <strong>${isVip ? "2.0x de XP em Dobro" : "1.5x de XP Boost"}</strong> para subir de nível
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 6px 0; font-size: 13px; color: #d1d5db;">
-                      🛡️ <strong>Insígnia Dourada</strong> e destaque exclusivo no seu perfil
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 6px 0; font-size: 13px; color: #d1d5db;">
-                      📊 <strong>Estatísticas Avançadas</strong> e backup total da sua biblioteca
-                    </td>
-                  </tr>
+                  </tr>`
+                    )
+                    .join("")}
                 </table>
               </div>
 
               <!-- Botão CTA -->
               <div style="text-align: center; margin-top: 28px;">
-                <a href="https://www.mygameslist.com.br/perfil" style="display: inline-block; background: linear-gradient(135deg, #10B981, #059669); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 32px; border-radius: 9999px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);">
-                  Acessar Meu Perfil VIP →
+                <a href="${escapeHtml(ctaUrl)}" style="display: inline-block; background: linear-gradient(135deg, #10B981, #059669); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 32px; border-radius: 9999px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);">
+                  ${escapeHtml(ctaText)}
                 </a>
               </div>
             </td>
@@ -161,13 +179,40 @@ export async function sendVipWelcomeEmail({
 </html>
 `;
 
-    // Remetente oficial verificado no Resend
+  return { html, subject };
+}
+
+/**
+ * Dispara e-mail de concessão VIP/PRO estilizado com visual obsidian dark e verde esmeralda / dourado.
+ */
+export async function sendVipWelcomeEmail({
+  to,
+  userName,
+  plan,
+  customSubject,
+  customMessage,
+  templateOverride,
+}: SendVipWelcomeEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const resend = getResendClient();
+    if (!resend) {
+      return { success: false, error: "Serviço de e-mail não configurado." };
+    }
+
+    const { html, subject: generatedSubject } = generateEmailHtml({
+      userName,
+      plan,
+      customMessage,
+      templateOverride,
+    });
+
+    const finalSubject = customSubject?.trim() || generatedSubject;
     const fromAddress = process.env.RESEND_FROM_EMAIL || "MyGameList <contato@mygameslist.com.br>";
 
     const data = await resend.emails.send({
       from: fromAddress,
       to: [to],
-      subject,
+      subject: finalSubject,
       html,
     });
 

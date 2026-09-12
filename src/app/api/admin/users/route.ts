@@ -4,6 +4,7 @@ import {
   getAllUsersForAdmin,
   recordAuditLog,
   getUserProfileByUsername,
+  getSystemSettings,
 } from "@/lib/firebase";
 import {
   adminGrantAccess,
@@ -191,6 +192,12 @@ export async function PATCH(request: NextRequest) {
       // Disparo opcional de E-mail via Resend
       if (sendEmail && userEmail && (plan === "vip" || plan === "pro")) {
         try {
+          const sysSettings = await getSystemSettings();
+          const templateOverride =
+            plan === "vip"
+              ? sysSettings.emailTemplates?.vipWelcome
+              : sysSettings.emailTemplates?.proWelcome;
+
           await sendVipWelcomeEmail({
             to: userEmail,
             userName: userDisplayName || "Gamer",
@@ -198,6 +205,7 @@ export async function PATCH(request: NextRequest) {
             customSubject: emailSubject?.trim() || undefined,
             customMessage: emailMessage?.trim() || undefined,
             lifetime: !premiumUntil,
+            templateOverride,
           });
         } catch (mailErr) {
           console.warn("[Admin Grant] Falha ao despachar e-mail via Resend:", mailErr);
