@@ -545,6 +545,13 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
+            ) : isAuthLoading ? (
+              /* Skeleton fiel ao botão de perfil do usuário */
+              <div className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/5 border border-white/10 shrink-0 animate-pulse">
+                <div className="w-7 h-7 rounded-2xl bg-white/15 shrink-0" />
+                <div className="w-16 h-3 rounded-full bg-white/15 hidden sm:block" />
+                <div className="w-8 h-3.5 rounded-full bg-white/10 hidden md:block" />
+              </div>
             ) : (
               <button
                 onClick={() => {
@@ -667,6 +674,25 @@ export default function Navbar() {
                       NOVO
                     </span>
                   </button>
+                </div>
+              ) : isAuthLoading ? (
+                /* Skeleton fiel ao card de perfil no Drawer Mobile */
+                <div className="p-3 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2.5 animate-pulse">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-2xl bg-white/10 shrink-0" />
+                      <div className="space-y-1">
+                        <div className="w-20 h-3 rounded-full bg-white/10" />
+                        <div className="w-14 h-2 rounded-full bg-white/5" />
+                      </div>
+                    </div>
+                    <div className="w-12 h-5 rounded-md bg-white/10" />
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#242a36]">
+                    <div className="w-12 h-2 rounded-full bg-white/5" />
+                    <div className="w-12 h-2 rounded-full bg-white/5" />
+                    <div className="w-8 h-2 rounded-full bg-white/5" />
+                  </div>
                 </div>
               ) : (
                 <button
