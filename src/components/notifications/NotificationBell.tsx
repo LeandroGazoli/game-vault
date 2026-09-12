@@ -1,39 +1,55 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { SystemNotification } from "@/lib/types";
-import { subscribeToSystemNotifications } from "@/lib/firebase";
+import {
+  subscribeToSystemNotifications,
+  markNotificationAsReadForUser,
+  markAllNotificationsAsReadForUser,
+  dismissNotificationForUser,
+} from "@/lib/firebase";
 import {
   getReadNotificationIds,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  getDismissedNotificationIds,
+  dismissNotificationLocally,
   getNotificationPermission,
   requestNotificationPermission,
   isNotificationSupported,
   INITIAL_FEATURE_NOTIFICATION,
   filterActiveNotifications,
 } from "@/lib/notifications";
+import { triggerSelectionHaptic, triggerHaptic } from "@/lib/capacitor";
 import NotificationDrawer from "./NotificationDrawer";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function NotificationBell() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
-  const [readIds, setReadIds] = useState<string[]>([]);
+  const [rawNotifications, setRawNotifications] = useState<SystemNotification[]>([]);
+  const [localReadIds, setLocalReadIds] = useState<string[]>([]);
+  const [localDismissedIds, setLocalDismissedIds] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [isLoadingPush, setIsLoadingPush] = useState(false);
 
+  // Inicializa leituras e dispensados combinando Firestore (user profile) e localStorage
   useEffect(() => {
-    // Se o usuário não estiver logado, não carrega nem escuta notificações
     if (!user) {
-      setNotifications([]);
+      setRawNotifications([]);
       return;
     }
 
-    // Carrega IDs lidos
-    setReadIds(getReadNotificationIds());
+    const storedReads = getReadNotificationIds();
+    const userProfileReads = user.readNotificationIds || [];
+    const mergedReads = Array.from(new Set([...storedReads, ...userProfileReads]));
+    setLocalReadIds(mergedReads);
+
+    const storedDismissed = getDismissedNotificationIds();
+    const userProfileDismissed = user.dismissedNotificationIds || [];
+    const mergedDismissed = Array.from(new Set([...storedDismissed, ...userProfileDismissed]));
+    setLocalDismissedIds(mergedDismissed);
 
     if (isNotificationSupported()) {
       setIsPushEnabled(getNotificationPermission() === "granted");
@@ -49,9 +65,7 @@ export default function NotificationBell() {
         merged = [INITIAL_FEATURE_NOTIFICATION];
       }
 
-      // Aplica filtro de retenção de dias e limite máximo de quantidade
-      const activeList = filterActiveNotifications(merged);
-      setNotifications(activeList);
+      setRawNotifications(merged);
     });
 
     return () => {
@@ -61,21 +75,85 @@ export default function NotificationBell() {
     };
   }, [user]);
 
-  // Usuários não logados não visualizam a central nem o sino de notificações
-  if (!user) {
-    return null;
-  }
+  // Filtra notificações ativas removendo as que o usuário excluiu/dispensou do perfil
+  const activeNotifications = useMemo(() => {
+    const withoutDismissed = rawNotifications.filter(
+      (item) => !localDismissedIds.includes(item.id)
+    );
+    return filterActiveNotifications(withoutDismissed);
+  }, [rawNotifications, localDismissedIds]);
 
-  const handleMarkAsRead = (id: string) => {
-    markNotificationAsRead(id);
-    setReadIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  };
+  // Marca uma notificação como lida
+  const handleMarkAsRead = useCallback(
+    (id: string) => {
+      if (localReadIds.includes(id)) return;
+      markNotificationAsRead(id);
+      setLocalReadIds((prev) => [...prev, id]);
 
-  const handleMarkAllAsRead = () => {
-    const allIds = notifications.map((n) => n.id);
+      if (user?.uid) {
+        markNotificationAsReadForUser(user.uid, id);
+      }
+    },
+    [localReadIds, user?.uid]
+  );
+
+  // Alterna o status entre lida e não lida
+  const handleToggleRead = useCallback(
+    (id: string) => {
+      triggerSelectionHaptic();
+      setLocalReadIds((prev) => {
+        const isRead = prev.includes(id);
+        if (isRead) {
+          return prev.filter((item) => item !== id);
+        } else {
+          markNotificationAsRead(id);
+          if (user?.uid) {
+            markNotificationAsReadForUser(user.uid, id);
+          }
+          return [...prev, id];
+        }
+      });
+    },
+    [user?.uid]
+  );
+
+  // Marca todas as visíveis como lidas
+  const handleMarkAllAsRead = useCallback(() => {
+    triggerSelectionHaptic();
+    const allIds = activeNotifications.map((n) => n.id);
     markAllNotificationsAsRead(allIds);
-    setReadIds(allIds);
-  };
+    setLocalReadIds((prev) => Array.from(new Set([...prev, ...allIds])));
+
+    if (user?.uid) {
+      markAllNotificationsAsReadForUser(user.uid, allIds);
+    }
+  }, [activeNotifications, user?.uid]);
+
+  // Exclui/remove a notificação do perfil do usuário
+  const handleDismissNotification = useCallback(
+    (id: string) => {
+      triggerHaptic("medium");
+      dismissNotificationLocally(id);
+      setLocalDismissedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+
+      if (user?.uid) {
+        dismissNotificationForUser(user.uid, id);
+      }
+    },
+    [user?.uid]
+  );
+
+  // Limpa todas as notificações visíveis do perfil
+  const handleDismissAll = useCallback(() => {
+    triggerHaptic("medium");
+    const idsToDismiss = activeNotifications.map((n) => n.id);
+    idsToDismiss.forEach((id) => dismissNotificationLocally(id));
+    setLocalDismissedIds((prev) => Array.from(new Set([...prev, ...idsToDismiss])));
+
+    if (user?.uid) {
+      idsToDismiss.forEach((id) => dismissNotificationForUser(user.uid, id));
+    }
+  }, [activeNotifications, user?.uid]);
 
   const handleEnablePush = async () => {
     setIsLoadingPush(true);
@@ -89,7 +167,12 @@ export default function NotificationBell() {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !readIds.includes(n.id)).length;
+  // Visitantes não logados não visualizam o sino
+  if (!user) {
+    return null;
+  }
+
+  const unreadCount = activeNotifications.filter((n) => !localReadIds.includes(n.id)).length;
 
   return (
     <>
@@ -115,10 +198,13 @@ export default function NotificationBell() {
       <NotificationDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        notifications={notifications}
-        readIds={readIds}
+        notifications={activeNotifications}
+        readIds={localReadIds}
         onMarkAsRead={handleMarkAsRead}
+        onToggleRead={handleToggleRead}
         onMarkAllAsRead={handleMarkAllAsRead}
+        onDismissNotification={handleDismissNotification}
+        onDismissAll={handleDismissAll}
         onEnablePush={handleEnablePush}
         isPushEnabled={isPushEnabled}
         isLoadingPush={isLoadingPush}
