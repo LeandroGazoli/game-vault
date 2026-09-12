@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 
 import HomeSearchHero from "@/components/HomeSearchHero";
+import HomeConversionBanner from "@/components/HomeConversionBanner";
+import AuthModal from "@/components/AuthModal";
 import HomeHeroCarousel from "@/components/HomeHeroCarousel";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
@@ -100,6 +102,7 @@ export default function HomePage() {
 
   // Estados dos modais interativos
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedGameForModal, setSelectedGameForModal] = useState<Game | null>(null);
 
   // Configurações globais (Carrossel Hero gerenciado pelo Admin)
@@ -245,6 +248,16 @@ export default function HomePage() {
       <HomeSearchHero
         onOpenRoulette={() => setIsRouletteOpen(true)}
       />
+
+      {/* ==========================================
+          CTA DE CONVERSÃO / CAPTURA DE LEADS (DESLOGADOS)
+          Exibido em destaque para reduzir a taxa de rejeição de anúncios
+      ========================================== */}
+      {!user && (
+        <HomeConversionBanner
+          onOpenAuth={() => setIsAuthOpen(true)}
+        />
+      )}
 
       {/* ==========================================
           2. CARROSSEL DESTAQUES WIDESCREEN 16:9
@@ -512,6 +525,12 @@ export default function HomePage() {
           onClose={() => setSelectedGameForModal(null)}
         />
       )}
+
+      {/* Modal de Cadastro / Login Social disparado por CTAs */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { X, ShieldAlert, Mail, Lock, User, Loader2 } from "lucide-react";
 import Logo from "./Logo";
 import AdaptiveModal from "./ui/AdaptiveModal";
+import { trackSignUpSuccess } from "@/lib/analytics";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
         await signUpWithEmail(email, password, username);
+        trackSignUpSuccess("email");
       } else {
         await signInWithEmail(email, password);
       }
@@ -95,6 +97,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       await signInWithGoogle();
       clearTimeout(safetyTimer);
+      trackSignUpSuccess("google");
       onClose();
     } catch (err: any) {
       clearTimeout(safetyTimer);

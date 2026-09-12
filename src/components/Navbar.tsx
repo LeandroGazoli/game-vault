@@ -14,6 +14,7 @@ import { triggerPwaInstall } from "./PwaInstallPrompt";
 import { openSpotlightSearch } from "./SpotlightSearchModal";
 import NotificationBell from "./notifications/NotificationBell";
 import { getProfileUrl } from "@/lib/routes";
+import { trackSignUpClick } from "@/lib/analytics";
 import {
   Gamepad2,
   Trophy,
@@ -530,11 +531,14 @@ export default function Navbar() {
               </div>
             ) : (
               <button
-                onClick={() => setIsAuthOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold transition-all shadow-md active:scale-95 shrink-0"
+                onClick={() => {
+                  trackSignUpClick("navbar_header_cta");
+                  setIsAuthOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.35)] active:scale-95 shrink-0 cursor-pointer"
               >
-                <User className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Entrar</span>
+                <User className="w-3.5 h-3.5 text-black" />
+                <span className="inline">Criar Conta</span>
               </button>
             )}
 
