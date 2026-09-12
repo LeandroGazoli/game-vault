@@ -17,6 +17,7 @@ import {
   Trophy,
   Mail,
   BookOpen,
+  Gamepad2,
 } from "lucide-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -32,6 +33,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Postagens & Artigos",
     icon: BookOpen,
     badge: "BLOG",
+  },
+  {
+    href: "/admin/indies",
+    label: "Jogos Indie & Banners",
+    icon: Gamepad2,
+    badge: "INDIE",
   },
   {
     href: "/admin/users",
