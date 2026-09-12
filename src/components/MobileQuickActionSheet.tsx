@@ -71,26 +71,26 @@ export default function MobileQuickActionSheet({
       />
 
       {/* Painel Inferior (Sheet Flutuante estilo iOS/Console Gamer) */}
-      <div className="relative w-full max-w-lg mx-auto bg-[#0d0f14] border-t border-[#00E5FF]/30 rounded-t-[32px] p-5 pb-[max(env(safe-area-inset-bottom,0px)+16px,24px)] shadow-[0_-15px_50px_rgba(0,0,0,0.9)] ring-1 ring-white/10 z-10 space-y-4">
+      <div className="relative w-full max-w-lg mx-auto bg-[#0d0f14] border-t border-emerald-500/30 rounded-t-[32px] p-5 pb-[max(env(safe-area-inset-bottom,0px)+16px,24px)] shadow-[0_-15px_50px_rgba(0,0,0,0.9)] ring-1 ring-white/10 z-10 space-y-4">
         {/* Puxador táctil superior */}
         <div className="flex items-center justify-center pt-1 pb-2">
           <div className="w-12 h-1.5 rounded-full bg-white/20" />
         </div>
 
-        {/* Cabeçalho do Sheet com Ícone Neon e Botão Fechar */}
+        {/* Cabeçalho do Sheet com Ícone e Botão Fechar */}
         <div className="flex items-center justify-between pb-1 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF] flex items-center justify-center shadow-[0_0_12px_rgba(0,229,255,0.4)]">
+            <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.3)]">
               <Gamepad2 className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-sm font-black text-white tracking-tight flex items-center gap-1.5">
-                <span>Central de Ações Rápidas</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF]">
-                  MGL HUB
+                <span>Ações Rápidas</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400">
+                  ATALHOS
                 </span>
               </h3>
-              <p className="text-[11px] text-gray-400">Atalhos dinâmicos para sua biblioteca gamer</p>
+              <p className="text-[11px] text-gray-400">Adicione jogos, sorteie ou importe seu catálogo</p>
             </div>
           </div>
 
@@ -108,9 +108,9 @@ export default function MobileQuickActionSheet({
           {/* 1. Adicionar Jogo */}
           <button
             onClick={() => handleAction(() => router.push("/search"))}
-            className="flex flex-col items-start p-3.5 rounded-2xl bg-gradient-to-br from-[#121622] to-[#181d2a] border border-[#00E5FF]/30 hover:border-[#00E5FF] transition-all text-left group active:scale-95 shadow-md"
+            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#141822] border border-emerald-500/30 hover:border-emerald-400 transition-all text-left group active:scale-95 shadow-md"
           >
-            <div className="w-8 h-8 rounded-xl bg-[#00E5FF]/20 text-[#00E5FF] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <Plus className="w-4 h-4 stroke-[3]" />
             </div>
             <span className="text-xs font-bold text-white">Adicionar Jogo</span>
@@ -126,7 +126,7 @@ export default function MobileQuickActionSheet({
                 }
               })
             }
-            className="flex flex-col items-start p-3.5 rounded-2xl bg-gradient-to-br from-[#1a1426] to-[#221833] border border-purple-500/30 hover:border-purple-400 transition-all text-left group active:scale-95 shadow-md"
+            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#141822] border border-purple-500/30 hover:border-purple-400 transition-all text-left group active:scale-95 shadow-md"
           >
             <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <Dices className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function MobileQuickActionSheet({
                 }
               })
             }
-            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#131720] border border-cyan-500/20 hover:border-cyan-400/50 transition-all text-left group active:scale-95 shadow-md"
+            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#141822] border border-cyan-500/20 hover:border-cyan-400/50 transition-all text-left group active:scale-95 shadow-md"
           >
             <div className="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <Upload className="w-4 h-4" />
@@ -156,7 +156,7 @@ export default function MobileQuickActionSheet({
           {/* 4. Inventário Steam */}
           <button
             onClick={() => handleAction(() => router.push("/inventario-steam"))}
-            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#131720] border border-amber-500/20 hover:border-amber-400/50 transition-all text-left group active:scale-95 shadow-md"
+            className="flex flex-col items-start p-3.5 rounded-2xl bg-[#141822] border border-amber-500/20 hover:border-amber-400/50 transition-all text-left group active:scale-95 shadow-md"
           >
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <Sparkles className="w-4 h-4" />
@@ -166,24 +166,24 @@ export default function MobileQuickActionSheet({
           </button>
         </div>
 
-        {/* Ações Secundárias (Personalizar Perfil ou PRO) */}
+        {/* Ações Secundárias */}
         <div className="pt-1 space-y-2">
           {user ? (
             <Link
               href={user.username ? `/perfil/editar` : "/perfil"}
               onClick={() => handleAction(() => {})}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 text-xs font-bold text-gray-200 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#141822] border border-white/10 hover:border-white/20 text-xs font-bold text-gray-200 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <Palette className="w-4 h-4 text-[#00E5FF]" />
+                <Palette className="w-4 h-4 text-emerald-400" />
                 <span>Personalizar Perfil &amp; Temas</span>
               </div>
-              <span className="text-[10px] text-cyan-400 font-mono">Editar →</span>
+              <span className="text-[10px] text-emerald-400 font-mono">Editar →</span>
             </Link>
           ) : (
             <button
               onClick={() => handleAction(() => router.push("/perfil"))}
-              className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl bg-white text-black text-xs font-black transition-all shadow-md active:scale-95"
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-500 text-black text-xs font-bold transition-all shadow-md active:scale-95"
             >
               <span>Acessar ou Criar Conta Gamer</span>
             </button>
@@ -208,13 +208,13 @@ export default function MobileQuickActionSheet({
           {/* Instalar App PWA */}
           <button
             onClick={() => handleAction(() => triggerPwaInstall())}
-            className="w-full flex items-center justify-between p-3 rounded-2xl bg-cyan-950/20 border border-cyan-500/25 hover:border-cyan-400 text-xs font-bold text-cyan-300 transition-colors cursor-pointer active:scale-98"
+            className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 text-xs font-bold text-neutral-300 transition-colors cursor-pointer active:scale-98"
           >
             <div className="flex items-center gap-2.5">
-              <Smartphone className="w-4 h-4 text-[#00E5FF]" />
+              <Smartphone className="w-4 h-4 text-emerald-400" />
               <span>Instalar Aplicativo (PWA)</span>
             </div>
-            <span className="text-[9px] font-mono font-bold bg-[#00E5FF]/20 text-[#00E5FF] px-2 py-0.5 rounded-full border border-[#00E5FF]/30">
+            <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
               INSTALAR
             </span>
           </button>

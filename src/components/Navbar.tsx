@@ -395,8 +395,8 @@ export default function Navbar() {
             <NotificationBell />
 
             {user ? (
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Menu Dropdown do Perfil */}
+              <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Menu Dropdown do Perfil (Desktop/Tablet) */}
                 <div
                   ref={userMenuRef}
                   className="relative"
@@ -442,7 +442,7 @@ export default function Navbar() {
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
                         >
-                          <User className="w-4 h-4 text-cyan-400" />
+                          <User className="w-4 h-4 text-emerald-400" />
                           <span>Meu Perfil</span>
                         </Link>
 
@@ -547,7 +547,7 @@ export default function Navbar() {
               </div>
             ) : isAuthLoading ? (
               /* Skeleton fiel ao botão de perfil do usuário */
-              <div className="flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/5 border border-white/10 shrink-0 animate-pulse">
+              <div className="hidden sm:flex items-center gap-1.5 p-1 sm:p-1.5 sm:pr-2.5 rounded-full bg-white/5 border border-white/10 shrink-0 animate-pulse">
                 <div className="w-7 h-7 rounded-2xl bg-white/15 shrink-0" />
                 <div className="w-16 h-3 rounded-full bg-white/15 hidden sm:block" />
                 <div className="w-8 h-3.5 rounded-full bg-white/10 hidden md:block" />
@@ -558,7 +558,7 @@ export default function Navbar() {
                   trackSignUpClick("navbar_header_cta");
                   setIsAuthOpen(true);
                 }}
-                className="h-9 min-h-[36px] px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_22px_rgba(16,185,129,0.5)] active:scale-95 shrink-0 cursor-pointer"
+                className="hidden sm:flex h-9 min-h-[36px] px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold items-center justify-center gap-2 transition-all shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_22px_rgba(16,185,129,0.5)] active:scale-95 shrink-0 cursor-pointer"
                 title="Acessar sua conta ou cadastrar-se"
               >
                 <User className="w-4 h-4 text-black" />
@@ -573,7 +573,7 @@ export default function Navbar() {
               title="Buscar jogos"
               aria-label="Buscar jogos"
             >
-              <Search className="w-4 h-4 text-cyan-400" />
+              <Search className="w-4 h-4 text-emerald-400" />
             </button>
 
             {/* Botão Hambúrguer para abrir Drawer Mobile */}
@@ -627,16 +627,26 @@ export default function Navbar() {
 
             {/* Corpo Central Rolável com Suporte a Momentum Scrolling */}
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 space-y-3.5 no-scrollbar [-webkit-overflow-scrolling:touch]">
-              {/* Perfil Compacto no Drawer */}
+              {/* Perfil no Drawer — Card Clicável que leva direto ao Perfil */}
               {user ? (
-                <div className="p-3 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2">
+                <Link
+                  href={user.username ? getProfileUrl(user.username) : "/perfil"}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block p-3.5 rounded-2xl bg-[#141822] border border-white/10 hover:border-emerald-500/50 transition-all space-y-2.5 active:scale-[0.98] group"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
+                      <div className="relative">
+                        <UserAvatar photoURL={user.photoURL} name={user.displayName} size="sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#141822]" />
+                      </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate max-w-[130px]">
-                          {user.displayName}
-                        </h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-xs font-bold text-white truncate max-w-[130px] group-hover:text-emerald-400 transition-colors">
+                            {user.displayName}
+                          </h4>
+                          <ChevronRight className="w-3.5 h-3.5 text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
                         <span className="text-[10px] text-neutral-400 font-mono block truncate">
                           @{user.username || "gamer"}
                         </span>
@@ -646,38 +656,17 @@ export default function Navbar() {
                   </div>
 
                   {/* Resumo Rápido de Estatísticas */}
-                  <div className="flex items-center justify-between text-[11px] font-mono pt-2 border-t border-[#242a36] text-neutral-400">
+                  <div className="flex items-center justify-between text-[11px] font-mono pt-2 border-t border-white/5 text-neutral-400">
                     <span>{stats.totalGames} jogos</span>
                     <span>•</span>
                     <span className="text-emerald-400 font-bold">{stats.completedCount} zerados</span>
                     <span>•</span>
                     <span className="text-amber-300 font-bold">{stats.totalPlaytimeHours}h</span>
                   </div>
-
-                  {/* Botão Rápido de Importar */}
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      if (pathname?.startsWith("/perfil")) {
-                        openGameImporter();
-                      } else {
-                        window.location.href = `${user.username ? getProfileUrl(user.username) : "/perfil"}?action=import`;
-                      }
-                    }}
-                    className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-xl bg-cyan-950/30 hover:bg-cyan-950/60 border border-[#00E5FF]/25 text-xs font-bold text-cyan-300 transition-all active:scale-95 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
-                      <span>Importar Biblioteca</span>
-                    </div>
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#00E5FF]/20 text-[#00E5FF]">
-                      NOVO
-                    </span>
-                  </button>
-                </div>
+                </Link>
               ) : isAuthLoading ? (
                 /* Skeleton fiel ao card de perfil no Drawer Mobile */
-                <div className="p-3 rounded-xl bg-[#14171e] border border-[#242a36] space-y-2.5 animate-pulse">
+                <div className="p-3.5 rounded-2xl bg-[#141822] border border-white/10 space-y-2.5 animate-pulse">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-2xl bg-white/10 shrink-0" />
@@ -688,7 +677,7 @@ export default function Navbar() {
                     </div>
                     <div className="w-12 h-5 rounded-md bg-white/10" />
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#242a36]">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
                     <div className="w-12 h-2 rounded-full bg-white/5" />
                     <div className="w-12 h-2 rounded-full bg-white/5" />
                     <div className="w-8 h-2 rounded-full bg-white/5" />
@@ -700,10 +689,10 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false);
                     setIsAuthOpen(true);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md cursor-pointer"
+                  className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md cursor-pointer"
                 >
                   <User className="w-4 h-4" />
-                  <span>Entrar ou Cadastrar</span>
+                  <span>Entrar ou Cadastrar Conta</span>
                 </button>
               )}
 
@@ -713,10 +702,10 @@ export default function Navbar() {
                   setIsMobileMenuOpen(false);
                   openSpotlightSearch();
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#14171e] border border-[#242a36] text-xs text-neutral-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#141822] border border-white/10 text-xs text-neutral-400 hover:text-white transition-all active:scale-95 cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  <Search className="w-3.5 h-3.5 text-cyan-400" />
+                  <Search className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Buscar jogos...</span>
                 </div>
                 <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-400">
@@ -724,22 +713,19 @@ export default function Navbar() {
                 </kbd>
               </button>
 
-              {/* Navegação Principal Compacta */}
+              {/* Hubs e Atalhos Rápidos */}
               <div className="space-y-0.5 pt-1">
                 <span className="text-[9px] uppercase font-mono font-bold text-neutral-400 tracking-wider px-2 block mb-1">
-                  Navegação
+                  Explorar
                 </span>
                 {[
-                  { href: "/", label: "Início", icon: Flame, color: "text-orange-400" },
-                  { href: "/calendar", label: "Calendário", icon: CalendarIcon, color: "text-[#00E5FF]" },
-                  { href: "/rankings", label: "Rankings", icon: Sparkles, color: "text-amber-400" },
-                  { href: "/feedback", label: "Ideias & Votação (Bugs)", icon: Lightbulb, color: "text-yellow-400" },
-                  { href: "/search", label: "Explorar Catálogo", icon: Search, color: "text-cyan-400" },
+                  { href: "/calendar", label: "Calendário de Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
+                  { href: "/rankings", label: "Rankings da Comunidade", icon: Sparkles, color: "text-amber-400" },
+                  { href: "/feedback", label: "Ideias & Reportar Bugs", icon: Lightbulb, color: "text-yellow-400" },
                   { href: "/inventario-steam", label: "Inventário Steam & Skins", icon: Gamepad2, color: "text-cyan-300" },
-                  { href: user?.username ? getProfileUrl(user.username) : "/perfil", label: "Meu Perfil & Jogos", icon: Trophy, color: "text-emerald-400" },
                 ].map((item) => {
                   const Icon = item.icon;
-                  const isActive = item.href === "/" ? pathname === "/" : pathname === item.href || (item.label.includes("Perfil") && pathname?.startsWith("/perfil"));
+                  const isActive = pathname === item.href;
                   return (
                     <Link
                       key={item.href}
