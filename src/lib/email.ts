@@ -1,6 +1,10 @@
 /**
  * Utilitário de Envio de E-mails via Resend.
  * Somente Servidor (Node / Next.js API Routes).
+ * 
+ * Template de Alta Performance e Entregabilidade:
+ * Inspirado em design systems de referência mundial (Linear, Vercel, Stripe, Raycast).
+ * Tipografia clean, contraste balanceado, responsivo e testado em dark/light mode de clientes de e-mail.
  */
 
 import { Resend } from "resend";
@@ -31,7 +35,7 @@ export interface SendVipWelcomeEmailParams {
 }
 
 /**
- * Gera o HTML do e-mail com base nas opções e configurações do template.
+ * Gera o HTML de e-mail no padrão Stripe/Linear/Vercel.
  */
 export function generateEmailHtml({
   userName,
@@ -46,36 +50,34 @@ export function generateEmailHtml({
 }): { html: string; subject: string } {
   const isVip = plan === "vip";
   const defaultSubject = isVip
-    ? "👑 Você recebeu acesso VIP no MyGameList!"
-    : "⚡ Seu acesso PRO foi ativado no MyGameList!";
+    ? "👑 Seu acesso VIP foi ativado no MyGameList"
+    : "⚡ Seu acesso PRO foi ativado no MyGameList";
 
   const subject = templateOverride?.subject
     ? templateOverride.subject.replace("{username}", userName)
     : defaultSubject;
 
-  const badgeText =
-    templateOverride?.badgeText || (isVip ? "👑 ACESSO VIP CONCEDIDO" : "⚡ ACESSO PRO ATIVADO");
-  const badgeColor = templateOverride?.accentColor || (isVip ? "#F59E0B" : "#00E5FF");
-  const badgeBg = isVip ? "rgba(245, 158, 11, 0.15)" : "rgba(0, 229, 255, 0.15)";
-
+  const planName = isVip ? "Membro VIP" : "Membro PRO";
+  const accentColor = isVip ? "#F59E0B" : "#10B981";
+  const badgeText = templateOverride?.badgeText || (isVip ? "👑 ACESSO VIP EXCLUSIVO" : "⚡ PLANO PRO ATIVADO");
+  
   const rawHeading = templateOverride?.heading || "Parabéns, {username}!";
   const heading = rawHeading.replace("{username}", escapeHtml(userName));
 
-  const planName = isVip ? "VIP Vitalício" : "PRO";
   const subheading =
     templateOverride?.subheading ||
-    `Você acabou de receber acesso exclusivo de nível <strong>${planName}</strong> no MyGameList.`;
+    `Você agora faz parte do nível <strong>${planName}</strong> com todas as funcionalidades premium desbloqueadas.`;
 
   const benefits = templateOverride?.benefits?.length
     ? templateOverride.benefits
     : [
-        "Zero Anúncios em toda a plataforma",
-        isVip ? "2.0x de XP em Dobro para subir de nível" : "1.5x de XP Boost nas atividades",
-        "Insígnia Dourada e destaque exclusivo no seu perfil",
-        "Estatísticas Avançadas e backup total da sua biblioteca",
+        "Zero anúncios em toda a plataforma e aplicativo",
+        isVip ? "2.0x de XP em Dobro em todas as atividades" : "1.5x de XP Boost de progressão",
+        "Insígnia exclusiva e destaque brilhante no perfil",
+        "Estatísticas avançadas e backup completo da biblioteca",
       ];
 
-  const ctaText = templateOverride?.ctaText || "Acessar Meu Perfil VIP →";
+  const ctaText = templateOverride?.ctaText || "Acessar Meu Painel →";
   const ctaUrl = templateOverride?.ctaUrl || "https://www.mygameslist.com.br/perfil";
   const displayMessage = customMessage?.trim() || templateOverride?.defaultMessage?.trim() || "";
 
@@ -85,88 +87,128 @@ export function generateEmailHtml({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
+  <title>${escapeHtml(subject)}</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 16px !important; }
+      .card { padding: 24px 20px !important; }
+      .title { font-size: 22px !important; }
+      .cta-button { width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0b0d12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0b0d12; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #0c0d12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e5e7eb;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0c0d12; padding: 48px 12px;">
     <tr>
       <td align="center">
-        <!-- Container Principal -->
-        <table role="presentation" width="100%" style="max-width: 580px; background-color: #141822; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        
+        <!-- Largura Máxima Padronizada (Linear / Vercel: 560px) -->
+        <table role="presentation" class="container" width="100%" style="max-width: 560px; margin: 0 auto; text-align: left;">
           
-          <!-- Banner Superior / Header -->
+          <!-- Logo / Topo Minimalista -->
           <tr>
-            <td style="padding: 32px 32px 24px 32px; text-align: center; background: radial-gradient(circle at top, rgba(16, 185, 129, 0.15), transparent 70%);">
-              <div style="display: inline-block; padding: 8px 16px; border-radius: 9999px; background-color: ${badgeBg}; border: 1px solid ${badgeColor}; color: ${badgeColor}; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px;">
-                ${escapeHtml(badgeText)}
-              </div>
-              <h1 style="margin: 0; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
-                ${heading}
-              </h1>
-              <p style="margin: 10px 0 0 0; font-size: 14px; color: #9ca3af; line-height: 1.5;">
-                ${subheading}
+            <td style="padding: 0 12px 28px 12px; text-align: center;">
+              <a href="https://www.mygameslist.com.br" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <span style="font-size: 17px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff;">
+                  MYGAME<span style="color: #10B981;">LIST</span>
+                </span>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Card Principal com Borda Sutil e Fundo Escuro Nobre -->
+          <tr>
+            <td>
+              <table role="presentation" class="card" width="100%" style="background-color: #13161f; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 36px 32px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);">
+                
+                <!-- Badge Superior Elegante (Pill) -->
+                <tr>
+                  <td>
+                    <div style="display: inline-block; padding: 4px 12px; border-radius: 9999px; background-color: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: ${accentColor}; text-transform: uppercase;">
+                      ${escapeHtml(badgeText)}
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Título Hero -->
+                <tr>
+                  <td style="padding-top: 20px;">
+                    <h1 class="title" style="margin: 0; font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.6px; line-height: 1.25;">
+                      ${heading}
+                    </h1>
+                    <p style="margin: 12px 0 0 0; font-size: 15px; color: #9ca3af; line-height: 1.55;">
+                      ${subheading}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Mensagem Personalizada da Moderação / Admin (Se houver) -->
+                ${
+                  displayMessage
+                    ? `
+                <tr>
+                  <td style="padding-top: 24px;">
+                    <div style="background-color: #0b0d13; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.06); padding: 18px 20px;">
+                      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 6px;">
+                        Nota da Equipe:
+                      </div>
+                      <div style="font-size: 14px; color: #f3f4f6; line-height: 1.6; white-space: pre-wrap;">
+                        ${escapeHtml(displayMessage)}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                `
+                    : ""
+                }
+
+                <!-- Seção de Recursos Inclusos -->
+                <tr>
+                  <td style="padding-top: 28px;">
+                    <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 14px;">
+                      O que está incluso no seu acesso:
+                    </div>
+
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      ${benefits
+                        .map(
+                          (benefit) => `
+                      <tr>
+                        <td style="padding: 6px 0; vertical-align: top; width: 22px;">
+                          <span style="color: #10B981; font-weight: bold; font-size: 15px; line-height: 1;">✓</span>
+                        </td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #d1d5db; line-height: 1.45;">
+                          ${escapeHtml(benefit)}
+                        </td>
+                      </tr>`
+                        )
+                        .join("")}
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Botão de Ação CTA (Linear Style) -->
+                <tr>
+                  <td style="padding-top: 32px; text-align: left;">
+                    <a href="${escapeHtml(ctaUrl)}" class="cta-button" style="display: inline-block; background-color: #10B981; color: #000000; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 12px; text-align: center; transition: all 0.2s ease;">
+                      ${escapeHtml(ctaText)}
+                    </a>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Rodapé Clean & Transparente -->
+          <tr>
+            <td style="padding: 32px 12px 0 12px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #4b5563; line-height: 1.5;">
+                Você recebeu esta notificação porque sua conta foi atualizada no 
+                <a href="https://www.mygameslist.com.br" style="color: #6b7280; text-decoration: underline;">MyGameList</a>.
               </p>
-            </td>
-          </tr>
-
-          <!-- Mensagem Personalizada do Admin (se houver) -->
-          ${
-            displayMessage
-              ? `
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-              <div style="background-color: rgba(255, 255, 255, 0.04); border-left: 3px solid ${badgeColor}; padding: 16px 20px; border-radius: 12px;">
-                <div style="font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
-                  Mensagem da Moderação:
-                </div>
-                <div style="font-size: 14px; color: #e5e7eb; line-height: 1.6; white-space: pre-wrap;">
-                  ${escapeHtml(displayMessage)}
-                </div>
-              </div>
-            </td>
-          </tr>
-          `
-              : ""
-          }
-
-          <!-- Benefícios Inclusos -->
-          <tr>
-            <td style="padding: 0 32px 32px 32px;">
-              <div style="background-color: #0f121a; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px;">
-                <h3 style="margin: 0 0 14px 0; font-size: 13px; font-weight: 700; color: #d1d5db; text-transform: uppercase; letter-spacing: 0.5px;">
-                  Vantagens Ativadas na sua Conta:
-                </h3>
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                  ${benefits
-                    .map(
-                      (b) => `
-                  <tr>
-                    <td style="padding: 6px 0; font-size: 13px; color: #d1d5db;">
-                      ✨ ${escapeHtml(b)}
-                    </td>
-                  </tr>`
-                    )
-                    .join("")}
-                </table>
-              </div>
-
-              <!-- Botão CTA -->
-              <div style="text-align: center; margin-top: 28px;">
-                <a href="${escapeHtml(ctaUrl)}" style="display: inline-block; background: linear-gradient(135deg, #10B981, #059669); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 14px 32px; border-radius: 9999px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);">
-                  ${escapeHtml(ctaText)}
-                </a>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Rodapé -->
-          <tr>
-            <td style="padding: 24px 32px; background-color: #0b0d12; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #6b7280;">
-                MyGameList • O cofre definitivo para o seu catálogo gamer.
-              </p>
-              <p style="margin: 6px 0 0 0; font-size: 10px; color: #4b5563;">
-                Este e-mail foi enviado automaticamente após a concessão de privilégios de acesso.
+              <p style="margin: 6px 0 0 0; font-size: 11px; color: #374151;">
+                © 2026 MyGameList. Todos os direitos reservados.
               </p>
             </td>
           </tr>
@@ -183,7 +225,7 @@ export function generateEmailHtml({
 }
 
 /**
- * Dispara e-mail de concessão VIP/PRO estilizado com visual obsidian dark e verde esmeralda / dourado.
+ * Dispara e-mail de concessão VIP/PRO estilizado com visual obsidian dark.
  */
 export async function sendVipWelcomeEmail({
   to,
