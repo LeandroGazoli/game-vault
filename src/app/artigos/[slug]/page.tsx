@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getArticleBySlug, ARTICLES_DATA } from "@/lib/articlesData";
+import { getCombinedArticleBySlug, getCombinedArticles } from "@/lib/articlesService";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
 import {
@@ -23,15 +23,18 @@ interface PageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
+export const revalidate = 60;
+
 export async function generateStaticParams() {
-  return ARTICLES_DATA.map((article) => ({
+  const articles = await getCombinedArticles();
+  return articles.map((article) => ({
     slug: article.slug,
   }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getCombinedArticleBySlug(slug);
 
   if (!article) {
     return {
@@ -78,7 +81,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticleDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getCombinedArticleBySlug(slug);
 
   if (!article) {
     notFound();

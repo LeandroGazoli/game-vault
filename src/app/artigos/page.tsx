@@ -1,11 +1,13 @@
 import React from "react";
 import type { Metadata } from "next";
-import { ARTICLES_DATA, getFeaturedArticles } from "@/lib/articlesData";
+import { getCombinedArticles } from "@/lib/articlesService";
 import ArticleCard from "@/components/articles/ArticleCard";
 import JsonLd from "@/components/seo/JsonLd";
 import { BookOpen, Sparkles, Flame, ShieldCheck } from "lucide-react";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
+
+export const revalidate = 60; // ISR revalidação a cada 1 minuto
 
 export const metadata: Metadata = {
   title: "Artigos, Guias e Análises Gamer • Central Editorial",
@@ -59,9 +61,10 @@ const structuredData = [
   },
 ];
 
-export default function ArtigosPage() {
-  const featured = getFeaturedArticles()[0] || ARTICLES_DATA[0];
-  const regularArticles = ARTICLES_DATA.filter((a) => a.id !== featured.id);
+export default async function ArtigosPage() {
+  const allArticles = await getCombinedArticles();
+  const featured = allArticles.find((a) => a.featured) || allArticles[0];
+  const regularArticles = allArticles.filter((a) => a.id !== featured?.id);
 
   return (
     <>
@@ -114,7 +117,7 @@ export default function ArtigosPage() {
               Todos os Guias e Publicações
             </h2>
             <span className="text-xs text-gray-400 font-mono">
-              {ARTICLES_DATA.length} artigos disponíveis
+              {allArticles.length} artigos disponíveis
             </span>
           </div>
 

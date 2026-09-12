@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Trophy,
   Mail,
+  BookOpen,
 } from "lucide-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -25,6 +26,12 @@ export const ADMIN_NAV_ITEMS = [
     icon: LayoutDashboard,
     badge: null,
     exact: true,
+  },
+  {
+    href: "/admin/artigos",
+    label: "Postagens & Artigos",
+    icon: BookOpen,
+    badge: "BLOG",
   },
   {
     href: "/admin/users",

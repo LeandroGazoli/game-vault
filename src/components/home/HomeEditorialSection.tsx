@@ -1,10 +1,22 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ARTICLES_DATA } from "@/lib/articlesData";
-import { BookOpen, ArrowRight, Sparkles, Clock } from "lucide-react";
+import { getCombinedArticles } from "@/lib/articlesService";
+import { Article } from "@/lib/types/article.types";
+import { BookOpen, ArrowRight, Clock } from "lucide-react";
 
 export default function HomeEditorialSection() {
-  const recentArticles = ARTICLES_DATA.slice(0, 3);
+  const [articles, setArticles] = useState<Article[]>(ARTICLES_DATA.slice(0, 3));
+
+  useEffect(() => {
+    getCombinedArticles()
+      .then((data) => {
+        if (data.length > 0) setArticles(data.slice(0, 3));
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="space-y-6 pt-2">
@@ -32,7 +44,7 @@ export default function HomeEditorialSection() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {recentArticles.map((article) => {
+        {articles.map((article) => {
           const formattedDate = new Date(article.publishedAt).toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
