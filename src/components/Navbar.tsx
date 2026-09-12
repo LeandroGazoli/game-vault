@@ -545,8 +545,6 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
-            ) : isAuthLoading ? (
-              <div className="h-9 w-28 rounded-full bg-white/5 animate-pulse border border-white/5 shrink-0" />
             ) : (
               <button
                 onClick={() => {
@@ -670,8 +668,6 @@ export default function Navbar() {
                     </span>
                   </button>
                 </div>
-              ) : isAuthLoading ? (
-                <div className="w-full h-10 rounded-xl bg-white/5 animate-pulse border border-white/5" />
               ) : (
                 <button
                   onClick={() => {
