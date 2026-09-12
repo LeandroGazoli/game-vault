@@ -8,6 +8,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/inventario-steam",
   },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   openGraph: {
     title: "Inventário Steam & Skins • GameVault",
     description: "Visualize skins de CS2, cosméticos de TF2 e itens da Steam em alta definição com valores de mercado.",
