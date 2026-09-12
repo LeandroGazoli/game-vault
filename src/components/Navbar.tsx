@@ -48,7 +48,7 @@ export function openGameImporter() {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, logout, isAdmin, isPremium } = useAuth();
+  const { user, logout, isAdmin, isPremium, isLoading: isAuthLoading } = useAuth();
   const { stats } = useGameLibrary();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -436,7 +436,7 @@ export default function Navbar() {
                       </div>
 
                       {/* Links do Menu */}
-                      <div className="pt-1 space-y-0.5">
+                      <div className="py-1 space-y-0.5">
                         <Link
                           href={user.username ? getProfileUrl(user.username) : "/perfil"}
                           onClick={() => setIsUserMenuOpen(false)}
@@ -479,10 +479,26 @@ export default function Navbar() {
                           <Link
                             href="/admin"
                             onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
                           >
-                            <ShieldCheck className="w-4 h-4 text-amber-400" />
+                            <ShieldCheck className="w-4 h-4 text-cyan-400" />
                             <span>Painel Admin</span>
+                          </Link>
+                        )}
+
+                        {!isPremium && (
+                          <Link
+                            href="/planos"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Crown className="w-4 h-4 text-amber-400" />
+                              <span>Seja PRO</span>
+                            </div>
+                            <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-300 font-mono">
+                              UPGRADE
+                            </span>
                           </Link>
                         )}
 
@@ -491,11 +507,11 @@ export default function Navbar() {
                             setIsUserMenuOpen(false);
                             triggerPwaInstall();
                           }}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left cursor-pointer"
                         >
                           <div className="flex items-center gap-2.5">
-                            <Smartphone className="w-4 h-4 text-cyan-400" />
-                            <span>Instalar App (PWA)</span>
+                            <Download className="w-4 h-4 text-[#00E5FF]" />
+                            <span>Instalar App PWA</span>
                           </div>
                           <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-[#00E5FF]">
                             APP
@@ -529,6 +545,8 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
+            ) : isAuthLoading ? (
+              <div className="h-9 w-28 rounded-full bg-white/5 animate-pulse border border-white/5 shrink-0" />
             ) : (
               <button
                 onClick={() => {
@@ -652,6 +670,8 @@ export default function Navbar() {
                     </span>
                   </button>
                 </div>
+              ) : isAuthLoading ? (
+                <div className="w-full h-10 rounded-xl bg-white/5 animate-pulse border border-white/5" />
               ) : (
                 <button
                   onClick={() => {

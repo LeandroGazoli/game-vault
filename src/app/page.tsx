@@ -89,7 +89,7 @@ const LEGENDARY_FRANCHISES = [
 ];
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { stats, library } = useGameLibrary();
   
   const [topTenGames, setTopTenGames] = useState<Game[]>([]);
@@ -253,7 +253,7 @@ export default function HomePage() {
           CTA DE CONVERSÃO / CAPTURA DE LEADS (DESLOGADOS)
           Exibido em destaque para reduzir a taxa de rejeição de anúncios
       ========================================== */}
-      {!user && (
+      {!user && !isAuthLoading && (
         <HomeConversionBanner
           onOpenAuth={() => setIsAuthOpen(true)}
         />

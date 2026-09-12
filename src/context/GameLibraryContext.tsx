@@ -23,26 +23,60 @@ interface GameLibraryContextType {
 
 const GameLibraryContext = createContext<GameLibraryContextType | undefined>(undefined);
 
+const LIBRARY_CACHE_PREFIX = "mgl_cached_library_";
+
+function getCachedLibrary(uid?: string): UserGame[] {
+  if (typeof window === "undefined" || !uid) return [];
+  try {
+    const raw = localStorage.getItem(`${LIBRARY_CACHE_PREFIX}${uid}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setCachedLibrary(uid: string | undefined, games: UserGame[]) {
+  if (typeof window === "undefined" || !uid) return;
+  try {
+    localStorage.setItem(`${LIBRARY_CACHE_PREFIX}${uid}`, JSON.stringify(games));
+  } catch {}
+}
+
 export function GameLibraryProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [library, setLibrary] = useState<UserGame[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [library, setLibrary] = useState<UserGame[]>(() => getCachedLibrary(user?.uid));
+  const [isLoading, setIsLoading] = useState(() => !getCachedLibrary(user?.uid).length);
   const libraryRef = useRef<UserGame[]>(library);
 
   useEffect(() => {
     libraryRef.current = library;
-  }, [library]);
+    if (user?.uid && library.length > 0) {
+      setCachedLibrary(user.uid, library);
+    }
+  }, [library, user?.uid]);
 
   useEffect(() => {
     async function load() {
-      setIsLoading(true);
+      if (!user) {
+        setLibrary([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Se já temos cache para este usuário, exibe imediatamente e busca novidades em segundo plano
+      const cached = getCachedLibrary(user.uid);
+      if (cached.length > 0 && library.length === 0) {
+        setLibrary(cached);
+        setIsLoading(false);
+      } else if (library.length === 0) {
+        setIsLoading(true);
+      }
+
       try {
-        if (user) {
-          const userGames = await getUserLibrary(user.uid);
-          setLibrary(userGames || []);
-        } else {
-          setLibrary([]);
-        }
+        const userGames = await getUserLibrary(user.uid);
+        const finalList = userGames || [];
+        setLibrary(finalList);
+        setCachedLibrary(user.uid, finalList);
       } catch (err) {
         console.error("Erro ao carregar biblioteca:", err);
       } finally {

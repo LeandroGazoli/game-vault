@@ -38,12 +38,40 @@ interface AuthContextType {
   upgradePlan: (plan: UserPlan, hideAds?: boolean) => Promise<void>;
 }
 
+const AUTH_USER_CACHE_KEY = "mgl_cached_user_profile_v1";
+
+function getCachedUserProfile(): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_USER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedUserProfile(profile: UserProfile | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (profile) {
+      localStorage.setItem(AUTH_USER_CACHE_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(AUTH_USER_CACHE_KEY);
+    }
+  } catch {}
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(() => getCachedUserProfile());
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !getCachedUserProfile());
+
+  const updateAndCacheUser = useCallback((newProfile: UserProfile | null) => {
+    setUser(newProfile);
+    setCachedUserProfile(newProfile);
+  }, []);
 
   // Somente leandro.gazolig@gmail.com com e-mail devidamente verificado no Firebase Auth é admin
   const isAdmin = Boolean(
@@ -124,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   isAdmin: true,
                 };
               }
-              setUser(profile);
+              updateAndCacheUser(profile);
             } else {
               const cleanUsername = fbUser.displayName
                 ? fbUser.displayName
@@ -150,12 +178,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 createdAt: new Date().toISOString(),
               };
               await saveUserProfile(fbUser.uid, newProfile);
-              setUser(newProfile);
+              updateAndCacheUser(newProfile);
             }
             setIsLoading(false);
           });
         } else {
-          setUser(null);
+          updateAndCacheUser(null);
           setIsLoading(false);
         }
       });
@@ -165,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (unsubscribeDoc) unsubscribeDoc();
       };
     } else {
-      setUser(null);
+      updateAndCacheUser(null);
       setIsLoading(false);
     }
   }, []);
@@ -250,33 +278,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setFirebaseUser(cred.user);
-    setUser(newProfile);
+    updateAndCacheUser(newProfile);
     await saveUserProfile(cred.user.uid, newProfile);
-  }, []);
+  }, [updateAndCacheUser]);
 
   const logout = useCallback(async () => {
     if (auth) {
       await signOut(auth);
     }
-    setUser(null);
+    updateAndCacheUser(null);
     setFirebaseUser(null);
-  }, []);
+  }, [updateAndCacheUser]);
 
   const updateUserBio = useCallback(async (bio: string, favoriteGame?: string) => {
     if (!user) return;
     const patch = { bio, ...(favoriteGame ? { favoriteGame } : {}), updatedAt: new Date().toISOString() };
-    setUser({ ...user, ...patch });
+    const updated = { ...user, ...patch };
+    updateAndCacheUser(updated);
     // Grava SOMENTE os campos alterados (não reescreve campos travados como gamerXp/plan/hideAds)
     await saveUserProfile(user.uid, patch);
-  }, [user]);
+  }, [user, updateAndCacheUser]);
 
   const updateUserProfile = useCallback(async (data: Partial<UserProfile>) => {
     if (!user) return;
     const patch = { ...data, updatedAt: new Date().toISOString() };
-    setUser({ ...user, ...patch });
+    const updated = { ...user, ...patch };
+    updateAndCacheUser(updated);
     // Grava SOMENTE os campos alterados — evita reescrever campos travados e rejeição por valor obsoleto
     await saveUserProfile(user.uid, patch);
-  }, [user]);
+  }, [user, updateAndCacheUser]);
 
   const upgradePlan = useCallback(async (plan: UserPlan, hideAds = true) => {
     if (!user) return;
@@ -288,9 +318,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hideAds: isPlanPremium ? hideAds : false,
       updatedAt: new Date().toISOString(),
     };
-    setUser(updated);
+    updateAndCacheUser(updated);
     await saveUserProfile(user.uid, updated);
-  }, [user, isAdmin]);
+  }, [user, isAdmin, updateAndCacheUser]);
 
   const contextValue = useMemo(
     () => ({
