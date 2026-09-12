@@ -18,6 +18,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
+  Globe,
+  Compass,
+  Target,
+  Navigation,
 } from "lucide-react";
 
 interface AdminUserDrawerProps {
@@ -177,6 +181,72 @@ export default function AdminUserDrawer({
                     : "Data desconhecida"}
                 </span>
               </div>
+            </div>
+
+            {/* Origem de Aquisição / UTMs */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-mono text-gray-400 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Origem do Usuário (UTM)</span>
+                </span>
+                {user.acquisition?.medium === "cpc" || user.acquisition?.medium === "paid_social" ? (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Tráfego Pago
+                  </span>
+                ) : user.acquisition?.source === "admin" ? (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Admin
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Orgânico / Direto
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-white/5">
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Canal / Source:</span>
+                  <span className="font-mono font-bold text-white capitalize">
+                    {user.acquisition?.source || "Direto / Orgânico"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Mídia / Medium:</span>
+                  <span className="font-mono text-gray-200">
+                    {user.acquisition?.medium || "none"}
+                  </span>
+                </div>
+              </div>
+
+              {user.acquisition?.campaign && (
+                <div className="text-[11px] border-t border-white/5 pt-1.5 flex items-center justify-between">
+                  <span className="text-gray-400 text-[10px] flex items-center gap-1">
+                    <Target className="w-3 h-3 text-cyan-400" />
+                    <span>Campanha:</span>
+                  </span>
+                  <span className="font-mono text-cyan-300 font-semibold text-[10px]">
+                    {user.acquisition.campaign}
+                  </span>
+                </div>
+              )}
+
+              {user.acquisition?.referrer && (
+                <div className="text-[10px] border-t border-white/5 pt-1 text-gray-400 flex items-start gap-1">
+                  <Globe className="w-3 h-3 text-gray-400 shrink-0 mt-0.5" />
+                  <span className="truncate" title={user.acquisition.referrer}>
+                    Ref: {user.acquisition.referrer}
+                  </span>
+                </div>
+              )}
+
+              {user.acquisition?.landingPage && (
+                <div className="text-[10px] text-gray-500 flex items-center gap-1 font-mono truncate">
+                  <Navigation className="w-2.5 h-2.5 text-gray-500 shrink-0" />
+                  <span className="truncate">Destino: {user.acquisition.landingPage}</span>
+                </div>
+              )}
             </div>
           </div>
 

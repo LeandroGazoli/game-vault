@@ -335,6 +335,12 @@ export async function POST(request: NextRequest) {
       isPremium,
       isAdmin: isUserAdmin,
       hideAds: isPremium,
+      acquisition: {
+        source: "admin",
+        medium: "manual",
+        campaign: "admin_creation",
+        capturedAt: now,
+      },
       createdAt: now,
       updatedAt: now,
       banned: false,

@@ -21,6 +21,7 @@ import {
 } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { UserProfile, UserPlan, ADMIN_EMAILS, getEffectiveAccess } from "@/lib/types";
+import { getStoredAcquisition } from "@/lib/utm";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -175,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 isPremium: userIsAdmin,
                 isAdmin: userIsAdmin,
                 hideAds: userIsAdmin,
+                acquisition: getStoredAcquisition(),
                 createdAt: new Date().toISOString(),
               };
               await saveUserProfile(fbUser.uid, newProfile);
@@ -275,6 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isPremium: userIsAdmin,
       isAdmin: userIsAdmin,
       hideAds: userIsAdmin,
+      acquisition: getStoredAcquisition(),
       createdAt: new Date().toISOString(),
     };
     setFirebaseUser(cred.user);

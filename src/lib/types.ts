@@ -495,8 +495,20 @@ export interface UserProfile {
   adultContentConfirmedAt?: string | null;
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
+  acquisition?: UserAcquisition;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface UserAcquisition {
+  source?: string;        // ex: 'google', 'instagram', 'facebook', 'direct', 'organic'
+  medium?: string;        // ex: 'cpc', 'stories', 'bio', 'referral', 'organic'
+  campaign?: string;      // ex: 'launch_promo_2026'
+  content?: string;
+  term?: string;
+  referrer?: string;      // document.referrer original
+  landingPage?: string;   // primeira URL acessada
+  capturedAt?: string;    // ISO timestamp
 }
 
 export interface EffectiveAccess {

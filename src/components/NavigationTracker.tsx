@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { captureAndStoreAcquisition } from "@/lib/utm";
 
 export const PREV_URL_STORAGE_KEY = "gv_prev_url";
 export const CURRENT_URL_STORAGE_KEY = "gv_current_url";
@@ -19,6 +20,7 @@ export default function NavigationTracker() {
     if (!pathname || typeof window === "undefined") return;
 
     try {
+      captureAndStoreAcquisition();
       const fullUrl = `${pathname}${window.location.search || ""}`;
       const currentStored = sessionStorage.getItem(CURRENT_URL_STORAGE_KEY);
 
