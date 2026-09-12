@@ -101,30 +101,6 @@ export function EmailTemplateEditor({
               />
             </div>
 
-            {/* Imagem / Logo do Perfil do Site */}
-            <div className="md:col-span-12 flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="text-gray-500 font-mono text-[11px] w-28 shrink-0 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Imagem / Logo:
-              </span>
-              <div className="flex-1 flex items-center gap-2">
-                <img
-                  src={config.logoUrl || "https://www.mygameslist.com.br/icon-192.png"}
-                  alt="Logo Preview"
-                  className="w-7 h-7 rounded-lg object-cover border border-white/10 shrink-0 bg-black/40"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "https://www.mygameslist.com.br/icon-192.png";
-                  }}
-                />
-                <input
-                  type="text"
-                  value={config.logoUrl || ""}
-                  onChange={(e) => updateField("logoUrl", e.target.value)}
-                  placeholder="https://www.mygameslist.com.br/icon-192.png"
-                  className="flex-1 bg-[#0a0b10] border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-emerald-500/50 font-mono text-[11px]"
-                />
-              </div>
-            </div>
-
             {/* Cor de Acento */}
             <div className="md:col-span-6 flex items-center gap-2">
               <span className="text-gray-500 font-mono text-[11px] w-28 shrink-0 flex items-center gap-1.5">
@@ -164,24 +140,6 @@ export function EmailTemplateEditor({
             <span className="font-mono text-[11px] text-gray-400">canvas / template</span>
           </div>
           <span className="text-[11px] text-gray-500 font-mono">Clique nos blocos para editar</span>
-        </div>
-
-        {/* Topo: Logo & Identidade Visual do Site */}
-        <div className="flex items-center gap-3 pb-2">
-          <img
-            src={config.logoUrl || "https://www.mygameslist.com.br/icon-192.png"}
-            alt="Site Logo"
-            className="w-10 h-10 rounded-xl object-cover border border-white/15 shadow-md shrink-0 bg-[#0c0d12]"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = "https://www.mygameslist.com.br/icon-192.png";
-            }}
-          />
-          <div>
-            <span className="text-base font-black tracking-tight text-white block">
-              MYGAME<span className="text-emerald-400">LIST</span>
-            </span>
-            <span className="text-[11px] text-gray-500 font-mono">Ícone de perfil oficial</span>
-          </div>
         </div>
 
         {/* Bloco 1: Badge / Pílula Flutuante */}
