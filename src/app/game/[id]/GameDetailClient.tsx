@@ -24,6 +24,7 @@ import HltbCard from "@/components/HltbCard";
 import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
 import GameDetailLoading from "./[slug]/loading";
+import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
 
 // Componentes Modulares de Jogo
 import { GalleryMediaItem, isStoreWebsite, getFeaturedBackdropImage } from "@/components/game/gameDetailHelpers";
@@ -477,6 +478,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
             <GameStoreLinks gameName={game.name} storeWebsites={storeWebsites} />
             <GameSpecsTable game={game} isAdult={isAdult} />
             <GameCommunityLinks communityWebsites={communityWebsites} />
+            <IndieSpotlightBanner location="game_detail" />
           </div>
         </div>
 

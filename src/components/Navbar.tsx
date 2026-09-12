@@ -313,6 +313,14 @@ export default function Navbar() {
                             <span>📰 Artigos &amp; Guias Gamer</span>
                           </Link>
                           <Link
+                            href="/indies"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-purple-300 hover:text-white hover:bg-purple-500/15 transition-colors truncate font-bold"
+                          >
+                            <Gamepad2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                            <span>👾 Vitrine de Jogos Indie</span>
+                          </Link>
+                          <Link
                             href="/inventario-steam"
                             onClick={() => setIsExploreMenuOpen(false)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cyan-300 hover:text-white hover:bg-white/10 transition-colors truncate font-semibold"
@@ -728,6 +736,7 @@ export default function Navbar() {
                   Explorar
                 </span>
                 {[
+                  { href: "/indies", label: "Vitrine de Jogos Indie", icon: Gamepad2, color: "text-purple-400" },
                   { href: "/artigos", label: "Artigos & Guias Gamer", icon: BookOpen, color: "text-emerald-400" },
                   { href: "/calendar", label: "Calendário de Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
                   { href: "/rankings", label: "Rankings da Comunidade", icon: Sparkles, color: "text-amber-400" },

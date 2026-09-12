@@ -245,6 +245,11 @@ export default function RootLayout({
                         </Link>
                       </li>
                       <li>
+                        <Link href="/indies" className="hover:text-purple-400 transition-colors font-semibold">
+                          👾 Jogos Indie (Vitrine &amp; Votação)
+                        </Link>
+                      </li>
+                      <li>
                         <Link href="/search" className="hover:text-white transition-colors">
                           Buscar Jogos
                         </Link>

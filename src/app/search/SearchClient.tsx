@@ -34,6 +34,8 @@ import { isUserAdult } from "@/lib/gameUtils";
 import AuthModal from "@/components/AuthModal";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
 import AdultContentModal from "@/components/AdultContentModal";
+import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
+import IndieSearchResultsRow from "@/components/indies/IndieSearchResultsRow";
 import {
   GENRE_FILTER_OPTIONS,
   PLATFORM_FAMILIES,
@@ -1324,6 +1326,12 @@ function SearchContent() {
             </span>
           </div>
         )}
+
+        {/* Banner de Destaque Indie configurável */}
+        <IndieSpotlightBanner location="search" className="mb-2" />
+
+        {/* Jogos da Comunidade Indie compatíveis com a busca */}
+        <IndieSearchResultsRow query={query} />
 
         <div className="flex items-center justify-between text-xs text-gray-400 px-1 font-mono">
           <span>
