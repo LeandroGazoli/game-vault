@@ -493,6 +493,8 @@ export interface UserProfile {
   grantedAt?: string | null;    // ISO da concessão
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;
+  readNotificationIds?: string[];
+  dismissedNotificationIds?: string[];
   createdAt: string;
   updatedAt?: string;
 }

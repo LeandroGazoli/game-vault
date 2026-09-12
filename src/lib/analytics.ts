@@ -41,10 +41,10 @@ export function trackSignUpSuccess(method: "google" | "email") {
   trackEvent("sign_up", {
     method,
   });
-  // Disparo para Google Ads Conversion se configurado
-  if (process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID) {
-    trackEvent("conversion", {
-      send_to: process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID,
-    });
-  }
+  // Disparo direto para a Conversão de Cadastro no Google Ads
+  trackEvent("conversion", {
+    send_to: process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID || "AW-18443489371/oCUxCKispPUcENugxdpE",
+    value: 1.0,
+    currency: "BRL",
+  });
 }

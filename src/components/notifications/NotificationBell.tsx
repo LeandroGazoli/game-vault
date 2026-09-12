@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { SystemNotification } from "@/lib/types";
-import {
-  subscribeToSystemNotifications,
-} from "@/lib/firebase";
+import { subscribeToSystemNotifications } from "@/lib/firebase";
 import {
   getReadNotificationIds,
   markNotificationAsRead,
@@ -12,37 +10,33 @@ import {
   getNotificationPermission,
   requestNotificationPermission,
   isNotificationSupported,
-  showLocalNotification,
   INITIAL_FEATURE_NOTIFICATION,
-  getLastShownToastId,
-  setLastShownToastId,
+  filterActiveNotifications,
 } from "@/lib/notifications";
 import NotificationDrawer from "./NotificationDrawer";
-import NotificationToast from "./NotificationToast";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function NotificationBell() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<SystemNotification[]>([INITIAL_FEATURE_NOTIFICATION]);
+  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [isLoadingPush, setIsLoadingPush] = useState(false);
-  const [toastNotification, setToastNotification] = useState<SystemNotification | null>(null);
 
   useEffect(() => {
+    // Se o usuário não estiver logado, não carrega nem escuta notificações
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
     // Carrega IDs lidos
     setReadIds(getReadNotificationIds());
 
     if (isNotificationSupported()) {
       setIsPushEnabled(getNotificationPermission() === "granted");
-    }
-
-    // Para visitantes deslogados, mantém notificação estática inicial sem abrir websocket com o Firestore
-    if (!user) {
-      setNotifications([INITIAL_FEATURE_NOTIFICATION]);
-      return;
     }
 
     // Assina notificações em tempo real do Firestore apenas para usuários autenticados
@@ -55,27 +49,9 @@ export default function NotificationBell() {
         merged = [INITIAL_FEATURE_NOTIFICATION];
       }
 
-      setNotifications(merged);
-
-      // Checa se há uma notificação recente não-lida para exibir o card toast flutuante
-      const currentReads = getReadNotificationIds();
-      const latestUnread = merged.find((n) => !currentReads.includes(n.id));
-
-      if (latestUnread) {
-        const lastToastId = getLastShownToastId();
-        if (lastToastId !== latestUnread.id) {
-          setToastNotification(latestUnread);
-          setLastShownToastId(latestUnread.id);
-
-          // Dispara push se autorizado no navegador
-          if (getNotificationPermission() === "granted" && latestUnread.sendPush !== false) {
-            showLocalNotification(latestUnread.title, {
-              body: latestUnread.message,
-              url: latestUnread.linkUrl || "/",
-            });
-          }
-        }
-      }
+      // Aplica filtro de retenção de dias e limite máximo de quantidade
+      const activeList = filterActiveNotifications(merged);
+      setNotifications(activeList);
     });
 
     return () => {
@@ -83,7 +59,12 @@ export default function NotificationBell() {
         unsubscribe();
       }
     };
-  }, [user?.uid]);
+  }, [user]);
+
+  // Usuários não logados não visualizam a central nem o sino de notificações
+  if (!user) {
+    return null;
+  }
 
   const handleMarkAsRead = (id: string) => {
     markNotificationAsRead(id);
@@ -141,12 +122,6 @@ export default function NotificationBell() {
         onEnablePush={handleEnablePush}
         isPushEnabled={isPushEnabled}
         isLoadingPush={isLoadingPush}
-      />
-
-      {/* Card Flutuante Toast para Notificação Recente */}
-      <NotificationToast
-        notification={toastNotification}
-        onClose={() => setToastNotification(null)}
       />
     </>
   );

@@ -535,10 +535,11 @@ export default function Navbar() {
                   trackSignUpClick("navbar_header_cta");
                   setIsAuthOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.35)] active:scale-95 shrink-0 cursor-pointer"
+                className="h-9 min-h-[36px] px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_22px_rgba(16,185,129,0.5)] active:scale-95 shrink-0 cursor-pointer"
+                title="Acessar sua conta ou cadastrar-se"
               >
-                <User className="w-3.5 h-3.5 text-black" />
-                <span className="inline">Criar Conta</span>
+                <User className="w-4 h-4 text-black" />
+                <span className="inline">Entrar / Criar Conta</span>
               </button>
             )}
 

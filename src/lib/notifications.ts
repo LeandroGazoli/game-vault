@@ -1,7 +1,10 @@
 import { SystemNotification } from "./types";
 
 const READ_STORAGE_KEY = "mgl_read_notifications_v1";
-const LAST_SHOWN_TOAST_KEY = "mgl_last_shown_toast_id";
+
+// Configurações de retenção e limite de exibição
+export const NOTIFICATION_RETENTION_DAYS = 30; // Notificações expiram visualmente após 30 dias (exceto fixadas)
+export const NOTIFICATION_DISPLAY_LIMIT = 20;  // Máximo de notificações exibidas simultaneamente
 
 // Notificação padrão automática destacando o novo recurso
 export const INITIAL_FEATURE_NOTIFICATION: SystemNotification = {
@@ -15,6 +18,39 @@ export const INITIAL_FEATURE_NOTIFICATION: SystemNotification = {
   isPinned: true,
   createdAt: "2026-09-03T20:00:00.000Z",
 };
+
+/**
+ * Filtra notificações aplicando limite de retenção em dias e cota máxima de itens.
+ * Itens fixados (`isPinned: true`) são mantidos e ordenados no topo.
+ */
+export function filterActiveNotifications(
+  notifications: SystemNotification[],
+  options?: {
+    maxDays?: number;
+    maxLimit?: number;
+  }
+): SystemNotification[] {
+  const maxDays = options?.maxDays ?? NOTIFICATION_RETENTION_DAYS;
+  const maxLimit = options?.maxLimit ?? NOTIFICATION_DISPLAY_LIMIT;
+  const cutoffTime = Date.now() - maxDays * 24 * 60 * 60 * 1000;
+
+  // Filtra por data (mantendo sempre as fixadas)
+  const valid = notifications.filter((item) => {
+    if (item.isPinned) return true;
+    const createdAtMs = new Date(item.createdAt).getTime();
+    if (isNaN(createdAtMs)) return true;
+    return createdAtMs >= cutoffTime;
+  });
+
+  // Ordena: fixados primeiro, e depois os mais recentes
+  valid.sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return valid.slice(0, maxLimit);
+}
 
 export function isNotificationSupported(): boolean {
   return typeof window !== "undefined" && "Notification" in window;
@@ -87,6 +123,8 @@ export async function showLocalNotification(
   }
 }
 
+const DISMISSED_STORAGE_KEY = "mgl_dismissed_notifications_v1";
+
 // ==========================================
 // GERENCIADOR DE LEITURA (LOCALSTORAGE)
 // ==========================================
@@ -125,17 +163,36 @@ export function markAllNotificationsAsRead(ids: string[]): void {
   }
 }
 
-export function getUnreadCount(notifications: SystemNotification[]): number {
-  const readIds = getReadNotificationIds();
-  return notifications.filter((n) => !readIds.includes(n.id)).length;
+// ==========================================
+// GERENCIADOR DE NOTIFICAÇÕES DISPENSADAS/EXCLUÍDAS DO PERFIL
+// ==========================================
+
+export function getDismissedNotificationIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(DISMISSED_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
-export function getLastShownToastId(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(LAST_SHOWN_TOAST_KEY);
-}
-
-export function setLastShownToastId(id: string): void {
+export function dismissNotificationLocally(id: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(LAST_SHOWN_TOAST_KEY, id);
+  try {
+    const current = getDismissedNotificationIds();
+    if (!current.includes(id)) {
+      const updated = [...current, id];
+      localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(updated));
+    }
+  } catch (err) {
+    console.error("Erro ao dispensar notificação localmente:", err);
+  }
+}
+
+export function getUnreadCount(
+  notifications: SystemNotification[],
+  readIds: string[] = getReadNotificationIds()
+): number {
+  return notifications.filter((n) => !readIds.includes(n.id)).length;
 }

@@ -24,6 +24,8 @@ import {
   writeBatch,
   orderBy,
   onSnapshot,
+  updateDoc,
+  arrayUnion,
   Firestore
 } from "firebase/firestore";
 import {
@@ -826,6 +828,51 @@ export async function deleteSystemNotification(id: string): Promise<void> {
   } catch (e) {
     console.error("Erro ao excluir notificação:", e);
     throw e;
+  }
+}
+
+/**
+ * Registra no perfil do usuário no Firestore que a notificação foi lida
+ */
+export async function markNotificationAsReadForUser(userId: string, notifId: string): Promise<void> {
+  if (!userId || !notifId || !db) return;
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      readNotificationIds: arrayUnion(notifId),
+    });
+  } catch (e) {
+    console.error("Erro ao persistir leitura de notificação no Firestore:", e);
+  }
+}
+
+/**
+ * Marca uma lista de notificações como lidas no perfil do usuário no Firestore
+ */
+export async function markAllNotificationsAsReadForUser(userId: string, notifIds: string[]): Promise<void> {
+  if (!userId || !notifIds.length || !db) return;
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      readNotificationIds: arrayUnion(...notifIds),
+    });
+  } catch (e) {
+    console.error("Erro ao persistir leituras de notificações no Firestore:", e);
+  }
+}
+
+/**
+ * Remove/dispensa permanentemente a notificação da visualização do perfil do usuário
+ */
+export async function dismissNotificationForUser(userId: string, notifId: string): Promise<void> {
+  if (!userId || !notifId || !db) return;
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      dismissedNotificationIds: arrayUnion(notifId),
+    });
+  } catch (e) {
+    console.error("Erro ao dispensar notificação no Firestore:", e);
   }
 }
 

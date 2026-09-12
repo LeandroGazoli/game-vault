@@ -28,6 +28,7 @@ export default function GoogleAnalytics({
             gtag('config', '${gaId}', {
               page_path: window.location.pathname,
             });
+            gtag('config', 'AW-18443489371');
           `,
         }}
       />

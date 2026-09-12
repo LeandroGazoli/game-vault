@@ -235,9 +235,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full mt-2 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm transition-all shadow-xl hover:scale-[1.01] disabled:opacity-50 cursor-pointer"
+            className="w-full mt-2 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm transition-all shadow-xl hover:scale-[1.01] disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
-            {loading ? "Carregando..." : isSignUp ? "Criar Conta" : "Entrar no MyGameList"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                <span>Processando...</span>
+              </>
+            ) : isSignUp ? (
+              "Criar Conta"
+            ) : (
+              "Entrar no MyGameList"
+            )}
           </button>
         </form>
 
