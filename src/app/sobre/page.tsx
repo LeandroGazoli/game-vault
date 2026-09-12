@@ -145,6 +145,23 @@ export default function SobrePage() {
         </ul>
       </div>
 
+      {/* Linha Editorial & Metodologia E-E-A-T */}
+      <div className="rounded-3xl border border-white/10 bg-[#18191c] p-8 space-y-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-emerald-400" />
+          Linha Editorial &amp; Metodologia de Dados
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+          No <strong>MyGameList</strong>, prezamos pelo rigor técnico e transparência na agregação e curadoria de dados:
+        </p>
+        <ul className="space-y-2 text-xs text-gray-400 list-disc list-inside">
+          <li><strong>Curadoria Humana:</strong> Todas as informações catalogadas passam por revisão e triagem contínua para evitar duplicidades ou dados corrompidos.</li>
+          <li><strong>Consolidação de Crítica:</strong> As notas do Metacritic refletem a média ponderada de dezenas de veículos especializados internacionais, sem viés editorial unilateral.</li>
+          <li><strong>Precisão em Horas de Jogo:</strong> Os tempos do HowLongToBeat são calibrados a partir de milhares de envios de jogadores reais, divididos entre narrativa principal, missões extras e conclusão total (100%).</li>
+          <li><strong>Autoria e Responsabilidade:</strong> O projeto é liderado por <strong>Leandro Gazoli</strong> (Fundador e Desenvolvedor Principal) e conta com a colaboração ativa dos membros da comunidade gamer.</li>
+        </ul>
+      </div>
+
       {/* Contato & Transparência */}
       <div className="rounded-3xl border border-white/10 bg-[#18191c] p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="space-y-1 text-center sm:text-left">
@@ -153,12 +170,12 @@ export default function SobrePage() {
             Estamos sempre abertos ao feedback da comunidade gamer para evoluir a plataforma.
           </p>
         </div>
-        <a
-          href="mailto:contato@mygameslist.com.br"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs shadow-lg transition-transform hover:scale-105"
+        <Link
+          href="/contato"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow-lg transition-transform hover:scale-105"
         >
-          <Mail className="w-4 h-4" /> Entrar em Contato
-        </a>
+          <Mail className="w-4 h-4" /> Ir para Página de Contato
+        </Link>
       </div>
     </div>
   );

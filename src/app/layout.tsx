@@ -238,6 +238,11 @@ export default function RootLayout({
                         </Link>
                       </li>
                       <li>
+                        <Link href="/artigos" className="hover:text-emerald-400 transition-colors font-semibold">
+                          📰 Artigos &amp; Guias
+                        </Link>
+                      </li>
+                      <li>
                         <Link href="/search" className="hover:text-white transition-colors">
                           Buscar Jogos
                         </Link>
@@ -259,6 +264,11 @@ export default function RootLayout({
                       <li>
                         <Link href="/sobre" className="hover:text-white transition-colors">
                           Sobre o MyGameList
+                        </Link>
+                      </li>
+                      <li>
+                        <Link href="/contato" className="hover:text-emerald-400 transition-colors font-semibold">
+                          Fale Conosco (Contato)
                         </Link>
                       </li>
                       <li>
@@ -308,8 +318,16 @@ export default function RootLayout({
                   </div>
 
                   <div className="flex flex-wrap items-center justify-center gap-4 text-gray-400 font-medium">
+                    <Link href="/artigos" className="hover:text-emerald-400 transition-colors">
+                      Artigos &amp; Guias
+                    </Link>
+                    <span>•</span>
                     <Link href="/sobre" className="hover:text-white transition-colors">
                       Sobre
+                    </Link>
+                    <span>•</span>
+                    <Link href="/contato" className="hover:text-white transition-colors">
+                      Contato
                     </Link>
                     <span>•</span>
                     <Link href="/termos" className="hover:text-white transition-colors">

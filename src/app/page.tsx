@@ -38,6 +38,7 @@ import HomeHeroCarousel from "@/components/HomeHeroCarousel";
 import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
+import HomeEditorialSection from "@/components/home/HomeEditorialSection";
 import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SystemSettings } from "@/lib/types";
@@ -482,6 +483,11 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      {/* ==========================================
+          8. CENTRAL EDITORIAL: ARTIGOS & GUIAS (SEO & ADSENSE COMPLIANCE)
+      ========================================== */}
+      <HomeEditorialSection />
 
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS

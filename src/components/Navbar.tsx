@@ -38,6 +38,7 @@ import {
   Bookmark,
   Lightbulb,
   Upload,
+  BookOpen,
 } from "lucide-react";
 
 export function openGameImporter() {
@@ -303,6 +304,14 @@ export default function Navbar() {
                           <span>Hubs &amp; Coleções</span>
                         </div>
                         <div className="space-y-0.5">
+                          <Link
+                            href="/artigos"
+                            onClick={() => setIsExploreMenuOpen(false)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 hover:text-white hover:bg-emerald-500/15 transition-colors truncate font-bold"
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>📰 Artigos &amp; Guias Gamer</span>
+                          </Link>
                           <Link
                             href="/inventario-steam"
                             onClick={() => setIsExploreMenuOpen(false)}
@@ -719,9 +728,11 @@ export default function Navbar() {
                   Explorar
                 </span>
                 {[
+                  { href: "/artigos", label: "Artigos & Guias Gamer", icon: BookOpen, color: "text-emerald-400" },
                   { href: "/calendar", label: "Calendário de Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
                   { href: "/rankings", label: "Rankings da Comunidade", icon: Sparkles, color: "text-amber-400" },
                   { href: "/feedback", label: "Ideias & Reportar Bugs", icon: Lightbulb, color: "text-yellow-400" },
+                  { href: "/contato", label: "Fale Conosco (Contato)", icon: Smartphone, color: "text-emerald-300" },
                   { href: "/inventario-steam", label: "Inventário Steam & Skins", icon: Gamepad2, color: "text-cyan-300" },
                 ].map((item) => {
                   const Icon = item.icon;

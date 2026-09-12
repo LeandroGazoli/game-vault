@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
+import { ARTICLES_DATA } from "@/lib/articlesData";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
 import { slugify, getGameUrl } from "@/lib/routes";
 import { getRegisteredGamePages } from "@/lib/gameRegistry";
@@ -87,6 +88,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/artigos`,
+      lastModified,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/contato`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/sobre`,
       lastModified,
       changeFrequency: "monthly",
@@ -112,7 +125,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 2. Rotas Dinâmicas de Categorias
+  // 2. Rotas Dinâmicas de Artigos e Guias Editoriais
+  const articlePages: MetadataRoute.Sitemap = ARTICLES_DATA.map((art) => ({
+    url: `${baseUrl}/artigos/${art.slug}`,
+    lastModified: new Date(art.updatedAt),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  // 3. Rotas Dinâmicas de Categorias
   const categoryPages: MetadataRoute.Sitemap = CATEGORIES_DATA.map((cat) => ({
     url: `${baseUrl}/categorias/${cat.slug}`,
     lastModified,
@@ -120,7 +141,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // 3. Rotas Dinâmicas de Coleções
+  // 4. Rotas Dinâmicas de Coleções
   const collectionPages: MetadataRoute.Sitemap = COLLECTIONS_DATA.map((col) => ({
     url: `${baseUrl}/colecoes/${col.slug}`,
     lastModified,
@@ -189,6 +210,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const byUrl = new Map<string, MetadataRoute.Sitemap[number]>();
   for (const entry of [
     ...staticPages,
+    ...articlePages,
     ...categoryPages,
     ...collectionPages,
     ...gamePages,
