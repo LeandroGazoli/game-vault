@@ -81,6 +81,7 @@ export function generateEmailHtml({
   const ctaUrl = templateOverride?.ctaUrl || "https://www.mygameslist.com.br/perfil";
   const displayMessage = customMessage?.trim() || templateOverride?.defaultMessage?.trim() || "";
 
+  const logoUrl = templateOverride?.logoUrl?.trim() || "https://www.mygameslist.com.br/icon-192.png";
   const preheader = templateOverride?.preheader?.trim() || "";
   const secondaryCtaText = templateOverride?.secondaryCtaText?.trim() || "";
   const secondaryCtaUrl = templateOverride?.secondaryCtaUrl?.trim() || "";
@@ -122,11 +123,18 @@ export function generateEmailHtml({
         <!-- Largura Máxima Padronizada (Linear / Vercel: 560px) -->
         <table role="presentation" class="container" width="100%" style="max-width: 560px; margin: 0 auto; text-align: left;">
           
-          <!-- Logo / Topo Minimalista -->
+          <!-- Logo / Topo com Imagem de Perfil / Marca do Site -->
           <tr>
             <td style="padding: 0 12px 28px 12px; text-align: center;">
-              <a href="https://www.mygameslist.com.br" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-                <span style="font-size: 17px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff;">
+              <a href="https://www.mygameslist.com.br" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px;">
+                <img 
+                  src="${escapeHtml(logoUrl)}" 
+                  alt="MyGameList" 
+                  width="38" 
+                  height="38" 
+                  style="display: inline-block; width: 38px; height: 38px; border-radius: 10px; vertical-align: middle; border: 1px solid rgba(255, 255, 255, 0.15); object-fit: cover;"
+                />
+                <span style="font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff; vertical-align: middle; margin-left: 10px;">
                   MYGAME<span style="color: #10B981;">LIST</span>
                 </span>
               </a>

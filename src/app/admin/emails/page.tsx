@@ -37,6 +37,7 @@ export default function AdminEmailsPage() {
   const [templateConfig, setTemplateConfig] = useState<EmailTemplateConfig>({
     subject: "",
     preheader: "",
+    logoUrl: "https://www.mygameslist.com.br/icon-192.png",
     badgeText: "",
     heading: "",
     subheading: "",
@@ -83,6 +84,7 @@ export default function AdminEmailsPage() {
       setTemplateConfig({
         subject: t?.subject || "👑 Seu acesso VIP foi ativado no MyGameList",
         preheader: t?.preheader || "Aproveite 2.0x XP em dobro, sem anúncios e recursos exclusivos liberados.",
+        logoUrl: t?.logoUrl || "https://www.mygameslist.com.br/icon-192.png",
         badgeText: t?.badgeText || "👑 ACESSO VIP EXCLUSIVO",
         heading: t?.heading || "Parabéns, {username}!",
         subheading: t?.subheading || "Você agora faz parte do nível <strong>Membro VIP</strong> com todas as funcionalidades premium desbloqueadas.",
@@ -104,6 +106,7 @@ export default function AdminEmailsPage() {
       setTemplateConfig({
         subject: t?.subject || "⚡ Seu acesso PRO foi ativado no MyGameList",
         preheader: t?.preheader || "Aproveite 1.5x XP Boost e navegação sem anúncios.",
+        logoUrl: t?.logoUrl || "https://www.mygameslist.com.br/icon-192.png",
         badgeText: t?.badgeText || "⚡ PLANO PRO ATIVADO",
         heading: t?.heading || "Parabéns, {username}!",
         subheading: t?.subheading || "Você agora faz parte do nível <strong>Membro PRO</strong> com velocidade de progressão turbinada.",

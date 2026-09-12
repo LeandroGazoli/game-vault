@@ -716,6 +716,7 @@ export interface SystemSettings {
 export interface EmailTemplateConfig {
   subject: string;
   preheader?: string;
+  logoUrl?: string;
   badgeText?: string;
   heading?: string;
   subheading?: string;
