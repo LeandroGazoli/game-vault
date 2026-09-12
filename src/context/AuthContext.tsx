@@ -10,6 +10,7 @@ import {
 import {
   signInWithPopup,
   signInWithRedirect,
+  signInWithCredential,
   getRedirectResult,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
@@ -28,6 +29,7 @@ interface AuthContextType {
   isPremium: boolean;
   isAdmin: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithGoogleCredential: (idToken: string) => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -211,6 +213,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithGoogleCredential = useCallback(async (idToken: string) => {
+    if (!auth) return;
+    const credential = GoogleAuthProvider.credential(idToken);
+    const result = await signInWithCredential(auth, credential);
+    if (result.user) {
+      setFirebaseUser(result.user);
+    }
+  }, []);
+
   const signInWithEmail = useCallback(async (email: string, pass: string) => {
     if (!auth) return;
     const result = await signInWithEmailAndPassword(auth, email, pass);
@@ -289,6 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isPremium,
       isAdmin,
       signInWithGoogle,
+      signInWithGoogleCredential,
       signInWithEmail,
       signUpWithEmail,
       logout,
@@ -303,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isPremium,
       isAdmin,
       signInWithGoogle,
+      signInWithGoogleCredential,
       signInWithEmail,
       signUpWithEmail,
       logout,

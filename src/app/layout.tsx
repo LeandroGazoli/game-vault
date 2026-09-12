@@ -25,6 +25,7 @@ import NavigationTracker from "@/components/NavigationTracker";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BannedUserModal from "@/components/BannedUserModal";
 import MaintenanceOverlay from "@/components/MaintenanceOverlay";
+import GoogleOneTap from "@/components/GoogleOneTap";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -179,6 +180,7 @@ export default function RootLayout({
         <NavigationTracker />
         <ViewTransitionsProvider>
           <AuthProvider>
+            <GoogleOneTap />
             <CapacitorInit />
             <GameLibraryProvider>
               <PwaRegister />
