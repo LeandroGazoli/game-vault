@@ -17,8 +17,10 @@ import {
   Copy,
   Layers,
   Palette,
+  Loader2,
 } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { loadCanvasImage, drawImageCover } from "@/lib/canvasUtils";
 
 interface ShareGamerCardModalProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ export default function ShareGamerCardModal({
   const [theme, setTheme] = useState<CardTheme>("neon");
   const [format, setFormat] = useState<CardFormat>("story");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRendering, setIsRendering] = useState(true);
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -71,14 +74,27 @@ export default function ShareGamerCardModal({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const isStory = format === "story";
-    const width = isStory ? 1080 : 1200;
-    const height = isStory ? 1920 : 675;
+    setIsRendering(true);
+    try {
+      const isStory = format === "story";
+      const width = isStory ? 1080 : 1200;
+      const height = isStory ? 1920 : 675;
 
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Carregar imagens antecipadamente (avatar e jogos)
+      const avatarImgPromise = user.photoURL ? loadCanvasImage(user.photoURL) : Promise.resolve(null);
+      const gameImagesPromises = displayGames.map((g) =>
+        g.gameCover ? loadCanvasImage(g.gameCover) : Promise.resolve(null)
+      );
+
+      const [avatarImg, ...gameImages] = await Promise.all([
+        avatarImgPromise,
+        ...gameImagesPromises,
+      ]);
 
     // 1. Fundo Base
     const bgGradient = ctx.createLinearGradient(0, 0, width, height);
@@ -144,23 +160,40 @@ export default function ShareGamerCardModal({
     const avatarRadius = isStory ? 75 : 55;
     const avatarX = 70 + avatarRadius;
 
-    // Desenhar Círculo do Avatar
+    // Desenhar Círculo do Avatar com Imagem ou Fallback de Iniciais
     ctx.save();
     ctx.beginPath();
     ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#1e2230";
-    ctx.fill();
+    ctx.clip();
+
+    if (avatarImg) {
+      drawImageCover(
+        ctx,
+        avatarImg,
+        avatarX - avatarRadius,
+        avatarY - avatarRadius,
+        avatarRadius * 2,
+        avatarRadius * 2
+      );
+    } else {
+      ctx.fillStyle = "#1e2230";
+      ctx.fill();
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `bold ${isStory ? 48 : 36}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const initials = (user.displayName || user.username || "G").substring(0, 2).toUpperCase();
+      ctx.fillText(initials, avatarX, avatarY);
+    }
+    ctx.restore();
+
+    // Borda do Avatar
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.lineWidth = 5;
     ctx.strokeStyle = theme === "neon" ? "#00E5FF" : theme === "gold" ? "#F59E0B" : "#A855F7";
     ctx.stroke();
-
-    // Iniciais do Usuário no Avatar
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = `bold ${isStory ? 48 : 36}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const initials = (user.displayName || user.username || "G").substring(0, 2).toUpperCase();
-    ctx.fillText(initials, avatarX, avatarY);
     ctx.restore();
 
     // Nome e Username
@@ -257,51 +290,98 @@ export default function ShareGamerCardModal({
       ctx.fillText(st.value, boxX + 24, boxY + (isStory ? 100 : 90));
     });
 
-    // 8. Seção de Jogos em Destaque (Apenas no formato Story ou espaço extra)
-    if (isStory) {
-      const showcaseY = 900;
+    // 8. Seção de Jogos em Destaque (Story & Landscape)
+    const showcaseY = isStory ? 900 : 410;
+    const gameCardH = isStory ? 460 : 180;
+    const gameCardW = (width - 140 - 40) / 3;
+
+    if (displayGames.length > 0) {
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 28px sans-serif";
+      ctx.font = `bold ${isStory ? 28 : 22}px sans-serif`;
       ctx.fillText("DESTAQUES DO VAULT", 70, showcaseY);
 
-      const gameCardsY = showcaseY + 40;
-      const gameCardW = (width - 140 - 40) / 3;
-      const gameCardH = 460;
+      const gameCardsY = showcaseY + (isStory ? 35 : 25);
 
       displayGames.forEach((gm, gIdx) => {
         const gx = 70 + gIdx * (gameCardW + 20);
-        ctx.fillStyle = "#151926";
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-        ctx.lineWidth = 2;
+        const gImg = gameImages[gIdx];
+
+        // Container do card
+        ctx.save();
         ctx.beginPath();
-        ctx.roundRect(gx, gameCardH ? gameCardsY : 0, gameCardW, gameCardH, 16);
-        ctx.fill();
+        ctx.roundRect(gx, gameCardsY, gameCardW, gameCardH, 16);
+        ctx.clip();
+
+        // Fundo base
+        ctx.fillStyle = "#151926";
+        ctx.fillRect(gx, gameCardsY, gameCardW, gameCardH);
+
+        // Capa do Jogo
+        if (gImg) {
+          drawImageCover(ctx, gImg, gx, gameCardsY, gameCardW, gameCardH);
+
+          // Gradiente escuro para legibilidade dos textos
+          const overlayGrad = ctx.createLinearGradient(
+            gx,
+            gameCardsY + gameCardH * 0.3,
+            gx,
+            gameCardsY + gameCardH
+          );
+          overlayGrad.addColorStop(0, "rgba(10, 13, 20, 0)");
+          overlayGrad.addColorStop(0.55, "rgba(10, 13, 20, 0.75)");
+          overlayGrad.addColorStop(1, "rgba(10, 13, 20, 0.98)");
+          ctx.fillStyle = overlayGrad;
+          ctx.fillRect(gx, gameCardsY, gameCardW, gameCardH);
+        }
+
+        ctx.restore();
+
+        // Borda do card
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(gx, gameCardsY, gameCardW, gameCardH, 16);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+        ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.restore();
 
         // Título do Jogo
         ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 20px sans-serif";
-        const title = gm.gameTitle.length > 22 ? gm.gameTitle.substring(0, 20) + "..." : gm.gameTitle;
-        ctx.fillText(title, gx + 15, gameCardsY + gameCardH - 40);
+        ctx.font = `bold ${isStory ? 20 : 16}px sans-serif`;
+        const maxLen = isStory ? 22 : 24;
+        const title =
+          gm.gameTitle.length > maxLen
+            ? gm.gameTitle.substring(0, maxLen - 2) + "..."
+            : gm.gameTitle;
+        ctx.fillText(title, gx + 16, gameCardsY + gameCardH - (isStory ? 42 : 36));
 
         // Status ou Horas
-        ctx.fillStyle = "#00E5FF";
-        ctx.font = "14px monospace";
-        const subtitle = gm.userPlaytimeHours ? `${gm.userPlaytimeHours}h jogadas` : gm.status === "completed" ? "Zerado ✓" : "Na lista";
-        ctx.fillText(subtitle, gx + 15, gameCardsY + gameCardH - 18);
+        ctx.fillStyle = theme === "neon" ? "#00E5FF" : theme === "gold" ? "#F59E0B" : "#34D399";
+        ctx.font = `bold ${isStory ? 14 : 13}px monospace`;
+        const subtitle = gm.userPlaytimeHours
+          ? `${gm.userPlaytimeHours}h jogadas`
+          : gm.status === "completed"
+          ? "Zerado ✓"
+          : "No Vault";
+        ctx.fillText(subtitle, gx + 16, gameCardsY + gameCardH - (isStory ? 18 : 14));
       });
     }
 
     // 9. Rodapé / Assinatura
-    const footerY = height - 80;
+    const footerY = height - (isStory ? 80 : 35);
     ctx.fillStyle = "#64748B";
-    ctx.font = "bold 20px monospace";
+    ctx.font = `bold ${isStory ? 20 : 16}px monospace`;
     ctx.fillText("mygameslist.com.br", 70, footerY);
 
     ctx.textAlign = "right";
     ctx.fillStyle = theme === "neon" ? "#00E5FF" : theme === "gold" ? "#F59E0B" : "#FFFFFF";
     ctx.fillText("COMPARTILHE SEU VAULT", width - 70, footerY);
     ctx.textAlign = "left";
+    } catch (err) {
+      console.error("[GamerCard] Erro ao renderizar card:", err);
+    } finally {
+      setIsRendering(false);
+    }
   };
 
   useEffect(() => {
@@ -312,7 +392,7 @@ export default function ShareGamerCardModal({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, theme, format]);
+  }, [isOpen, theme, format, user?.photoURL, user?.username, user?.displayName, displayGames.length]);
 
   const handleDownloadPng = async () => {
     const canvas = canvasRef.current;
@@ -476,7 +556,15 @@ export default function ShareGamerCardModal({
         </div>
 
         {/* Pré-visualização do Canvas em tempo real */}
-        <div className="flex justify-center items-center bg-black/40 rounded-2xl p-4 border border-white/5 overflow-hidden">
+        <div className="relative flex justify-center items-center bg-black/40 rounded-2xl p-4 border border-white/5 overflow-hidden min-h-[220px]">
+          {isRendering && (
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-10">
+              <Loader2 className="w-7 h-7 text-[#00E5FF] animate-spin" />
+              <span className="text-xs font-mono font-medium text-gray-300">
+                Carregando imagens do Vault...
+              </span>
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             className={`rounded-2xl shadow-2xl border border-white/10 max-h-[380px] w-auto object-contain transition-all duration-300 ${
