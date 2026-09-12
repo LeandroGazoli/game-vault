@@ -161,8 +161,8 @@ export async function sendVipWelcomeEmail({
 </html>
 `;
 
-    // Envio pelo Resend (usando onboarding@resend.dev para desenvolvimento ou domínio verificado)
-    const fromAddress = "MyGameList <onboarding@resend.dev>";
+    // Remetente oficial verificado no Resend
+    const fromAddress = process.env.RESEND_FROM_EMAIL || "MyGameList <contato@mygameslist.com.br>";
 
     const data = await resend.emails.send({
       from: fromAddress,
