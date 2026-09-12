@@ -9,8 +9,10 @@ import {
   adminGrantAccess,
   adminUpdateUserModeration,
   adminSaveUserProfile,
+  adminCreateNotification,
 } from "@/lib/firebaseAdmin";
 import { UserPlan, UserProfile } from "@/lib/types";
+import { sendVipWelcomeEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +104,13 @@ export async function PATCH(request: NextRequest) {
       durationValue,
       durationUnit, // "days" | "months" | "years"
       lifetime,
+      // Notificações e e-mail
+      userEmail,
+      sendEmail,
+      emailSubject,
+      emailMessage,
+      sendInApp,
+      inAppMessage,
     } = body;
 
     if (!userId || typeof userId !== "string") {
@@ -155,6 +164,45 @@ export async function PATCH(request: NextRequest) {
         targetName: userDisplayName || userId,
         details: { newPlan: plan, source, premiumUntil, planLabel: planLabel || null },
       });
+
+      // Disparo opcional de Notificação In-App direcionada ao usuário
+      if (sendInApp && (plan === "vip" || plan === "pro")) {
+        try {
+          const isVip = plan === "vip";
+          const defaultMsg = isVip
+            ? "Você agora é um Membro VIP! Aproveite 2x XP em todas as atividades, zero anúncios e vantagens exclusivas."
+            : "Você agora é Membro PRO! Aproveite 1.5x XP Boost e navegue sem anúncios.";
+
+          await adminCreateNotification({
+            title: isVip ? "👑 Bem-vindo ao VIP MyGameList!" : "⚡ Acesso PRO Ativado!",
+            message: inAppMessage?.trim() || defaultMsg,
+            category: "reward",
+            linkUrl: "/perfil",
+            linkLabel: "Ver Benefícios no Meu Perfil →",
+            targetUserId: userId,
+            isPinned: true,
+            createdBy: adminEmail || "Admin",
+          });
+        } catch (notifErr) {
+          console.warn("[Admin Grant] Falha ao criar notificação in-app:", notifErr);
+        }
+      }
+
+      // Disparo opcional de E-mail via Resend
+      if (sendEmail && userEmail && (plan === "vip" || plan === "pro")) {
+        try {
+          await sendVipWelcomeEmail({
+            to: userEmail,
+            userName: userDisplayName || "Gamer",
+            plan: plan as "vip" | "pro",
+            customSubject: emailSubject?.trim() || undefined,
+            customMessage: emailMessage?.trim() || undefined,
+            lifetime: !premiumUntil,
+          });
+        } catch (mailErr) {
+          console.warn("[Admin Grant] Falha ao despachar e-mail via Resend:", mailErr);
+        }
+      }
     }
 
     // Atualização de Moderação

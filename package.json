@@ -41,6 +41,7 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "resend": "^6.28.0",
     "stripe": "^22.6.1",
     "tailwind-merge": "^3.0.1",
     "three": "^0.185.1"

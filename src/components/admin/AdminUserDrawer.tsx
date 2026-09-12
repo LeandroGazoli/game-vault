@@ -22,6 +22,8 @@ import {
   Compass,
   Target,
   Navigation,
+  Bell,
+  Send,
 } from "lucide-react";
 
 interface AdminUserDrawerProps {
@@ -42,6 +44,11 @@ export interface GrantInput {
   lifetime: boolean;
   durationValue?: number;
   durationUnit?: "days" | "months" | "years";
+  sendEmail?: boolean;
+  emailSubject?: string;
+  emailMessage?: string;
+  sendInApp?: boolean;
+  inAppMessage?: string;
 }
 
 export default function AdminUserDrawer({
@@ -66,6 +73,19 @@ export default function AdminUserDrawer({
   const [durationValue, setDurationValue] = useState<number>(30);
   const [durationUnit, setDurationUnit] = useState<"days" | "months" | "years">("days");
 
+  // Notificação In-App e Disparo de E-mail
+  const [sendEmail, setSendEmail] = useState<boolean>(true);
+  const [emailSubject, setEmailSubject] = useState<string>(
+    `👑 Você recebeu acesso VIP no MyGameList!`
+  );
+  const [emailMessage, setEmailMessage] = useState<string>(
+    `Parabéns @${user?.username || "Gamer"}! Concedemos a você acesso exclusivo de Membro VIP no MyGameList com 2.0x XP em dobro, sem anúncios e todos os recursos liberados.`
+  );
+  const [sendInApp, setSendInApp] = useState<boolean>(true);
+  const [inAppMessage, setInAppMessage] = useState<string>(
+    `Parabéns @${user?.username || "Gamer"}! Você recebeu acesso VIP exclusivo com 2.0x XP e zero anúncios!`
+  );
+
   if (!isOpen || !user) return null;
 
   const currentPlan = user.plan || "free";
@@ -82,6 +102,11 @@ export default function AdminUserDrawer({
         lifetime: plan === "free" ? true : lifetime,
         durationValue,
         durationUnit,
+        sendEmail: plan !== "free" ? sendEmail : false,
+        emailSubject: emailSubject.trim() || undefined,
+        emailMessage: emailMessage.trim() || undefined,
+        sendInApp: plan !== "free" ? sendInApp : false,
+        inAppMessage: inAppMessage.trim() || undefined,
       });
     } finally {
       setIsUpdating(false);
@@ -362,6 +387,81 @@ export default function AdminUserDrawer({
                     placeholder='Ex.: "Colaborador Fundador", "Cortesia VIP"'
                     className="w-full rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF]/50"
                   />
+                </div>
+
+                {/* Notificação In-App Direcionada */}
+                <div className="pt-2 border-t border-white/5 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={sendInApp}
+                      onChange={(e) => setSendInApp(e.target.checked)}
+                      className="accent-cyan-400"
+                    />
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Bell className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Criar aviso in-app para o jogador</span>
+                    </span>
+                  </label>
+
+                  {sendInApp && (
+                    <div className="space-y-1.5 pl-5">
+                      <label className="block text-[10px] font-mono text-gray-400">
+                        Mensagem no Sininho de Notificações:
+                      </label>
+                      <textarea
+                        value={inAppMessage}
+                        onChange={(e) => setInAppMessage(e.target.value)}
+                        rows={2}
+                        className="w-full rounded-xl bg-[#0d0f14] border border-white/10 p-2.5 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-cyan-400/50 resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Disparo de E-mail via Resend */}
+                <div className="pt-2 border-t border-white/5 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={sendEmail}
+                      onChange={(e) => setSendEmail(e.target.checked)}
+                      className="accent-amber-400"
+                    />
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Disparar e-mail de boas-vindas ({user.email || "Sem e-mail"})</span>
+                    </span>
+                  </label>
+
+                  {sendEmail && (
+                    <div className="space-y-2 pl-5">
+                      <div>
+                        <label className="block text-[10px] font-mono text-gray-400 mb-1">
+                          Assunto do E-mail:
+                        </label>
+                        <input
+                          type="text"
+                          value={emailSubject}
+                          onChange={(e) => setEmailSubject(e.target.value)}
+                          className="w-full rounded-xl bg-[#0d0f14] border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400/50"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono text-gray-400 mb-1">
+                          Mensagem Personalizada do Admin no E-mail:
+                        </label>
+                        <textarea
+                          value={emailMessage}
+                          onChange={(e) => setEmailMessage(e.target.value)}
+                          rows={3}
+                          placeholder="Mensagem ou justificativa especial..."
+                          className="w-full rounded-xl bg-[#0d0f14] border border-white/10 p-2.5 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-400/50 resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

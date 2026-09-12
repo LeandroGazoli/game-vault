@@ -164,4 +164,19 @@ export async function adminUpdateUserModeration(
   await adminSaveUserProfile(uid, { ...data, moderatedAt: new Date().toISOString() });
 }
 
+/** Admin: cria notificação de sistema (global ou direcionada) */
+export async function adminCreateNotification(
+  data: Omit<import("./types").SystemNotification, "id" | "createdAt">
+): Promise<string> {
+  const colRef = getAdminDb().collection("system_notifications");
+  const docRef = colRef.doc();
+  const now = new Date().toISOString();
+  await docRef.set({
+    ...data,
+    id: docRef.id,
+    createdAt: now,
+  });
+  return docRef.id;
+}
+
 export { FieldValue };

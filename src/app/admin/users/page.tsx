@@ -75,12 +75,18 @@ export default function AdminUsersPage() {
         body: JSON.stringify({
           userId: targetUser.uid,
           userDisplayName: targetUser.displayName || targetUser.username,
+          userEmail: targetUser.email || undefined,
           plan: grant.plan,
           planSource: grant.planSource,
           planLabel: grant.planLabel,
           lifetime: grant.lifetime,
           durationValue: grant.durationValue,
           durationUnit: grant.durationUnit,
+          sendEmail: grant.sendEmail,
+          emailSubject: grant.emailSubject,
+          emailMessage: grant.emailMessage,
+          sendInApp: grant.sendInApp,
+          inAppMessage: grant.inAppMessage,
         }),
       });
       const data = await res.json().catch(() => ({}));

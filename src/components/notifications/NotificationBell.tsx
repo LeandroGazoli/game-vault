@@ -77,11 +77,14 @@ export default function NotificationBell() {
 
   // Filtra notificações ativas removendo as que o usuário excluiu/dispensou do perfil
   const activeNotifications = useMemo(() => {
-    const withoutDismissed = rawNotifications.filter(
-      (item) => !localDismissedIds.includes(item.id)
-    );
+    const withoutDismissed = rawNotifications.filter((item) => {
+      if (localDismissedIds.includes(item.id)) return false;
+      // Notificação direcionada: só exibe se for para o usuário atual
+      if (item.targetUserId && item.targetUserId !== user?.uid) return false;
+      return true;
+    });
     return filterActiveNotifications(withoutDismissed);
-  }, [rawNotifications, localDismissedIds]);
+  }, [rawNotifications, localDismissedIds, user?.uid]);
 
   // Marca uma notificação como lida
   const handleMarkAsRead = useCallback(

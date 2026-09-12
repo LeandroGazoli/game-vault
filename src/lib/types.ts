@@ -1139,6 +1139,7 @@ export interface SystemNotification {
   imageUrl?: string | null;
   isPinned?: boolean;
   sendPush?: boolean;
+  targetUserId?: string | null;
   createdAt: string;
   createdBy?: string;
 }
