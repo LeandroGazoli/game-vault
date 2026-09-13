@@ -7,11 +7,15 @@ Este documento estabelece as **regras inegociáveis de arquitetura, padrões de 
 ## 🎯 1. Visão Geral e Filosofia do Projeto
 
 - **Produto:** Plataforma e PWA (Capacitor) para colecionadores e entusiastas de videogames gerenciarem seu catálogo, tempo de jogo (HLTB), notas (Metacritic/comunidade) e backlog.
+- **Filosofia Central: Mobile-First, Compacto e App Native (Nosso maior cliente é mobile):**
+  - O projeto é **Mobile-First acima de tudo**. Cada tela, componente, fluxo e interação deve ser concebido e desenhado primeiramente para o celular, comportando-se e parecendo um **aplicativo nativo de smartphone**.
+  - **Apenas depois do mobile estar 100% refinado, fluido e polido é que o desktop deve ser trabalhado.** A prioridade máxima de desenvolvimento e experiência de uso é sempre o cliente mobile.
+  - **Interface Compacta e Densidade Inteligente:** Evite espaços em branco excessivos ou layouts espalhados. A interface deve ser compacta, direta e limpa, utilizando **Progressive Disclosure** (acordeões retráteis, abas segmentadas e drawers) para manter tudo acessível sem rolagem cansativa.
 - **Design System:** Estilo *App Nativo / Mobile-First*:
   - Cantos arredondados generosos: `rounded-2xl` e `rounded-3xl`.
   - Superfícies escuras com profundidade: fundo `#0b0d12`, cards `#141822`, bordas sutis `border-white/10`.
   - Cor de destaque vibrante (Acento Primário): **Verde Esmeralda** (`#10B981` / `emerald-500` / `emerald-400`).
-  - Interface compacta, sem poluição visual, utilizando **Progressive Disclosure** (acordeões retráteis e abas segmentadas).
+  - Safe-areas, toques com feedback tátil e ergonomia de uso com uma mão (área de alcance do polegar).
 
 ---
 
@@ -153,16 +157,17 @@ Todo código novo ou refatorado deve passar por uma checagem rigorosa de seguran
 
 Sempre que um agente for criar ou alterar código no Game Vault, deve seguir rigorosamente estes passos:
 
-1. **Não Inflar Arquivos Existentes:** Se uma funcionalidade nova exigir mais de 40-50 linhas de código dentro de um componente que já está próximo de 250 linhas, **crie um novo arquivo componente** e apenas importe-o.
-2. **Validação Obrigatória em Dois Níveis:**
+1. **Pensar no Mobile Primeiro (App Native & Compacto):** Toda UI nova ou refatoração deve ser idealizada, estruturada e validada para celulares primeiro (comportamento de app nativo, compacto, sem excesso de espaçamentos ou scrolls desnecessários). O desktop só deve ser desenhado ou adaptado após o mobile estar impecável.
+2. **Não Inflar Arquivos Existentes:** Se uma funcionalidade nova exigir mais de 40-50 linhas de código dentro de um componente que já está próximo de 250 linhas, **crie um novo arquivo componente** e apenas importe-o.
+3. **Validação Obrigatória em Dois Níveis:**
    - **Nível 1 (Tipagem):** Executar `./node_modules/.bin/tsc --noEmit`.
    - **Nível 2 (Build de Produção):** Executar `./node_modules/.bin/next build`.
    - NUNCA declare uma tarefa como concluída se o build falhar ou quebrar rotas estáticas/dinâmicas.
-3. **Commits Semânticos:** Escreva mensagens de commit seguindo a convenção [Conventional Commits](https://www.conventionalcommits.org/):
+4. **Commits Semânticos:** Escreva mensagens de commit seguindo a convenção [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat(...)`: Novas funcionalidades ou novos componentes.
    - `fix(...)`: Correções de bugs.
    - `refactor(...)`: Reestruturação de arquivos ou quebra de monólitos em componentes menores sem alterar o comportamento externo.
    - `style(...)`: Ajustes puramente visuais e Tailwind.
-4. **Homologação e Deploy:**
+5. **Homologação e Deploy:**
    - Mantenha o trabalho em branch de homologação (`homologacao/*`).
    - Gere e compartilhe o link de preview no Vercel para validação do usuário.
