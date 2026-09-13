@@ -1,0 +1,313 @@
+import { Article } from "../types/article.types";
+
+export const ARTICLES_BATCH_3: Article[] = [
+  {
+    id: "art-17",
+    slug: "steam-deck-revolucao-pc-gamer-portatil",
+    title: "Steam Deck e a Revolução dos Portáteis: Como o Linux e o Proton Transformaram o PC Gaming",
+    subtitle: "A aposta da Valve que libertou a biblioteca do computador tradicional e inaugurou uma era dourada de hardware móvel.",
+    excerpt: "Com a camada de compatibilidade Proton e o SteamOS, o Steam Deck quebrou barreiras históricas, permitindo rodar milhares de clássicos e lançamentos AAA no conforto da cama ou em viagens.",
+    category: "guias",
+    categoryLabel: "Hardware & Tecnologia",
+    readTimeMinutes: 7,
+    publishedAt: "2026-09-04T11:00:00.000Z",
+    updatedAt: "2026-09-12T15:10:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co2lbd.jpg",
+    coverAlt: "Steam Deck e console portátil em uso com jogos de PC",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Steam Deck", "Hardware", "Proton", "Valve", "Portáteis", "PC Gaming"],
+    sections: [
+      {
+        heading: "A Conquista da Camada Proton no Linux",
+        content: [
+          "Durante décadas, a ideia de jogar títulos modernos de PC sem o sistema operacional Windows parecia uma utopia distante. A Valve investiu pacientemente no desenvolvimento do Proton, traduzindo chamadas DirectX para a API aberta Vulkan em tempo real.",
+          "O resultado é que hoje mais de 15.000 títulos possuem selo 'Steam Deck Verified' ou 'Playable', funcionando de maneira transparente com controles táteis ergonômicos e suspensão instantânea de sessão.",
+        ],
+        callout: {
+          type: "tip",
+          text: "Dica de Bateria: Travar a taxa de quadros em 40 ou 45 FPS através do menu de acesso rápido estende a autonomia de bateria em quase 50% sem comprometer a percepção de fluidez dos jogos.",
+        },
+      },
+      {
+        heading: "O Impacto na Redução do Backlog Gamer",
+        content: [
+          "Para colecionadores cadastrados no MyGameList, o console portátil tornou-se a ferramenta definitiva para diminuir a pilha de jogos acumulados. A facilidade de jogar por 20 a 30 minutos em pequenos intervalos diários viabilizou o zeramento de dezenas de títulos indies que antes ficavam esquecidos.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "art-18",
+    slug: "soulslike-para-iniciantes-ordem-ideal",
+    title: "Guia Definitivo de Soulslike para Iniciantes: Por Onde Começar sem Desistir",
+    subtitle: "A ordem ideal para desbravar os desafios da FromSoftware, compreender os pilares do gênero e evitar frustrações.",
+    excerpt: "A temida reputação de dificuldade afasta muitos jogadores curiosos. Descubra quais títulos oferecem a curva de aprendizado mais justa, mecânicas de suporte e tempos médios para zerar.",
+    category: "guias",
+    categoryLabel: "Guia para Iniciantes",
+    readTimeMinutes: 8,
+    publishedAt: "2026-09-03T17:30:00.000Z",
+    updatedAt: "2026-09-12T14:45:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co4jni.jpg",
+    coverAlt: "Guerreiro contemplando a Árvore Sagrada em Elden Ring",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Soulslike", "Elden Ring", "Dark Souls", "FromSoftware", "Dificuldade", "Guias"],
+    relatedGames: [
+      { id: 119277, name: "Elden Ring", slug: "elden-ring", coverImage: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg", metacritic: 96, hltbMain: 58 },
+      { id: 2368, name: "Dark Souls III", slug: "dark-souls-iii", coverImage: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x77.jpg", metacritic: 89, hltbMain: 32 },
+    ],
+    sections: [
+      {
+        heading: "Por Que Elden Ring é a Porta de Entrada Perfeita",
+        content: [
+          "Nos Dark Souls lineares antigos, bater em uma 'parede' (um chefe difícil como as Gárgulas do Campanário) significava ficar preso no mesmo corredor por horas sem alternativas. Em Elden Ring, o mundo aberto liberta o jogador: se um obstáculo é intransponível, basta montar em seu cavalo, cavalgar para o sul, explorar catacumbas, subir dez níveis e voltar com armas aprimoradas.",
+        ],
+        callout: {
+          type: "tip",
+          text: "Conselho de Ouro: A morte em jogos da FromSoftware não é uma tela de fracasso, mas uma mensagem pedagógica informando qual ataque inimigo você ainda não aprendeu a telegrafar.",
+        },
+      },
+      {
+        heading: "A Ordem de Progressão Recomendada pela Comunidade",
+        content: [
+          "1. Elden Ring: Para aprender os fundamentos com liberdade máxima e invocações de espíritos.",
+          "2. Dark Souls III: Para vivenciar combates de chefes cinematográficos com ritmo mais ágil e direto.",
+          "3. Demon's Souls ou Dark Souls Remastered: Para compreender a arquitetura pioneira e o level design interconectado.",
+          "4. Sekiro: Shadows Die Twice: O teste supremo de ritmo musical baseado unicamente em defesas perfeitas (deflect).",
+        ],
+      },
+    ],
+  },
+  {
+    id: "art-19",
+    slug: "jogos-de-terror-psicologico-que-marcaram-epoca",
+    title: "O Pavor na Mente: A Evolução dos Jogos de Terror Psicológico",
+    subtitle: "Como obras de Silent Hill a Alan Wake 2 trocaram os sustos fáceis pela angústia existencial profunda.",
+    excerpt: "O verdadeiro medo não nasce do monstro que pula na tela, mas da dúvida sobre a sanidade do próprio protagonista. Analisamos os pilares dos clássicos que assombram a mente dos jogadores.",
+    category: "listas",
+    categoryLabel: "Especial & Seleção",
+    readTimeMinutes: 7,
+    publishedAt: "2026-09-03T10:00:00.000Z",
+    updatedAt: "2026-09-12T12:30:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co6q80.jpg",
+    coverAlt: "Atmosfera sombria e nevoenta de terror psicológico",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Terror", "Alan Wake 2", "Silent Hill", "Resident Evil", "Suspense", "Psicologia"],
+    relatedGames: [
+      { id: 114283, name: "Alan Wake 2", slug: "alan-wake-2", coverImage: "https://images.igdb.com/igdb/image/upload/t_cover_big/co6q80.jpg", metacritic: 89, hltbMain: 18 },
+    ],
+    sections: [
+      {
+        heading: "Além do 'Jump Scare': A Arquitetura do Desconforto",
+        content: [
+          "O horror comercial de Hollywood costuma se apoiar em picos de volume repentinos para assustar o espectador de forma efêmera. Em contraste, os mestres do terror psicológico nos videogames manipulam a iluminação ambiente, o silêncio desconfortável e as contradições da narrativa para gerar uma tensão opressiva contínua.",
+        ],
+      },
+      {
+        heading: "Alan Wake 2 e a Metanarrativa da Obsessão",
+        content: [
+          "A Remedy Entertainment entregou em Alan Wake 2 uma obra que mescla live-action, romance policial de Saga Anderson e delírios surrealistas no Dark Place. Com nota 89 no Metacritic e duração estimada em 18 horas, o jogo redefine a maturidade artística do gênero.",
+        ],
+        callout: {
+          type: "quote",
+          text: "Em um bom terror psicológico, o monstro mais aterrorizante é o reflexo no espelho: nossos próprios arrependimentos e culpas não resolvidas.",
+        },
+      },
+    ],
+  },
+  {
+    id: "art-20",
+    slug: "metroidvanias-obrigatorios-alem-de-hollow-knight",
+    title: "Metroidvanias Imperdíveis: 7 Obras de Exploração Não Linear Além de Hollow Knight",
+    subtitle: "Descubra tesouros 2D repletos de segredos, saltos acrobáticos e atmosferas inesquecíveis para zerar.",
+    excerpt: "Se você já concluiu Hollow Knight e está faminto por labirintos envolventes com melhorias permanentes de habilidades, conheça os grandes destaques do gênero catalogados no MyGameList.",
+    category: "listas",
+    categoryLabel: "Seleção Temática",
+    readTimeMinutes: 6,
+    publishedAt: "2026-09-02T19:00:00.000Z",
+    updatedAt: "2026-09-12T11:20:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co1vce.jpg",
+    coverAlt: "Exploração de cenários fantásticos em plataforma e metroidvania",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Metroidvania", "Indie", "Exploração", "Ori", "Metroid", "Castlevania"],
+    sections: [
+      {
+        heading: "O Charme Eterno do 'Backtracking' Recompensador",
+        content: [
+          "O prazer fundamental do metroidvania consiste em avistar uma borda alta ou uma porta trancada, guardar aquela memória no mapa mental e, horas depois, retornar triunfante após adquirir um salto duplo ou um gancho mecânico.",
+        ],
+      },
+      {
+        heading: "Nossa Seleção de Ouro",
+        content: [
+          "1. Ori and the Will of the Wisps: Fluidez acrobática incomparável e uma das direções visuais mais deslumbrantes da história.",
+          "2. Blasphemous 2: Pixel art sombrio inspirado no barroco espanhol com combate religioso impiedoso.",
+          "3. Prince of Persia: The Lost Crown: Resposta exemplar da Ubisoft moderna com quebra-cabeças temporais fantásticos.",
+          "4. Animal Well: Exploração minimalista e quebra-cabeças crípticos densos sem combate direto.",
+          "5. Bloodstained: Ritual of the Night: O sucessor espiritual legítimo pelas mãos do próprio criador de Symphony of the Night.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "art-21",
+    slug: "economia-de-skins-e-mercado-da-comunidade-steam",
+    title: "A Economia Invisível da Steam: Como o Mercado da Comunidade Movimenta Bilhões",
+    subtitle: "A história do mercado digital da Valve, de itens de centavos a cosméticos avaliados em centenas de milhares de dólares.",
+    excerpt: "Desde a introdução dos primeiros chapéus em Team Fortress 2 até as facas ultrarraras de Counter-Strike, a Valve transformou a posse virtual em um dos ecossistemas mais fascinantes da economia moderna.",
+    category: "industria",
+    categoryLabel: "Cenário & Economia",
+    readTimeMinutes: 7,
+    publishedAt: "2026-09-02T13:00:00.000Z",
+    updatedAt: "2026-09-12T13:40:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co2lbd.jpg",
+    coverAlt: "Mercado digital e economia de itens virtuais",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Economia", "Steam", "Skins", "Valve", "Mercado", "Indústria"],
+    sections: [
+      {
+        heading: "De Cosméticos Lúdicos a Reservas de Valor",
+        content: [
+          "O que começou como um experimento despretensioso em Team Fortress 2 evoluiu para um mercado complexo com taxas de flutuação de preços, arbitragem de liquidez e itens históricos procurados por investidores mundiais.",
+          "A retenção das transações dentro da carteira Steam impulsiona de forma perpétua a compra de novos jogos de desenvolvedores parceiros em toda a plataforma.",
+        ],
+        callout: {
+          type: "tip",
+          text: "Segurança Sempre: Ative obrigatoriamente a autenticação de dois fatores no Steam Guard móvel e desconfie terminantemente de links externos que solicitem logins por terceiros.",
+        },
+      },
+    ],
+  },
+  {
+    id: "art-22",
+    slug: "jogos-cooperativos-para-jogar-a-dois",
+    title: "Co-op de Sofá e Online: Os Melhores Jogos para Fortalecer Parcerias e Amizades",
+    subtitle: "De It Takes Two a Overcooked: seleções imperdíveis para casais, amigos e família se divertirem juntos.",
+    excerpt: "Jogar com outra pessoa ao seu lado é uma das experiências humanas mais gratificantes. Selecionamos os jogos colaborativos que exigem sincronia, risadas e espírito de equipe.",
+    category: "listas",
+    categoryLabel: "Seleção Temática",
+    readTimeMinutes: 6,
+    publishedAt: "2026-09-01T17:00:00.000Z",
+    updatedAt: "2026-09-12T14:15:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co1vce.jpg",
+    coverAlt: "Dois jogadores compartilhando controles em uma aventura cooperativa",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Co-op", "Multiplayer", "It Takes Two", "Overcooked", "Casais", "Amigos"],
+    sections: [
+      {
+        heading: "A Magia da Comunicação Conjunta",
+        content: [
+          "Em um universo dominado por multiplayer competitivo onde estranhos trocam ofensas em chats anônimos, os jogos cooperativos puros resgatam a cumplicidade autêntica. Vencer uma fase difícil ao lado de quem amamos gera memórias emocionais duradouras.",
+        ],
+      },
+      {
+        heading: "Títulos Indispensáveis no Seu Catálogo",
+        content: [
+          "1. It Takes Two: Vencedor do Jogo do Ano (GOTY), uma lição magistral de variedade mecânica onde nenhuma fase repete os mesmos poderes.",
+          "2. A Way Out: Fuga de prisão cinematográfica com tela dividida obrigatória e desfecho dramático surpreendente.",
+          "3. Overcooked! All You Can Eat: O teste supremo de coordenação culinária sob estresse cômico contagiante.",
+          "4. Portal 2 (Modo Co-op): Quebra-cabeças de física inteligentes projetados para serem desvendados a duas cabeças.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "art-23",
+    slug: "gerenciamento-de-tempo-em-jogos-de-simulacao",
+    title: "O Charme Terapêutico dos Simuladores de Fazenda e Rotina: De Stardew Valley a Animal Crossing",
+    subtitle: "Por que cuidar de hortaliças virtuais e organizar estoques desacelera a ansiedade do mundo moderno.",
+    excerpt: "Em uma sociedade sobrecarregada por notificações e cobranças contínuas, os 'cozy games' de simulação oferecem um refúgio acolhedor onde todo esforço gera frutos visíveis e reconfortantes.",
+    category: "guias",
+    categoryLabel: "Comportamento & Guias",
+    readTimeMinutes: 6,
+    publishedAt: "2026-08-31T15:00:00.000Z",
+    updatedAt: "2026-09-12T11:00:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co2lbd.jpg",
+    coverAlt: "Plantações e vilarejo acolhedor em jogo de simulação rural",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Stardew Valley", "Cozy Games", "Simulação", "Relaxante", "Indie", "HowLongToBeat"],
+    sections: [
+      {
+        heading: "A Recompensa Imediata e o Controle da Própria Rotina",
+        content: [
+          "Criado pelo desenvolvedor solitário Eric Barone (ConcernedApe), Stardew Valley se tornou um dos maiores marcos da história dos videogames porque respeita a autonomia do jogador. Não existem prazos de demissão nem multas financeiras punitivas: cada dia dura cerca de 15 minutos e você escolhe se quer pescar, minerar ou conversar com a comunidade da vila.",
+        ],
+        callout: {
+          type: "quote",
+          text: "Jogos acolhedores nos lembram que a felicidade muitas vezes reside no ritmo suave das pequenas tarefas diárias bem executadas.",
+        },
+      },
+    ],
+  },
+  {
+    id: "art-24",
+    slug: "a-arte-da-narrativa-emergente-em-rust-e-dayz",
+    title: "Narrativa Emergente: Quando os Próprios Jogadores Escrevem as Maiores Histórias dos Games",
+    subtitle: "A beleza do caos social em Rust, DayZ e ARK onde não há roteiro pré-definido e a sobrevivência depende da confiança alheia.",
+    excerpt: "Sem cutscenes orquestradas ou falas dubladas por atores de Hollywood, os jogos de sobrevivência em mundo aberto criam dramas humanos dignos de cinema através de encontros fortuitos entre estranhos.",
+    category: "especiais",
+    categoryLabel: "Especial & Análise",
+    readTimeMinutes: 7,
+    publishedAt: "2026-08-30T18:00:00.000Z",
+    updatedAt: "2026-09-12T15:00:00.000Z",
+    coverImage: "https://images.igdb.com/igdb/image/upload/t_1080p/co1r77.jpg",
+    coverAlt: "Sobreviventes ao redor de uma fogueira improvisada no ermo",
+    featured: false,
+    author: {
+      name: "Leandro Gazoli",
+      role: "Editor-Chefe & Fundador do MyGameList",
+      avatar: "/logo-mgl.png",
+      bio: "Entusiasta de RPGs ocidentais e orientais, colecionador de jogos e arquiteto de software gamer.",
+    },
+    tags: ["Rust", "DayZ", "Narrativa Emergente", "Multiplayer", "Sobrevivência", "Steam"],
+    sections: [
+      {
+        heading: "O Valor da Confiança em Território Hostil",
+        content: [
+          "O verdadeiro encanto de títulos como DayZ e Rust não reside na caça aos animais ou na coleta de madeira, mas no momento tenso em que dois sobreviventes armados se encontram em um galpão escuro na chuva. A decisão de apertar o microfone e negociar comida em vez de disparar gatilhos cria momentos de suspense inigualáveis.",
+        ],
+      },
+    ],
+  },
+];
