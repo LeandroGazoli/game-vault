@@ -27,6 +27,7 @@ import {
   ArrowUp,
   ArrowDown,
   Megaphone,
+  Gamepad2,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -37,6 +38,7 @@ export default function AdminUsersPage() {
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [acquisitionFilter, setAcquisitionFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"createdAt" | "gamesCount">("createdAt");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -210,22 +212,37 @@ export default function AdminUsersPage() {
       return true;
     });
 
-    // Ordenação por data de criação (createdAt)
+    // Ordenação configurável (por Cadastro ou por Jogos no Vault)
     return list.sort((a, b) => {
+      if (sortBy === "gamesCount") {
+        const gamesA = typeof a.gamesCount === "number" ? a.gamesCount : 0;
+        const gamesB = typeof b.gamesCount === "number" ? b.gamesCount : 0;
+        return sortOrder === "desc" ? gamesB - gamesA : gamesA - gamesB;
+      }
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
     });
-  }, [users, planFilter, statusFilter, acquisitionFilter, searchQuery, sortOrder]);
+  }, [users, planFilter, statusFilter, acquisitionFilter, searchQuery, sortBy, sortOrder]);
+
+  const toggleSort = (column: "createdAt" | "gamesCount") => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+  };
 
   const exportToCSV = () => {
-    const headers = ["UID", "Nome", "Username", "Email", "Plano", "Banido", "Origem_Source", "Origem_Medium", "Origem_Campanha", "CriadoEm"];
+    const headers = ["UID", "Nome", "Username", "Email", "Plano", "Jogos_Vault", "Banido", "Origem_Source", "Origem_Medium", "Origem_Campanha", "CriadoEm"];
     const rows = filteredUsers.map((u) => [
       `"${u.uid}"`,
       `"${u.displayName || ""}"`,
       `"${u.username || ""}"`,
       `"${u.email || ""}"`,
       `"${u.plan || "free"}"`,
+      `"${u.gamesCount ?? 0}"`,
       `"${u.banned ? "Sim" : "Não"}"`,
       `"${u.acquisition?.source || "direct"}"`,
       `"${u.acquisition?.medium || "none"}"`,
@@ -359,19 +376,38 @@ export default function AdminUsersPage() {
                 <th className="py-3.5 pl-6">Membro</th>
                 <th className="py-3.5">E-mail</th>
                 <th className="py-3.5">Plano Atual</th>
+                <th
+                  onClick={() => toggleSort("gamesCount")}
+                  className="py-3.5 cursor-pointer hover:text-white transition-colors select-none"
+                  title="Clique para ordenar por quantidade de jogos no Vault"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Gamepad2 className="w-3 h-3 text-emerald-400" />
+                    <span>Vault</span>
+                    {sortBy === "gamesCount" && (
+                      sortOrder === "desc" ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      ) : (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      )
+                    )}
+                  </div>
+                </th>
                 <th className="py-3.5">Status</th>
                 <th className="py-3.5">Origem (UTM)</th>
                 <th
-                  onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+                  onClick={() => toggleSort("createdAt")}
                   className="py-3.5 cursor-pointer hover:text-white transition-colors select-none"
-                  title="Clique para inverter ordenação por data de criação"
+                  title="Clique para ordenar por data de cadastro"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Cadastro</span>
-                    {sortOrder === "desc" ? (
-                      <ArrowDown className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    ) : (
-                      <ArrowUp className="w-3.5 h-3.5 text-[#00E5FF]" />
+                    {sortBy === "createdAt" && (
+                      sortOrder === "desc" ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      ) : (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#00E5FF]" />
+                      )
                     )}
                   </div>
                 </th>
@@ -381,7 +417,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-white/5">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500 text-xs">
+                  <td colSpan={8} className="py-12 text-center text-gray-500 text-xs">
                     {isLoading ? "Carregando usuários..." : "Nenhum usuário localizado com estes filtros."}
                   </td>
                 </tr>
@@ -426,6 +462,20 @@ export default function AdminUsersPage() {
 
                       <td className="py-3.5">
                         <PlanBadge plan={currentPlan} size="sm" />
+                      </td>
+
+                      {/* Quantidade de Jogos no Vault */}
+                      <td className="py-3.5">
+                        {(u.gamesCount ?? 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20">
+                            <Gamepad2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <span>{u.gamesCount}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 text-gray-400 text-[10px] font-medium border border-white/10">
+                            <span>0</span>
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-3.5">

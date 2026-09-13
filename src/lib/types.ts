@@ -500,6 +500,7 @@ export interface UserProfile {
   adultContentConfirmedAt?: string | null;
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
+  gamesCount?: number;
   acquisition?: UserAcquisition;
   createdAt: string;
   updatedAt?: string;
