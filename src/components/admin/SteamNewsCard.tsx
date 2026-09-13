@@ -1,19 +1,21 @@
 "use client";
 
 import React from "react";
-import { Clock, Download, ExternalLink } from "lucide-react";
+import { Clock, Download, ExternalLink, Sparkles } from "lucide-react";
 import { cleanSteamBBCode, isPortugueseNews } from "@/lib/steamNewsService";
 
 interface SteamNewsCardProps {
   item: any;
-  onImport: (item: any) => void;
+  onImport: (item: any, rewriteWithAI?: boolean) => void;
   buttonLabel?: string;
+  isRewriting?: boolean;
 }
 
 export default function SteamNewsCard({
   item,
   onImport,
   buttonLabel = "Usar como Postagem",
+  isRewriting = false,
 }: SteamNewsCardProps) {
   const isPt = isPortugueseNews(item.title, item.contents || item.originalContents || "");
   const gameBadge = item.gameName || (item.appId || item.appid ? `App ${item.appId || item.appid}` : null);
@@ -51,7 +53,7 @@ export default function SteamNewsCard({
         {displaySnippet}...
       </p>
 
-      <div className="pt-2 flex items-center justify-between border-t border-white/5">
+      <div className="pt-2 flex items-center justify-between border-t border-white/5 flex-wrap gap-2">
         <a
           href={item.url}
           target="_blank"
@@ -62,14 +64,28 @@ export default function SteamNewsCard({
           <ExternalLink className="w-3 h-3" />
         </a>
 
-        <button
-          type="button"
-          onClick={() => onImport(item)}
-          className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>{buttonLabel}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={isRewriting}
+            onClick={() => onImport(item, false)}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+          >
+            <Download className="w-3 h-3" />
+            <span>Direto</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isRewriting}
+            onClick={() => onImport(item, true)}
+            className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
+            title="Reescreve o anúncio com IA para formato editorial"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Reescrever com IA</span>
+          </button>
+        </div>
       </div>
     </div>
   );

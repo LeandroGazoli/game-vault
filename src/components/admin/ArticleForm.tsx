@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Article, ArticleSection } from "@/lib/types/article.types";
 import { saveArticleToFirestore } from "@/lib/articlesService";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
-import { Save, Loader2, Radio, FileText, SlidersHorizontal, ArrowLeft, Eye } from "lucide-react";
-import SteamNewsImportModal from "./SteamNewsImportModal";
+import { Save, Loader2, Radio, FileText, SlidersHorizontal, ArrowLeft, Eye, Sparkles, Globe } from "lucide-react";
+import NewsImportModal, { ImportedArticleData } from "./NewsImportModal";
 import ArticleInfoFields, { CATEGORY_OPTIONS } from "./ArticleInfoFields";
 import ArticleRichEditor from "./ArticleRichEditor";
 import ArticlePreviewModal from "./ArticlePreviewModal";
@@ -40,8 +40,9 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
   const [sections, setSections] = useState<ArticleSection[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "content">("info");
-  const [isSteamModalOpen, setIsSteamModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isRewritingCurrent, setIsRewritingCurrent] = useState(false);
 
   useEffect(() => {
     const data = getInitialArticleFormData(initialArticle);
@@ -61,6 +62,49 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
   const handleTitleChange = (val: string) => {
     setTitle(val);
     if (!initialArticle) setSlug(generateArticleSlug(val));
+  };
+
+  const handleRewriteCurrentWithAI = async () => {
+    if (!title.trim() && !contentHtml.trim()) {
+      alert("Informe ao menos o título ou conteúdo para a IA reescrever.");
+      return;
+    }
+
+    setIsRewritingCurrent(true);
+    try {
+      const res = await fetch("/api/articles/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title || "Artigo de Games",
+          content: contentHtml || excerpt || title,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Falha ao comunicar com a IA.");
+      }
+
+      const aiData = await res.json();
+      setTitle(aiData.title);
+      setSubtitle(aiData.subtitle);
+      setSlug(aiData.slug);
+      setCategory(aiData.category);
+      setExcerpt(aiData.excerpt);
+      if (aiData.tags) setTagsInput(aiData.tags.join(", "));
+      if (aiData.readTimeMinutes) setReadTimeMinutes(aiData.readTimeMinutes);
+      if (aiData.contentHtml) setContentHtml(aiData.contentHtml);
+
+      triggerSuccessHaptic();
+      setActiveTab("content");
+    } catch (err: any) {
+      console.error("Erro ao reescrever matéria:", err);
+      triggerWarningHaptic();
+      alert(`Falha na reescrita com IA: ${err.message || "Tente novamente."}`);
+    } finally {
+      setIsRewritingCurrent(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,25 +148,39 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
     }
   };
 
-  const handleSelectSteamNews = (imported: {
-    title: string;
-    subtitle: string;
-    excerpt: string;
-    coverImage: string;
-    tags: string[];
-    content: string;
-    sourceUrl: string;
-  }) => {
-    const data = parseSteamNewsToArticleData(imported);
-    setTitle(data.title);
-    setSubtitle(data.subtitle);
-    setSlug(data.slug);
-    setCategory(data.category);
-    setExcerpt(data.excerpt);
-    setCoverImage(data.coverImage);
-    setTagsInput(data.tagsInput);
-    setReadTimeMinutes(data.readTimeMinutes);
-    setContentHtml(data.contentHtml);
+  const handleSelectImportedNews = (imported: ImportedArticleData) => {
+    if (imported.contentHtml) {
+      // Importação já reescrita e formatada pela IA
+      setTitle(imported.title);
+      setSubtitle(imported.subtitle || "");
+      setSlug(imported.slug || generateArticleSlug(imported.title));
+      if (imported.category) setCategory(imported.category);
+      setExcerpt(imported.excerpt);
+      setCoverImage(imported.coverImage);
+      setTagsInput(imported.tags.join(", "));
+      setReadTimeMinutes(imported.readTimeMinutes || 4);
+      setContentHtml(imported.contentHtml);
+    } else {
+      // Importação direta
+      const data = parseSteamNewsToArticleData({
+        title: imported.title,
+        subtitle: imported.subtitle,
+        excerpt: imported.excerpt,
+        coverImage: imported.coverImage,
+        tags: imported.tags,
+        content: imported.content,
+        sourceUrl: imported.sourceUrl,
+      });
+      setTitle(data.title);
+      setSubtitle(data.subtitle);
+      setSlug(data.slug);
+      setCategory(data.category);
+      setExcerpt(data.excerpt);
+      setCoverImage(data.coverImage);
+      setTagsInput(data.tagsInput);
+      setReadTimeMinutes(data.readTimeMinutes);
+      setContentHtml(data.contentHtml);
+    }
     setActiveTab("content");
   };
 
@@ -157,25 +215,40 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
           </button>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            type="button"
+            disabled={isRewritingCurrent}
+            onClick={handleRewriteCurrentWithAI}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+            title="Aprimora e reescreve todo o texto e metadados com IA mantendo a essência original"
+          >
+            {isRewritingCurrent ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            )}
+            <span>{isRewritingCurrent ? "Reescrevendo..." : "Reescrever com IA"}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsPreviewOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 text-xs font-bold transition-all cursor-pointer"
             title="Pré-visualizar diagramação e conteúdo do artigo"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3.5 h-3.5 text-emerald-400" />
             <span>Pré-visualizar</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setIsSteamModalOpen(true)}
+            onClick={() => setIsImportModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition-all cursor-pointer"
-            title="Importar anúncio ou patch note oficial da Steam como rascunho"
+            title="Importar matérias da NewsData.io ou comunicados oficiais da Steam com reescrita inteligente"
           >
-            <Radio className="w-3.5 h-3.5 animate-pulse" />
-            <span>Importar da Steam</span>
+            <Globe className="w-3.5 h-3.5" />
+            <span>Importar Matérias (NewsData & Steam)</span>
           </button>
         </div>
       </div>
@@ -284,11 +357,11 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
         })}
       />
 
-      {/* Modal Secundário para Importação Steam */}
-      <SteamNewsImportModal
-        isOpen={isSteamModalOpen}
-        onClose={() => setIsSteamModalOpen(false)}
-        onSelectNews={handleSelectSteamNews}
+      {/* Modal de Importação com IA (NewsData.io + Steam) */}
+      <NewsImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSelectNews={handleSelectImportedNews}
       />
     </div>
   );
