@@ -7,8 +7,6 @@ import {
   getCombinedArticles,
   deleteArticleFromFirestore,
 } from "@/lib/articlesService";
-import { useAuth } from "@/context/AuthContext";
-import ArticleEditorModal from "@/components/admin/ArticleEditorModal";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import {
   BookOpen,
@@ -18,20 +16,16 @@ import {
   ExternalLink,
   Search,
   Flame,
-  Calendar,
   Clock,
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
 
 export default function AdminArtigosPage() {
-  const { user } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadArticles = async () => {
@@ -49,16 +43,6 @@ export default function AdminArtigosPage() {
   useEffect(() => {
     loadArticles();
   }, []);
-
-  const handleOpenCreate = () => {
-    setEditingArticle(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (article: Article) => {
-    setEditingArticle(article);
-    setIsModalOpen(true);
-  };
 
   const handleDelete = async (article: Article) => {
     const confirmDelete = window.confirm(
@@ -101,15 +85,15 @@ export default function AdminArtigosPage() {
         </div>
       )}
 
-      {/* Header com Ação de Criar */}
+      {/* Header com Ação de Criar (Página Dedicada) */}
       <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>SISTEMA DE POSTAGENS &amp; BLOG</span>
+            <span>SISTEMA DE POSTAGENS & BLOG</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Gerenciador de Artigos &amp; Guias
+            Gerenciador de Artigos & Guias
           </h2>
           <p className="text-xs text-gray-400">
             Crie e edite análises, matérias e guias para fortalecer a indexação no Google AdSense.
@@ -126,12 +110,12 @@ export default function AdminArtigosPage() {
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
 
-          <button
-            onClick={handleOpenCreate}
+          <Link
+            href="/admin/artigos/novo"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-lg transition-transform hover:scale-105 active:scale-95"
           >
             <Plus className="w-4 h-4" /> Nova Postagem
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -228,13 +212,13 @@ export default function AdminArtigosPage() {
                     <ExternalLink className="w-4 h-4" />
                   </Link>
 
-                  <button
-                    onClick={() => handleOpenEdit(art)}
+                  <Link
+                    href={`/admin/artigos/${art.id || art.slug}`}
                     className="p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-gray-300 hover:text-emerald-400 transition-colors"
-                    title="Editar Postagem"
+                    title="Editar Postagem em Página Dedicada"
                   >
                     <Edit3 className="w-4 h-4" />
-                  </button>
+                  </Link>
 
                   <button
                     onClick={() => handleDelete(art)}
@@ -249,16 +233,6 @@ export default function AdminArtigosPage() {
           </div>
         )}
       </div>
-
-      {/* Modal de Criação / Edição */}
-      <ArticleEditorModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        articleToEdit={editingArticle}
-        onSaved={loadArticles}
-        currentAdminEmail={user?.email || undefined}
-        currentAdminName={user?.displayName || undefined}
-      />
     </div>
   );
 }
