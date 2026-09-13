@@ -6,11 +6,18 @@ import Link from "next/link";
 import { Article, ArticleSection } from "@/lib/types/article.types";
 import { saveArticleToFirestore } from "@/lib/articlesService";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
-import { Save, Loader2, Radio, FileText, SlidersHorizontal, ArrowLeft } from "lucide-react";
+import { Save, Loader2, Radio, FileText, SlidersHorizontal, ArrowLeft, Eye } from "lucide-react";
 import SteamNewsImportModal from "./SteamNewsImportModal";
 import ArticleInfoFields, { CATEGORY_OPTIONS } from "./ArticleInfoFields";
 import ArticleRichEditor from "./ArticleRichEditor";
-import { generateArticleSlug, convertSectionsToHtml } from "@/lib/articleHelpers";
+import ArticlePreviewModal from "./ArticlePreviewModal";
+import {
+  generateArticleSlug,
+  convertSectionsToHtml,
+  buildArticlePayload,
+  parseSteamNewsToArticleData,
+  getInitialArticleFormData,
+} from "@/lib/articleHelpers";
 
 interface ArticleFormProps {
   initialArticle?: Article | null;
@@ -34,40 +41,21 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "content">("info");
   const [isSteamModalOpen, setIsSteamModalOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
-    if (initialArticle) {
-      setTitle(initialArticle.title || "");
-      setSubtitle(initialArticle.subtitle || "");
-      setSlug(initialArticle.slug || "");
-      setCategory(initialArticle.category || "guias");
-      setReadTimeMinutes(initialArticle.readTimeMinutes || 5);
-      setCoverImage(initialArticle.coverImage || "");
-      setExcerpt(initialArticle.excerpt || "");
-      setTagsInput(initialArticle.tags?.join(", ") || "");
-      setFeatured(Boolean(initialArticle.featured));
-      setSections(initialArticle.sections || []);
-
-      if (initialArticle.contentHtml) {
-        setContentHtml(initialArticle.contentHtml);
-      } else if (initialArticle.sections && initialArticle.sections.length > 0) {
-        setContentHtml(convertSectionsToHtml(initialArticle.sections));
-      } else {
-        setContentHtml("<p>Escreva o conteúdo do seu artigo aqui...</p>");
-      }
-    } else {
-      setTitle("");
-      setSubtitle("");
-      setSlug("");
-      setCategory("guias");
-      setReadTimeMinutes(5);
-      setCoverImage("https://images.igdb.com/igdb/image/upload/t_1080p/co670h.jpg");
-      setExcerpt("");
-      setTagsInput("Games, Análise, Backlog");
-      setFeatured(false);
-      setContentHtml("<p>Escreva o conteúdo do seu artigo aqui...</p>");
-      setSections([{ heading: "Introdução", content: [""] }]);
-    }
+    const data = getInitialArticleFormData(initialArticle);
+    setTitle(data.title);
+    setSubtitle(data.subtitle);
+    setSlug(data.slug);
+    setCategory(data.category);
+    setReadTimeMinutes(data.readTimeMinutes);
+    setCoverImage(data.coverImage);
+    setExcerpt(data.excerpt);
+    setTagsInput(data.tagsInput);
+    setFeatured(data.featured);
+    setSections(data.sections);
+    setContentHtml(data.contentHtml);
   }, [initialArticle]);
 
   const handleTitleChange = (val: string) => {
@@ -86,32 +74,22 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
     setIsSaving(true);
     try {
       const catObj = CATEGORY_OPTIONS.find((c) => c.value === category);
-      const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
-
-      const articlePayload: Article = {
-        id: initialArticle?.id || `art-${Date.now()}`,
-        slug: slug.trim(),
-        title: title.trim(),
-        subtitle: subtitle.trim(),
-        excerpt: excerpt.trim(),
+      const articlePayload = buildArticlePayload({
+        initialArticle,
+        title,
+        subtitle,
+        slug,
+        excerpt,
         category,
-        categoryLabel: catObj?.label || "Guia",
-        readTimeMinutes: Number(readTimeMinutes) || 5,
-        publishedAt: initialArticle?.publishedAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        coverImage: coverImage.trim() || "https://images.igdb.com/igdb/image/upload/t_1080p/co670h.jpg",
-        coverAlt: `${title} - Imagem de Capa`,
+        categoryLabel: catObj?.label,
+        readTimeMinutes,
+        coverImage,
         featured,
-        tags,
-        author: initialArticle?.author || {
-          name: currentAdminName || "Equipe Editorial MyGameList",
-          role: "Editor Gamer",
-          avatar: "/logo-mgl.png",
-          bio: "Redação de guias, análises e curadoria de dados da plataforma.",
-        },
+        tagsInput,
         contentHtml,
-        sections: sections.length > 0 ? sections : [{ heading: "Artigo", content: [excerpt] }],
-      };
+        sections,
+        currentAdminName,
+      });
 
       await saveArticleToFirestore(articlePayload);
       triggerSuccessHaptic();
@@ -135,27 +113,16 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
     content: string;
     sourceUrl: string;
   }) => {
-    setTitle(imported.title);
-    setSubtitle(imported.subtitle);
-    setSlug(generateArticleSlug(imported.title));
-    setCategory("industria");
-    setExcerpt(imported.excerpt);
-    setCoverImage(imported.coverImage);
-    setTagsInput(imported.tags.join(", "));
-    setReadTimeMinutes(4);
-
-    const paragraphsHtml = imported.content
-      .split("\n\n")
-      .map((p) => `<p>${p.trim()}</p>`)
-      .join("");
-
-    const fullHtml = `
-      <h2>Visão Geral da Atualização</h2>
-      <blockquote><p>Anúncio oficial importado via Steam News. <a href="${imported.sourceUrl}">Acesse o post original na Steam</a></p></blockquote>
-      ${paragraphsHtml}
-    `;
-
-    setContentHtml(fullHtml);
+    const data = parseSteamNewsToArticleData(imported);
+    setTitle(data.title);
+    setSubtitle(data.subtitle);
+    setSlug(data.slug);
+    setCategory(data.category);
+    setExcerpt(data.excerpt);
+    setCoverImage(data.coverImage);
+    setTagsInput(data.tagsInput);
+    setReadTimeMinutes(data.readTimeMinutes);
+    setContentHtml(data.contentHtml);
     setActiveTab("content");
   };
 
@@ -190,15 +157,27 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsSteamModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
-          title="Importar anúncio ou patch note oficial da Steam como rascunho"
-        >
-          <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>Importar da Steam</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsPreviewOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
+            title="Pré-visualizar diagramação e conteúdo do artigo"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Pré-visualizar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSteamModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition-all cursor-pointer"
+            title="Importar anúncio ou patch note oficial da Steam como rascunho"
+          >
+            <Radio className="w-3.5 h-3.5 animate-pulse" />
+            <span>Importar da Steam</span>
+          </button>
+        </div>
       </div>
 
       {/* Formulário Principal */}
@@ -255,23 +234,55 @@ export default function ArticleForm({ initialArticle, currentAdminName }: Articl
             <ArrowLeft className="w-4 h-4" /> Cancelar
           </Link>
 
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" /> Salvar Postagem
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs transition-all cursor-pointer"
+            >
+              <Eye className="w-4 h-4" /> Pré-visualizar
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" /> Salvar Postagem
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Modal de Pré-visualização do Artigo */}
+      <ArticlePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        article={buildArticlePayload({
+          initialArticle,
+          title: title.trim() || "Título do Artigo em Destaque",
+          subtitle,
+          slug: slug.trim() || "preview-slug",
+          excerpt: excerpt.trim() || "Resumo da postagem com detalhes para o card e metadados SEO...",
+          category,
+          categoryLabel: CATEGORY_OPTIONS.find((c) => c.value === category)?.label,
+          readTimeMinutes,
+          coverImage,
+          featured,
+          tagsInput,
+          contentHtml,
+          sections,
+          currentAdminName,
+        })}
+      />
 
       {/* Modal Secundário para Importação Steam */}
       <SteamNewsImportModal
