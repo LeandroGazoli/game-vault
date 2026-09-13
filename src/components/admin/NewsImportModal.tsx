@@ -11,6 +11,8 @@ import {
   Globe,
   Newspaper,
   Filter,
+  KeyRound,
+  ShieldCheck,
 } from "lucide-react";
 import {
   SteamNewsItem,
@@ -19,6 +21,7 @@ import {
 } from "@/lib/steamNewsService";
 import { NewsDataArticle } from "@/lib/newsDataService";
 import { GNewsArticle } from "@/lib/gnewsService";
+import { ApiQuotaStatus } from "@/lib/apiKeyUsageTracker";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import SteamNewsCard from "./SteamNewsCard";
 import SteamAppIdSearchForm from "./SteamAppIdSearchForm";
@@ -61,6 +64,15 @@ export default function NewsImportModal({
 }: NewsImportModalProps) {
   const [sourceTab, setSourceTab] = useState<"newsdata" | "gnews" | "steam">("newsdata");
   
+  // Custom API keys (para o usuário/admin usar a sua própria se desejar)
+  const [newsDataCustomKey, setNewsDataCustomKey] = useState("");
+  const [gnewsCustomKey, setGnewsCustomKey] = useState("");
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  // Quotas
+  const [newsDataQuota, setNewsDataQuota] = useState<ApiQuotaStatus | null>(null);
+  const [gnewsQuota, setGnewsQuota] = useState<ApiQuotaStatus | null>(null);
+
   // NewsData.io state
   const [newsDataQuery, setNewsDataQuery] = useState("games OR jogo OR jogos OR video game");
   const [newsDataArticles, setNewsDataArticles] = useState<NewsDataArticle[]>([]);
@@ -99,12 +111,17 @@ export default function NewsImportModal({
     setLoadingNewsData(true);
     try {
       const q = encodeURIComponent(customQuery ?? newsDataQuery);
-      const res = await fetch(`/api/newsdata?q=${q}&country=br&language=pt`);
+      const keyParam = newsDataCustomKey.trim() ? `&apiKey=${encodeURIComponent(newsDataCustomKey.trim())}` : "";
+      const res = await fetch(`/api/newsdata?q=${q}&country=br&language=pt${keyParam}`);
       if (res.ok) {
         const data = await res.json();
         setNewsDataArticles(data.results || []);
+        if (data.quota) setNewsDataQuota(data.quota);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Erro ao consultar NewsData.io");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Erro ao buscar notícias NewsData:", err);
     } finally {
       setLoadingNewsData(false);
@@ -115,12 +132,17 @@ export default function NewsImportModal({
     setLoadingGNews(true);
     try {
       const q = encodeURIComponent(customQuery ?? gnewsQuery);
-      const res = await fetch(`/api/gnews?q=${q}&lang=pt&max=10`);
+      const keyParam = gnewsCustomKey.trim() ? `&apiKey=${encodeURIComponent(gnewsCustomKey.trim())}` : "";
+      const res = await fetch(`/api/gnews?q=${q}&lang=pt&max=10${keyParam}`);
       if (res.ok) {
         const data = await res.json();
         setGnewsArticles(data.articles || []);
+        if (data.quota) setGnewsQuota(data.quota);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Erro ao consultar GNews.io");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Erro ao buscar notícias GNews:", err);
     } finally {
       setLoadingGNews(false);
@@ -413,45 +435,132 @@ export default function NewsImportModal({
           </div>
         )}
 
-        {/* Abas de Seleção de Fonte */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3 shrink-0 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setSourceTab("newsdata")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              sourceTab === "newsdata"
-                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 font-black"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>NewsData.io</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSourceTab("gnews")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              sourceTab === "gnews"
-                ? "bg-violet-500 text-white shadow-lg shadow-violet-500/20 font-black"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Newspaper className="w-3.5 h-3.5" />
-            <span>GNews.io</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSourceTab("steam")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              sourceTab === "steam"
-                ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/20 font-black"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5" />
-            <span>Steam Oficial</span>
-          </button>
+        {/* Abas de Seleção de Fonte e Monitor de Cotas */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSourceTab("newsdata")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                sourceTab === "newsdata"
+                  ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 font-black"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>NewsData.io</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceTab("gnews")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                sourceTab === "gnews"
+                  ? "bg-violet-500 text-white shadow-lg shadow-violet-500/20 font-black"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              <span>GNews.io</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceTab("steam")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                sourceTab === "steam"
+                  ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/20 font-black"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Steam Oficial</span>
+            </button>
+          </div>
+
+          {/* Contador de Limite Diário & Chave Alternativa */}
+          {sourceTab !== "steam" && (
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+              {/* Badge de Consumo Diário */}
+              {((sourceTab === "newsdata" && newsDataQuota) || (sourceTab === "gnews" && gnewsQuota)) && (
+                <div
+                  className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] font-mono text-zinc-300 flex items-center gap-1.5"
+                  title="Contador de requisições gastas hoje para esta chave (Cap: 100/dia)"
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      (sourceTab === "newsdata" ? newsDataQuota?.isExceeded : gnewsQuota?.isExceeded)
+                        ? "bg-rose-500 animate-ping"
+                        : "bg-emerald-400"
+                    }`}
+                  />
+                  <span>
+                    Hoje:{" "}
+                    <strong className="text-white">
+                      {sourceTab === "newsdata" ? newsDataQuota?.count : gnewsQuota?.count}
+                    </strong>
+                    /
+                    {sourceTab === "newsdata" ? newsDataQuota?.limit : gnewsQuota?.limit} reqs
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowKeyInput(!showKeyInput)}
+                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
+                  (sourceTab === "newsdata" ? newsDataCustomKey : gnewsCustomKey)
+                    ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-zinc-400 hover:text-white"
+                }`}
+                title="Inserir uma chave de API própria ou alternativa"
+              >
+                <KeyRound className="w-3 h-3" />
+                <span>{(sourceTab === "newsdata" ? newsDataCustomKey : gnewsCustomKey) ? "Chave Própria Ativa" : "Usar Minha Chave"}</span>
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Gaveta de Chave Própria / Alternativa */}
+        {showKeyInput && sourceTab !== "steam" && (
+          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2 shrink-0 animate-fadeIn">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-300 font-bold flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                Chave de API {sourceTab === "newsdata" ? "NewsData.io" : "GNews.io"}
+              </span>
+              <span className="text-[10px] text-gray-400">
+                Cada chave possui cota isolada de 100 req/dia
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={sourceTab === "newsdata" ? newsDataCustomKey : gnewsCustomKey}
+                onChange={(e) => {
+                  if (sourceTab === "newsdata") setNewsDataCustomKey(e.target.value);
+                  else setGnewsCustomKey(e.target.value);
+                }}
+                placeholder={
+                  sourceTab === "newsdata"
+                    ? "Cole sua chave da NewsData (pub_...)"
+                    : "Cole seu token de API da GNews"
+                }
+                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (sourceTab === "newsdata") loadNewsData();
+                  else loadGNews();
+                  triggerSuccessHaptic();
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all cursor-pointer"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Conteúdo: NewsData.io */}
         {sourceTab === "newsdata" && (

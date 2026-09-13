@@ -606,6 +606,135 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Card: Provedores de Notícias & Cotas Diárias (NewsData.io & GNews.io) */}
+        <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">
+                Provedores de Notícias & Cotas Diárias (APIs)
+              </h3>
+              <p className="text-xs text-gray-400">
+                Configure chaves alternativas salvas no banco de dados e limites diários de requisições (padrão: 100 req/dia por chave free).
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* NewsData.io Config */}
+            <div className="rounded-2xl bg-[#0d0f14] border border-white/10 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">
+                  NewsData.io
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">
+                  Default: env NEWSDATA_API_KEY
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-300 font-medium">
+                  Chave Alternativa (Gravada no Banco)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Deixe em branco para usar a variável da Vercel"
+                  value={settings.newsApiSettings?.newsdataApiKey || ""}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      newsApiSettings: {
+                        ...settings.newsApiSettings,
+                        newsdataApiKey: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-300 font-medium">
+                  Limite Diário de Requisições (Cap per Day)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={settings.newsApiSettings?.newsdataDailyLimit ?? 100}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      newsApiSettings: {
+                        ...settings.newsApiSettings,
+                        newsdataDailyLimit: Number(e.target.value) || 100,
+                      },
+                    })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* GNews.io Config */}
+            <div className="rounded-2xl bg-[#0d0f14] border border-white/10 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-violet-400 uppercase tracking-wider font-mono">
+                  GNews.io
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">
+                  Default: env GNEWS_API_KEY
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-300 font-medium">
+                  Chave Alternativa (Gravada no Banco)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Deixe em branco para usar a variável da Vercel"
+                  value={settings.newsApiSettings?.gnewsApiKey || ""}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      newsApiSettings: {
+                        ...settings.newsApiSettings,
+                        gnewsApiKey: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-300 font-medium">
+                  Limite Diário de Requisições (Cap per Day)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={settings.newsApiSettings?.gnewsDailyLimit ?? 100}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      newsApiSettings: {
+                        ...settings.newsApiSettings,
+                        gnewsDailyLimit: Number(e.target.value) || 100,
+                      },
+                    })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </form>
 
       {/* Card: IndexNow (fora do form — o botão não deve submeter as configurações) */}

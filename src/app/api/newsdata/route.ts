@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const language = searchParams.get("language") || undefined;
     const category = searchParams.get("category") || undefined;
     const page = searchParams.get("page") || undefined;
+    const customApiKey = searchParams.get("apiKey") || undefined;
 
     const data = await fetchNewsDataArticles({
       q,
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
       language,
       category,
       page,
+      customApiKey,
     });
 
     return NextResponse.json(data);

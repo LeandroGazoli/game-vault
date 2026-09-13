@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
     const lang = searchParams.get("lang") || undefined;
     const country = searchParams.get("country") || undefined;
     const max = searchParams.get("max") ? parseInt(searchParams.get("max")!, 10) : undefined;
+    const customApiKey = searchParams.get("apiKey") || undefined;
 
     const data = await fetchGNewsArticles({
       q,
       lang,
       country,
       max,
+      customApiKey,
     });
 
     return NextResponse.json(data);

@@ -388,6 +388,10 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
     bountiesEnabled: true,
     instantSyncSteam: true,
   },
+  newsApiSettings: {
+    newsdataDailyLimit: 100,
+    gnewsDailyLimit: 100,
+  },
   emailTemplates: {
     vipWelcome: {
       subject: "👑 Você recebeu acesso VIP no MyGameList!",

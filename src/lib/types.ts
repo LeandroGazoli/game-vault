@@ -715,6 +715,12 @@ export interface SystemSettings {
     bountiesEnabled: boolean;
     instantSyncSteam: boolean;
   };
+  newsApiSettings?: {
+    newsdataApiKey?: string;
+    newsdataDailyLimit?: number;
+    gnewsApiKey?: string;
+    gnewsDailyLimit?: number;
+  };
   emailTemplates?: {
     vipWelcome?: EmailTemplateConfig;
     proWelcome?: EmailTemplateConfig;
