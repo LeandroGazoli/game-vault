@@ -21,6 +21,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Play,
+  Eye,
+  AlertTriangle,
 } from "lucide-react";
 
 interface PageProps {
@@ -119,6 +121,36 @@ export default async function IndieGameDetailPage({ params }: PageProps) {
         >
           <ArrowLeft className="w-4 h-4" /> Voltar para o Indie Hub
         </Link>
+
+        {/* Barra de Modo Preview para Rascunho / Em Análise */}
+        {game.status !== "approved" && (
+          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-amber-300 uppercase tracking-wider font-mono">
+                    Modo de Preview (Rascunho)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold uppercase">
+                    Status: {game.status}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-300">
+                  Esta página está visível em modo de pré-visualização para análise antes da publicação oficial.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/indies"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-colors shrink-0 whitespace-nowrap"
+            >
+              Ir para Painel de Moderação
+            </Link>
+          </div>
+        )}
 
         {/* Hero Card do Jogo Indie */}
         <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-[#141822] p-6 sm:p-10 shadow-2xl space-y-6">

@@ -32,7 +32,7 @@ import {
   Filter,
   Plus,
   Edit3,
-  FolderDown,
+  Eye,
 } from "lucide-react";
 
 export default function AdminIndiesPage() {
@@ -51,7 +51,26 @@ export default function AdminIndiesPage() {
   const loadIndies = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchAllIndiesAdmin();
+      let data = await fetchAllIndiesAdmin();
+
+      // Se o jogo 'Something Meaningful' do Google Drive ainda não existir, cria-o automaticamente como Rascunho (pending)
+      const existingDriveGame = data.find(
+        (g) => g.title.toLowerCase() === SOMETHING_MEANINGFUL_DRIVE_DATA.title.toLowerCase()
+      );
+
+      if (!existingDriveGame && user?.uid) {
+        try {
+          await submitIndieGame(SOMETHING_MEANINGFUL_DRIVE_DATA, user.uid, {
+            initialStatus: "pending",
+            isSpotlight: true,
+            spotlightLocations: ["home", "search", "game_detail"],
+          });
+          data = await fetchAllIndiesAdmin();
+        } catch (seedErr) {
+          console.error("Erro ao provisionar jogo rascunho Something Meaningful:", seedErr);
+        }
+      }
+
       setIndies(data);
     } catch (err) {
       console.error("Erro ao carregar indies para admin:", err);
@@ -62,18 +81,11 @@ export default function AdminIndiesPage() {
 
   useEffect(() => {
     loadIndies();
-  }, []);
+  }, [user?.uid]);
 
   const handleOpenCreate = () => {
     setGameToEdit(null);
     setPrefillData(null);
-    setIsModalOpen(true);
-  };
-
-  const handleImportDriveGame = () => {
-    triggerSuccessHaptic();
-    setGameToEdit(null);
-    setPrefillData(SOMETHING_MEANINGFUL_DRIVE_DATA);
     setIsModalOpen(true);
   };
 
@@ -196,15 +208,6 @@ export default function AdminIndiesPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={handleImportDriveGame}
-            className="px-4 py-3 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold text-xs border border-cyan-500/40 shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
-            title="Importar dados e mídias do jogo 'Something Meaningful' do Google Drive"
-          >
-            <FolderDown className="w-4 h-4 text-cyan-400" />
-            <span>Importar Something Meaningful (Drive)</span>
-          </button>
-
-          <button
             onClick={handleOpenCreate}
             className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
           >
@@ -215,7 +218,7 @@ export default function AdminIndiesPage() {
           <button
             onClick={loadIndies}
             disabled={isLoading}
-            className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
+            className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors cursor-pointer"
             title="Recarregar lista"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -361,10 +364,15 @@ export default function AdminIndiesPage() {
                     <Link
                       href={`/indies/${game.slug}`}
                       target="_blank"
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300"
-                      title="Ver Página do Jogo"
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        game.status !== "approved"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
+                          : "bg-white/5 hover:bg-white/10 text-gray-300"
+                      }`}
+                      title={game.status !== "approved" ? "Visualizar Preview do Rascunho" : "Ver Página do Jogo"}
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{game.status !== "approved" ? "Preview" : "Ver"}</span>
                     </Link>
                     <button
                       onClick={() => handleDelete(game)}
