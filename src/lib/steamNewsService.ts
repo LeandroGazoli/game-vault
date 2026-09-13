@@ -10,6 +10,7 @@ export interface SteamNewsItem {
   feedname: string;
   feed_type: number;
   appid: number;
+  isTranslated?: boolean;
 }
 
 export interface SteamNewsApiResponse {

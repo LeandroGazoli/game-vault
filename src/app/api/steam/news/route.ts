@@ -3,7 +3,16 @@ import {
   SteamNewsApiResponse,
   isAllowedLanguageNews,
   isPortugueseNews,
+  cleanSteamBBCode,
+  extractFirstSteamImage,
 } from "@/lib/steamNewsService";
+import { translateToPortuguese } from "@/lib/translate";
+import {
+  getStoredSteamNews,
+  saveTranslatedSteamNews,
+  getRecentSteamNews,
+  StoredSteamNewsItem,
+} from "@/lib/steamNewsDb";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +21,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const appId = searchParams.get("appId");
     const count = parseInt(searchParams.get("count") || "5", 10);
-    const langFilter = searchParams.get("lang"); // "pt", "pt_en" ou vazio
+    const mode = searchParams.get("mode"); // "recent" para listar as últimas salvas no site
+
+    // Se o cliente pedir as notícias salvas mais recentes no sistema (para o painel admin ou feed geral)
+    if (mode === "recent") {
+      const recentStored = await getRecentSteamNews(Math.min(count, 30));
+      return NextResponse.json({
+        count: recentStored.length,
+        news: recentStored,
+      });
+    }
 
     if (!appId || !/^\d+$/.test(appId)) {
       return NextResponse.json(
@@ -21,9 +39,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Buscamos prioritariamente anúncios da comunidade Steam oficiais (steam_community_announcements)
-    // Buscamos um número maior para filtrar línguas indesejadas (russo, chinês) e manter a quantidade pedida
-    const fetchLimit = Math.max(count * 5, 25);
+    const fetchLimit = Math.max(count * 4, 20);
     const targetUrl = `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${appId}&count=${fetchLimit}&feeds=steam_community_announcements`;
 
     let res = await fetch(targetUrl, {
@@ -31,10 +47,12 @@ export async function GET(req: NextRequest) {
       next: { revalidate: 1800 }, // Cache de 30 min
     });
 
-    let data: SteamNewsApiResponse = res.ok ? await res.json() : { appnews: { appid: Number(appId), newsitems: [], count: 0 } };
+    let data: SteamNewsApiResponse = res.ok
+      ? await res.json()
+      : { appnews: { appid: Number(appId), newsitems: [], count: 0 } };
     let items = data.appnews?.newsitems || [];
 
-    // Fallback: se não houver comunicados oficiais da comunidade, busca sem o filtro de feed mas filtra o russo/chinês
+    // Fallback se o feed específico não retornar
     if (items.length === 0) {
       const fallbackUrl = `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${appId}&count=${fetchLimit}`;
       const fallbackRes = await fetch(fallbackUrl, {
@@ -48,28 +66,100 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Filtragem estrita contra caracteres cirílicos (russo), CJK (chinês, japonês, coreano), árabe
-    let filtered = items.filter((item) =>
+    const allowedItems = items.filter((item) =>
       isAllowedLanguageNews(item.title, item.contents)
     );
 
-    // 2. Se for solicitado estritamente português ("pt")
-    if (langFilter === "pt") {
-      const onlyPt = filtered.filter((item) =>
-        isPortugueseNews(item.title, item.contents)
-      );
-      // Se houver matérias em português, entrega apenas elas
-      if (onlyPt.length > 0) {
-        filtered = onlyPt;
-      }
-    }
+    // 2. Tradução sob demanda e persistência no banco (Firestore + Memória)
+    // Processa os primeiros 'count' itens
+    const targetedItems = allowedItems.slice(0, Math.min(count, 10));
 
-    // Limita à quantidade solicitada
-    const finalItems = filtered.slice(0, Math.min(count, 15));
+    const processedNews = await Promise.all(
+      targetedItems.map(async (item) => {
+        // Verifica se já temos tradução salva para este gid no Firestore
+        const stored = await getStoredSteamNews(item.gid);
+        if (stored && stored.translatedContents) {
+          return {
+            ...item,
+            title: stored.translatedTitle || item.title,
+            contents: stored.translatedContents,
+            isTranslated: true,
+          };
+        }
+
+        // Se já for originalmente em português, salva direto
+        if (isPortugueseNews(item.title, item.contents)) {
+          const firstImg = extractFirstSteamImage(item.contents);
+          const storedItem: StoredSteamNewsItem = {
+            gid: item.gid,
+            appId: Number(appId),
+            title: item.title,
+            translatedTitle: item.title,
+            originalContents: item.contents,
+            translatedContents: item.contents,
+            author: item.author || "Steam Community",
+            url: item.url,
+            date: item.date,
+            feedlabel: item.feedlabel || "Patch Note",
+            feedname: item.feedname || "Steam Community",
+            firstImage: firstImg,
+            updatedAt: new Date().toISOString(),
+          };
+          saveTranslatedSteamNews(storedItem).catch(() => {});
+          return {
+            ...item,
+            isTranslated: false,
+          };
+        }
+
+        // Se estiver em inglês/outro idioma permitido, traduz o título e conteúdo
+        try {
+          const cleanText = cleanSteamBBCode(item.contents);
+          // Traduz o título
+          const translatedTitle = await translateToPortuguese(item.title);
+
+          // Pega os parágrafos mais importantes para tradução limpa (até 1200 caracteres)
+          const contentSample = cleanText.slice(0, 1200);
+          const translatedBody = await translateToPortuguese(contentSample);
+
+          const firstImg = extractFirstSteamImage(item.contents);
+
+          const storedItem: StoredSteamNewsItem = {
+            gid: item.gid,
+            appId: Number(appId),
+            title: item.title,
+            translatedTitle: translatedTitle || item.title,
+            originalContents: item.contents,
+            translatedContents: translatedBody || cleanText,
+            author: item.author || "Steam Community",
+            url: item.url,
+            date: item.date,
+            feedlabel: item.feedlabel || "Patch Note",
+            feedname: item.feedname || "Steam Community",
+            firstImage: firstImg,
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Salva no Firestore de forma assíncrona (sem bloquear requisição)
+          saveTranslatedSteamNews(storedItem).catch(() => {});
+
+          return {
+            ...item,
+            title: translatedTitle || item.title,
+            contents: translatedBody || cleanText,
+            isTranslated: true,
+          };
+        } catch (err) {
+          console.warn(`Erro ao traduzir notícia ${item.gid}:`, err);
+          return item;
+        }
+      })
+    );
 
     return NextResponse.json({
       appId: Number(appId),
-      count: finalItems.length,
-      news: finalItems,
+      count: processedNews.length,
+      news: processedNews,
     });
   } catch (error: any) {
     console.error("Erro ao buscar notícias da Steam:", error);

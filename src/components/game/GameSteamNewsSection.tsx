@@ -145,9 +145,9 @@ export default function GameSteamNewsSection({
                       <span className="px-1.5 py-0.5 rounded bg-white/5 font-mono text-cyan-400">
                         {item.feedlabel || "Patch Note"}
                       </span>
-                      {isPt && (
+                      {(isPt || item.isTranslated) && (
                         <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/20">
-                          PT-BR
+                          {item.isTranslated ? "Traduzido PT-BR" : "PT-BR"}
                         </span>
                       )}
                       <span>•</span>
