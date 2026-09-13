@@ -12,6 +12,7 @@ interface IndieMainContentTabsProps {
 
 export default function IndieMainContentTabs({ game, embedUrl }: IndieMainContentTabsProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "dev_notes" | "media">("overview");
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
 
   const hasDevNotes = Boolean(game.devNotes && game.devNotes.trim());
   const hasMedia = Boolean(embedUrl || (game.screenshots && game.screenshots.length > 0));
@@ -75,15 +76,31 @@ export default function IndieMainContentTabs({ game, embedUrl }: IndieMainConten
       {/* CONTEÚDO DA ABA 1: VISÃO GERAL */}
       {activeTab === "overview" && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Sinopse & Apresentação */}
-          <section className="rounded-3xl border border-white/10 bg-[#141822] p-6 sm:p-8 space-y-4 shadow-xl">
-            <h2 className="text-lg sm:text-xl font-black text-white tracking-tight border-b border-white/10 pb-3">
+          {/* Sinopse & Apresentação com suporte a recolher/expandir */}
+          <section className="rounded-3xl border border-white/10 bg-[#141822] p-5 sm:p-7 space-y-4 shadow-xl relative overflow-hidden">
+            <h2 className="text-base sm:text-lg font-black text-white tracking-tight border-b border-white/10 pb-3">
               Sobre o Projeto &amp; Visão do Desenvolvedor
             </h2>
-            <IndieDescriptionRenderer
-              content={game.description}
-              mode={game.descriptionMode}
-            />
+            
+            <div className={`relative transition-all duration-300 ${!isOverviewExpanded ? "max-h-[380px] overflow-hidden" : ""}`}>
+              <IndieDescriptionRenderer
+                content={game.description}
+                mode={game.descriptionMode}
+              />
+              {!isOverviewExpanded && (
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#141822] via-[#141822]/90 to-transparent pointer-events-none" />
+              )}
+            </div>
+
+            <div className="pt-1 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
+              >
+                <span>{isOverviewExpanded ? "Recolher Descrição" : "Ler Descrição Completa"}</span>
+              </button>
+            </div>
           </section>
 
           {/* Enredo e História */}
