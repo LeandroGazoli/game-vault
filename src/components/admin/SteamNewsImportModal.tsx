@@ -9,12 +9,13 @@ import {
   Radio,
   ExternalLink,
   Clock,
-  Sparkles,
+  Globe2,
 } from "lucide-react";
 import {
   SteamNewsItem,
   cleanSteamBBCode,
   extractFirstSteamImage,
+  isPortugueseNews,
 } from "@/lib/steamNewsService";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 
@@ -47,13 +48,14 @@ export default function SteamNewsImportModal({
   onSelectNews,
 }: SteamNewsImportModalProps) {
   const [appIdInput, setAppIdInput] = useState("");
+  const [onlyPt, setOnlyPt] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newsList, setNewsList] = useState<SteamNewsItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFetchNews = async (targetAppId: string) => {
+  const handleFetchNews = async (targetAppId: string, ptOnly = onlyPt) => {
     const cleanId = targetAppId.trim();
     if (!cleanId || !/^\d+$/.test(cleanId)) {
       alert("Informe um Steam AppID numérico válido.");
@@ -63,7 +65,8 @@ export default function SteamNewsImportModal({
     setLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(`/api/steam/news?appId=${cleanId}&count=6`);
+      const langParam = ptOnly ? "&lang=pt" : "";
+      const res = await fetch(`/api/steam/news?appId=${cleanId}&count=8${langParam}`);
       if (!res.ok) {
         throw new Error(`Status ${res.status}`);
       }
@@ -90,7 +93,6 @@ export default function SteamNewsImportModal({
       extractFirstSteamImage(item.contents) ||
       `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${item.appid}/header.jpg`;
 
-    // Excerpt: primeiros 180 caracteres limpos
     const cleanExcerpt =
       cleanText
         .replace(/^#+\s+/gm, "")
@@ -126,7 +128,7 @@ export default function SteamNewsImportModal({
                 Importar Notícia Oficial da Steam
               </h3>
               <p className="text-xs text-gray-400">
-                Puxe patch notes e anúncios como rascunho para traduzir e editar
+                Comunicados oficiais de estúdios (sem spam russo, chinês ou agregadores)
               </p>
             </div>
           </div>
@@ -138,7 +140,7 @@ export default function SteamNewsImportModal({
           </button>
         </div>
 
-        {/* Input de Busca & Atalhos Rápidos */}
+        {/* Input de Busca, Filtro PT e Sugestões */}
         <div className="space-y-3 shrink-0">
           <form
             onSubmit={(e) => {
@@ -168,24 +170,45 @@ export default function SteamNewsImportModal({
             </button>
           </form>
 
-          {/* Atalhos Populares */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mr-1">
-              Sugestões:
-            </span>
-            {POPULAR_STEAM_GAMES.map((game) => (
-              <button
-                key={game.appId}
-                type="button"
-                onClick={() => {
-                  setAppIdInput(game.appId);
-                  handleFetchNews(game.appId);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-zinc-300 hover:text-cyan-400 transition-colors"
-              >
-                {game.name}
-              </button>
-            ))}
+          {/* Filtro de Idioma e Sugestões */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mr-1">
+                Sugestões:
+              </span>
+              {POPULAR_STEAM_GAMES.map((game) => (
+                <button
+                  key={game.appId}
+                  type="button"
+                  onClick={() => {
+                    setAppIdInput(game.appId);
+                    handleFetchNews(game.appId);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-zinc-300 hover:text-cyan-400 transition-colors"
+                >
+                  {game.name}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !onlyPt;
+                setOnlyPt(nextVal);
+                if (appIdInput) {
+                  handleFetchNews(appIdInput, nextVal);
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                onlyPt
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                  : "bg-white/5 text-zinc-400 border-white/10 hover:text-white"
+              }`}
+            >
+              <Globe2 className="w-3.5 h-3.5" />
+              <span>{onlyPt ? "Apenas PT-BR ativo" : "Filtrar estrito PT-BR"}</span>
+            </button>
           </div>
         </div>
 
@@ -202,57 +225,69 @@ export default function SteamNewsImportModal({
             <div className="p-8 text-center space-y-2 rounded-2xl bg-white/5 border border-white/5">
               <p className="text-xs font-bold text-white">Nenhum anúncio encontrado</p>
               <p className="text-[11px] text-zinc-400">
-                Verifique se o AppID está correto na loja da Steam.
+                {onlyPt
+                  ? "Nenhum post em português encontrado para este jogo. Desmarque o filtro PT-BR para ver os comunicados originais dos estúdios."
+                  : "Verifique se o AppID está correto na loja da Steam."}
               </p>
             </div>
           )}
 
           {!loading &&
-            newsList.map((item) => (
-              <div
-                key={item.gid}
-                className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/40 transition-all space-y-2 group"
-              >
-                <div className="flex items-center justify-between text-[10px] text-zinc-400">
-                  <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
-                    {item.feedlabel || "Steam"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {new Date(item.date * 1000).toLocaleDateString("pt-BR")}
-                  </span>
+            newsList.map((item) => {
+              const isPt = isPortugueseNews(item.title, item.contents);
+              return (
+                <div
+                  key={item.gid}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/40 transition-all space-y-2 group"
+                >
+                  <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                        {item.feedlabel || "Steam"}
+                      </span>
+                      {isPt && (
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+                          PT-BR
+                        </span>
+                      )}
+                    </div>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(item.date * 1000).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+
+                  <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    {item.title}
+                  </h4>
+
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                    {cleanSteamBBCode(item.contents).slice(0, 160)}...
+                  </p>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-white/5">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white"
+                    >
+                      <span>Ver original</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => handleImport(item)}
+                      className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Usar como Rascunho</span>
+                    </button>
+                  </div>
                 </div>
-
-                <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  {item.title}
-                </h4>
-
-                <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
-                  {cleanSteamBBCode(item.contents).slice(0, 160)}...
-                </p>
-
-                <div className="pt-2 flex items-center justify-between border-t border-white/5">
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white"
-                  >
-                    <span>Ver original</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => handleImport(item)}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Usar como Rascunho</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </div>
     </div>

@@ -1,20 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import {
-  Newspaper,
   ExternalLink,
   ChevronDown,
   ChevronUp,
   Clock,
   Radio,
-  FileText,
 } from "lucide-react";
 import {
   SteamNewsItem,
   cleanSteamBBCode,
   extractFirstSteamImage,
+  isPortugueseNews,
 } from "@/lib/steamNewsService";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 
@@ -129,6 +127,7 @@ export default function GameSteamNewsSection({
             const isExpanded = expandedIndex === idx;
             const cleanText = cleanSteamBBCode(item.contents);
             const firstImg = extractFirstSteamImage(item.contents);
+            const isPt = isPortugueseNews(item.title, item.contents);
 
             return (
               <div
@@ -146,6 +145,11 @@ export default function GameSteamNewsSection({
                       <span className="px-1.5 py-0.5 rounded bg-white/5 font-mono text-cyan-400">
                         {item.feedlabel || "Patch Note"}
                       </span>
+                      {isPt && (
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/20">
+                          PT-BR
+                        </span>
+                      )}
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-zinc-500" />
