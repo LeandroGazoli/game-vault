@@ -14,6 +14,7 @@ import {
   arrayRemove,
   increment,
   addDoc,
+  deleteField,
 } from "firebase/firestore";
 import {
   IndieGame,
@@ -26,6 +27,30 @@ import {
 
 const INDIES_COLLECTION = "indie_games";
 const USERS_COLLECTION = "users";
+
+/**
+ * Remove campos estritamente `undefined` ou substitui por `deleteField()` em operações de update
+ * para prevenir o erro do Firestore: "Unsupported field value: undefined"
+ */
+function sanitizeForFirestore<T extends Record<string, any>>(obj: T, forUpdate = false): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) {
+      if (forUpdate) {
+        result[key] = deleteField();
+      }
+      // Se não for update (ex: setDoc/addDoc), simplesmente omite o campo
+      continue;
+    }
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      // Se for um objeto aninhado (ex: ptbrSupport, systemRequirements)
+      result[key] = sanitizeForFirestore(value, forUpdate);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
 function slugify(text: string): string {
   return text
@@ -70,7 +95,8 @@ export async function submitIndieGame(
   };
 
   const docRef = doc(db, INDIES_COLLECTION, docId);
-  await setDoc(docRef, newGame);
+  const sanitizedGame = sanitizeForFirestore(newGame, false);
+  await setDoc(docRef, sanitizedGame);
 
   // Se já for cadastrado como aprovado (ex.: pelo próprio admin para sua conta), concede o título
   if (status === "approved" && userId) {
@@ -96,10 +122,14 @@ export async function updateIndieGame(
   }
 ): Promise<void> {
   const docRef = doc(db, INDIES_COLLECTION, gameId);
-  await updateDoc(docRef, {
-    ...data,
-    updatedAt: new Date().toISOString(),
-  });
+  const updates = sanitizeForFirestore(
+    {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    },
+    true
+  );
+  await updateDoc(docRef, updates);
 }
 
 /**
