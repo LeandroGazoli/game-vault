@@ -86,11 +86,11 @@ export default function HomeSearchHero({
           </div>
         </div>
 
-        {/* Filtros Rápidos com Estilo Console Vice City */}
-        <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+        {/* Filtros Rápidos com Estilo Console Vice City (Mobile-First: scroll horizontal suave e tags essenciais) */}
+        <div className="flex items-center justify-start sm:justify-center gap-2 text-xs overflow-x-auto no-scrollbar w-full max-w-full px-1 py-1 sm:flex-wrap">
           <Link
             href="/search?q=Grand+Theft+Auto"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff007f]/25 to-[#ff6b00]/25 hover:from-[#ff007f]/40 hover:to-[#ff6b00]/40 text-pink-200 border border-[#ff007f]/40 hover:border-[#ff007f] transition-all font-bold shadow-md active:scale-95"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff007f]/25 to-[#ff6b00]/25 hover:from-[#ff007f]/40 hover:to-[#ff6b00]/40 text-pink-200 border border-[#ff007f]/40 hover:border-[#ff007f] transition-all font-bold shadow-md active:scale-95 shrink-0"
           >
             <span className="text-xs">🌴</span>
             <span>Saga GTA</span>
@@ -98,7 +98,7 @@ export default function HomeSearchHero({
 
           <Link
             href="/colecoes/dublados-ptbr"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-emerald-400/40 backdrop-blur-md transition-all font-medium active:scale-95"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-emerald-400/40 backdrop-blur-md transition-all font-medium active:scale-95 shrink-0"
           >
             <Languages className="w-3.5 h-3.5 text-emerald-400" />
             <span>100% Dublados</span>
@@ -106,7 +106,7 @@ export default function HomeSearchHero({
 
           <Link
             href="/colecoes/hall-da-fama"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-yellow-400/40 backdrop-blur-md transition-all font-medium active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-yellow-400/40 backdrop-blur-md transition-all font-medium active:scale-95 shrink-0 whitespace-nowrap"
           >
             <Trophy className="w-3.5 h-3.5 text-yellow-400" />
             <span>Hall da Fama (90+)</span>
@@ -114,7 +114,7 @@ export default function HomeSearchHero({
 
           <Link
             href="/colecoes/fim-de-semana"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-sky-400/40 backdrop-blur-md transition-all font-medium active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-sky-400/40 backdrop-blur-md transition-all font-medium active:scale-95 shrink-0 whitespace-nowrap"
           >
             <Clock className="w-3.5 h-3.5 text-sky-400" />
             <span>Até 10 Horas</span>
@@ -122,7 +122,7 @@ export default function HomeSearchHero({
 
           <button
             onClick={onOpenRoulette}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-amber-400/40 backdrop-blur-md transition-all font-medium active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-amber-400/40 backdrop-blur-md transition-all font-medium active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
           >
             <Dices className="w-3.5 h-3.5 text-amber-400" />
             <span>Roleta Gamer</span>
@@ -130,7 +130,7 @@ export default function HomeSearchHero({
 
           <Link
             href="/calendar"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-indigo-400/40 backdrop-blur-md transition-all font-medium active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 border border-white/10 hover:border-indigo-400/40 backdrop-blur-md transition-all font-medium active:scale-95 shrink-0 whitespace-nowrap"
           >
             <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
             <span>Calendário</span>
