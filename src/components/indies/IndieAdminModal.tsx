@@ -9,6 +9,7 @@ interface IndieAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
   gameToEdit?: IndieGame | null;
+  initialFormData?: IndieSubmissionForm | null;
   onSave: (formData: IndieSubmissionForm) => Promise<void>;
   isSubmitting: boolean;
 }
@@ -17,6 +18,7 @@ export default function IndieAdminModal({
   isOpen,
   onClose,
   gameToEdit,
+  initialFormData,
   onSave,
   isSubmitting,
 }: IndieAdminModalProps) {
@@ -78,7 +80,7 @@ export default function IndieAdminModal({
                   ptbrSupport: gameToEdit.ptbrSupport,
                   systemRequirements: gameToEdit.systemRequirements,
                 }
-              : undefined
+              : initialFormData || undefined
           }
           onSubmit={onSave}
           isSubmitting={isSubmitting}

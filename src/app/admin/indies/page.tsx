@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import IndieAdminModal from "@/components/indies/IndieAdminModal";
+import { SOMETHING_MEANINGFUL_DRIVE_DATA } from "@/lib/constants/somethingMeaningfulData";
 import {
   Gamepad2,
   CheckCircle2,
@@ -31,6 +32,7 @@ import {
   Filter,
   Plus,
   Edit3,
+  FolderDown,
 } from "lucide-react";
 
 export default function AdminIndiesPage() {
@@ -43,6 +45,7 @@ export default function AdminIndiesPage() {
   // Modal de criação / edição
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gameToEdit, setGameToEdit] = useState<IndieGame | null>(null);
+  const [prefillData, setPrefillData] = useState<IndieSubmissionForm | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const loadIndies = async () => {
@@ -63,11 +66,20 @@ export default function AdminIndiesPage() {
 
   const handleOpenCreate = () => {
     setGameToEdit(null);
+    setPrefillData(null);
+    setIsModalOpen(true);
+  };
+
+  const handleImportDriveGame = () => {
+    triggerSuccessHaptic();
+    setGameToEdit(null);
+    setPrefillData(SOMETHING_MEANINGFUL_DRIVE_DATA);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (game: IndieGame) => {
     setGameToEdit(game);
+    setPrefillData(null);
     setIsModalOpen(true);
   };
 
@@ -79,16 +91,18 @@ export default function AdminIndiesPage() {
         triggerSuccessHaptic();
         setToastMessage(`Jogo "${formData.title}" atualizado com sucesso!`);
       } else {
+        const isImported = Boolean(prefillData);
         await submitIndieGame(formData, user?.uid || "admin", {
           initialStatus: "approved",
-          isSpotlight: false,
-          spotlightLocations: [],
+          isSpotlight: isImported,
+          spotlightLocations: isImported ? ["home", "search", "game_detail"] : [],
         });
         triggerSuccessHaptic();
         setToastMessage(`Jogo "${formData.title}" cadastrado e publicado com sucesso!`);
       }
       setTimeout(() => setToastMessage(null), 3000);
       setIsModalOpen(false);
+      setPrefillData(null);
       loadIndies();
     } catch (err) {
       console.error("Erro ao salvar jogo indie pelo admin:", err);
@@ -180,7 +194,16 @@ export default function AdminIndiesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleImportDriveGame}
+            className="px-4 py-3 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold text-xs border border-cyan-500/40 shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+            title="Importar dados e mídias do jogo 'Something Meaningful' do Google Drive"
+          >
+            <FolderDown className="w-4 h-4 text-cyan-400" />
+            <span>Importar Something Meaningful (Drive)</span>
+          </button>
+
           <button
             onClick={handleOpenCreate}
             className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
@@ -361,8 +384,12 @@ export default function AdminIndiesPage() {
       {/* Modal de Criação / Edição do Admin */}
       <IndieAdminModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPrefillData(null);
+        }}
         gameToEdit={gameToEdit}
+        initialFormData={prefillData}
         onSave={handleSaveGame}
         isSubmitting={isSaving}
       />

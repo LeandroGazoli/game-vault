@@ -66,10 +66,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function getYouTubeEmbedUrl(url?: string): string | null {
+function getMediaEmbedUrl(url?: string): string | null {
   if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
+  // Suporte a Google Drive Preview Player (ex: https://drive.google.com/file/d/{id}/preview)
+  if (url.includes("drive.google.com/file/d/")) {
+    const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+    }
+  }
+  // Suporte a YouTube
+  const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(ytRegExp);
   return match && match[2].length === 11
     ? `https://www.youtube-nocookie.com/embed/${match[2]}`
     : null;
@@ -98,7 +106,7 @@ export default async function IndieGameDetailPage({ params }: PageProps) {
     url: `${SITE_URL}/indies/${slug}`,
   };
 
-  const embedUrl = getYouTubeEmbedUrl(game.trailerUrl);
+  const embedUrl = getMediaEmbedUrl(game.trailerUrl);
 
   return (
     <>

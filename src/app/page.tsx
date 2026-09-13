@@ -39,6 +39,7 @@ import CategoriesCarousel from "@/components/CategoriesCarousel";
 import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
 import HomeEditorialSection from "@/components/home/HomeEditorialSection";
+import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
 import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SystemSettings } from "@/lib/types";
@@ -259,6 +260,11 @@ export default function HomePage() {
           onOpenAuth={() => setIsAuthOpen(true)}
         />
       )}
+
+      {/* ==========================================
+          BANNER DE DESTAQUE INDIE NA HOME
+      ========================================== */}
+      <IndieSpotlightBanner location="home" className="mb-2" />
 
       {/* ==========================================
           2. CARROSSEL DESTAQUES WIDESCREEN 16:9
