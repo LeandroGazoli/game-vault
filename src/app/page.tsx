@@ -40,6 +40,7 @@ import CollectionsSection from "@/components/CollectionsSection";
 import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCard";
 import HomeEditorialSection from "@/components/home/HomeEditorialSection";
 import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
+import HomeIndiesSection from "@/components/home/HomeIndiesSection";
 import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { SystemSettings } from "@/lib/types";
@@ -306,6 +307,11 @@ export default function HomePage() {
           PUBLICIDADE 1: LEADERBOARD SUPERIOR
       ========================================== */}
       <AdBanner slot="HOME_TOP_LEADERBOARD" />
+
+      {/* ==========================================
+          SEÇÃO EXCLUSIVA: JOGOS INDIES DA COMUNIDADE
+      ========================================== */}
+      <HomeIndiesSection />
 
       {/* ==========================================
           COLEÇÕES ESPECIAIS DO ACERVO

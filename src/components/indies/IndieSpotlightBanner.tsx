@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IndieGame, IndieSpotlightLocation } from "@/lib/types/indie.types";
-import { fetchSpotlightIndie } from "@/lib/indieService";
-import { Sparkles, ArrowRight, Heart, X, Gamepad2 } from "lucide-react";
+import { fetchSpotlightIndies } from "@/lib/indieService";
+import { Sparkles, ArrowRight, Heart, X, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface IndieSpotlightBannerProps {
   location: IndieSpotlightLocation;
@@ -15,16 +15,17 @@ export default function IndieSpotlightBanner({
   location,
   className = "",
 }: IndieSpotlightBannerProps) {
-  const [indie, setIndie] = useState<IndieGame | null>(null);
+  const [indies, setIndies] = useState<IndieGame[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    fetchSpotlightIndie(location)
+    fetchSpotlightIndies(location)
       .then((data) => {
         if (isMounted) {
-          setIndie(data);
+          setIndies(data);
           setLoading(false);
         }
       })
@@ -36,6 +37,17 @@ export default function IndieSpotlightBanner({
       isMounted = false;
     };
   }, [location]);
+
+  // Rodízio automático a cada 8 segundos se houver mais de 1 destaque
+  useEffect(() => {
+    if (indies.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % indies.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [indies.length]);
+
+  const indie = indies[currentIndex] || null;
 
   if (loading || !indie || isDismissed) {
     return null;
@@ -78,6 +90,23 @@ export default function IndieSpotlightBanner({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {indies.length > 1 && (
+            <div className="flex items-center gap-1 mr-1 hidden sm:flex">
+              {indies.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${
+                    idx === currentIndex
+                      ? "w-4 bg-emerald-400"
+                      : "bg-white/20 hover:bg-white/40"
+                  }`}
+                  title={`Destaque ${idx + 1} de ${indies.length}`}
+                />
+              ))}
+            </div>
+          )}
+
           <Link
             href={`/indies/${indie.slug}`}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[11px] sm:text-xs shadow-md transition-transform hover:scale-105 active:scale-95 whitespace-nowrap"

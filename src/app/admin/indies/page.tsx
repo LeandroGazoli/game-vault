@@ -31,6 +31,8 @@ import {
   Plus,
   Edit3,
   Eye,
+  Star,
+  Clock,
 } from "lucide-react";
 
 export default function AdminIndiesPage() {
@@ -128,6 +130,24 @@ export default function AdminIndiesPage() {
       loadIndies();
     } catch (err) {
       console.error("Erro ao atualizar spotlight:", err);
+      triggerWarningHaptic();
+    }
+  };
+
+  const handleUpdatePriority = async (game: IndieGame, priority: number) => {
+    try {
+      await updateIndieSpotlight(
+        game.id,
+        game.isSpotlight,
+        game.spotlightLocations || [],
+        { priority }
+      );
+      triggerSuccessHaptic();
+      setToastMessage(`Prioridade do destaque alterada para ${priority}!`);
+      setTimeout(() => setToastMessage(null), 3000);
+      loadIndies();
+    } catch (err) {
+      console.error("Erro ao atualizar prioridade:", err);
       triggerWarningHaptic();
     }
   };
@@ -277,11 +297,35 @@ export default function AdminIndiesPage() {
 
                 {/* Controles de Banner & Ações */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-white/5">
-                  {/* Seletor de Locais do Banner */}
+                  {/* Seletor de Locais do Banner & Prioridade de Rodízio */}
                   <div className="space-y-1">
-                    <span className="text-[10px] font-mono font-bold text-gray-400 uppercase block">
-                      Exibir no Banner:
-                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase block">
+                        Exibir no Banner:
+                      </span>
+                      {game.isSpotlight && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUpdatePriority(
+                              game,
+                              ((game.spotlightPriority || 0) + 1) % 3
+                            )
+                          }
+                          className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 cursor-pointer"
+                          title="Clique para alternar prioridade no rodízio (0: Padrão, 1: Alta, 2: Máxima)"
+                        >
+                          <Star className="w-2.5 h-2.5 fill-amber-300" />
+                          <span>
+                            {(game.spotlightPriority || 0) === 2
+                              ? "Prio: Máxima"
+                              : (game.spotlightPriority || 0) === 1
+                              ? "Prio: Alta"
+                              : "Prio: Normal"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5 text-[10px] font-mono">
                       {[
                         { id: "search", label: "Busca" },

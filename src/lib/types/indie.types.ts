@@ -37,6 +37,8 @@ export interface IndieGame {
   voters: string[]; // UIDs dos usuários que votaram
   isSpotlight: boolean;
   spotlightLocations: IndieSpotlightLocation[];
+  spotlightPriority?: number; // 0 = padrão, valores maiores têm maior prioridade
+  spotlightUntil?: string; // Data ISO opcional de expiração do destaque
   submittedBy: string; // UID do usuário que submeteu
   createdAt: string;
   updatedAt: string;

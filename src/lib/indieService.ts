@@ -262,11 +262,12 @@ export async function toggleVoteIndie(
 }
 
 /**
- * Busca o jogo indie ativo no banner de destaque para um local específico
+ * Busca todos os jogos indies em destaque aprovados para um local específico.
+ * Considera expiração (spotlightUntil) e ordena por prioridade decrescente.
  */
-export async function fetchSpotlightIndie(
+export async function fetchSpotlightIndies(
   location: IndieSpotlightLocation
-): Promise<IndieGame | null> {
+): Promise<IndieGame[]> {
   try {
     const q = query(
       collection(db, INDIES_COLLECTION),
@@ -274,11 +275,46 @@ export async function fetchSpotlightIndie(
       where("isSpotlight", "==", true)
     );
     const snap = await getDocs(q);
-    const indies = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IndieGame));
-    const matching = indies.find(
-      (g) => g.spotlightLocations && g.spotlightLocations.includes(location)
-    );
-    return matching || indies[0] || null;
+    const now = new Date().toISOString();
+    
+    const indies = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as IndieGame))
+      .filter((g) => {
+        // Verifica se inclui a localização
+        const matchesLoc = g.spotlightLocations && g.spotlightLocations.includes(location);
+        if (!matchesLoc) return false;
+        // Verifica se não expirou
+        if (g.spotlightUntil && g.spotlightUntil < now) return false;
+        return true;
+      })
+      .sort((a, b) => (b.spotlightPriority || 0) - (a.spotlightPriority || 0));
+
+    return indies;
+  } catch (error) {
+    console.error("Erro ao buscar destaques indie:", error);
+    return [];
+  }
+}
+
+/**
+ * Busca o jogo indie ativo no banner de destaque para um local específico,
+ * aplicando rodízio temporal entre os jogos elegíveis de maior prioridade.
+ */
+export async function fetchSpotlightIndie(
+  location: IndieSpotlightLocation
+): Promise<IndieGame | null> {
+  try {
+    const indies = await fetchSpotlightIndies(location);
+    if (indies.length === 0) return null;
+    if (indies.length === 1) return indies[0];
+
+    // Rodízio automático: agrupa pelos de maior prioridade e alterna baseado no tempo (ou aleatório ponderado)
+    const highestPriority = indies[0].spotlightPriority || 0;
+    const topTier = indies.filter((g) => (g.spotlightPriority || 0) === highestPriority);
+
+    // Alterna a cada 10 segundos ou por carregamento de página
+    const randomIndex = Math.floor(Math.random() * topTier.length);
+    return topTier[randomIndex] || indies[0];
   } catch (error) {
     console.error("Erro ao buscar spotlight indie:", error);
     return null;
@@ -357,14 +393,27 @@ export async function updateIndieStatus(
 export async function updateIndieSpotlight(
   gameId: string,
   isSpotlight: boolean,
-  spotlightLocations: IndieSpotlightLocation[]
+  spotlightLocations: IndieSpotlightLocation[],
+  options?: {
+    priority?: number;
+    until?: string | null;
+  }
 ): Promise<void> {
   const docRef = doc(db, INDIES_COLLECTION, gameId);
-  await updateDoc(docRef, {
+  const updates: Record<string, any> = {
     isSpotlight,
     spotlightLocations,
     updatedAt: new Date().toISOString(),
-  });
+  };
+
+  if (options?.priority !== undefined) {
+    updates.spotlightPriority = options.priority;
+  }
+  if (options?.until !== undefined) {
+    updates.spotlightUntil = options.until || deleteField();
+  }
+
+  await updateDoc(docRef, updates);
 }
 
 export async function deleteIndieGame(gameId: string): Promise<void> {
