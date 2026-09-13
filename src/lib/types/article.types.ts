@@ -39,6 +39,7 @@ export interface Article {
   author: ArticleAuthor;
   tags: string[];
   featured?: boolean;
+  contentHtml?: string;
   sections: ArticleSection[];
   relatedGames?: RelatedGameRef[];
 }

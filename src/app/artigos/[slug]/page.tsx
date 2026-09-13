@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCombinedArticleBySlug, getCombinedArticles } from "@/lib/articlesService";
+import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
 import {
@@ -193,32 +194,41 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         </div>
 
         {/* Conteúdo Principal do Artigo */}
-        <div className="prose prose-invert max-w-none space-y-8 text-sm sm:text-base text-gray-300 leading-relaxed">
-          {article.sections.map((section, idx) => (
-            <section key={idx} className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight border-b border-white/10 pb-2">
-                {section.heading}
-              </h2>
+        {article.contentHtml ? (
+          <div
+            className="prose prose-invert prose-emerald max-w-none space-y-6 text-sm sm:text-base text-gray-300 leading-relaxed font-sans"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeCustomHtml(article.contentHtml),
+            }}
+          />
+        ) : (
+          <div className="prose prose-invert max-w-none space-y-8 text-sm sm:text-base text-gray-300 leading-relaxed">
+            {article.sections.map((section, idx) => (
+              <section key={idx} className="space-y-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight border-b border-white/10 pb-2">
+                  {section.heading}
+                </h2>
 
-              {section.content.map((paragraph, pIdx) => (
-                <p key={pIdx} className="text-gray-300 leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
+                {section.content.map((paragraph, pIdx) => (
+                  <p key={pIdx} className="text-gray-300 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
 
-              {section.callout && (
-                <div className="my-6 p-5 rounded-2xl bg-[#141822] border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-                  {section.callout.type === "quote" ? (
-                    <Quote className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                  ) : (
-                    <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                  )}
-                  <p className="italic">{section.callout.text}</p>
-                </div>
-              )}
-            </section>
-          ))}
-        </div>
+                {section.callout && (
+                  <div className="my-6 p-5 rounded-2xl bg-[#141822] border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
+                    {section.callout.type === "quote" ? (
+                      <Quote className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    )}
+                    <p className="italic">{section.callout.text}</p>
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
 
         {/* Banner de Anúncio In-Content (Respeitando conformidade AdSense de texto denso) */}
         <div className="pt-4">
