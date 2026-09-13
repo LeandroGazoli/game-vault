@@ -28,6 +28,25 @@ export interface IndieGame {
   submittedBy: string; // UID do usuário que submeteu
   createdAt: string;
   updatedAt: string;
+
+  // Ficha técnica & metadados expandidos (equivalentes à página de jogos)
+  storyline?: string;
+  publisherName?: string;
+  gameModes?: string[]; // Ex: "Single-player", "Multiplayer", "Co-op"
+  playerPerspectives?: string[]; // Ex: "Primeira pessoa", "Terceira pessoa", "Isométrica", "2D Side-scroller"
+  themes?: string[]; // Ex: "Ficção Científica", "Fantasia", "Sobrevivência", "Cyberpunk"
+  ageRating?: string; // Ex: "Livre", "10+", "12+", "14+", "16+", "18+"
+  ptbrSupport?: {
+    audio?: boolean;
+    subtitles?: boolean;
+    interface?: boolean;
+  };
+  screenshots?: string[]; // URLs de capturas de tela adicionais
+  artworks?: string[];
+  systemRequirements?: {
+    minimum?: string;
+    recommended?: string;
+  };
 }
 
 export interface IndieComment {
@@ -56,4 +75,25 @@ export interface IndieSubmissionForm {
   steamUrl?: string;
   itchUrl?: string;
   releaseDate?: string;
+
+  // Campos expandidos da ficha técnica
+  storyline?: string;
+  publisherName?: string;
+  gameModes?: string[];
+  playerPerspectives?: string[];
+  themes?: string[];
+  ageRating?: string;
+  ptbrSupport?: {
+    audio?: boolean;
+    subtitles?: boolean;
+    interface?: boolean;
+  };
+  screenshots?: string[];
+  systemRequirements?: {
+    minimum?: string;
+    recommended?: string;
+  };
 }
+
+// Título gamer exclusivo concedido ao desenvolvedor que tem jogo aprovado
+export const INDIE_CREATOR_TITLE = "👾 Criador Indie MyGameList";

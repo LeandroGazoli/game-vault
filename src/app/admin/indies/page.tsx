@@ -6,14 +6,19 @@ import {
   IndieGame,
   IndieSpotlightLocation,
   IndieGameStatus,
+  IndieSubmissionForm,
 } from "@/lib/types/indie.types";
 import {
   fetchAllIndiesAdmin,
   updateIndieStatus,
   updateIndieSpotlight,
   deleteIndieGame,
+  submitIndieGame,
+  updateIndieGame,
 } from "@/lib/indieService";
+import { useAuth } from "@/context/AuthContext";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
+import IndieAdminModal from "@/components/indies/IndieAdminModal";
 import {
   Gamepad2,
   CheckCircle2,
@@ -24,13 +29,21 @@ import {
   RefreshCw,
   Search,
   Filter,
+  Plus,
+  Edit3,
 } from "lucide-react";
 
 export default function AdminIndiesPage() {
+  const { user } = useAuth();
   const [indies, setIndies] = useState<IndieGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Modal de criação / edição
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [gameToEdit, setGameToEdit] = useState<IndieGame | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadIndies = async () => {
     setIsLoading(true);
@@ -47,6 +60,44 @@ export default function AdminIndiesPage() {
   useEffect(() => {
     loadIndies();
   }, []);
+
+  const handleOpenCreate = () => {
+    setGameToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (game: IndieGame) => {
+    setGameToEdit(game);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveGame = async (formData: IndieSubmissionForm) => {
+    setIsSaving(true);
+    try {
+      if (gameToEdit) {
+        await updateIndieGame(gameToEdit.id, formData);
+        triggerSuccessHaptic();
+        setToastMessage(`Jogo "${formData.title}" atualizado com sucesso!`);
+      } else {
+        await submitIndieGame(formData, user?.uid || "admin", {
+          initialStatus: "approved",
+          isSpotlight: false,
+          spotlightLocations: [],
+        });
+        triggerSuccessHaptic();
+        setToastMessage(`Jogo "${formData.title}" cadastrado e publicado com sucesso!`);
+      }
+      setTimeout(() => setToastMessage(null), 3000);
+      setIsModalOpen(false);
+      loadIndies();
+    } catch (err) {
+      console.error("Erro ao salvar jogo indie pelo admin:", err);
+      triggerWarningHaptic();
+      alert("Falha ao salvar jogo indie.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleStatusChange = async (gameId: string, status: IndieGameStatus) => {
     try {
@@ -114,7 +165,7 @@ export default function AdminIndiesPage() {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header com Botão de Cadastro do Admin */}
       <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
@@ -125,18 +176,28 @@ export default function AdminIndiesPage() {
             Jogos Independentes &amp; Banners
           </h2>
           <p className="text-xs text-gray-400">
-            Aprove projetos enviados por desenvolvedores e configure em quais páginas o banner compacto será exibido.
+            Cadastre novos jogos como Admin, aprove solicitações de criadores e configure os banners.
           </p>
         </div>
 
-        <button
-          onClick={loadIndies}
-          disabled={isLoading}
-          className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
-          title="Recarregar lista"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenCreate}
+            className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Jogo</span>
+          </button>
+
+          <button
+            onClick={loadIndies}
+            disabled={isLoading}
+            className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
+            title="Recarregar lista"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* Filtro de Status */}
@@ -247,13 +308,13 @@ export default function AdminIndiesPage() {
                     </div>
                   </div>
 
-                  {/* Moderação de Status */}
+                  {/* Moderação de Status e Edição */}
                   <div className="flex items-center gap-1.5">
                     {game.status !== "approved" && (
                       <button
                         onClick={() => handleStatusChange(game.id, "approved")}
                         className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow"
-                        title="Aprovar Projeto"
+                        title="Aprovar Projeto & Conceder Título"
                       >
                         Aprovar
                       </button>
@@ -267,6 +328,13 @@ export default function AdminIndiesPage() {
                         Rejeitar
                       </button>
                     )}
+                    <button
+                      onClick={() => handleOpenEdit(game)}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-gray-300 hover:text-cyan-300"
+                      title="Editar Ficha Técnica Completa"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
                     <Link
                       href={`/indies/${game.slug}`}
                       target="_blank"
@@ -289,6 +357,15 @@ export default function AdminIndiesPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Criação / Edição do Admin */}
+      <IndieAdminModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        gameToEdit={gameToEdit}
+        onSave={handleSaveGame}
+        isSubmitting={isSaving}
+      />
     </div>
   );
 }

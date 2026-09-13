@@ -18,6 +18,7 @@ import {
   GAMER_EMOJI_SUGGESTIONS,
   ProfileLayout,
 } from "@/lib/types";
+import { INDIE_CREATOR_TITLE } from "@/lib/types/indie.types";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
 import VipBackgroundSelector from "@/components/profile/VipBackgroundSelector";
@@ -1398,6 +1399,31 @@ export default function ProfileEditView({
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {/* Se o usuário tiver a insígnia exclusiva de desenvolvedor indie, exibe em destaque ouro/roxo */}
+                {(createdTitles.includes(INDIE_CREATOR_TITLE) ||
+                  user?.customTitles?.includes(INDIE_CREATOR_TITLE) ||
+                  user?.customTitle === INDIE_CREATOR_TITLE) && (
+                  <button
+                    type="button"
+                    onClick={() => toggleEquipTitle(INDIE_CREATOR_TITLE)}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                      equippedTitles.includes(INDIE_CREATOR_TITLE)
+                        ? "bg-purple-500 text-white border-purple-400 shadow-md shadow-purple-500/25 scale-105"
+                        : "bg-purple-500/15 text-purple-300 border-purple-500/30 hover:bg-purple-500/25"
+                    }`}
+                  >
+                    <span>{INDIE_CREATOR_TITLE}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 text-amber-300 font-mono font-black">
+                      EXCLUSIVO
+                    </span>
+                    {equippedTitles.includes(INDIE_CREATOR_TITLE) && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-white text-black">
+                        #{equippedTitles.indexOf(INDIE_CREATOR_TITLE) + 1}
+                      </span>
+                    )}
+                  </button>
+                )}
+
                 {DEFAULT_GAMER_TITLES.map((title) => {
                   const isEquipped = equippedTitles.includes(title);
                   const equippedIndex = equippedTitles.indexOf(title);

@@ -21,9 +21,11 @@ import {
   IndieSubmissionForm,
   IndieSpotlightLocation,
   IndieGameStatus,
+  INDIE_CREATOR_TITLE,
 } from "./types/indie.types";
 
 const INDIES_COLLECTION = "indie_games";
+const USERS_COLLECTION = "users";
 
 function slugify(text: string): string {
   return text
@@ -36,25 +38,32 @@ function slugify(text: string): string {
 }
 
 /**
- * Submete um jogo indie para moderação
+ * Submete ou cadastra um jogo indie.
+ * Se submittedBy for informado como admin e initialStatus for "approved", o jogo já entra publicado.
  */
 export async function submitIndieGame(
   data: IndieSubmissionForm,
-  userId: string
+  userId: string,
+  options?: {
+    initialStatus?: IndieGameStatus;
+    isSpotlight?: boolean;
+    spotlightLocations?: IndieSpotlightLocation[];
+  }
 ): Promise<string> {
   const baseSlug = slugify(data.title);
   const docId = `indie-${Date.now()}`;
   const now = new Date().toISOString();
+  const status = options?.initialStatus || "pending";
 
   const newGame: IndieGame = {
     ...data,
     id: docId,
     slug: `${baseSlug}-${docId.slice(-4)}`,
-    status: "pending",
+    status,
     votesCount: 0,
     voters: [],
-    isSpotlight: false,
-    spotlightLocations: [],
+    isSpotlight: options?.isSpotlight ?? false,
+    spotlightLocations: options?.spotlightLocations ?? [],
     submittedBy: userId,
     createdAt: now,
     updatedAt: now,
@@ -62,7 +71,71 @@ export async function submitIndieGame(
 
   const docRef = doc(db, INDIES_COLLECTION, docId);
   await setDoc(docRef, newGame);
+
+  // Se já for cadastrado como aprovado (ex.: pelo próprio admin para sua conta), concede o título
+  if (status === "approved" && userId) {
+    try {
+      await grantIndieCreatorTitleToUser(userId);
+    } catch (err) {
+      console.warn("Erro ao atribuir título de criador no submit:", err);
+    }
+  }
+
   return docId;
+}
+
+/**
+ * Atualiza um jogo indie existente (utilizado na edição do admin)
+ */
+export async function updateIndieGame(
+  gameId: string,
+  data: Partial<IndieSubmissionForm> & {
+    status?: IndieGameStatus;
+    isSpotlight?: boolean;
+    spotlightLocations?: IndieSpotlightLocation[];
+  }
+): Promise<void> {
+  const docRef = doc(db, INDIES_COLLECTION, gameId);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Atribui o título gamer exclusivo "👾 Criador Indie MyGameList" ao perfil do usuário
+ */
+export async function grantIndieCreatorTitleToUser(userId: string): Promise<void> {
+  if (!userId) return;
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const userData = snap.data();
+  const currentCreatedTitles: string[] = Array.isArray(userData.createdCustomTitles)
+    ? userData.createdCustomTitles
+    : [];
+
+  const updates: Record<string, any> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (!currentCreatedTitles.includes(INDIE_CREATOR_TITLE)) {
+    updates.createdCustomTitles = arrayUnion(INDIE_CREATOR_TITLE);
+  }
+
+  // Se o usuário não tiver título customizado equipado, equipa o de criador automaticamente
+  if (!userData.customTitle) {
+    updates.customTitle = INDIE_CREATOR_TITLE;
+    const currentCustomTitles: string[] = Array.isArray(userData.customTitles)
+      ? userData.customTitles
+      : [];
+    if (!currentCustomTitles.includes(INDIE_CREATOR_TITLE)) {
+      updates.customTitles = [INDIE_CREATOR_TITLE, ...currentCustomTitles].slice(0, 3);
+    }
+  }
+
+  await updateDoc(userRef, updates);
 }
 
 /**
@@ -208,15 +281,31 @@ export async function fetchAllIndiesAdmin(): Promise<IndieGame[]> {
   }
 }
 
+/**
+ * Atualiza status e, se aprovado, concede o título exclusivo ao desenvolvedor
+ */
 export async function updateIndieStatus(
   gameId: string,
   status: IndieGameStatus
 ): Promise<void> {
   const docRef = doc(db, INDIES_COLLECTION, gameId);
+  const snap = await getDoc(docRef);
+
   await updateDoc(docRef, {
     status,
     updatedAt: new Date().toISOString(),
   });
+
+  if (status === "approved" && snap.exists()) {
+    const game = snap.data() as IndieGame;
+    if (game.submittedBy) {
+      try {
+        await grantIndieCreatorTitleToUser(game.submittedBy);
+      } catch (err) {
+        console.warn("Erro ao atribuir título exclusivo ao autor do jogo:", err);
+      }
+    }
+  }
 }
 
 export async function updateIndieSpotlight(
