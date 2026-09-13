@@ -9,6 +9,8 @@ interface PageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
+export const revalidate = 86400; // ISR: 24 horas em cache na CDN Edge
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const collection = getCollectionBySlug(slug);

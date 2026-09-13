@@ -11,7 +11,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const hltb = await fetchHLTBData(name);
-    return NextResponse.json({ hltb });
+    return NextResponse.json(
+      { hltb },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=604800, stale-while-revalidate=2592000",
+        },
+      }
+    );
   } catch (error) {
     console.error("Erro na rota HLTB:", error);
     return NextResponse.json({ hltb: null });

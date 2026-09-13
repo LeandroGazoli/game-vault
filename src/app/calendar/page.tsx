@@ -4,6 +4,8 @@ import JsonLd from "@/components/seo/JsonLd";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
+export const revalidate = 3600; // ISR: 1 hora em cache na CDN Edge
+
 export const metadata: Metadata = {
   title: "Calendário de Lançamentos de Jogos 2026",
   description:

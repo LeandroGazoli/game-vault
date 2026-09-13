@@ -301,7 +301,7 @@ export default function SpotlightSearchModal() {
           triggerAiRecommendation(trimmed);
         }, AI_SEARCH_DEBOUNCE_MS);
       }
-    }, 280);
+    }, 350);
 
     return () => {
       clearTimeout(timer);

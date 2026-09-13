@@ -18,13 +18,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const games = await getGamesByCategoryIGDB(slug, sort, platform, limit, offset);
-    return NextResponse.json({
-      category,
-      games,
-      count: games.length,
-      page,
-      hasMore: games.length >= limit,
-    });
+    return NextResponse.json(
+      {
+        category,
+        games,
+        count: games.length,
+        page,
+        hasMore: games.length >= limit,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      }
+    );
   } catch (error) {
     console.error(`Erro ao buscar jogos da categoria ${slug}:`, error);
     return NextResponse.json({ error: "Falha ao buscar jogos da categoria", games: [], count: 0 }, { status: 500 });

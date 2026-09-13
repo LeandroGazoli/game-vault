@@ -9,7 +9,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const grouped = await getCalendarGamesApi(year, month);
-    return NextResponse.json({ calendar: grouped, year, month });
+    return NextResponse.json(
+      { calendar: grouped, year, month },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (error) {
     console.error("Erro em /api/games/calendar:", error);
     return NextResponse.json({ calendar: {}, year, month }, { status: 500 });

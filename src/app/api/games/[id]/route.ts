@@ -12,7 +12,11 @@ export async function GET(
   if (id === "popular") {
     try {
       const games = await getPopularGamesApi();
-      return NextResponse.json(games);
+      return NextResponse.json(games, {
+        headers: {
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        },
+      });
     } catch (e) {
       return NextResponse.json([], { status: 500 });
     }

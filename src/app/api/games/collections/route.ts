@@ -14,11 +14,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const games = await getGamesByCollectionIGDB(slug, limit);
-    return NextResponse.json({
-      collection,
-      games,
-      count: games.length,
-    });
+    return NextResponse.json(
+      {
+        collection,
+        games,
+        count: games.length,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      }
+    );
   } catch (error) {
     console.error(`Erro ao buscar jogos da coleção ${slug}:`, error);
     return NextResponse.json({ error: "Falha ao buscar jogos da coleção", games: [], count: 0 }, { status: 500 });

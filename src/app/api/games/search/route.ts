@@ -124,7 +124,13 @@ export async function GET(request: NextRequest) {
       onlyAdult: isAdultRequested,
     });
 
-    return NextResponse.json(result);
+    const responseHeaders: Record<string, string> = {};
+    // Para buscas públicas padrão (sem autenticação de conteúdo restrito/adulto), aplica cache na borda (CDN)
+    if (!isAdultRequested) {
+      responseHeaders["Cache-Control"] = "public, s-maxage=1800, stale-while-revalidate=86400";
+    }
+
+    return NextResponse.json(result, { headers: responseHeaders });
   } catch (error) {
     console.error("Erro na busca de jogos:", error);
     return NextResponse.json({ error: "Falha ao buscar jogos", games: [], count: 0, total: 0 }, { status: 500 });
