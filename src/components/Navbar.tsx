@@ -13,6 +13,7 @@ import UserAvatar from "./UserAvatar";
 import { triggerPwaInstall } from "./PwaInstallPrompt";
 import { openSpotlightSearch } from "./SpotlightSearchModal";
 import NotificationBell from "./notifications/NotificationBell";
+import ArticlesDropdown from "./navigation/ArticlesDropdown";
 import { getProfileUrl } from "@/lib/routes";
 import { trackSignUpClick } from "@/lib/analytics";
 import {
@@ -195,6 +196,8 @@ export default function Navbar() {
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 Rankings
               </Link>
+              {/* Dropdown Exclusivo para Artigos, Guias e Análises */}
+              <ArticlesDropdown />
               <Link
                 href="/feedback"
                 className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
@@ -736,8 +739,14 @@ export default function Navbar() {
                   Explorar
                 </span>
                 {[
+                  {
+                    href: "/artigos",
+                    label: "Artigos & Guias Gamer",
+                    icon: BookOpen,
+                    color: "text-emerald-400",
+                    badge: "NOVO",
+                  },
                   { href: "/indies", label: "Vitrine de Jogos Indie", icon: Gamepad2, color: "text-purple-400" },
-                  { href: "/artigos", label: "Artigos & Guias Gamer", icon: BookOpen, color: "text-emerald-400" },
                   { href: "/calendar", label: "Calendário de Lançamentos", icon: CalendarIcon, color: "text-cyan-400" },
                   { href: "/rankings", label: "Rankings da Comunidade", icon: Sparkles, color: "text-amber-400" },
                   { href: "/feedback", label: "Ideias & Reportar Bugs", icon: Lightbulb, color: "text-yellow-400" },
@@ -761,7 +770,14 @@ export default function Navbar() {
                         <Icon className={`w-3.5 h-3.5 ${item.color}`} />
                         <span>{item.label}</span>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-neutral-600" />
+                      <div className="flex items-center gap-1.5">
+                        {item.badge && (
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            {item.badge}
+                          </span>
+                        )}
+                        <ChevronRight className="w-3.5 h-3.5 text-neutral-600" />
+                      </div>
                     </Link>
                   );
                 })}
