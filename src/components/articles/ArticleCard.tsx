@@ -19,61 +19,52 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
     return (
       <Link
         href={`/artigos/${article.slug}`}
-        className="group relative block overflow-hidden rounded-3xl border border-white/10 bg-[#141822] hover:border-emerald-500/40 transition-all duration-300 shadow-2xl hover:shadow-emerald-950/20"
+        className="group relative flex flex-col sm:flex-row items-center overflow-hidden rounded-2xl border border-white/10 bg-[#141822] hover:border-emerald-500/40 transition-all duration-300 shadow-lg hover:shadow-emerald-950/20"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-          <div className="lg:col-span-7 relative min-h-[260px] sm:min-h-[340px] overflow-hidden bg-neutral-900">
-            <img
-              src={article.coverImage}
-              alt={article.coverAlt}
-              className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105 filter brightness-[0.75] contrast-[1.05]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#141822]" />
-            <span className="absolute top-4 left-4 px-3.5 py-1.5 rounded-full bg-emerald-500 text-black font-extrabold text-xs tracking-wider uppercase shadow-lg">
-              {article.categoryLabel}
-            </span>
-          </div>
+        {/* Thumbnail compacta estilo portal de notícias */}
+        <div className="relative w-full sm:w-72 md:w-80 h-44 sm:h-36 shrink-0 overflow-hidden bg-neutral-900">
+          <img
+            src={article.coverImage}
+            alt={article.coverAlt}
+            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 filter brightness-[0.85]"
+          />
+          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-emerald-500 text-black font-extrabold text-[10px] uppercase tracking-wider shadow">
+            {article.categoryLabel}
+          </span>
+        </div>
 
-          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-xs text-gray-400 font-mono">
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                  {formattedDate}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                  {article.readTimeMinutes} min de leitura
-                </span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight leading-tight">
-                {article.title}
-              </h2>
-
-              <p className="text-xs sm:text-sm text-gray-300 line-clamp-3 leading-relaxed">
-                {article.excerpt}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={article.author.avatar}
-                  alt={article.author.name}
-                  className="w-8 h-8 rounded-full border border-white/20 object-cover"
-                />
-                <div>
-                  <p className="text-xs font-bold text-white leading-none">{article.author.name}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{article.author.role}</p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition-transform">
-                Ler Artigo <ArrowRight className="w-4 h-4" />
+        {/* Conteúdo textual direto ao ponto */}
+        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between w-full space-y-2">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-emerald-400" />
+                {formattedDate}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-emerald-400" />
+                {article.readTimeMinutes} min de leitura
               </span>
             </div>
+
+            <h2 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors tracking-tight leading-snug line-clamp-2">
+              {article.title}
+            </h2>
+
+            <p className="text-xs text-gray-400 line-clamp-1 leading-relaxed">
+              {article.excerpt}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[11px]">
+            <span className="text-gray-400 font-medium">
+              Por <strong className="text-gray-300">{article.author.name}</strong>
+            </span>
+
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-400 group-hover:translate-x-1 transition-transform">
+              Ler Notícia <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
         </div>
       </Link>

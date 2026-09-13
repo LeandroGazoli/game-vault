@@ -26,6 +26,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  getCountFromServer,
   Firestore
 } from "firebase/firestore";
 import {
@@ -237,6 +238,21 @@ export async function getAllUsersForAdmin(): Promise<UserProfile[]> {
     snapshot.forEach((docSnap) => {
       users.push(docSnap.data() as UserProfile);
     });
+
+    // Busca contagem de jogos no Vault de cada usuário em paralelo com agregação do Firestore
+    const countsResults = await Promise.allSettled(
+      users.map(async (u) => {
+        if (!u.uid || !db) return 0;
+        const countSnap = await getCountFromServer(collection(db, "users", u.uid, "games"));
+        return countSnap.data().count;
+      })
+    );
+
+    users.forEach((u, index) => {
+      const res = countsResults[index];
+      u.gamesCount = res.status === "fulfilled" ? res.value : 0;
+    });
+
     return users;
   } catch (e) {
     console.error("Erro ao listar usuários para o admin:", e);

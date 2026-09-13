@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { CATEGORIES_DATA } from "@/lib/categoriesData";
 import { COLLECTIONS_DATA } from "@/lib/collectionsData";
-import { ARTICLES_DATA } from "@/lib/articlesData";
+import { getCombinedArticles } from "@/lib/articlesService";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
 import { slugify, getGameUrl } from "@/lib/routes";
 import { getRegisteredGamePages } from "@/lib/gameRegistry";
@@ -138,9 +138,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 2. Rotas Dinâmicas de Artigos e Guias Editoriais
-  const articlePages: MetadataRoute.Sitemap = ARTICLES_DATA.map((art) => ({
+  const allArticles = await getCombinedArticles();
+  const articlePages: MetadataRoute.Sitemap = allArticles.map((art) => ({
     url: `${baseUrl}/artigos/${art.slug}`,
-    lastModified: new Date(art.updatedAt),
+    lastModified: new Date(art.updatedAt || art.publishedAt),
     changeFrequency: "weekly",
     priority: 0.8,
   }));
