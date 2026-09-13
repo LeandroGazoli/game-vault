@@ -24,7 +24,7 @@ export default function HomeSearchHero({
   const backdropImage = GTA_VI_OFFICIAL_ARTWORK;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-[#13121a] border border-white/[0.08] shadow-2xl group min-h-[460px] sm:min-h-[520px] flex flex-col justify-between">
+    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-[#13121a] border border-white/[0.08] shadow-2xl group min-h-[380px] sm:min-h-[520px] flex flex-col justify-between">
       {/* Imagem de Fundo Oficial GTA VI em Alta Definição (1080p) */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img
@@ -68,7 +68,7 @@ export default function HomeSearchHero({
         </div>
 
         {/* Barra de Busca Ampla em Destaque com Efeito Neon Sunset */}
-        <div className="w-full max-w-2xl mb-5">
+        <div className="w-full max-w-2xl mb-2 sm:mb-5">
           <div
             onClick={() => openSpotlightSearch()}
             role="button"
@@ -86,8 +86,8 @@ export default function HomeSearchHero({
           </div>
         </div>
 
-        {/* Filtros Rápidos com Estilo Console Vice City */}
-        <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+        {/* Filtros Rápidos com Estilo Console Vice City (Apenas em telas maiores que mobile) */}
+        <div className="hidden sm:flex flex-wrap items-center justify-center gap-2 text-xs">
           <Link
             href="/search?q=Grand+Theft+Auto"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff007f]/25 to-[#ff6b00]/25 hover:from-[#ff007f]/40 hover:to-[#ff6b00]/40 text-pink-200 border border-[#ff007f]/40 hover:border-[#ff007f] transition-all font-bold shadow-md active:scale-95"
