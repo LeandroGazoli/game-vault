@@ -102,17 +102,54 @@ src/
 2. **Componentes Presentacionais Puros:**
    - Sempre que um componente apenas renderiza dados baseados em props (ex: `GameStatsBar`, `GameSpecsTable`), mantenha-o desacoplado de contextos globais e requisições de rede. Isso facilita testes unitários e visualização isolada.
 
+## 📝 5. Campos de Edição de Texto (Rich Text, Markdown e HTML)
+
+- **Suporte Multi-Formato:** Todos os campos de edição de texto enriquecido (anotações, reviews, descrições personalizadas) devem implementar suporte a:
+  - **Tiptap Rich Text Editor** (WYSIWYG interativo com barra de ferramentas e atalhos).
+  - **Markdown** (edição em texto puro com formatação padrão e preview).
+  - **HTML** (código bruto / tags HTML sanitizadas).
+- **Escolha do Usuário:** A interface deve oferecer um seletor claro (ex: abas segmentadas ou dropdown de modo) permitindo que o usuário escolha qual estilo/modo de edição prefere utilizar, persistindo a preferência sempre que cabível.
+- **Sanitização e Segurança:** Qualquer renderização ou persistência de HTML/Markdown deve passar por sanitização rigorosa contra XSS antes da exibição.
+
 ---
 
-## 🛡️ 5. Padrões de TypeScript e Resiliência
+## 🪟 6. Modais/Popups vs. Páginas Dedicadas
+
+- **Popups e Modais apenas para Conteúdo Curto:** Modais, popups, bottom sheets ou dialogs devem ser restritos a ações atômicas, confirmações, feedbacks rápidos, alertas e pequenos formulários de entrada única (ex: confirmação de exclusão, quick share, seletor de nota rápido).
+- **Páginas Dedicadas para Conteúdos Avançados:** Fluxos com múltiplos campos, configurações complexas, edições aprofundadas e personalizações (ex: customização do site/perfil, edição de catálogo, configurações gerais, formulários longos) **devem obrigatoriamente ser construídos em rotas/páginas dedicadas** (`/settings/*`, `/profile/edit`, etc.), garantindo espaço adequado, boa usabilidade em dispositivos móveis e suporte a navegação/histórico de URL do navegador.
+
+---
+
+## 🛡️ 7. Padrões de TypeScript e Resiliência
 
 - **Zero `any`:** Não utilize `any`. Tipifique explicitamente as props de cada componente via `interface` ou `type`.
 - **Tratamento de Imagens e Falhas de Rede:** Qualquer imagem vinda de APIs externas (IGDB, RAWG, Steam) deve possuir tratamento de `onError` com fallback para gradiente ou placeholder SVG elegante.
 - **Progressive Enhancement:** O app deve funcionar tanto no navegador desktop quanto no mobile, suportando toques táteis, gestos de swipe e adaptação às áreas seguras (*safe-areas*) do iOS/Android.
 
+## 🔒 8. Segurança, Prevenção de Falhas e Otimização de Performance
+
+Todo código novo ou refatorado deve passar por uma checagem rigorosa de segurança, eficiência de execução e gestão de recursos antes de ser homologado:
+
+### 8.1. Auditoria de Segurança e APIs (`backend-security-coder` & `api-security-best-practices`)
+- **Validação e Sanitização Estrita:** Nunca confie em inputs de usuários ou respostas de APIs externas. Valide payloads com schemas (ex: Zod) e sanitize dados ricos (HTML/Markdown) contra ataques de XSS e injection.
+- **Autorização e IDOR:** Sempre valide permissões e posse de recursos no backend/API routes (verificar se o `userId` autenticado é o real proprietário do item antes de mutações ou leituras restritas).
+- **Proteção de Segredos e Rate Limiting:** Jamais exponha chaves de API sensíveis, tokens de serviço ou credenciais de banco no lado cliente. Aplique rate limiting e proteções contra requisições abusivas em endpoints críticos.
+- **Tratamento Seguro de Erros:** Não vaze stack traces, queries internas ou dados confidenciais em respostas de erro ou logs públicos de produção.
+
+### 8.2. Prevenção de Loops Infinitos e Memory Leaks
+- **Ciclos de Vida e Hooks no React:**
+  - Inspecione minuciosamente matrizes de dependência em `useEffect`, `useCallback` e `useMemo` para evitar re-renderizações em cascata e loops infinitos de chamadas de API.
+  - **Limpeza Obrigatória (Cleanup):** Sempre remova listeners de eventos (`window.addEventListener`), observers (`ResizeObserver`, `IntersectionObserver`), subscrições em tempo real (Firebase/WebSockets) e intervalos/timers (`setInterval`, `setTimeout`) nas funções de retorno/desmontagem dos hooks.
+- **Desacoplamento e Retenção de Memória:** Evite reter referências circulares em closures ou em stores globais de longa duração para objetos descartáveis de tela.
+
+### 8.3. Otimizações Gerais de Execução
+- **Lazy Loading e Split de Código:** Utilize carregamento dinâmico (`next/dynamic`) para componentes pesados que não são exibidos no carregamento inicial (ex: editores ricos, modais secundários, gráficos).
+- **Debounce e Throttle:** Aplique debounce em inputs de busca com digitação rápida e throttle em listeners contínuos de scroll, redimensionamento ou toques táteis.
+- **Cache e Memoização Eficiente:** Utilize estratégias de cache apropriadas (SWR/React Query/Next Cache) e memoize cálculos computacionalmente caros.
+
 ---
 
-## 🚦 6. Protocolo de Modificação para Agentes de IA
+## 🚦 9. Protocolo de Modificação para Agentes de IA
 
 Sempre que um agente for criar ou alterar código no Game Vault, deve seguir rigorosamente estes passos:
 
