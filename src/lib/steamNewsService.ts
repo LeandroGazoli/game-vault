@@ -78,17 +78,30 @@ export function extractFirstSteamImage(contents: string): string | null {
 }
 
 /**
- * Detecta se o texto está predominantemente em português ou é elegível.
+ * Detecta se o texto está genuinamente em português analisando vocabulário específico
+ * e evitando falsos positivos com preposições inglesas como "a" ou "in".
  */
 export function isPortugueseNews(title: string, contents: string): boolean {
-  const combined = `${title} ${contents}`.toLowerCase().slice(0, 800);
+  const clean = `${title} ${contents}`
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\[[^\]]*\]/g, " ");
+  const sample = clean.toLowerCase().slice(0, 1000);
 
-  // Palavras de alta frequência em português
-  const ptMatches = combined.match(
-    /\b(o|a|os|as|um|uma|de|do|da|dos|das|em|no|na|nos|nas|com|para|por|que|este|esta|jogo|jogos|atualização|atualizacoes|novidades|patch|versão|versao|correção|correcoes|melhorias|jogadores|lançamento|lancamento|grátis|gratis)\b/gi
+  // Stopwords e termos típicos em inglês
+  const englishMatches = sample.match(
+    /\b(the|and|is|are|in|with|of|to|for|from|by|which|their|players|gameplay|features|patch|update|look at|announcing|returns|adventure|explore|discover|we are|will be)\b/g
   );
 
-  return Boolean(ptMatches && ptMatches.length >= 2);
+  // Termos fortemente indicativos de português (não ambíguos)
+  const portugueseMatches = sample.match(
+    /\b(um|uma|de|do|da|dos|das|no|na|nos|nas|com|para|por|que|este|esta|jogo|jogos|atualização|atualizações|novidades|versão|versões|correção|correções|melhorias|jogadores|lançamento|grátis|está|estão|mais|sobre|veja|conheça|chegando|estará)\b/g
+  );
+
+  const engCount = englishMatches ? englishMatches.length : 0;
+  const ptCount = portugueseMatches ? portugueseMatches.length : 0;
+
+  // Só é considerado português se tiver termos claros em português e mais termos em PT do que em inglês
+  return ptCount >= 3 && ptCount > engCount;
 }
 
 /**

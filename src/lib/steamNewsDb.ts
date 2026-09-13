@@ -23,6 +23,7 @@ export interface StoredSteamNewsItem {
   feedlabel: string;
   feedname: string;
   firstImage?: string | null;
+  isTranslated?: boolean;
   updatedAt: string;
 }
 

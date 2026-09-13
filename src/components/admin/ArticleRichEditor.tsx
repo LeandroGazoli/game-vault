@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import ImageExtension from "@tiptap/extension-image";
@@ -60,7 +60,7 @@ export default function ArticleRichEditor({
     ],
     content,
     immediatelyRender: false,
-    onUpdate: ({ editor: currentEditor }) => {
+    onUpdate: ({ editor: currentEditor }: { editor: Editor }) => {
       onChange(currentEditor.getHTML());
     },
     editorProps: {
