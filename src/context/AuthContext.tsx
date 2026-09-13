@@ -368,7 +368,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth deve ser utilizado dentro de AuthProvider");
+    // Fallback defensivo para Server Components, Static Site Generation (SSG) ou pré-renderização de rotas
+    return {
+      user: null,
+      firebaseUser: null,
+      isLoading: false,
+      isPremium: false,
+      isAdmin: false,
+      signInWithGoogle: async () => {},
+      signInWithGoogleCredential: async () => {},
+      signInWithEmail: async () => {},
+      signUpWithEmail: async () => {},
+      logout: async () => {},
+      updateUserBio: async () => {},
+      updateUserProfile: async () => {},
+      upgradePlan: async () => {},
+    };
   }
   return context;
 }

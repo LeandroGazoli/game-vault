@@ -465,6 +465,11 @@ export interface UserProfile {
   moderationReason?: string | null;
   moderatedAt?: string | null;
   bannerURL?: string | null;
+  customBackground?: {
+    type: "preset" | "custom_image" | "solid_color" | "animated";
+    value: string; // url, hex (#0e0f12), ou preset id
+    animationId?: "parallax" | "sprites" | "dust" | "minimal";
+  } | null;
   theme?: ProfileTheme;
   profileLayout?: ProfileLayout;
   customTitle?: string | null;
@@ -698,6 +703,11 @@ export interface SystemSettings {
     enabled: boolean;
     maxItems: number;
     items: HeroCarouselItem[];
+  };
+  defaultBackground?: {
+    type: "preset" | "custom_image" | "solid_color" | "animated";
+    value: string; // url, hex (#0e0f12), ou preset id
+    animationId?: "parallax" | "sprites" | "dust" | "minimal";
   };
   features: {
     aiRecommendations: boolean;

@@ -177,11 +177,11 @@ export default function RootLayout({
         <JsonLd data={globalStructuredData} />
       </head>
       <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
-        <BackgroundController />
-        <BackgroundSwitcherFloating />
         <NavigationTracker />
         <ViewTransitionsProvider>
           <AuthProvider>
+            <BackgroundController />
+            <BackgroundSwitcherFloating />
             <GoogleOneTap />
             <CapacitorInit />
             <GameLibraryProvider>

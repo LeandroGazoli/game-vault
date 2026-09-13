@@ -20,6 +20,8 @@ import {
 } from "@/lib/types";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
+import VipBackgroundSelector from "@/components/profile/VipBackgroundSelector";
+import { BackgroundConfig } from "@/lib/types/background.types";
 import { isPureHtmlBio } from "@/lib/sanitizeHtml";
 import { calculateAge } from "@/lib/gameUtils";
 import {
@@ -123,7 +125,7 @@ export default function ProfileEditView({
   games = [],
   initialTab,
 }: ProfileEditViewProps) {
-  const { user, isPremium, updateUserProfile } = useAuth();
+  const { user, isPremium, isAdmin, updateUserProfile } = useAuth();
 
   const [activeSection, setActiveSection] = useState<"info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility">(initialTab || "info");
 
@@ -139,6 +141,9 @@ export default function ProfileEditView({
   const [customBannerUrl, setCustomBannerUrl] = useState<string>("");
   const [selectedTheme, setSelectedTheme] = useState<ProfileTheme>(user?.theme || "cyan");
   const [selectedLayout, setSelectedLayout] = useState<ProfileLayout>(user?.profileLayout || "default");
+  const [customBgConfig, setCustomBgConfig] = useState<BackgroundConfig | null>(
+    (user?.customBackground as BackgroundConfig) || null
+  );
 
   // Títulos e Insígnias
   const [equippedTitles, setEquippedTitles] = useState<string[]>(() => {
@@ -200,6 +205,7 @@ export default function ProfileEditView({
       setBirthDateInput(user.birthDate || "");
       setSelectedBanner(user.bannerURL || PRESET_BANNERS[0].url);
       setSelectedTheme(user.theme || "cyan");
+      setCustomBgConfig((user.customBackground as BackgroundConfig) || null);
       if (user.customTitles && Array.isArray(user.customTitles) && user.customTitles.length > 0) {
         setEquippedTitles(user.customTitles.slice(0, 3));
       } else if (user.customTitle) {
@@ -366,6 +372,7 @@ export default function ProfileEditView({
         favoriteGame: cleanFavGame,
         birthDate: birthDateInput.trim() || null,
         bannerURL: banner,
+        customBackground: customBgConfig,
         theme: selectedTheme,
         profileLayout: selectedLayout,
         customTitle: equippedTitles[0] || null, // Mantém compatibilidade com leitura legada
@@ -877,6 +884,17 @@ export default function ProfileEditView({
                 })}
               </div>
             </div>
+
+            {/* SELETOR DE BACKGROUND EXCLUSIVO VIP / PRO */}
+            <VipBackgroundSelector
+              isVipOrPro={Boolean(isPremium || user?.plan === "vip" || user?.plan === "pro" || isAdmin)}
+              value={customBgConfig}
+              onChange={(newBg) => setCustomBgConfig(newBg)}
+              onOpenUpgrade={() => {
+                if (onClose) onClose();
+                if (onOpenUpgrade) onOpenUpgrade();
+              }}
+            />
 
             {/* Estilo do Layout do Perfil (Exclusivo PRO / VIP) */}
             <div className="space-y-3 pt-3 border-t border-white/10">

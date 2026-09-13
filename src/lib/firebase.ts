@@ -377,6 +377,11 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
       },
     ],
   },
+  defaultBackground: {
+    type: "preset",
+    value: "/assets/bg/city.png",
+    animationId: "parallax",
+  },
   features: {
     aiRecommendations: true,
     communityChat: false,

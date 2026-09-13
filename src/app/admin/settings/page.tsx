@@ -19,6 +19,7 @@ import {
   Globe,
   Send,
 } from "lucide-react";
+import AdminBackgroundSettings from "@/components/admin/AdminBackgroundSettings";
 
 export default function AdminSettingsPage() {
   const { user } = useAuth();
@@ -195,6 +196,17 @@ export default function AdminSettingsPage() {
             </div>
           )}
         </div>
+
+        {/* Card: Plano de Fundo Global da Plataforma (Presets / Imagem / Cor Sólida / Animação) */}
+        <AdminBackgroundSettings
+          value={settings.defaultBackground as any}
+          onChange={(newBg) =>
+            setSettings({
+              ...settings,
+              defaultBackground: newBg as any,
+            })
+          }
+        />
 
         {/* Card: Banner Global de Notificação */}
         <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 space-y-4">
