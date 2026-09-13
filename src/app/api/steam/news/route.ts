@@ -2,17 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   SteamNewsApiResponse,
   isAllowedLanguageNews,
-  isPortugueseNews,
-  cleanSteamBBCode,
-  extractFirstSteamImage,
 } from "@/lib/steamNewsService";
-import { translateToPortuguese } from "@/lib/translate";
-import {
-  getStoredSteamNews,
-  saveTranslatedSteamNews,
-  getRecentSteamNews,
-  StoredSteamNewsItem,
-} from "@/lib/steamNewsDb";
+import { getRecentSteamNews } from "@/lib/steamNewsDb";
+import { fetchLatestGlobalSteamNews } from "@/lib/steamGlobalNewsService";
+import { processAndTranslateNewsItem } from "@/lib/steamNewsProcessor";
 
 export const dynamic = "force-dynamic";
 
@@ -20,16 +13,37 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const appId = searchParams.get("appId");
-    const count = parseInt(searchParams.get("count") || "5", 10);
-    const mode = searchParams.get("mode"); // "recent" para listar as últimas salvas no site
+    const count = parseInt(searchParams.get("count") || "10", 10);
+    const mode = searchParams.get("mode");
     const forceFresh = searchParams.get("fresh") === "true";
 
-    // Se o cliente pedir as notícias salvas mais recentes no sistema (para o painel admin ou feed geral)
+    // Modo "recent": notícias já salvas no banco
     if (mode === "recent") {
       const recentStored = await getRecentSteamNews(Math.min(count, 30));
       return NextResponse.json({
         count: recentStored.length,
         news: recentStored,
+      });
+    }
+
+    // Modo "latest" ou sem appId: busca as notícias mais recentes de qualquer jogo na Steam
+    if (mode === "latest" || (!appId && !mode)) {
+      const globalNews = await fetchLatestGlobalSteamNews(Math.min(count * 2, 30));
+      const allowedGlobal = globalNews.filter((item) =>
+        isAllowedLanguageNews(item.title, item.contents)
+      );
+      const targetItems = allowedGlobal.slice(0, Math.min(count, 15));
+
+      const processed = await Promise.all(
+        targetItems.map((item) =>
+          processAndTranslateNewsItem(item, item.appId || item.appid, forceFresh)
+        )
+      );
+
+      return NextResponse.json({
+        mode: "latest",
+        count: processed.length,
+        news: processed,
       });
     }
 
@@ -66,111 +80,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 1. Filtragem contra blogs agregadores de spam
     const allowedItems = items.filter((item) =>
       isAllowedLanguageNews(item.title, item.contents)
     );
 
-    // 2. Processa os primeiros 'count' itens
     const targetedItems = allowedItems.slice(0, Math.min(count, 10));
 
     const processedNews = await Promise.all(
-      targetedItems.map(async (item) => {
-        // Verifica se já temos tradução válida salva para este gid no Firestore
-        if (!forceFresh) {
-          const stored = await getStoredSteamNews(item.gid);
-          if (stored && stored.translatedContents) {
-            // Se o item armazenado tem translatedTitle diferente do original ou já foi traduzido
-            const hasValidTranslation =
-              stored.isTranslated &&
-              stored.translatedTitle &&
-              !isPortugueseNews(item.title, item.contents)
-                ? stored.translatedTitle !== item.title
-                : true;
-
-            if (hasValidTranslation) {
-              return {
-                ...item,
-                title: stored.translatedTitle || item.title,
-                contents: stored.translatedContents,
-                isTranslated: Boolean(stored.isTranslated),
-              };
-            }
-          }
-        }
-
-        // Se já for genuinamente em português brasileiro
-        const alreadyPt = isPortugueseNews(item.title, item.contents);
-        if (alreadyPt) {
-          const firstImg = extractFirstSteamImage(item.contents);
-          const storedItem: StoredSteamNewsItem = {
-            gid: item.gid,
-            appId: Number(appId),
-            title: item.title,
-            translatedTitle: item.title,
-            originalContents: item.contents,
-            translatedContents: item.contents,
-            author: item.author || "Steam Community",
-            url: item.url,
-            date: item.date,
-            feedlabel: item.feedlabel || "Patch Note",
-            feedname: item.feedname || "Steam Community",
-            firstImage: firstImg,
-            isTranslated: false,
-            updatedAt: new Date().toISOString(),
-          };
-          saveTranslatedSteamNews(storedItem).catch(() => {});
-          return {
-            ...item,
-            isTranslated: false,
-          };
-        }
-
-        // Se estiver em inglês ou qualquer outro idioma estrangeiro, traduz
-        try {
-          const cleanText = cleanSteamBBCode(item.contents);
-
-          // Tradução do título para PT-BR
-          const translatedTitle = await translateToPortuguese(item.title);
-
-          // Tradução do corpo para PT-BR (até 1200 caracteres para velocidade e clareza)
-          const contentSample = cleanText.slice(0, 1200);
-          const translatedBody = await translateToPortuguese(contentSample);
-
-          const firstImg = extractFirstSteamImage(item.contents);
-          const isActuallyTranslated =
-            translatedTitle !== item.title || translatedBody !== contentSample;
-
-          const storedItem: StoredSteamNewsItem = {
-            gid: item.gid,
-            appId: Number(appId),
-            title: item.title,
-            translatedTitle: translatedTitle || item.title,
-            originalContents: item.contents,
-            translatedContents: translatedBody || cleanText,
-            author: item.author || "Steam Community",
-            url: item.url,
-            date: item.date,
-            feedlabel: item.feedlabel || "Patch Note",
-            feedname: item.feedname || "Steam Community",
-            firstImage: firstImg,
-            isTranslated: isActuallyTranslated,
-            updatedAt: new Date().toISOString(),
-          };
-
-          saveTranslatedSteamNews(storedItem).catch(() => {});
-
-          return {
-            ...item,
-            title: translatedTitle || item.title,
-            contents: translatedBody || cleanText,
-            isTranslated: isActuallyTranslated,
-          };
-        } catch (err) {
-          console.warn(`Erro ao traduzir notícia ${item.gid}:`, err);
-          return item;
-        }
-      })
+      targetedItems.map((item) =>
+        processAndTranslateNewsItem(item, Number(appId), forceFresh)
+      )
     );
 
     return NextResponse.json({

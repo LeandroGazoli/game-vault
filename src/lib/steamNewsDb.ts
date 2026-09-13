@@ -22,6 +22,7 @@ export interface StoredSteamNewsItem {
   date: number; // unix timestamp
   feedlabel: string;
   feedname: string;
+  gameName?: string;
   firstImage?: string | null;
   isTranslated?: boolean;
   updatedAt: string;
