@@ -210,7 +210,7 @@ export function computeLibraryStats(games: UserGame[]): LibraryStats {
     droppedCount: dropped,
     backlogCount: backlog,
     libraryCount,
-    totalPlaytimeHours: totalPlaytime,
+    totalPlaytimeHours: Math.round((totalPlaytime + Number.EPSILON) * 10) / 10,
     averageRating: ratedCount > 0 ? Number((ratingSum / ratedCount).toFixed(1)) : 0,
     ratedCount,
     topGenres,

@@ -14,7 +14,8 @@ export function formatGameDuration(
   userHours?: number | null
 ): { text: string; isEstimated: boolean; isTbd: boolean } {
   if (typeof userHours === "number" && userHours > 0) {
-    return { text: `${userHours}h`, isEstimated: false, isTbd: false };
+    const formattedHours = Math.round((userHours + Number.EPSILON) * 10) / 10;
+    return { text: `${formattedHours}h`, isEstimated: false, isTbd: false };
   }
 
   const hltbHours = game.hltb?.mainStory;
