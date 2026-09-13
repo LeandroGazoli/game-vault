@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { IndieSubmissionForm } from "@/lib/types/indie.types";
 import IndieDescriptionEditor from "./IndieDescriptionEditor";
+import IndieCatalogMatcher from "./IndieCatalogMatcher";
 import {
   Gamepad2,
   Image as ImageIcon,
@@ -17,6 +18,7 @@ import {
   Globe,
   Plus,
   Trash2,
+  BookOpen,
 } from "lucide-react";
 
 interface IndieFormFieldsProps {
@@ -39,6 +41,22 @@ export default function IndieFormFields({
   const [descriptionMode, setDescriptionMode] = useState<"tiptap" | "html" | "markdown">(
     initialValues?.descriptionMode || "markdown"
   );
+  // Notas do Desenvolvedor (Dev Notes / Devlog)
+  const [devNotes, setDevNotes] = useState(initialValues?.devNotes || "");
+  const [devNotesMode, setDevNotesMode] = useState<"tiptap" | "html" | "markdown">(
+    initialValues?.devNotesMode || "markdown"
+  );
+  // Vinculação ao catálogo geral
+  const [linkedGameId, setLinkedGameId] = useState<number | string | undefined>(
+    initialValues?.linkedGameId
+  );
+  const [linkedGameName, setLinkedGameName] = useState<string | undefined>(
+    initialValues?.linkedGameName
+  );
+  const [linkedGameSlug, setLinkedGameSlug] = useState<string | undefined>(
+    initialValues?.linkedGameSlug
+  );
+
   const [storyline, setStoryline] = useState(initialValues?.storyline || "");
   const [developerName, setDeveloperName] = useState(initialValues?.developerName || "");
   const [developerEmail, setDeveloperEmail] = useState(initialValues?.developerEmail || "");
@@ -85,6 +103,10 @@ export default function IndieFormFields({
   const [itchUrl, setItchUrl] = useState(initialValues?.itchUrl || "");
   const [studioWebsite, setStudioWebsite] = useState(initialValues?.studioWebsite || "");
   const [contactDiscord, setContactDiscord] = useState(initialValues?.contactDiscord || "");
+  const [youtubeUrl, setYoutubeUrl] = useState(initialValues?.youtubeUrl || "");
+  const [tiktokUrl, setTiktokUrl] = useState(initialValues?.tiktokUrl || "");
+  const [twitterUrl, setTwitterUrl] = useState(initialValues?.twitterUrl || "");
+  const [instagramUrl, setInstagramUrl] = useState(initialValues?.instagramUrl || "");
   const [minReq, setMinReq] = useState(initialValues?.systemRequirements?.minimum || "");
   const [recReq, setRecReq] = useState(initialValues?.systemRequirements?.recommended || "");
 
@@ -101,12 +123,21 @@ export default function IndieFormFields({
       tagline: tagline.trim(),
       description: description.trim(),
       descriptionMode,
+      devNotes: devNotes.trim() || undefined,
+      devNotesMode: devNotes.trim() ? devNotesMode : undefined,
+      linkedGameId: linkedGameId || undefined,
+      linkedGameName: linkedGameName || undefined,
+      linkedGameSlug: linkedGameSlug || undefined,
       storyline: storyline.trim() || undefined,
       developerName: developerName.trim(),
       developerEmail: developerEmail.trim(),
       publisherName: publisherName.trim() || undefined,
       studioWebsite: studioWebsite.trim() || undefined,
       contactDiscord: contactDiscord.trim() || undefined,
+      youtubeUrl: youtubeUrl.trim() || undefined,
+      tiktokUrl: tiktokUrl.trim() || undefined,
+      twitterUrl: twitterUrl.trim() || undefined,
+      instagramUrl: instagramUrl.trim() || undefined,
       coverImage: coverImage.trim(),
       bannerImage: bannerImage.trim() || undefined,
       trailerUrl: trailerUrl.trim() || undefined,
@@ -451,7 +482,7 @@ export default function IndieFormFields({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-300">Comunidade Discord / Link Social</label>
+            <label className="text-xs font-bold text-gray-300">Comunidade Discord</label>
             <input
               type="url"
               value={contactDiscord}
@@ -461,6 +492,89 @@ export default function IndieFormFields({
             />
           </div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-white/5">
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-gray-300">Canal YouTube</label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://youtube.com/@..."
+              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-gray-300">TikTok</label>
+            <input
+              type="url"
+              value={tiktokUrl}
+              onChange={(e) => setTiktokUrl(e.target.value)}
+              placeholder="https://tiktok.com/@..."
+              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-gray-300">Twitter / X</label>
+            <input
+              type="url"
+              value={twitterUrl}
+              onChange={(e) => setTwitterUrl(e.target.value)}
+              placeholder="https://x.com/..."
+              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-gray-300">Instagram</label>
+            <input
+              type="url"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/..."
+              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 6. VÍNCULO COM O CATÁLOGO PRINCIPAL (IGDB / VAULT) */}
+      <IndieCatalogMatcher
+        linkedGameId={linkedGameId}
+        linkedGameName={linkedGameName}
+        linkedGameSlug={linkedGameSlug}
+        onSelectGame={(g) => {
+          setLinkedGameId(g ? g.id : undefined);
+          setLinkedGameName(g ? g.name : undefined);
+          setLinkedGameSlug(g ? g.slug : undefined);
+        }}
+        defaultSearchTitle={title}
+      />
+
+      {/* 7. NOTAS DO DESENVOLVEDOR & DIÁRIO DE PRODUÇÃO (DEVLOG) */}
+      <div className="space-y-4 p-5 rounded-2xl bg-black/20 border border-white/5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+            <BookOpen className="w-4 h-4" /> 7. Notas do Desenvolvedor (Dev Notes / Devlog)
+          </h3>
+          <span className="text-[10px] font-mono text-gray-400">
+            Aba dedicada na página do jogo
+          </span>
+        </div>
+
+        <p className="text-xs text-gray-400">
+          Compartilhe atualizações de desenvolvimento, bastidores, patches, metas da campanha ou cartas abertas aos jogadores.
+        </p>
+
+        <IndieDescriptionEditor
+          content={devNotes}
+          onChange={setDevNotes}
+          mode={devNotesMode}
+          onModeChange={setDevNotesMode}
+          placeholder="Escreva aqui suas notas de desenvolvimento, novidades da versão, agradecimentos ou planos futuros..."
+        />
       </div>
 
       {/* BOTÃO DE SUBMISSÃO */}

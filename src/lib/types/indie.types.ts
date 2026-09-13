@@ -13,6 +13,10 @@ export interface IndieGame {
   developerEmail: string;
   studioWebsite?: string;
   contactDiscord?: string;
+  youtubeUrl?: string;
+  tiktokUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
   coverImage: string;
   bannerImage?: string;
   trailerUrl?: string;
@@ -21,6 +25,13 @@ export interface IndieGame {
   steamUrl?: string;
   itchUrl?: string;
   releaseDate?: string;
+  // Vinculação ao catálogo geral (IGDB / RAWG)
+  linkedGameId?: number | string;
+  linkedGameSlug?: string;
+  linkedGameName?: string;
+  // Notas e Atualizações do Desenvolvedor (Dev Notes / Devlog)
+  devNotes?: string;
+  devNotesMode?: "tiptap" | "html" | "markdown" | null;
   status: IndieGameStatus;
   votesCount: number;
   voters: string[]; // UIDs dos usuários que votaram
@@ -69,6 +80,10 @@ export interface IndieSubmissionForm {
   developerEmail: string;
   studioWebsite?: string;
   contactDiscord?: string;
+  youtubeUrl?: string;
+  tiktokUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
   coverImage: string;
   bannerImage?: string;
   trailerUrl?: string;
@@ -77,6 +92,13 @@ export interface IndieSubmissionForm {
   steamUrl?: string;
   itchUrl?: string;
   releaseDate?: string;
+  // Vinculação ao catálogo geral (IGDB / RAWG)
+  linkedGameId?: number | string;
+  linkedGameSlug?: string;
+  linkedGameName?: string;
+  // Notas e Atualizações do Desenvolvedor (Dev Notes / Devlog)
+  devNotes?: string;
+  devNotesMode?: "tiptap" | "html" | "markdown" | null;
 
   // Campos expandidos da ficha técnica
   storyline?: string;

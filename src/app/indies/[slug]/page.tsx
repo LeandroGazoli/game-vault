@@ -6,6 +6,8 @@ import { fetchIndieBySlug, fetchApprovedIndies } from "@/lib/indieService";
 import IndieVoteButton from "@/components/indies/IndieVoteButton";
 import IndieCommentsSection from "@/components/indies/IndieCommentsSection";
 import IndieDescriptionRenderer from "@/components/indies/IndieDescriptionRenderer";
+import IndieMainContentTabs from "@/components/indies/IndieMainContentTabs";
+import { getGameUrl } from "@/lib/routes";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
 import {
@@ -24,6 +26,12 @@ import {
   Play,
   Eye,
   AlertTriangle,
+  Youtube,
+  Twitter,
+  Instagram,
+  Music2,
+  MessageSquare,
+  Link2,
 } from "lucide-react";
 
 interface PageProps {
@@ -267,81 +275,76 @@ export default async function IndieGameDetailPage({ params }: PageProps) {
                     <span>Site Oficial</span>
                   </a>
                 )}
+
+                {game.contactDiscord && (
+                  <a
+                    href={game.contactDiscord}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#5865F2] font-bold text-xs border border-[#5865F2]/40 transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Discord</span>
+                  </a>
+                )}
+
+                {game.youtubeUrl && (
+                  <a
+                    href={game.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 border border-white/10 transition-colors"
+                    title="Canal no YouTube"
+                  >
+                    <Youtube className="w-4 h-4" />
+                  </a>
+                )}
+
+                {game.tiktokUrl && (
+                  <a
+                    href={game.tiktokUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-pink-500/20 text-gray-300 hover:text-pink-400 border border-white/10 transition-colors"
+                    title="Perfil no TikTok"
+                  >
+                    <Music2 className="w-4 h-4" />
+                  </a>
+                )}
+
+                {game.twitterUrl && (
+                  <a
+                    href={game.twitterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-sky-500/20 text-gray-300 hover:text-sky-400 border border-white/10 transition-colors"
+                    title="Perfil no Twitter / X"
+                  >
+                    <Twitter className="w-4 h-4" />
+                  </a>
+                )}
+
+                {game.instagramUrl && (
+                  <a
+                    href={game.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-gray-300 hover:text-purple-400 border border-white/10 transition-colors"
+                    title="Perfil no Instagram"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Layout em 2 Colunas: Sinopse & Trailer (Esquerda) vs Ficha Técnica (Direita) */}
+        {/* Layout em 2 Colunas: Conteúdo Principal com Abas (Esquerda) vs Ficha Técnica (Direita) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Coluna Principal */}
+          {/* Coluna Principal com Abas (Visão Geral, Notas do Dev, Mídias) */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Trailer do Jogo */}
-            {embedUrl && (
-              <section className="rounded-3xl border border-white/10 bg-[#141822] p-6 space-y-3">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                  <Play className="w-4 h-4 text-emerald-400" /> Trailer Oficial de Gameplay
-                </h2>
-                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black border border-white/5 shadow-xl">
-                  <iframe
-                    src={embedUrl}
-                    title={`${game.title} Trailer`}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              </section>
-            )}
-
-            {/* Sinopse & Apresentação */}
-            <section className="rounded-3xl border border-white/10 bg-[#141822] p-6 sm:p-8 space-y-4">
-              <h2 className="text-lg sm:text-xl font-black text-white tracking-tight border-b border-white/10 pb-3">
-                Sobre o Projeto &amp; Visão do Desenvolvedor
-              </h2>
-              <IndieDescriptionRenderer
-                content={game.description}
-                mode={game.descriptionMode}
-              />
-            </section>
-
-            {/* Enredo e História */}
-            {game.storyline && (
-              <section className="rounded-3xl border border-white/10 bg-[#141822] p-6 sm:p-8 space-y-4">
-                <h2 className="text-lg font-bold text-white tracking-tight border-b border-white/10 pb-3">
-                  Universo &amp; Enredo
-                </h2>
-                <div className="text-sm text-gray-300 leading-relaxed space-y-4 whitespace-pre-line">
-                  {game.storyline}
-                </div>
-              </section>
-            )}
-
-            {/* Galeria de Screenshots */}
-            {game.screenshots && game.screenshots.length > 0 && (
-              <section className="rounded-3xl border border-white/10 bg-[#141822] p-6 space-y-3">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                  Galeria de Imagens &amp; Screenshots
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {game.screenshots.map((sUrl, idx) => (
-                    <a
-                      key={idx}
-                      href={sUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-xl overflow-hidden aspect-video bg-black/40 border border-white/10 group relative block"
-                    >
-                      <img
-                        src={sUrl}
-                        alt={`${game.title} Screenshot ${idx + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
+            <IndieMainContentTabs game={game} embedUrl={embedUrl} />
           </div>
 
           {/* Coluna Lateral: Ficha Técnica Completa (Padrão GameDetail) */}
@@ -432,6 +435,30 @@ export default async function IndieGameDetailPage({ params }: PageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Vínculo com Catálogo Principal (IGDB / RAWG) */}
+            {game.linkedGameId && (
+              <div className="rounded-3xl border border-cyan-500/30 bg-cyan-500/5 p-5 space-y-3 shadow-lg">
+                <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs font-bold uppercase">
+                  <Link2 className="w-4 h-4" />
+                  <span>Catálogo Principal Game Vault</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Este título indie está conectado à base oficial. Adicione ao seu backlog, registre seu tempo de jogo e sincronize com sua biblioteca.
+                </p>
+                <Link
+                  href={getGameUrl({
+                    id: game.linkedGameId,
+                    name: game.linkedGameName || game.title,
+                    slug: game.linkedGameSlug,
+                  })}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs transition-colors"
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>Ver no Catálogo do Vault</span>
+                </Link>
+              </div>
+            )}
 
             {/* Banner Informativo de Criador */}
             <div className="rounded-3xl border border-purple-500/20 bg-purple-500/5 p-5 space-y-2">

@@ -7,28 +7,47 @@ import { IndieSubmissionForm } from "../types/indie.types";
 export const SOMETHING_MEANINGFUL_DRIVE_DATA: IndieSubmissionForm = {
   title: "Something Meaningful",
   tagline: "Um RPG de mundo aberto surrealista onde você decide como vai viver após a morte.",
-  description: `Após ser “desconectado” do mundo real, você desperta dentro de um programa experimental de pós-vida, um espaço digital projetado no estilo nostálgico dos anos 90.
+  description: `Após ser “desconectado” do mundo real, você desperta dentro de um **programa experimental de pós-vida**, um espaço digital projetado no estilo nostálgico dos anos 90.
 
-Criado pela Xmeta Corp, uma empresa de tecnologia de ponta que vende conforto através da nostalgia, esse mundo simulado ainda está em fase beta. Você, assim como os outros aqui, aceitou fazer o upload da própria consciência em troca de alguns trocados.
+Criado pela **Xmeta Corp**, uma empresa de tecnologia de ponta que vende conforto através da nostalgia, esse mundo simulado ainda está em fase beta. Você, assim como os outros aqui, aceitou fazer o upload da própria consciência em troca de alguns trocados.
 
 Agora, preso nesse paraíso artificial, todos tentam encontrar significado, propósito... e talvez uma forma de se sentir vivo novamente.
 
-* CONSTRUA SUA JORNADA: Começando sem privilégios, você vai precisar se esforçar para melhorar seus atributos, adquirir novas habilidades e conquistar itens. A cada conquista, você ganha acesso a novas áreas, novas possibilidades e a uma cidade cada vez mais viva.
-* EXPLORE O MUNDO: Experiência caótica, bem-humorada e repleta de momentos inesperados! Um diálogo engraçado, situações inusitadas e surpresas a cada esquina.
-* JOGUE MINIGAMES: Cada minigame é diferente do anterior — ganhe novos itens, desbloqueie melhorias e vença competições.
-* CONHEÇA PERSONAGENS ÚNICOS: Interaja com todos e descubra como suas escolhas moldam a jornada.`,
+### 🌟 Destaques da Experiência
+* **➔ CONSTRUA SUA JORNADA:** Começando sem privilégios, você vai precisar se esforçar para melhorar seus atributos, adquirir novas habilidades e conquistar itens. A cada conquista, você ganha acesso a novas áreas, novas possibilidades e a uma cidade cada vez mais viva e cheia de oportunidades.
+* **➔ EXPLORE O MUNDO:** A experiência é caótica, bem-humorada e repleta de momentos inesperados! Um diálogo engraçado, situações inusitadas e surpresas a cada esquina.
+* **➔ JOGUE MINIGAMES:** Cada minigame é diferente do anterior — ganhe novos itens, desbloqueie melhorias e vença competições.
+* **➔ CONHEÇA PERSONAGENS ÚNICOS:** Uma IA desenvolvida pela Xmeta Corp garante avatares singulares. Interaja com todos e descubra como suas escolhas moldam a jornada.`,
   descriptionMode: "markdown",
+  devNotes: `### 🎮 Mensagem do Time de Desenvolvimento — Mon Ami Interactive
+
+Olá, jogadores e entusiastas de jogos independentes!
+
+Somos um pequeno estúdio independente brasileiro formado por **três desenvolvedores** que deixaram suas carreiras anteriores para se dedicar integralmente à criação de **Something Meaningful**.
+
+Combinando visão criativa, habilidade técnica e uma abordagem multidisciplinar, nossa proposta é entregar um RPG de mundo aberto surreal — algo que pareça ao mesmo tempo estranho, instigante e profundamente humano.
+
+> 🏆 **Reconhecimento Cultural:** Este projeto é realizado com o valoroso apoio da **Fundação Catarinense de Cultura** através do **Prêmio Catarinense de Cinema**.
+
+Agradecemos imensamente a todos que estão acompanhando o projeto desde as primeiras versões, adicionando à **Wishlist na Steam** e participando das discussões na nossa comunidade do Discord!`,
+  devNotesMode: "markdown",
   storyline: "Após a morte, a consciência do jogador é transferida para uma simulação computacional dos anos 90 mantida pela enigmática Xmeta Corp. Em meio ao caos corporativo e habitantes excêntricos, sua missão é buscar relevância e significado para sua nova existência eterna.",
   developerName: "Mon Ami Interactive",
   developerEmail: "monamiinteractive@gmail.com",
   publisherName: "Mon Ami Interactive (Apoio Fundação Catarinense de Cultura)",
-  platforms: ["PC"],
+  contactDiscord: "https://discord.com/invite/daW2w4ewJm",
+  steamUrl: "https://store.steampowered.com/app/4006300/Something_Meaningful/",
+  youtubeUrl: "https://www.youtube.com/@monamiverso",
+  tiktokUrl: "https://www.tiktok.com/@monamiverso",
+  twitterUrl: "https://x.com/monamigames",
+  instagramUrl: "https://www.instagram.com/monami_interactive",
+  platforms: ["PC (Steam)"],
   genres: ["RPG", "Mundo Aberto", "Simulação", "Aventura", "Comédia"],
   gameModes: ["Single-player"],
   playerPerspectives: ["Terceira pessoa", "Isométrica"],
   themes: ["Surrealismo", "Nostalgia Anos 90", "Ficção Científica", "Humor Negro"],
   ageRating: "14+",
-  releaseDate: "Em breve",
+  releaseDate: "Em breve (2026)",
   // Assets de alta resolução diretamente do Google Drive (lh3.googleusercontent.com / Google Drive Preview)
   coverImage: "https://lh3.googleusercontent.com/d/1C3NlrnK65m8Ue2q3lR75v8uSBd4PydJS=w1200",
   bannerImage: "https://lh3.googleusercontent.com/d/19TI6OAVCU9N9xp86_Kabd4sXSlQ9_4sH=w1600",

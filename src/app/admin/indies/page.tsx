@@ -69,6 +69,25 @@ export default function AdminIndiesPage() {
         } catch (seedErr) {
           console.error("Erro ao provisionar jogo rascunho Something Meaningful:", seedErr);
         }
+      } else if (existingDriveGame && (!existingDriveGame.devNotes || !existingDriveGame.steamUrl)) {
+        // Atualiza os novos metadados completos (redes sociais, dev notes, steam)
+        try {
+          await updateIndieGame(existingDriveGame.id, {
+            steamUrl: SOMETHING_MEANINGFUL_DRIVE_DATA.steamUrl,
+            contactDiscord: SOMETHING_MEANINGFUL_DRIVE_DATA.contactDiscord,
+            youtubeUrl: SOMETHING_MEANINGFUL_DRIVE_DATA.youtubeUrl,
+            tiktokUrl: SOMETHING_MEANINGFUL_DRIVE_DATA.tiktokUrl,
+            twitterUrl: SOMETHING_MEANINGFUL_DRIVE_DATA.twitterUrl,
+            instagramUrl: SOMETHING_MEANINGFUL_DRIVE_DATA.instagramUrl,
+            devNotes: SOMETHING_MEANINGFUL_DRIVE_DATA.devNotes,
+            devNotesMode: SOMETHING_MEANINGFUL_DRIVE_DATA.devNotesMode,
+            description: SOMETHING_MEANINGFUL_DRIVE_DATA.description,
+            descriptionMode: SOMETHING_MEANINGFUL_DRIVE_DATA.descriptionMode,
+          });
+          data = await fetchAllIndiesAdmin();
+        } catch (updateErr) {
+          console.error("Erro ao sincronizar metadados do Something Meaningful:", updateErr);
+        }
       }
 
       setIndies(data);
