@@ -92,23 +92,17 @@ export function isPortugueseNews(title: string, contents: string): boolean {
 }
 
 /**
- * Filtra matérias indesejadas (em cirílico/russo, chinês/japonês/coreano, árabe, etc.)
+ * Valida se a matéria é elegível para exibição e tradução (evitando blogs de spam irrelevantes).
+ * Aceita matérias em qualquer idioma estrangeiro (inglês, russo, chinês, japonês, etc.)
+ * pois serão traduzidas sob demanda e salvas em PT-BR.
  */
 export function isAllowedLanguageNews(title: string, contents: string): boolean {
-  const sample = `${title} ${contents.slice(0, 400)}`;
+  const sample = `${title} ${contents.slice(0, 400)}`.toLowerCase();
 
-  // Cirílico (Russo, Ucraniano, etc.)
-  if (/[\u0400-\u04FF]/.test(sample)) return false;
-
-  // CJK (Chinês, Japonês, Coreano)
-  if (/[\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF]/.test(sample)) return false;
-
-  // Árabe, Hebraico, Tailandês
-  if (/[\u0600-\u06FF\u0590-\u05FF\u0E00-\u0E7F]/.test(sample)) return false;
-
-  // Rejeita feeds agregadores conhecidos que não são comunicados de jogos
-  const lower = sample.toLowerCase();
-  if (lower.includes("gamemag.ru") || lower.includes("3dnews.ru")) return false;
+  // Rejeita unicamente feeds de agregadores de pirataria ou blogs conhecidos por não serem notas de jogos
+  if (sample.includes("3dnews.ru/assets") || sample.includes("warez") || sample.includes("crackwatch")) {
+    return false;
+  }
 
   return true;
 }

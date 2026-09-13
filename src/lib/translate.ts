@@ -100,16 +100,17 @@ function splitIntoSafeChunks(text: string, maxLen = 300): string[] {
 /**
  * Traduz um trecho individual respeitando os limites estritos da API
  */
-async function translateChunk(chunk: string): Promise<string> {
+async function translateChunk(chunk: string, sourceLang: string = "autodetect"): Promise<string> {
   const trimmed = chunk.trim();
   if (!trimmed) return chunk;
 
-  if (translationCache.has(trimmed)) {
-    return translationCache.get(trimmed)!;
+  const cacheKey = `${sourceLang}:${trimmed}`;
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey)!;
   }
 
   try {
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|pt-BR&de=contato@mygameslist.com.br`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=${sourceLang}|pt-BR&de=contato@mygameslist.com.br`;
     const res = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -126,7 +127,7 @@ async function translateChunk(chunk: string): Promise<string> {
       if (status === 200 && isCleanTranslation(translated)) {
         const sanitized = sanitizeTranslation(translated);
         if (sanitized) {
-          setTranslationCache(trimmed, sanitized);
+          setTranslationCache(cacheKey, sanitized);
           return sanitized;
         }
       }
@@ -140,15 +141,16 @@ async function translateChunk(chunk: string): Promise<string> {
 }
 
 /**
- * Traduz um texto em inglês para Português Brasileiro (PT-BR) com cache em memória,
+ * Traduz qualquer texto estrangeiro para Português Brasileiro (PT-BR) com auto-detecção de idioma e cache,
  * garantindo integridade de parágrafos e segurança contra limites de requisição.
  */
-export async function translateToPortuguese(text: string): Promise<string> {
+export async function translateToPortuguese(text: string, sourceLang: string = "autodetect"): Promise<string> {
   if (!text || text.trim().length === 0) return text;
 
   const trimmed = sanitizeTranslation(text.trim());
-  if (translationCache.has(trimmed)) {
-    return translationCache.get(trimmed)!;
+  const cacheKey = `${sourceLang}:${trimmed}`;
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey)!;
   }
 
   try {
@@ -162,20 +164,20 @@ export async function translateToPortuguese(text: string): Promise<string> {
 
       // Garante que cada fatia tenha no máximo 300 caracteres (bem abaixo do limite de 500 do MyMemory)
       const chunks = splitIntoSafeChunks(cleanPara, 300);
-      const translatedChunks = await Promise.all(chunks.map((c) => translateChunk(c)));
+      const translatedChunks = await Promise.all(chunks.map((c) => translateChunk(c, sourceLang)));
 
       translatedParagraphs.push(translatedChunks.join(" "));
     }
 
     const fullResult = sanitizeTranslation(translatedParagraphs.join("\n\n"));
     if (isCleanTranslation(fullResult) && fullResult.length > 0) {
-      setTranslationCache(trimmed, fullResult);
+      setTranslationCache(cacheKey, fullResult);
       return fullResult;
     }
 
     return trimmed;
   } catch (error) {
-    console.warn("Erro na tradução da sinopse:", error);
+    console.warn("Erro na tradução:", error);
     return trimmed;
   }
 }
