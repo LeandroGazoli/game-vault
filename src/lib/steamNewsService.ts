@@ -10,6 +10,8 @@ export interface SteamNewsItem {
   feedname: string;
   feed_type: number;
   appid: number;
+  appId?: number;
+  gameName?: string;
   isTranslated?: boolean;
 }
 
