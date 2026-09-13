@@ -9,6 +9,7 @@ import {
   Sparkles,
   Flame,
   Globe,
+  Newspaper,
   Filter,
 } from "lucide-react";
 import {
@@ -17,10 +18,12 @@ import {
   extractFirstSteamImage,
 } from "@/lib/steamNewsService";
 import { NewsDataArticle } from "@/lib/newsDataService";
+import { GNewsArticle } from "@/lib/gnewsService";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import SteamNewsCard from "./SteamNewsCard";
 import SteamAppIdSearchForm from "./SteamAppIdSearchForm";
 import NewsDataCard from "./NewsDataCard";
+import GNewsCard from "./GNewsCard";
 
 export interface ImportedArticleData {
   title: string;
@@ -56,12 +59,17 @@ export default function NewsImportModal({
   onClose,
   onSelectNews,
 }: NewsImportModalProps) {
-  const [sourceTab, setSourceTab] = useState<"newsdata" | "steam">("newsdata");
+  const [sourceTab, setSourceTab] = useState<"newsdata" | "gnews" | "steam">("newsdata");
   
   // NewsData.io state
   const [newsDataQuery, setNewsDataQuery] = useState("games OR jogo OR jogos OR video game");
   const [newsDataArticles, setNewsDataArticles] = useState<NewsDataArticle[]>([]);
   const [loadingNewsData, setLoadingNewsData] = useState(false);
+
+  // GNews.io state
+  const [gnewsQuery, setGnewsQuery] = useState("jogos OR video game");
+  const [gnewsArticles, setGnewsArticles] = useState<GNewsArticle[]>([]);
+  const [loadingGNews, setLoadingGNews] = useState(false);
   
   // Steam state
   const [steamTab, setSteamTab] = useState<"latest" | "search">("latest");
@@ -79,6 +87,8 @@ export default function NewsImportModal({
     if (isOpen) {
       if (sourceTab === "newsdata" && newsDataArticles.length === 0) {
         loadNewsData();
+      } else if (sourceTab === "gnews" && gnewsArticles.length === 0) {
+        loadGNews();
       } else if (sourceTab === "steam" && steamLatestList.length === 0) {
         loadLatestSteamNews();
       }
@@ -98,6 +108,22 @@ export default function NewsImportModal({
       console.warn("Erro ao buscar notícias NewsData:", err);
     } finally {
       setLoadingNewsData(false);
+    }
+  };
+
+  const loadGNews = async (customQuery?: string) => {
+    setLoadingGNews(true);
+    try {
+      const q = encodeURIComponent(customQuery ?? gnewsQuery);
+      const res = await fetch(`/api/gnews?q=${q}&lang=pt&max=10`);
+      if (res.ok) {
+        const data = await res.json();
+        setGnewsArticles(data.articles || []);
+      }
+    } catch (err) {
+      console.warn("Erro ao buscar notícias GNews:", err);
+    } finally {
+      setLoadingGNews(false);
     }
   };
 
@@ -205,7 +231,6 @@ export default function NewsImportModal({
       return;
     }
 
-    // Importação direta
     onSelectNews({
       title: item.title,
       subtitle: `Matéria informada via ${item.source_name || "NewsData.io"}`,
@@ -214,6 +239,63 @@ export default function NewsImportModal({
       tags,
       content: rawContent,
       sourceUrl: item.link,
+      category: "industria",
+    });
+
+    triggerSuccessHaptic();
+    onClose();
+  };
+
+  // Import Handler para GNews.io
+  const handleImportGNews = async (item: GNewsArticle, rewriteWithAI: boolean) => {
+    const rawContent = `${item.title}\n\n${item.description || ""}\n\n${item.content || ""}`;
+    const cover = item.image || "https://images.igdb.com/igdb/image/upload/t_1080p/co670h.jpg";
+    const tags = ["Games", "GNews", item.source?.name || "Notícias"];
+
+    if (rewriteWithAI) {
+      setRewritingId(item.id);
+      try {
+        const aiOutput = await requestAiRewrite({
+          title: item.title,
+          content: rawContent,
+          sourceName: item.source?.name || "GNews",
+          sourceUrl: item.url,
+        });
+
+        onSelectNews({
+          title: aiOutput.title,
+          subtitle: aiOutput.subtitle,
+          slug: aiOutput.slug,
+          excerpt: aiOutput.excerpt,
+          category: aiOutput.category,
+          tags: aiOutput.tags || tags,
+          readTimeMinutes: aiOutput.readTimeMinutes || 4,
+          coverImage: cover,
+          content: rawContent,
+          contentHtml: aiOutput.contentHtml,
+          sourceUrl: item.url,
+        });
+
+        triggerSuccessHaptic();
+        onClose();
+      } catch (err: any) {
+        console.error("Erro na reescrita IA:", err);
+        triggerWarningHaptic();
+        alert(`Erro na reescrita com IA: ${err.message || "Tente novamente."}`);
+      } finally {
+        setRewritingId(null);
+      }
+      return;
+    }
+
+    onSelectNews({
+      title: item.title,
+      subtitle: `Notícia apurada por ${item.source?.name || "GNews"}`,
+      excerpt: (item.description || item.title).slice(0, 180) + "...",
+      coverImage: cover,
+      tags,
+      content: rawContent,
+      sourceUrl: item.url,
       category: "industria",
     });
 
@@ -305,10 +387,10 @@ export default function NewsImportModal({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white">
-                Importador Editorial com IA & Notícias
+                Importador Editorial Multifonte
               </h3>
               <p className="text-xs text-gray-400">
-                Puxe novidades da indústria gamer e reescreva de forma 100% autoral com o Gemini
+                Selecione artigos de grandes portais ou Steam e reescreva de forma 100% autoral sob demanda
               </p>
             </div>
           </div>
@@ -332,37 +414,48 @@ export default function NewsImportModal({
         )}
 
         {/* Abas de Seleção de Fonte */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3 shrink-0">
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setSourceTab("newsdata")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               sourceTab === "newsdata"
                 ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 font-black"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>NewsData.io (Portais & Mídia BR)</span>
+            <span>NewsData.io</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSourceTab("gnews")}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              sourceTab === "gnews"
+                ? "bg-violet-500 text-white shadow-lg shadow-violet-500/20 font-black"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <Newspaper className="w-3.5 h-3.5" />
+            <span>GNews.io</span>
           </button>
           <button
             type="button"
             onClick={() => setSourceTab("steam")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               sourceTab === "steam"
                 ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/20 font-black"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
-            <span>Steam Oficial (Patch Notes & Updates)</span>
+            <span>Steam Oficial</span>
           </button>
         </div>
 
         {/* Conteúdo: NewsData.io */}
         {sourceTab === "newsdata" && (
           <div className="space-y-4 flex-1 flex flex-col min-h-0">
-            {/* Barra de Busca com Suporte Booleano */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -390,7 +483,6 @@ export default function NewsImportModal({
               </button>
             </form>
 
-            {/* Lista de Notícias NewsData */}
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
               {loadingNewsData && (
                 <div className="p-8 text-center space-y-3 text-zinc-400">
@@ -419,10 +511,67 @@ export default function NewsImportModal({
           </div>
         )}
 
+        {/* Conteúdo: GNews.io */}
+        {sourceTab === "gnews" && (
+          <div className="space-y-4 flex-1 flex flex-col min-h-0">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                loadGNews();
+              }}
+              className="flex items-center gap-2 shrink-0"
+            >
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={gnewsQuery}
+                  onChange={(e) => setGnewsQuery(e.target.value)}
+                  placeholder='Ex: jogos OR "video game", nintendo, xbox'
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loadingGNews}
+                className="px-4 py-2 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {loadingGNews ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Filter className="w-3.5 h-3.5" />}
+                <span>Buscar</span>
+              </button>
+            </form>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {loadingGNews && (
+                <div className="p-8 text-center space-y-3 text-zinc-400">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-violet-400" />
+                  <p className="text-xs">Buscando matérias no GNews.io...</p>
+                </div>
+              )}
+
+              {!loadingGNews && gnewsArticles.length === 0 && (
+                <div className="p-8 text-center space-y-2 rounded-2xl bg-white/5 border border-white/5">
+                  <p className="text-xs font-bold text-white">Nenhuma notícia encontrada</p>
+                  <p className="text-[11px] text-zinc-400">Tente buscar por outros termos.</p>
+                </div>
+              )}
+
+              {!loadingGNews &&
+                gnewsArticles.map((art) => (
+                  <GNewsCard
+                    key={art.id}
+                    item={art}
+                    onImport={handleImportGNews}
+                    isRewriting={Boolean(rewritingId)}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Conteúdo: Steam */}
         {sourceTab === "steam" && (
           <div className="space-y-4 flex-1 flex flex-col min-h-0">
-            {/* Sub-abas da Steam */}
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -460,7 +609,6 @@ export default function NewsImportModal({
               />
             )}
 
-            {/* Lista Steam */}
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
               {steamTab === "latest" && (
                 <>
