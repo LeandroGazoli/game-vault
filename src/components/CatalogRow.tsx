@@ -8,6 +8,7 @@ import { getGameUrl } from "@/lib/routes";
 import { ChevronLeft, ChevronRight, Plus, Check, Star, Clock } from "lucide-react";
 import { useGameLibrary } from "@/context/GameLibraryContext";
 import { formatGameDuration } from "@/lib/gameUtils";
+import { triggerSelectionHaptic } from "@/lib/capacitor";
 
 interface CatalogRowProps {
   title: string;
@@ -104,10 +105,10 @@ export default function CatalogRow({
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Linha com Scroll Snap Nativo */}
+          {/* Linha com Scroll Snap Nativo estilo App */}
           <div
             ref={rowRef}
-            className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto scrollbar-none pb-3 pt-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0"
+            className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-3 pt-1 -mx-3.5 px-3.5 sm:mx-0 sm:px-0"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {games.map((game, index) => {
@@ -118,7 +119,7 @@ export default function CatalogRow({
               return (
                 <div
                   key={game.id}
-                  className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/80 hover:z-20 cursor-pointer select-none"
+                  className="group relative flex-shrink-0 snap-start w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/80 hover:z-20 cursor-pointer select-none"
                 >
                   <Link
                     href={getGameUrl(game)}
@@ -186,21 +187,23 @@ export default function CatalogRow({
                     </div>
                   </Link>
 
-                  {/* Botão de Ação Rápida no Topo Direito (+) */}
+                  {/* Botão de Ação Rápida no Topo Direito (+) com hit-target ampliado para polegar */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      triggerSelectionHaptic();
                       setSelectedGame(game);
                     }}
-                    className={`absolute top-2 right-2 p-1.5 rounded-lg border backdrop-blur-md transition-all shadow-md z-20 active:scale-95 ${
+                    className={`absolute top-1.5 right-1.5 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] flex items-center justify-center rounded-xl border backdrop-blur-md transition-all shadow-md z-20 active:scale-90 touch-manipulation cursor-pointer ${
                       userGame
                         ? "bg-emerald-500/30 text-emerald-300 border-emerald-500/50 opacity-100"
                         : "bg-black/60 hover:bg-white text-white hover:text-black border-white/15 hover:border-white sm:opacity-0 sm:group-hover:opacity-100 opacity-90"
                     }`}
                     title={userGame ? "Editar na biblioteca" : "Adicionar à biblioteca"}
+                    aria-label={userGame ? "Editar na biblioteca" : "Adicionar à biblioteca"}
                   >
-                    {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    {userGame ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Plus className="w-4 h-4 stroke-[2.5]" />}
                   </button>
                 </div>
               );
