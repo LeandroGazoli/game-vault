@@ -17,6 +17,7 @@ Agora, preso nesse paraíso artificial, todos tentam encontrar significado, prop
 * EXPLORE O MUNDO: Experiência caótica, bem-humorada e repleta de momentos inesperados! Um diálogo engraçado, situações inusitadas e surpresas a cada esquina.
 * JOGUE MINIGAMES: Cada minigame é diferente do anterior — ganhe novos itens, desbloqueie melhorias e vença competições.
 * CONHEÇA PERSONAGENS ÚNICOS: Interaja com todos e descubra como suas escolhas moldam a jornada.`,
+  descriptionMode: "markdown",
   storyline: "Após a morte, a consciência do jogador é transferida para uma simulação computacional dos anos 90 mantida pela enigmática Xmeta Corp. Em meio ao caos corporativo e habitantes excêntricos, sua missão é buscar relevância e significado para sua nova existência eterna.",
   developerName: "Mon Ami Interactive",
   developerEmail: "monamiinteractive@gmail.com",

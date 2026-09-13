@@ -58,6 +58,7 @@ export default function IndieAdminModal({
                   title: gameToEdit.title,
                   tagline: gameToEdit.tagline,
                   description: gameToEdit.description,
+                  descriptionMode: gameToEdit.descriptionMode,
                   storyline: gameToEdit.storyline,
                   developerName: gameToEdit.developerName,
                   developerEmail: gameToEdit.developerEmail,

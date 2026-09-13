@@ -8,6 +8,7 @@ export interface IndieGame {
   title: string;
   tagline: string;
   description: string;
+  descriptionMode?: "tiptap" | "html" | "markdown" | null;
   developerName: string;
   developerEmail: string;
   studioWebsite?: string;
@@ -63,6 +64,7 @@ export interface IndieSubmissionForm {
   title: string;
   tagline: string;
   description: string;
+  descriptionMode?: "tiptap" | "html" | "markdown" | null;
   developerName: string;
   developerEmail: string;
   studioWebsite?: string;

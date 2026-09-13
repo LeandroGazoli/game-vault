@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { IndieSubmissionForm } from "@/lib/types/indie.types";
+import IndieDescriptionEditor from "./IndieDescriptionEditor";
 import {
   Gamepad2,
   Image as ImageIcon,
@@ -35,6 +36,9 @@ export default function IndieFormFields({
   const [title, setTitle] = useState(initialValues?.title || "");
   const [tagline, setTagline] = useState(initialValues?.tagline || "");
   const [description, setDescription] = useState(initialValues?.description || "");
+  const [descriptionMode, setDescriptionMode] = useState<"tiptap" | "html" | "markdown">(
+    initialValues?.descriptionMode || "markdown"
+  );
   const [storyline, setStoryline] = useState(initialValues?.storyline || "");
   const [developerName, setDeveloperName] = useState(initialValues?.developerName || "");
   const [developerEmail, setDeveloperEmail] = useState(initialValues?.developerEmail || "");
@@ -96,6 +100,7 @@ export default function IndieFormFields({
       title: title.trim(),
       tagline: tagline.trim(),
       description: description.trim(),
+      descriptionMode,
       storyline: storyline.trim() || undefined,
       developerName: developerName.trim(),
       developerEmail: developerEmail.trim(),
@@ -367,25 +372,31 @@ export default function IndieFormFields({
         </div>
       </div>
 
-      {/* 4. SINOPSE & HISTÓRIA */}
+      {/* 4. SINOPSE & HISTÓRIA (SUPORTE A TIPTAP, HTML E MARKDOWN) */}
       <div className="space-y-4 p-5 rounded-2xl bg-black/20 border border-white/5">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-          <Sparkles className="w-4 h-4" /> 4. Sinopse &amp; Enredo
-        </h3>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> 4. Sinopse, Apresentação &amp; Enredo
+          </h3>
+          <span className="text-[10px] font-mono text-gray-400">
+            Escolha entre Tiptap, HTML ou Markdown
+          </span>
+        </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-gray-300">Descrição / Visão Geral do Jogo *</label>
-          <textarea
-            rows={4}
-            required
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Apresente as principais mecânicas, estilo visual e o que torna o seu jogo imperdível..."
-            className="w-full px-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-amber-500 resize-none leading-relaxed"
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-gray-300">
+            Descrição / Apresentação Completa do Jogo *
+          </label>
+          <IndieDescriptionEditor
+            content={description}
+            onChange={setDescription}
+            mode={descriptionMode}
+            onModeChange={setDescriptionMode}
+            placeholder="Apresente as principais mecânicas, estilo visual, história e diferenciais que tornam seu jogo imperdível..."
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 pt-2 border-t border-white/5">
           <label className="text-xs font-bold text-gray-300">Enredo / Storyline (Opcional)</label>
           <textarea
             rows={3}

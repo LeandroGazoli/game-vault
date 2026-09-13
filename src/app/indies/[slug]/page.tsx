@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fetchIndieBySlug, fetchApprovedIndies } from "@/lib/indieService";
 import IndieVoteButton from "@/components/indies/IndieVoteButton";
 import IndieCommentsSection from "@/components/indies/IndieCommentsSection";
+import IndieDescriptionRenderer from "@/components/indies/IndieDescriptionRenderer";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
 import {
@@ -298,9 +299,10 @@ export default async function IndieGameDetailPage({ params }: PageProps) {
               <h2 className="text-lg sm:text-xl font-black text-white tracking-tight border-b border-white/10 pb-3">
                 Sobre o Projeto &amp; Visão do Desenvolvedor
               </h2>
-              <div className="text-sm text-gray-300 leading-relaxed space-y-4 whitespace-pre-line">
-                {game.description}
-              </div>
+              <IndieDescriptionRenderer
+                content={game.description}
+                mode={game.descriptionMode}
+              />
             </section>
 
             {/* Enredo e História */}
