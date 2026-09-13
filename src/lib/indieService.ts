@@ -29,26 +29,42 @@ const INDIES_COLLECTION = "indie_games";
 const USERS_COLLECTION = "users";
 
 /**
- * Remove campos estritamente `undefined` ou substitui por `deleteField()` em operações de update
- * para prevenir o erro do Firestore: "Unsupported field value: undefined"
+ * Sanitiza objetos para o Firestore:
+ * - Para criação (setDoc/addDoc): remove campos `undefined` recursivamente, preservando a estrutura de objetos aninhados.
+ * - Para atualização (updateDoc): achata chaves aninhadas usando dot-notation (ex: `systemRequirements.recommended`)
+ *   para que `deleteField()` seja válido no Firestore (o Firestore só aceita deleteField em chaves de primeiro nível da query de update, inclusive se forem chaves com ponto).
  */
-function sanitizeForFirestore<T extends Record<string, any>>(obj: T, forUpdate = false): Record<string, any> {
+function sanitizeForFirestore<T extends Record<string, any>>(obj: T, forUpdate = false, prefix = ""): Record<string, any> {
   const result: Record<string, any> = {};
+
   for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+
     if (value === undefined) {
       if (forUpdate) {
-        result[key] = deleteField();
+        result[fullKey] = deleteField();
       }
-      // Se não for update (ex: setDoc/addDoc), simplesmente omite o campo
       continue;
     }
+
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-      // Se for um objeto aninhado (ex: ptbrSupport, systemRequirements)
-      result[key] = sanitizeForFirestore(value, forUpdate);
+      if (forUpdate) {
+        // Achata o objeto recursivamente em chaves com ponto (dot notation)
+        const nested = sanitizeForFirestore(value, true, fullKey);
+        Object.assign(result, nested);
+      } else {
+        const nested = sanitizeForFirestore(value, false, "");
+        result[key] = nested;
+      }
     } else {
-      result[key] = value;
+      if (forUpdate) {
+        result[fullKey] = value;
+      } else {
+        result[key] = value;
+      }
     }
   }
+
   return result;
 }
 
