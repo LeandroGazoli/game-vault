@@ -56,11 +56,12 @@ export async function getDailyKeyUsage(service: "newsdata" | "gnews", key: strin
   const keyHash = hashApiKey(key);
   const docId = `${service}_${keyHash}_${date}`;
 
+  const serviceLimit = service === "newsdata" ? 200 : 100;
   const defaultUsage: ApiKeyUsage = {
     apiKeyHash: keyHash,
     date,
     count: 0,
-    limit: 100,
+    limit: serviceLimit,
     service,
     lastUsedAt: new Date().toISOString(),
   };
@@ -82,11 +83,12 @@ export async function getDailyKeyUsage(service: "newsdata" | "gnews", key: strin
 /**
  * Incrementa em 1 requisição o contador da chave para o dia corrente
  */
-export async function incrementKeyUsage(service: "newsdata" | "gnews", key: string, limit = 100): Promise<ApiKeyUsage> {
+export async function incrementKeyUsage(service: "newsdata" | "gnews", key: string, limit?: number): Promise<ApiKeyUsage> {
   const date = getTodayDateString();
   const keyHash = hashApiKey(key);
   const docId = `${service}_${keyHash}_${date}`;
   const now = new Date().toISOString();
+  const effectiveLimit = limit ?? (service === "newsdata" ? 200 : 100);
 
   let currentCount = 0;
 
@@ -101,7 +103,7 @@ export async function incrementKeyUsage(service: "newsdata" | "gnews", key: stri
         apiKeyHash: keyHash,
         date,
         count: newCount,
-        limit,
+        limit: effectiveLimit,
         service,
         lastUsedAt: now,
       };
@@ -116,7 +118,7 @@ export async function incrementKeyUsage(service: "newsdata" | "gnews", key: stri
     apiKeyHash: keyHash,
     date,
     count: currentCount + 1,
-    limit,
+    limit: effectiveLimit,
     service,
     lastUsedAt: now,
   };

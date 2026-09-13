@@ -389,7 +389,7 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
     instantSyncSteam: true,
   },
   newsApiSettings: {
-    newsdataDailyLimit: 100,
+    newsdataDailyLimit: 200,
     gnewsDailyLimit: 100,
   },
   emailTemplates: {

@@ -658,19 +658,19 @@ export default function AdminSettingsPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs text-gray-300 font-medium">
-                  Limite Diário de Requisições (Cap per Day)
+                  Limite Diário de Créditos (Plano Free: 200 créditos/dia)
                 </label>
                 <input
                   type="number"
                   min={1}
                   max={10000}
-                  value={settings.newsApiSettings?.newsdataDailyLimit ?? 100}
+                  value={settings.newsApiSettings?.newsdataDailyLimit ?? 200}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       newsApiSettings: {
                         ...settings.newsApiSettings,
-                        newsdataDailyLimit: Number(e.target.value) || 100,
+                        newsdataDailyLimit: Number(e.target.value) || 200,
                       },
                     })
                   }

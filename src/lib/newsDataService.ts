@@ -48,7 +48,7 @@ export async function fetchNewsDataArticles(params: NewsDataSearchParams = {}): 
   let apiKey = params.customApiKey?.trim();
   let keySource: "custom" | "system_db" | "env" = "custom";
 
-  let dailyLimit = 100;
+  let dailyLimit = 200;
 
   if (!apiKey) {
     try {
@@ -56,7 +56,7 @@ export async function fetchNewsDataArticles(params: NewsDataSearchParams = {}): 
       if (settings.newsApiSettings?.newsdataApiKey?.trim()) {
         apiKey = settings.newsApiSettings.newsdataApiKey.trim();
         keySource = "system_db";
-        dailyLimit = settings.newsApiSettings.newsdataDailyLimit || 100;
+        dailyLimit = settings.newsApiSettings.newsdataDailyLimit || 200;
       }
     } catch {
       // Fallback gracioso
