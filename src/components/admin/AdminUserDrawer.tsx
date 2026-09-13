@@ -24,6 +24,7 @@ import {
   Navigation,
   Bell,
   Send,
+  Gamepad2,
 } from "lucide-react";
 
 interface AdminUserDrawerProps {
@@ -205,6 +206,31 @@ export default function AdminUserDrawer({
                       })
                     : "Data desconhecida"}
                 </span>
+              </div>
+            </div>
+
+            {/* Jogos no Vault */}
+            <div className="p-3 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+              <span className="text-[10px] uppercase font-mono text-gray-400">Jogos no Vault</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Gamepad2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-sm">
+                    {typeof user.gamesCount === "number" ? user.gamesCount : 0}{" "}
+                    <span className="text-xs font-normal text-gray-400 font-sans">
+                      {(user.gamesCount ?? 0) === 1 ? "jogo cadastrado" : "jogos cadastrados"}
+                    </span>
+                  </span>
+                </div>
+                {(user.gamesCount ?? 0) > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                    Ativo no Vault
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-white/5 text-gray-400 text-[10px] font-medium border border-white/10">
+                    Vault Vazio
+                  </span>
+                )}
               </div>
             </div>
 
