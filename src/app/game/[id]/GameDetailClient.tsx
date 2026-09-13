@@ -40,6 +40,8 @@ import GameDlcsSection from "@/components/game/GameDlcsSection";
 import GameCommunityLinks from "@/components/game/GameCommunityLinks";
 import GameSimilarSection from "@/components/game/GameSimilarSection";
 import GameMediaGallery from "@/components/game/GameMediaGallery";
+import GameSteamNewsSection from "@/components/game/GameSteamNewsSection";
+import { extractSteamAppId } from "@/lib/steamNewsService";
 
 interface GameDetailClientProps {
   initialGame?: Game | null;
@@ -205,6 +207,7 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   }, [game?.dlcs, game?.expansions]);
 
   const backdropImage = useMemo(() => getFeaturedBackdropImage(game), [game]);
+  const steamAppId = useMemo(() => extractSteamAppId(game?.websites), [game?.websites]);
 
   if (loading) return <GameDetailLoading />;
 
@@ -428,6 +431,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
                 userGame={userGame}
                 onOpenModal={() => setIsModalOpen(true)}
               />
+              {steamAppId && (
+                <GameSteamNewsSection appId={steamAppId} gameTitle={game.name} />
+              )}
               <GameSimilarSection
                 game={game}
                 onSelectGameToSave={(g) => {
@@ -453,6 +459,9 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
               onTranslateOnDemand={handleTranslateOnDemand}
             />
             <HltbCard hltb={game.hltb} userPlaytimeHours={userGame?.userPlaytimeHours} />
+            {steamAppId && (
+              <GameSteamNewsSection appId={steamAppId} gameTitle={game.name} />
+            )}
             <GameMediaGallery game={game} allMediaItems={allMediaItems} />
             <GameDlcsSection
               game={game}

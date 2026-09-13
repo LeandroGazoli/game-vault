@@ -14,7 +14,9 @@ import {
   BookOpen,
   Image as ImageIcon,
   CheckCircle2,
+  Radio,
 } from "lucide-react";
+import SteamNewsImportModal from "./SteamNewsImportModal";
 
 interface ArticleEditorModalProps {
   isOpen: boolean;
@@ -65,6 +67,7 @@ export default function ArticleEditorModal({
   ]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "content">("info");
+  const [isSteamModalOpen, setIsSteamModalOpen] = useState(false);
 
   useEffect(() => {
     if (articleToEdit) {
@@ -182,6 +185,52 @@ export default function ArticleEditorModal({
     }
   };
 
+  const handleSelectSteamNews = (imported: {
+    title: string;
+    subtitle: string;
+    excerpt: string;
+    coverImage: string;
+    tags: string[];
+    content: string;
+    sourceUrl: string;
+  }) => {
+    setTitle(imported.title);
+    setSubtitle(imported.subtitle);
+    setSlug(generateSlug(imported.title));
+    setCategory("industria");
+    setExcerpt(imported.excerpt);
+    setCoverImage(imported.coverImage);
+    setTagsInput(imported.tags.join(", "));
+    setReadTimeMinutes(4);
+
+    // Quebra o conteúdo em seções por parágrafos para edição
+    const paragraphs = imported.content
+      .split("\n\n")
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    setSections([
+      {
+        heading: "Visão Geral da Atualização",
+        content: paragraphs.slice(0, Math.min(paragraphs.length, 3)),
+        callout: {
+          type: "info",
+          text: `Anúncio oficial importado via Steam News. [Acesse o post original na Steam](${imported.sourceUrl})`,
+        },
+      },
+      ...(paragraphs.length > 3
+        ? [
+            {
+              heading: "Notas Detalhadas & Mudanças",
+              content: paragraphs.slice(3),
+            },
+          ]
+        : []),
+    ]);
+
+    setActiveTab("content");
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-3xl rounded-[32px] bg-[#14161d] border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl my-8 max-h-[90vh] flex flex-col">
@@ -208,29 +257,41 @@ export default function ArticleEditorModal({
           </button>
         </div>
 
-        {/* Abas Internas */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-2 shrink-0">
+        {/* Abas Internas & Ação Importar Steam */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("info")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "info"
+                  ? "bg-emerald-500 text-black shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              1. Metadados &amp; Capa
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("content")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === "content"
+                  ? "bg-emerald-500 text-black shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              2. Seções &amp; Conteúdo ({sections.length})
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => setActiveTab("info")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "info"
-                ? "bg-emerald-500 text-black shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
+            onClick={() => setIsSteamModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+            title="Importar anúncio ou patch note oficial da Steam como rascunho"
           >
-            1. Metadados &amp; Capa
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("content")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "content"
-                ? "bg-emerald-500 text-black shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            2. Seções &amp; Conteúdo ({sections.length})
+            <Radio className="w-3.5 h-3.5 animate-pulse" />
+            <span>Importar da Steam</span>
           </button>
         </div>
 
@@ -434,6 +495,13 @@ export default function ArticleEditorModal({
           </div>
         </form>
       </div>
+
+      {/* Modal Secundário de Importação da Steam */}
+      <SteamNewsImportModal
+        isOpen={isSteamModalOpen}
+        onClose={() => setIsSteamModalOpen(false)}
+        onSelectNews={handleSelectSteamNews}
+      />
     </div>
   );
 }
