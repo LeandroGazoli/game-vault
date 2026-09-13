@@ -6,7 +6,6 @@ import {
   IndieGame,
   IndieSpotlightLocation,
   IndieGameStatus,
-  IndieSubmissionForm,
 } from "@/lib/types/indie.types";
 import {
   fetchAllIndiesAdmin,
@@ -18,7 +17,6 @@ import {
 } from "@/lib/indieService";
 import { useAuth } from "@/context/AuthContext";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
-import IndieAdminModal from "@/components/indies/IndieAdminModal";
 import { SOMETHING_MEANINGFUL_DRIVE_DATA } from "@/lib/constants/somethingMeaningfulData";
 import {
   Gamepad2,
@@ -41,12 +39,6 @@ export default function AdminIndiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Modal de criação / edição
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [gameToEdit, setGameToEdit] = useState<IndieGame | null>(null);
-  const [prefillData, setPrefillData] = useState<IndieSubmissionForm | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const loadIndies = async () => {
     setIsLoading(true);
@@ -101,48 +93,6 @@ export default function AdminIndiesPage() {
   useEffect(() => {
     loadIndies();
   }, [user?.uid]);
-
-  const handleOpenCreate = () => {
-    setGameToEdit(null);
-    setPrefillData(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (game: IndieGame) => {
-    setGameToEdit(game);
-    setPrefillData(null);
-    setIsModalOpen(true);
-  };
-
-  const handleSaveGame = async (formData: IndieSubmissionForm) => {
-    setIsSaving(true);
-    try {
-      if (gameToEdit) {
-        await updateIndieGame(gameToEdit.id, formData);
-        triggerSuccessHaptic();
-        setToastMessage(`Jogo "${formData.title}" atualizado com sucesso!`);
-      } else {
-        const isImported = Boolean(prefillData);
-        await submitIndieGame(formData, user?.uid || "admin", {
-          initialStatus: "approved",
-          isSpotlight: isImported,
-          spotlightLocations: isImported ? ["home", "search", "game_detail"] : [],
-        });
-        triggerSuccessHaptic();
-        setToastMessage(`Jogo "${formData.title}" cadastrado e publicado com sucesso!`);
-      }
-      setTimeout(() => setToastMessage(null), 3000);
-      setIsModalOpen(false);
-      setPrefillData(null);
-      loadIndies();
-    } catch (err) {
-      console.error("Erro ao salvar jogo indie pelo admin:", err);
-      triggerWarningHaptic();
-      alert("Falha ao salvar jogo indie.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleStatusChange = async (gameId: string, status: IndieGameStatus) => {
     try {
@@ -226,13 +176,13 @@ export default function AdminIndiesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleOpenCreate}
+          <Link
+            href="/admin/indies/novo"
             className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Cadastrar Jogo</span>
-          </button>
+          </Link>
 
           <button
             onClick={loadIndies}
@@ -268,53 +218,59 @@ export default function AdminIndiesPage() {
         ))}
       </div>
 
-      {/* Tabela de Jogos */}
-      <div className="rounded-3xl bg-[#14161d] border border-white/10 overflow-hidden shadow-xl">
+      {/* Listagem de Jogos Cadastrados */}
+      <div className="rounded-[32px] bg-[#14161d] border border-white/10 p-6 shadow-xl space-y-4">
         {isLoading ? (
-          <div className="p-12 text-center text-xs text-gray-400 font-mono animate-pulse">
+          <div className="py-12 text-center text-gray-400 text-xs font-mono">
             Carregando projetos indie...
           </div>
         ) : filteredIndies.length === 0 ? (
-          <div className="p-12 text-center text-xs text-gray-400">
-            Nenhum projeto encontrado com este filtro.
+          <div className="py-12 text-center text-gray-400 text-xs">
+            Nenhum jogo indie encontrado para o filtro selecionado.
           </div>
         ) : (
           <div className="divide-y divide-white/5">
             {filteredIndies.map((game) => (
               <div
                 key={game.id}
-                className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+                className="py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4"
               >
-                <div className="flex items-start gap-3.5 min-w-0">
-                  <img
-                    src={game.coverImage}
-                    alt={game.title}
-                    className="w-14 h-18 rounded-xl object-cover shrink-0 border border-white/10"
-                  />
+                {/* Info do Jogo */}
+                <div className="flex items-center gap-4 min-w-0">
+                  {game.coverImage ? (
+                    <img
+                      src={game.coverImage}
+                      alt={game.title}
+                      className="w-16 h-20 rounded-2xl object-cover border border-white/10 shrink-0 shadow"
+                    />
+                  ) : (
+                    <div className="w-16 h-20 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                      <Gamepad2 className="w-6 h-6 text-gray-500" />
+                    </div>
+                  )}
+
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-sm font-bold text-white truncate">
+                        {game.title}
+                      </h4>
                       <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                           game.status === "approved"
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : game.status === "pending"
-                            ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                            : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : game.status === "rejected"
+                            ? "bg-red-500/10 border-red-500/30 text-red-400"
+                            : "bg-amber-500/10 border-amber-500/30 text-amber-400"
                         }`}
                       >
-                        {game.status}
-                      </span>
-                      <span className="text-xs font-bold text-white truncate">
-                        {game.title}
+                        {game.status.toUpperCase()}
                       </span>
                     </div>
-
-                    <p className="text-xs text-gray-400">
-                      Dev: <strong className="text-gray-300">{game.developerName}</strong> ({game.developerEmail})
-                    </p>
-
-                    <p className="text-[11px] text-gray-500 line-clamp-1">
+                    <p className="text-xs text-gray-400 truncate max-w-md">
                       {game.tagline}
+                    </p>
+                    <p className="text-[10px] font-mono text-gray-500">
+                      Dev: <strong className="text-gray-300">{game.developerName}</strong> • {game.developerEmail} • {game.votesCount || 0} votos
                     </p>
                   </div>
                 </div>
@@ -340,7 +296,7 @@ export default function AdminIndiesPage() {
                             onClick={() =>
                               handleToggleSpotlight(game, loc.id as any)
                             }
-                            className={`px-2 py-1 rounded-lg border transition-all ${
+                            className={`px-2 py-1 rounded-lg border transition-all cursor-pointer ${
                               isChecked
                                 ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold"
                                 : "bg-black/30 border-white/10 text-gray-500 hover:text-white"
@@ -358,7 +314,7 @@ export default function AdminIndiesPage() {
                     {game.status !== "approved" && (
                       <button
                         onClick={() => handleStatusChange(game.id, "approved")}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow cursor-pointer"
                         title="Aprovar Projeto & Conceder Título"
                       >
                         Aprovar
@@ -367,19 +323,19 @@ export default function AdminIndiesPage() {
                     {game.status !== "rejected" && (
                       <button
                         onClick={() => handleStatusChange(game.id, "rejected")}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 text-xs font-bold"
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 text-xs font-bold cursor-pointer"
                         title="Rejeitar Projeto"
                       >
                         Rejeitar
                       </button>
                     )}
-                    <button
-                      onClick={() => handleOpenEdit(game)}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-gray-300 hover:text-cyan-300"
-                      title="Editar Ficha Técnica Completa"
+                    <Link
+                      href={`/admin/indies/${game.id}/editar`}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-gray-300 hover:text-cyan-300 transition-colors"
+                      title="Editar Ficha Técnica Completa em Página Dedicada"
                     >
                       <Edit3 className="w-4 h-4" />
-                    </button>
+                    </Link>
                     <Link
                       href={`/indies/${game.slug}`}
                       target="_blank"
@@ -395,7 +351,7 @@ export default function AdminIndiesPage() {
                     </Link>
                     <button
                       onClick={() => handleDelete(game)}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400"
+                      className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 cursor-pointer"
                       title="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -407,19 +363,6 @@ export default function AdminIndiesPage() {
           </div>
         )}
       </div>
-
-      {/* Modal de Criação / Edição do Admin */}
-      <IndieAdminModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setPrefillData(null);
-        }}
-        gameToEdit={gameToEdit}
-        initialFormData={prefillData}
-        onSave={handleSaveGame}
-        isSubmitting={isSaving}
-      />
     </div>
   );
 }
