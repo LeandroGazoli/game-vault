@@ -12,7 +12,7 @@ interface AdminBackgroundSettingsProps {
 export default function AdminBackgroundSettings({ value, onChange }: AdminBackgroundSettingsProps) {
   const currentConfig: BackgroundConfig = value || {
     type: "preset",
-    value: "/assets/bg/city.png",
+    value: "/assets/bg/city.webp",
     opacity: 0.35,
   };
 

@@ -17,29 +17,29 @@ export const PRESET_BACKGROUNDS: PresetBackground[] = [
   {
     id: "city",
     name: "Pixel City Horizon",
-    url: "/assets/bg/city.png",
-    thumbnail: "/assets/bg/city.png",
+    url: "/assets/bg/city.webp",
+    thumbnail: "/assets/bg/city.webp",
     category: "cidade",
   },
   {
     id: "cyberpunk-street",
     name: "Cyberpunk Street 8-Bit",
-    url: "/assets/bg/cyberpunk-street.png",
-    thumbnail: "/assets/bg/cyberpunk-street.png",
+    url: "/assets/bg/cyberpunk-street.webp",
+    thumbnail: "/assets/bg/cyberpunk-street.webp",
     category: "cyberpunk",
   },
   {
     id: "preview-arcade",
     name: "Retro Game Panorama",
-    url: "/assets/bg/preview.png",
-    thumbnail: "/assets/bg/preview.png",
+    url: "/assets/bg/preview.webp",
+    thumbnail: "/assets/bg/preview.webp",
     category: "gameplay",
   },
   {
     id: "neon-gamer-room",
     name: "Dark Neon Atmosphere",
-    url: "/assets/bg/sandro-katalina-k1bO_VTiZSs-unsplash.jpg",
-    thumbnail: "/assets/bg/sandro-katalina-k1bO_VTiZSs-unsplash.jpg",
+    url: "/assets/bg/sandro-katalina.webp",
+    thumbnail: "/assets/bg/sandro-katalina.webp",
     category: "fotografia",
   },
 ];
@@ -55,6 +55,6 @@ export const SOLID_COLOR_PRESETS: { id: string; name: string; hex: string }[] = 
 
 export const DEFAULT_BACKGROUND_CONFIG: BackgroundConfig = {
   type: "preset",
-  value: "/assets/bg/city.png",
+  value: "/assets/bg/city.webp",
   opacity: 0.35,
 };

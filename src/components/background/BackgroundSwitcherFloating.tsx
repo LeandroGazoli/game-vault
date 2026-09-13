@@ -8,7 +8,7 @@ import { triggerSelectionHaptic } from "@/lib/capacitor";
 
 export default function BackgroundSwitcherFloating() {
   const [currentType, setCurrentType] = useState<string>("preset");
-  const [currentValue, setCurrentValue] = useState<string>("/assets/bg/city.png");
+  const [currentValue, setCurrentValue] = useState<string>("/assets/bg/city.webp");
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 

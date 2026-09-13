@@ -379,7 +379,7 @@ export const DEFAULT_SYSTEM_SETTINGS: import("./types").SystemSettings = {
   },
   defaultBackground: {
     type: "preset",
-    value: "/assets/bg/city.png",
+    value: "/assets/bg/city.webp",
     animationId: "parallax",
   },
   features: {
