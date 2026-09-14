@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Cloud, Save } from "lucide-react";
+import { ArrowLeft, Check, Cloud, Save, ChevronRight } from "lucide-react";
 import { UserGame } from "@/lib/types";
 import { useProfileSettings } from "@/hooks/useProfileSettings";
 import ProfilePreviewCard from "./ProfilePreviewCard";
@@ -21,6 +21,16 @@ export interface ProfileSettingsHubProps {
   onOpenUpgrade?: () => void;
   games?: UserGame[];
 }
+
+const DESKTOP_NAV_ITEMS = [
+  { id: 1, label: "1. Dados do Perfil & Identidade" },
+  { id: 2, label: "2. Capa, Cores & Temas Visuais" },
+  { id: 3, label: "3. Insígnias & Prestígio" },
+  { id: 4, label: "4. Bio Estilizada (HTML/MD)" },
+  { id: 5, label: "5. Gamertags & Redes Conectadas" },
+  { id: 6, label: "6. Vitrine do Jogo em Destaque" },
+  { id: 7, label: "7. Privacidade & Segurança" },
+];
 
 export default function ProfileSettingsHub({
   isPage = false,
@@ -44,7 +54,7 @@ export default function ProfileSettingsHub({
     <div className="min-h-screen bg-[#0b0d12] text-[#e2e2e9] selection:bg-[#10b981] selection:text-black">
       {/* Top Header */}
       <header className="fixed top-0 w-full z-40 pt-safe bg-[#0b0d12]/90 backdrop-blur-xl border-b border-white/10 shadow-lg">
-        <div className="h-14 px-4 flex items-center justify-between max-w-md mx-auto">
+        <div className="h-14 px-4 flex items-center justify-between max-w-md lg:max-w-6xl mx-auto">
           <button type="button" onClick={handleBack} className="flex items-center gap-1 text-gray-400 hover:text-white active:scale-95 transition-all py-1.5 pr-3 pl-1 -ml-1">
             <ArrowLeft className="w-5 h-5 text-[#4edea3]" />
             <span className="text-[15px] font-semibold tracking-tight">Cancelar</span>
@@ -59,23 +69,52 @@ export default function ProfileSettingsHub({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="w-full pt-20 pb-32 px-3.5 flex flex-col gap-3 max-w-md mx-auto">
-        <ProfilePreviewCard
-          bannerURL={settings.customBannerUrl || settings.bannerURL}
-          photoURL={settings.photoURL}
-          displayName={settings.displayName}
-          username={settings.user?.username || "jogador"}
-          equippedTitles={settings.equippedTitles}
-          layout={settings.layout}
-        />
+      {/* Main Content (Mobile: Single Column Stack | Desktop: 2-Column Split-Screen) */}
+      <main className="w-full pt-20 pb-32 px-3.5 flex flex-col gap-3 max-w-md mx-auto lg:max-w-6xl lg:grid lg:grid-cols-[380px_1fr] lg:gap-8 lg:items-start">
+        {/* Left Column: Live Preview Card (Sticky on Desktop) */}
+        <div className="flex flex-col gap-3 lg:sticky lg:top-20">
+          <ProfilePreviewCard
+            bannerURL={settings.customBannerUrl || settings.bannerURL}
+            photoURL={settings.photoURL}
+            displayName={settings.displayName}
+            username={settings.user?.username || "jogador"}
+            equippedTitles={settings.equippedTitles}
+            layout={settings.layout}
+          />
 
-        <div className="flex items-center justify-between px-1 text-xs text-gray-400 pt-1">
-          <span className="font-bold text-[11px] uppercase tracking-wider text-gray-400">Gavetas de Configuração</span>
-          <span className="font-mono text-[11px] text-[#4edea3]">7 Seções Disponíveis</span>
+          {/* Desktop-only Quick Drawer Shortcuts */}
+          <div className="hidden lg:flex flex-col gap-1 p-3 rounded-2xl bg-[#141822] border border-white/10 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">
+              Atalhos de Navegação Rápida
+            </span>
+            {DESKTOP_NAV_ITEMS.map((item) => {
+              const isActive = settings.activeAccordion === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => settings.toggleAccordion(item.id)}
+                  className={`px-2.5 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-all ${
+                    isActive
+                      ? "bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">{item.label}</span>
+                  <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isActive ? "rotate-90 text-[#4edea3]" : "text-gray-500"}`} />
+                </button>
+              );
+            })}
+          </div>
         </div>
 
+        {/* Right Column: Accordions & Sections */}
         <div className="flex flex-col gap-2.5 w-full">
+          <div className="flex items-center justify-between px-1 text-xs text-gray-400 pt-1 lg:pt-0">
+            <span className="font-bold text-[11px] uppercase tracking-wider text-gray-400">Gavetas de Configuração</span>
+            <span className="font-mono text-[11px] text-[#4edea3]">7 Seções Disponíveis</span>
+          </div>
+
           <div id="accordion-1">
             <IdentityAccordion
               isOpen={settings.activeAccordion === 1}
@@ -174,11 +213,11 @@ export default function ProfileSettingsHub({
               setVisibility={settings.setVisibility}
             />
           </div>
-        </div>
 
-        <div className="flex items-center justify-center gap-2 py-3 text-gray-500 font-mono text-[11px]">
-          <Cloud className="w-4 h-4 text-[#4edea3]" />
-          <span>Sincronizado na Nuvem MGL Vault</span>
+          <div className="flex items-center justify-center gap-2 py-3 text-gray-500 font-mono text-[11px]">
+            <Cloud className="w-4 h-4 text-[#4edea3]" />
+            <span>Sincronizado na Nuvem MGL Vault</span>
+          </div>
         </div>
       </main>
 
@@ -194,7 +233,7 @@ export default function ProfileSettingsHub({
 
       {/* Sticky Save Bar */}
       <aside className="fixed bottom-0 w-full z-40 pb-safe bg-[#0b0d12]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-8px_32px_rgba(0,0,0,0.8)]">
-        <div className="p-3.5 flex items-center justify-center max-w-md mx-auto w-full gap-2.5">
+        <div className="p-3.5 flex items-center justify-center max-w-md lg:max-w-6xl mx-auto w-full gap-2.5">
           <button type="button" onClick={handleBack} className="px-4 h-12 rounded-xl bg-[#1a2130] hover:bg-[#1e2433] text-gray-300 hover:text-white text-xs font-semibold border border-white/10 active:scale-95 transition-all">
             Descartar
           </button>
