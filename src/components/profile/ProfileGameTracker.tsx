@@ -142,7 +142,7 @@ export default function ProfileGameTracker({
                       <button
                         type="button"
                         onClick={() => onEditGame(game)}
-                        className="w-full py-1 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-gray-200 hover:text-cyan-300 text-[11px] font-bold transition-all border border-white/10 active:scale-95 text-center"
+                        className="w-full py-1 rounded-xl bg-[#1e2535] hover:bg-[#283247] text-gray-200 hover:text-cyan-300 text-[11px] font-bold transition-all border border-white/10 active:scale-95 text-center"
                       >
                         Atualizar Progresso
                       </button>
@@ -154,7 +154,7 @@ export default function ProfileGameTracker({
           </div>
         ) : (
           /* Estado Vazio de Jogos em Andamento */
-          <div className="p-5 rounded-2xl bg-[#181d28]/60 border border-dashed border-white/10 text-center space-y-2">
+          <div className="p-5 rounded-2xl bg-[#181d28] border border-dashed border-white/10 text-center space-y-2">
             <p className="text-xs text-gray-400">Nenhum jogo marcado como &quot;Jogando Agora&quot;.</p>
             {isOwner && (
               <div className="flex items-center justify-center gap-2 pt-1">
@@ -162,7 +162,7 @@ export default function ProfileGameTracker({
                   <button
                     type="button"
                     onClick={() => handleFilterClick("backlog")}
-                    className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#2a2012] hover:bg-[#382b18] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform"
                   >
                     <Play className="w-3 h-3" />
                     <span>Iniciar do Backlog ({stats.backlogCount})</span>
@@ -171,7 +171,7 @@ export default function ProfileGameTracker({
                   <button
                     type="button"
                     onClick={() => onAddGame?.()}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#10291e] hover:bg-[#163829] border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Explorar Catálogo</span>
@@ -186,11 +186,11 @@ export default function ProfileGameTracker({
       {/* 2. BARRA DE MÉTRICAS RÁPIDAS DO TRACKER (TOUCH CARDS) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
         {[
-          { id: "playing", label: "Jogando", count: stats.playingCount, icon: Gamepad2, color: "text-cyan-400", border: "border-cyan-500/30", bg: "bg-cyan-950/20" },
-          { id: "paused", label: "Pausados", count: stats.pausedCount || pausedGames.length, icon: PauseCircle, color: "text-amber-400", border: "border-amber-500/30", bg: "bg-amber-950/20" },
-          { id: "completed", label: "Zerados", count: stats.completedCount, icon: Trophy, color: "text-emerald-400", border: "border-emerald-500/30", bg: "bg-emerald-950/20" },
-          { id: "backlog", label: "Quero Jogar", count: stats.backlogCount, icon: Bookmark, color: "text-purple-400", border: "border-purple-500/30", bg: "bg-purple-950/20" },
-          { id: "all", label: "Coleção", count: stats.totalGames, icon: Layers, color: "text-gray-300", border: "border-white/15", bg: "bg-white/5" },
+          { id: "playing", label: "Jogando", count: stats.playingCount, icon: Gamepad2, color: "text-cyan-400", border: "border-cyan-500/40", bg: "bg-[#0d222b]" },
+          { id: "paused", label: "Pausados", count: stats.pausedCount || pausedGames.length, icon: PauseCircle, color: "text-amber-400", border: "border-amber-500/40", bg: "bg-[#251e12]" },
+          { id: "completed", label: "Zerados", count: stats.completedCount, icon: Trophy, color: "text-emerald-400", border: "border-emerald-500/40", bg: "bg-[#0d241a]" },
+          { id: "backlog", label: "Quero Jogar", count: stats.backlogCount, icon: Bookmark, color: "text-purple-400", border: "border-purple-500/40", bg: "bg-[#21152d]" },
+          { id: "all", label: "Coleção", count: stats.totalGames, icon: Layers, color: "text-gray-300", border: "border-white/15", bg: "bg-[#181d28]" },
         ].map((item) => {
           const Icon = item.icon;
           const isSelected = activeFilter === item.id;
@@ -201,8 +201,8 @@ export default function ProfileGameTracker({
               onClick={() => handleFilterClick(item.id)}
               className={`p-3 rounded-2xl border text-left transition-all active:scale-95 select-none ${
                 isSelected
-                  ? "bg-white/15 border-white shadow-md ring-1 ring-white/30"
-                  : `${item.bg} ${item.border} hover:bg-white/10`
+                  ? "bg-[#252f42] border-white shadow-md ring-1 ring-white/40"
+                  : `${item.bg} ${item.border} hover:bg-[#1e2535]`
               }`}
             >
               <div className="flex items-center justify-between gap-1 mb-1">

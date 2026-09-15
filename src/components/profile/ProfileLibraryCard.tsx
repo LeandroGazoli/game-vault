@@ -81,14 +81,14 @@ export default function ProfileLibraryCard({
             <button
               type="button"
               onClick={() => onEditGame(asGame)}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-gray-200 transition-colors active:scale-95"
+              className="px-3 py-1.5 rounded-xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-semibold text-gray-200 transition-colors active:scale-95"
             >
               Editar
             </button>
           ) : (
             <Link
               href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-semibold text-emerald-300 block text-center transition-colors active:scale-95"
+              className="px-3 py-1.5 rounded-xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-semibold text-emerald-300 block text-center transition-colors active:scale-95"
             >
               Ver
             </Link>
@@ -146,14 +146,14 @@ export default function ProfileLibraryCard({
           <button
             type="button"
             onClick={() => onEditGame(asGame)}
-            className="w-full py-1 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors active:scale-95"
+            className="w-full py-1 rounded-xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-[11px] font-semibold text-gray-200 transition-colors active:scale-95"
           >
             Editar
           </button>
         ) : (
           <Link
             href={getGameUrl({ id: userGame.gameId, slug: userGame.gameSlug, name: userGame.gameTitle })}
-            className="w-full py-1 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-emerald-300 block text-center transition-colors active:scale-95"
+            className="w-full py-1 rounded-xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-[11px] font-semibold text-emerald-300 block text-center transition-colors active:scale-95"
           >
             Ver Detalhes
           </Link>

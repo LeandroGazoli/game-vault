@@ -218,7 +218,7 @@ export default function ProfileSectionsModal({
                     onClick={() => handleSelectTemplate(tmpl.id)}
                     className={`p-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] ${
                       isSelected
-                        ? "bg-emerald-500/15 border-emerald-500/60 shadow-lg ring-1 ring-emerald-500/40"
+                        ? "bg-[#112a20] border-emerald-500/60 shadow-lg ring-1 ring-emerald-500/40"
                         : "bg-[#161a26] border-white/10 hover:border-white/20"
                     }`}
                   >
@@ -251,7 +251,7 @@ export default function ProfileSectionsModal({
                 }}
                 className={`p-3.5 rounded-2xl border text-left transition-all col-span-1 sm:col-span-2 ${
                   selectedTemplate === "custom"
-                    ? "bg-amber-500/15 border-amber-500/60 shadow-lg ring-1 ring-amber-500/40"
+                    ? "bg-[#2d2212] border-amber-500/60 shadow-lg ring-1 ring-amber-500/40"
                     : "bg-[#161a26] border-white/10 hover:border-white/20"
                 }`}
               >

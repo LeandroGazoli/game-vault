@@ -23,13 +23,13 @@ export default function ProfileSectionsReorderList({
           className={`p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all ${
             section.visible
               ? "bg-[#161a26] border-white/10"
-              : "bg-[#12151f]/60 border-white/5 opacity-60"
+              : "bg-[#10131c] border-white/5 text-gray-400"
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
             <span className="w-5 font-mono text-xs text-gray-500 font-bold">{idx + 1}.</span>
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-bold text-white truncate">
+              <div className={`text-xs sm:text-sm font-bold truncate ${section.visible ? "text-white" : "text-gray-400"}`}>
                 {section.label}
               </div>
               <div className="text-[10px] text-gray-500 font-mono">
@@ -44,8 +44,8 @@ export default function ProfileSectionsReorderList({
               onClick={() => onToggleVisibility(section.id)}
               className={`p-2 rounded-xl transition-colors ${
                 section.visible
-                  ? "bg-white/5 hover:bg-white/10 text-emerald-400"
-                  : "bg-white/5 hover:bg-white/10 text-gray-500"
+                  ? "bg-[#1c2230] hover:bg-[#252f42] text-emerald-400"
+                  : "bg-[#1c2230] hover:bg-[#252f42] text-gray-500"
               }`}
               title={section.visible ? "Ocultar seção" : "Exibir seção"}
             >
@@ -56,7 +56,7 @@ export default function ProfileSectionsReorderList({
               type="button"
               disabled={idx === 0}
               onClick={() => onMoveSection(idx, "up")}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-2 rounded-xl bg-[#1c2230] hover:bg-[#252f42] text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               title="Mover para cima"
             >
               <ArrowUp className="w-4 h-4" />
@@ -66,7 +66,7 @@ export default function ProfileSectionsReorderList({
               type="button"
               disabled={idx === sections.length - 1}
               onClick={() => onMoveSection(idx, "down")}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-2 rounded-xl bg-[#1c2230] hover:bg-[#252f42] text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               title="Mover para baixo"
             >
               <ArrowDown className="w-4 h-4" />

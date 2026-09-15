@@ -131,7 +131,7 @@ export default function ProfileHeroMobile({
                 </span>
 
                 {/* Badge de Nível Gamer */}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-mono text-[10px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1c2230] border border-white/10 text-gray-200 font-mono text-[10px] font-bold">
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                   <span>LV. {user.gamerLevel || 1}</span>
                 </span>
@@ -141,7 +141,7 @@ export default function ProfileHeroMobile({
                   <button
                     type="button"
                     onClick={() => (isOwner ? handleAction(onOpenManagePlan) : undefined)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-[10px] active:scale-95 transition-transform"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#2a2012] border border-amber-500/40 text-amber-300 font-bold text-[10px] active:scale-95 transition-transform"
                   >
                     <Crown className="w-2.5 h-2.5 text-amber-400" />
                     <span>VIP</span>
@@ -150,7 +150,7 @@ export default function ProfileHeroMobile({
                   <button
                     type="button"
                     onClick={() => (isOwner ? handleAction(onOpenManagePlan) : undefined)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-bold text-[10px] active:scale-95 transition-transform"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e2730] border border-cyan-500/40 text-cyan-300 font-bold text-[10px] active:scale-95 transition-transform"
                   >
                     <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
                     <span>PRO</span>
@@ -173,7 +173,7 @@ export default function ProfileHeroMobile({
             <button
               type="button"
               onClick={() => handleAction(onOpenShare)}
-              className="p-2 sm:px-3 sm:py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-all shrink-0 active:scale-95"
+              className="p-2 sm:px-3 sm:py-2 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-gray-300 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-all shrink-0 active:scale-95"
               title="Compartilhar Perfil"
               aria-label="Compartilhar Perfil"
             >
@@ -221,7 +221,7 @@ export default function ProfileHeroMobile({
             <button
               type="button"
               onClick={() => handleAction(onOpenEditProfile)}
-              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-200 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
+              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-bold text-gray-200 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
             >
               <Palette className="w-3.5 h-3.5 text-emerald-400" />
               <span>Personalizar</span>
@@ -229,7 +229,7 @@ export default function ProfileHeroMobile({
 
             <Link
               href="/search"
-              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
+              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-[#10291e] hover:bg-[#163829] border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar Jogos</span>
@@ -239,7 +239,7 @@ export default function ProfileHeroMobile({
               <button
                 type="button"
                 onClick={() => handleAction(onOpenImporter)}
-                className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
+                className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-bold text-gray-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
               >
                 <Upload className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Importar</span>
@@ -250,7 +250,7 @@ export default function ProfileHeroMobile({
               <button
                 type="button"
                 onClick={() => handleAction(onOpenSectionsOrder)}
-                className="min-h-[38px] px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
+                className="min-h-[38px] px-3 py-1.5 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-bold text-gray-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
                 title="Reordenar seções do perfil"
               >
                 <Layers className="w-3.5 h-3.5 text-amber-400" />
@@ -262,7 +262,7 @@ export default function ProfileHeroMobile({
               <button
                 type="button"
                 onClick={() => handleAction(onOpenTools)}
-                className="min-h-[38px] w-10 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 flex items-center justify-center shrink-0 active:scale-95 transition-transform ml-auto"
+                className="min-h-[38px] w-10 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-gray-300 flex items-center justify-center shrink-0 active:scale-95 transition-transform ml-auto"
                 title="Ferramentas e Configurações"
                 aria-label="Ferramentas do perfil"
               >

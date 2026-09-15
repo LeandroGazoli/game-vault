@@ -127,7 +127,7 @@ export default function ProfileLibrarySection({
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
                 {tab.count !== "" && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isActive ? "bg-white/20 text-white" : "bg-white/5 text-gray-400"}`}>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isActive ? "bg-[#28354c] text-white" : "bg-[#1c2230] text-gray-400"}`}>
                     {tab.count}
                   </span>
                 )}
