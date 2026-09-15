@@ -29,16 +29,8 @@ export default function ShowcaseGameCard({
 
   return (
     <div
-      className={`relative rounded-3xl overflow-hidden border border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-[#18191c] to-[#121316] p-6 sm:p-7 shadow-2xl shadow-amber-500/5 ${className}`}
+      className={`relative rounded-3xl overflow-hidden border border-amber-500/40 bg-[#16171b] p-6 sm:p-7 shadow-2xl ${className}`}
     >
-      {/* Background Cover Blur Effect */}
-      {game.gameCover && (
-        <img
-          src={game.gameCover}
-          alt=""
-          className="absolute -right-10 -top-10 w-96 h-96 object-cover opacity-10 blur-2xl pointer-events-none"
-        />
-      )}
 
       {/* Header do Destaque */}
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/5 text-[11px] font-mono">
@@ -112,8 +104,8 @@ export default function ShowcaseGameCard({
 
           {/* Resenha / Citação do Jogador */}
           {game.userReview ? (
-            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 text-xs text-gray-300 italic leading-relaxed relative">
-              <Quote className="w-4 h-4 text-amber-400/40 mb-1" />
+            <div className="p-3.5 rounded-2xl bg-[#12141c] border border-white/10 text-xs text-gray-300 italic leading-relaxed relative">
+              <Quote className="w-4 h-4 text-amber-400 mb-1" />
               &quot;{game.userReview}&quot;
             </div>
           ) : (

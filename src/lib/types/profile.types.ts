@@ -4,7 +4,6 @@
  */
 
 export type ProfileSectionId =
-  | "playing_now"
   | "game_tracker"
   | "library"
   | "recent_games"
@@ -39,11 +38,10 @@ export interface ProfileModularSettings {
 
 /** Configuração padrão inicial das seções do Perfil */
 export const DEFAULT_PROFILE_SECTIONS: ProfileSectionConfig[] = [
-  { id: "playing_now", label: "Jogando Agora", visible: true, order: 0 },
-  { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 1 },
-  { id: "library", label: "Biblioteca Completa", visible: true, order: 2 },
-  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 3 },
-  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 4 },
-  { id: "bio", label: "Apresentação & Bio", visible: true, order: 5 },
-  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 6 },
+  { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 0 },
+  { id: "library", label: "Biblioteca Completa", visible: true, order: 1 },
+  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 2 },
+  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 3 },
+  { id: "bio", label: "Apresentação & Bio", visible: true, order: 4 },
+  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 5 },
 ];

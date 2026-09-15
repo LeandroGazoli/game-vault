@@ -14,7 +14,7 @@ import { useProfileModules } from "@/hooks/useProfileModules";
 
 import ProfileHeroMobile from "@/components/profile/ProfileHeroMobile";
 import ProfileGameTracker from "@/components/profile/ProfileGameTracker";
-import ProfileLibrarySection from "@/components/profile/ProfileLibrarySection";
+import ProfileStreamingSections from "@/components/profile/ProfileStreamingSections";
 import ProfileGamificationSection from "@/components/profile/ProfileGamificationSection";
 import ProfileModularContainer from "@/components/profile/ProfileModularContainer";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
@@ -106,7 +106,6 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const renderSection = useCallback((sectionId: ProfileSectionId) => {
     if (!activeUser) return null;
     switch (sectionId) {
-      case "playing_now":
       case "game_tracker":
         return (
           <ProfileGameTracker
@@ -119,7 +118,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         );
       case "library":
         return (
-          <ProfileLibrarySection
+          <ProfileStreamingSections
             games={activeLibrary}
             stats={activeStats}
             isOwner={isOwnProfile}

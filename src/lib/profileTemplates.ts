@@ -15,13 +15,12 @@ export const OFFICIAL_PROFILE_TEMPLATES: Record<Exclude<ProfileTemplateId, "cust
     description: "Prioridade máxima para jogos em andamento e progresso do backlog.",
     iconName: "Gamepad2",
     sections: [
-      { id: "playing_now", label: "Jogando Agora", visible: true, order: 0 },
-      { id: "game_tracker", label: "Métricas & Progresso", visible: true, order: 1 },
-      { id: "library", label: "Biblioteca de Jogos", visible: true, order: 2 },
-      { id: "recent_games", label: "Atividades Recentes", visible: true, order: 3 },
-      { id: "achievements", label: "Conquistas & Nível", visible: true, order: 4 },
-      { id: "showcase", label: "Jogo em Destaque", visible: true, order: 5 },
-      { id: "bio", label: "Bio & Apresentação", visible: true, order: 6 },
+      { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 0 },
+      { id: "library", label: "Biblioteca de Jogos", visible: true, order: 1 },
+      { id: "recent_games", label: "Atividades Recentes", visible: true, order: 2 },
+      { id: "achievements", label: "Conquistas & Nível", visible: true, order: 3 },
+      { id: "showcase", label: "Jogo em Destaque", visible: true, order: 4 },
+      { id: "bio", label: "Bio & Apresentação", visible: true, order: 5 },
     ],
   },
   gamer: {
@@ -31,12 +30,11 @@ export const OFFICIAL_PROFILE_TEMPLATES: Record<Exclude<ProfileTemplateId, "cust
     iconName: "Trophy",
     sections: [
       { id: "achievements", label: "Conquistas & Nível", visible: true, order: 0 },
-      { id: "playing_now", label: "Jogando Agora", visible: true, order: 1 },
+      { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 1 },
       { id: "showcase", label: "Jogo em Destaque", visible: true, order: 2 },
-      { id: "game_tracker", label: "Métricas do Tracker", visible: true, order: 3 },
-      { id: "library", label: "Biblioteca Completa", visible: true, order: 4 },
-      { id: "bio", label: "Bio & Apresentação", visible: true, order: 5 },
-      { id: "recent_games", label: "Atividades Recentes", visible: false, order: 6 },
+      { id: "library", label: "Biblioteca Completa", visible: true, order: 3 },
+      { id: "bio", label: "Bio & Apresentação", visible: true, order: 4 },
+      { id: "recent_games", label: "Atividades Recentes", visible: false, order: 5 },
     ],
   },
   compact: {
@@ -45,13 +43,12 @@ export const OFFICIAL_PROFILE_TEMPLATES: Record<Exclude<ProfileTemplateId, "cust
     description: "Densidade máxima de informações sem rolagem desnecessária.",
     iconName: "Minimize2",
     sections: [
-      { id: "playing_now", label: "Jogando Agora", visible: true, order: 0 },
-      { id: "game_tracker", label: "Métricas Rápidas", visible: true, order: 1 },
-      { id: "library", label: "Biblioteca Compacta", visible: true, order: 2 },
-      { id: "achievements", label: "Conquistas & Nível", visible: true, order: 3 },
-      { id: "bio", label: "Bio", visible: false, order: 4 },
-      { id: "showcase", label: "Destaque", visible: false, order: 5 },
-      { id: "recent_games", label: "Recentes", visible: false, order: 6 },
+      { id: "game_tracker", label: "Métricas Rápidas", visible: true, order: 0 },
+      { id: "library", label: "Biblioteca Compacta", visible: true, order: 1 },
+      { id: "achievements", label: "Conquistas & Nível", visible: true, order: 2 },
+      { id: "bio", label: "Bio", visible: false, order: 3 },
+      { id: "showcase", label: "Destaque", visible: false, order: 4 },
+      { id: "recent_games", label: "Recentes", visible: false, order: 5 },
     ],
   },
   minimal: {
@@ -61,11 +58,10 @@ export const OFFICIAL_PROFILE_TEMPLATES: Record<Exclude<ProfileTemplateId, "cust
     iconName: "Sparkles",
     sections: [
       { id: "library", label: "Biblioteca Completa", visible: true, order: 0 },
-      { id: "playing_now", label: "Jogando Agora", visible: true, order: 1 },
+      { id: "game_tracker", label: "Game Tracker", visible: true, order: 1 },
       { id: "bio", label: "Apresentação", visible: true, order: 2 },
-      { id: "game_tracker", label: "Métricas", visible: false, order: 3 },
-      { id: "achievements", label: "Conquistas", visible: false, order: 4 },
-      { id: "showcase", label: "Destaque", visible: false, order: 5 },
+      { id: "achievements", label: "Conquistas", visible: false, order: 3 },
+      { id: "showcase", label: "Destaque", visible: false, order: 4 },
       { id: "recent_games", label: "Recentes", visible: false, order: 6 },
     ],
   },
@@ -79,9 +75,10 @@ export function resolveProfileSections(
   templateId: ProfileTemplateId = "tracker"
 ): ProfileSectionConfig[] {
   if (customSections && Array.isArray(customSections) && customSections.length > 0) {
-    // Garante que se novas seções forem adicionadas no futuro, elas entrem com defaults
-    const existingIds = new Set(customSections.map((s) => s.id));
-    const merged = [...customSections];
+    // Saneamento proativo: remove chave obsoleta "playing_now" para evitar duplicidade
+    const cleaned = customSections.filter((s) => (s.id as any) !== "playing_now");
+    const existingIds = new Set(cleaned.map((s) => s.id));
+    const merged = [...cleaned];
 
     for (const def of DEFAULT_PROFILE_SECTIONS) {
       if (!existingIds.has(def.id)) {
