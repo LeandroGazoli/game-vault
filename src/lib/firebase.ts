@@ -967,6 +967,51 @@ export function subscribeToSystemNotifications(
   }
 }
 
+/**
+ * Assina as notificações privadas e exclusivas do usuário em tempo real
+ */
+export function subscribeToUserPrivateNotifications(
+  userId: string,
+  callback: (notifications: SystemNotification[]) => void
+): () => void {
+  if (!db || !userId) {
+    callback([]);
+    return () => {};
+  }
+
+  try {
+    const userNotifColl = collection(db, "users", userId, "notifications");
+    return onSnapshot(
+      userNotifColl,
+      (snapshot) => {
+        const list: SystemNotification[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          list.push({
+            id: docSnap.id,
+            title: data.title || "",
+            message: data.message || "",
+            category: data.category || "general",
+            linkUrl: data.linkUrl || null,
+            linkLabel: data.linkLabel || null,
+            createdAt: data.createdAt || new Date().toISOString(),
+            targetUserId: userId,
+            isPinned: false,
+          });
+        });
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        callback(list);
+      },
+      (error) => {
+        console.warn("[Firebase] Erro ao assinar notificações privadas do usuário:", error);
+      }
+    );
+  } catch (err) {
+    console.warn("[Firebase] Erro no listener de notificações privadas:", err);
+    return () => {};
+  }
+}
+
 let cachedLeaderboard: { list: UserProfile[]; timestamp: number } | null = null;
 const LEADERBOARD_CACHE_TTL_MS = 45 * 1000; // 45 segundos
 

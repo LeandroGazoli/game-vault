@@ -66,6 +66,14 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isOwner(userId) || isVerifiedAdmin();
       }
+
+      // Regras para notificações privadas do usuário (FASE 11 & FASE 14 - Prevenção de IDOR)
+      match /notifications/{notifId} {
+        allow read: if isOwner(userId) || isVerifiedAdmin();
+        allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+        allow delete: if isOwner(userId) || isVerifiedAdmin();
+        allow create: if isVerifiedAdmin();
+      }
     }
 
     // Cache público de traduções de jogos: protegido contra DoS, injeção de campos e overflow de armazenamento

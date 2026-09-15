@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { SystemNotification } from "@/lib/types";
 import {
   subscribeToSystemNotifications,
+  subscribeToUserPrivateNotifications,
   markNotificationAsReadForUser,
   markAllNotificationsAsReadForUser,
   dismissNotificationForUser,
@@ -55,23 +56,34 @@ export default function NotificationBell() {
       setIsPushEnabled(getNotificationPermission() === "granted");
     }
 
-    // Assina notificações em tempo real do Firestore apenas para usuários autenticados
-    const unsubscribe = subscribeToSystemNotifications((serverNotifs) => {
-      let merged: SystemNotification[] = [];
+    let globalNotifs: SystemNotification[] = [];
+    let privateNotifs: SystemNotification[] = [];
 
-      if (serverNotifs.length > 0) {
-        merged = serverNotifs;
-      } else {
-        merged = [INITIAL_FEATURE_NOTIFICATION];
-      }
+    const updateCombined = () => {
+      const all = [...privateNotifs, ...globalNotifs];
+      const uniqueMap = new Map<string, SystemNotification>();
+      all.forEach((n) => uniqueMap.set(n.id, n));
+      const sorted = Array.from(uniqueMap.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setRawNotifications(sorted.length > 0 ? sorted : [INITIAL_FEATURE_NOTIFICATION]);
+    };
 
-      setRawNotifications(merged);
+    // Assina notificações públicas de sistema
+    const unsubGlobal = subscribeToSystemNotifications((serverNotifs) => {
+      globalNotifs = serverNotifs;
+      updateCombined();
+    });
+
+    // Assina notificações privadas e direcionadas do usuário (FASE 11 & FASE 14)
+    const unsubPrivate = subscribeToUserPrivateNotifications(user.uid, (privates) => {
+      privateNotifs = privates;
+      updateCombined();
     });
 
     return () => {
-      if (typeof unsubscribe === "function") {
-        unsubscribe();
-      }
+      if (typeof unsubGlobal === "function") unsubGlobal();
+      if (typeof unsubPrivate === "function") unsubPrivate();
     };
   }, [user]);
 

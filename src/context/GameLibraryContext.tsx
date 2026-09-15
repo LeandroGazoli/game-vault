@@ -117,6 +117,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         gameSlug: gameData.gameSlug || String(gameData.gameId),
         gameTitle: gameData.gameTitle,
         gameCover: gameData.gameCover || null,
+        owned: gameData.owned !== undefined ? gameData.owned : true,
         status: gameData.status || "backlog",
         completionType: gameData.status === "completed" ? gameData.completionType || null : null,
         userRating: gameData.userRating !== undefined ? gameData.userRating : null,
@@ -209,6 +210,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
           gameSlug: item.gameSlug || String(item.gameId),
           gameTitle: item.gameTitle,
           gameCover: item.gameCover !== undefined ? item.gameCover : existing?.gameCover || null,
+          owned: item.owned !== undefined ? item.owned : existing?.owned !== undefined ? existing.owned : true,
           status: item.status || existing?.status || "backlog",
           completionType: item.status === "completed" ? item.completionType || existing?.completionType || null : null,
           userRating: item.userRating !== undefined ? item.userRating : existing?.userRating ?? null,
@@ -287,6 +289,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
     let completed = 0;
     let playing = 0;
+    let paused = 0;
     let dropped = 0;
     let backlog = 0;
     let libraryCount = 0;
@@ -294,6 +297,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     for (const g of library) {
       if (g.status === "completed") completed++;
       else if (g.status === "playing") playing++;
+      else if (g.status === "paused") paused++;
       else if (g.status === "dropped") dropped++;
       else if (g.status === "backlog") backlog++;
       else if (g.status === "library") libraryCount++;
@@ -323,6 +327,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       totalGames: library.length,
       completedCount: completed,
       playingCount: playing,
+      pausedCount: paused,
       droppedCount: dropped,
       backlogCount: backlog,
       libraryCount,

@@ -32,6 +32,7 @@ import {
   Package,
   Layers,
   Bookmark,
+  PauseCircle,
 } from "lucide-react";
 import { CONSOLE_CATEGORIES, POPULAR_CONSOLES } from "@/lib/platformUtils";
 
@@ -355,6 +356,7 @@ export default function GameModal({
         gameSlug: game.slug,
         gameTitle: game.name,
         gameCover: game.background_image,
+        owned: true,
         status,
         completionType: status === "completed" ? (completionType || "main_story") : null,
         userRating: rating !== null ? rating : null,
@@ -528,6 +530,14 @@ export default function GameModal({
                     iconColor: "text-cyan-400",
                   },
                   {
+                    id: "paused" as GameStatus,
+                    label: "Pausado",
+                    subtitle: "Em pausa temporária",
+                    icon: PauseCircle,
+                    activeClass: "bg-amber-400 text-black font-bold border-amber-400 shadow-lg shadow-amber-400/20",
+                    iconColor: "text-amber-400",
+                  },
+                  {
                     id: "completed" as GameStatus,
                     label: "Zerados",
                     subtitle: "Jogos zerados",
@@ -649,6 +659,23 @@ export default function GameModal({
                 >
                   <Gamepad2 className="w-3.5 h-3.5" />
                   Jogando
+                </button>
+
+                {/* Pausado */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerSelectionHaptic();
+                    setStatus("paused");
+                  }}
+                  className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all ${
+                    status === "paused"
+                      ? "bg-amber-400 text-black font-bold shadow-lg shadow-amber-400/20"
+                      : "bg-white/10 text-gray-300 hover:bg-white/15"
+                  }`}
+                >
+                  <PauseCircle className="w-3.5 h-3.5" />
+                  Pausado
                 </button>
 
                 {/* Concluído / Zerado */}

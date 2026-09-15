@@ -144,8 +144,29 @@ export default function GameImporterModal({
     setSteamError(null);
 
     try {
+      // 1. Pré-validação em tempo real (Fase 9)
+      const validateRes = await fetch("/api/steam/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ steamInput: steamInput.trim() }),
+      });
+      const validateData = await validateRes.json();
+
+      if (!validateData.valid) {
+        setSteamError(validateData.error || "Perfil Steam não encontrado. Verifique o link ou username informado.");
+        return;
+      }
+
+      if (validateData.isPrivate) {
+        setSteamError(
+          `Perfil Steam localizado (${validateData.profile?.personaname || "Gamer"}), porém seus Detalhes dos Jogos estão definidos como PRIVADOS na Steam. Acesse Perfil > Editar Perfil > Configurações de Privacidade > Detalhes dos Jogos: "Público" para importar.`
+        );
+        return;
+      }
+
+      const effectiveSteamId = validateData.steamId64 || steamInput.trim();
       const params = new URLSearchParams();
-      params.set("steamId", steamInput.trim());
+      params.set("steamId", effectiveSteamId);
       if (steamApiKey.trim()) params.set("apiKey", steamApiKey.trim());
 
       const res = await fetch(`/api/steam/games?${params.toString()}`);

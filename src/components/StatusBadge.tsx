@@ -2,7 +2,7 @@
 
 import React from "react";
 import { GameStatus, CompletionType } from "@/lib/types";
-import { Trophy, Gamepad2, XCircle, Clock, Crown, Sword, Compass, Sparkles, Layers } from "lucide-react";
+import { Trophy, Gamepad2, XCircle, Clock, Crown, Sword, Compass, Sparkles, Layers, PauseCircle } from "lucide-react";
 
 interface StatusBadgeProps {
   status: GameStatus;
@@ -28,6 +28,13 @@ export const STATUS_CONFIG: Record<
     text: "text-cyan-300",
     border: "border-cyan-500/40",
     icon: Gamepad2,
+  },
+  paused: {
+    label: "Pausado",
+    bg: "bg-[#251e12]/90",
+    text: "text-amber-400",
+    border: "border-amber-500/40",
+    icon: PauseCircle,
   },
   library: {
     label: "Biblioteca",

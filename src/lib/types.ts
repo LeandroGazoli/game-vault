@@ -1,4 +1,4 @@
-export type GameStatus = "completed" | "playing" | "dropped" | "backlog" | "library";
+export type GameStatus = "completed" | "playing" | "paused" | "dropped" | "backlog" | "library";
 
 export type CompletionType = "main_story" | "main_extra" | "completionist" | "platinum" | "custom";
 
@@ -424,6 +424,8 @@ export interface UserGame {
   gameSlug: string;
   gameTitle: string;
   gameCover: string | null;
+  /** Indica pertencimento à coleção/biblioteca do usuário. Fonte central de propriedade. */
+  owned?: boolean;
   status: GameStatus;
   completionType?: CompletionType | null;
   userRating: number | null;
@@ -750,6 +752,7 @@ export interface LibraryStats {
   totalGames: number;
   completedCount: number;
   playingCount: number;
+  pausedCount?: number;
   droppedCount: number;
   backlogCount: number;
   libraryCount?: number;
@@ -1381,6 +1384,4 @@ export interface ImportGameDraft {
   selected: boolean;
   alreadyInLibrary?: boolean;
 }
-
-
-
+export * from "./types/profile.types";

@@ -173,6 +173,7 @@ export function computeLibraryStats(games: UserGame[]): LibraryStats {
 
   let completed = 0;
   let playing = 0;
+  let paused = 0;
   let dropped = 0;
   let backlog = 0;
   let libraryCount = 0;
@@ -180,6 +181,7 @@ export function computeLibraryStats(games: UserGame[]): LibraryStats {
   for (const g of games) {
     if (g.status === "completed") completed++;
     else if (g.status === "playing") playing++;
+    else if (g.status === "paused") paused++;
     else if (g.status === "dropped") dropped++;
     else if (g.status === "backlog") backlog++;
     else if (g.status === "library") libraryCount++;
@@ -207,6 +209,7 @@ export function computeLibraryStats(games: UserGame[]): LibraryStats {
     totalGames: games.length,
     completedCount: completed,
     playingCount: playing,
+    pausedCount: paused,
     droppedCount: dropped,
     backlogCount: backlog,
     libraryCount,
