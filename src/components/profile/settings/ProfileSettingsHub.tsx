@@ -54,25 +54,39 @@ export default function ProfileSettingsHub({
     <div className="min-h-screen bg-[#0b0d12] text-[#e2e2e9] selection:bg-[#10b981] selection:text-black">
       {/* Top Header */}
       <header className="fixed top-0 w-full z-40 pt-safe bg-[#0b0d12]/90 backdrop-blur-xl border-b border-white/10 shadow-lg">
-        <div className="h-14 px-4 flex items-center justify-between max-w-md lg:max-w-6xl mx-auto">
-          <button type="button" onClick={handleBack} className="flex items-center gap-1 text-gray-400 hover:text-white active:scale-95 transition-all py-1.5 pr-3 pl-1 -ml-1">
-            <ArrowLeft className="w-5 h-5 text-[#4edea3]" />
-            <span className="text-[15px] font-semibold tracking-tight">Cancelar</span>
+        <div className="h-14 px-4 sm:px-6 flex items-center justify-between max-w-6xl mx-auto">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white active:scale-95 transition-all py-1.5 pr-3 pl-1 -ml-1"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#10b981]" />
+            <span className="text-sm font-semibold tracking-tight">Voltar</span>
           </button>
+
           <div className="flex flex-col items-center">
-            <h1 className="text-[15px] font-bold text-white tracking-tight">Hub de Edição</h1>
-            <span className="text-[10px] text-[#4edea3] font-mono font-semibold uppercase tracking-wider">Variante 2 • Acordeão</span>
+            <h1 className="text-sm sm:text-base font-bold text-white tracking-tight">Personalizar Perfil</h1>
+            <span className="text-[10px] text-[#10b981] font-mono font-semibold uppercase tracking-wider">MGL Identity Studio</span>
           </div>
-          <button type="button" disabled={settings.isSaving} onClick={settings.handleSave} className="px-3.5 py-1.5 rounded-full bg-[#10b981] hover:bg-emerald-400 text-black text-[13px] font-bold shadow-md active:scale-95 transition-all disabled:opacity-50">
-            {settings.isSaving ? "Salvando..." : "Salvar"}
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={settings.isSaving}
+              onClick={settings.handleSave}
+              className="px-4 py-1.5 rounded-full bg-[#10b981] hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>{settings.isSaving ? "Salvando..." : "Salvar"}</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content (Mobile: Single Column Stack | Desktop: 2-Column Split-Screen) */}
-      <main className="w-full pt-20 pb-32 px-3.5 flex flex-col gap-3 max-w-md mx-auto lg:max-w-6xl lg:grid lg:grid-cols-[380px_1fr] lg:gap-8 lg:items-start">
+      <main className="w-full pt-20 pb-28 lg:pb-16 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col lg:grid lg:grid-cols-[380px_1fr] lg:gap-8 lg:items-start">
         {/* Left Column: Live Preview Card (Sticky on Desktop) */}
-        <div className="flex flex-col gap-3 lg:sticky lg:top-20">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           <ProfilePreviewCard
             bannerURL={settings.customBannerUrl || settings.bannerURL}
             photoURL={settings.photoURL}
@@ -82,37 +96,66 @@ export default function ProfileSettingsHub({
             layout={settings.layout}
           />
 
-          {/* Desktop-only Quick Drawer Shortcuts */}
-          <div className="hidden lg:flex flex-col gap-1 p-3 rounded-2xl bg-[#141822] border border-white/10 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">
-              Atalhos de Navegação Rápida
-            </span>
-            {DESKTOP_NAV_ITEMS.map((item) => {
-              const isActive = settings.activeAccordion === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => settings.toggleAccordion(item.id)}
-                  className={`px-2.5 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-all ${
-                    isActive
-                      ? "bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">{item.label}</span>
-                  <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isActive ? "rotate-90 text-[#4edea3]" : "text-gray-500"}`} />
-                </button>
-              );
-            })}
+          {/* Desktop-only Quick Drawer Shortcuts & Action Card */}
+          <div className="hidden lg:flex flex-col gap-2 p-4 rounded-3xl bg-[#141822] border border-white/10 shadow-lg">
+            <div className="flex items-center justify-between pb-1 border-b border-white/5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Atalhos Rápidos
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+                7 Seções
+              </span>
+            </div>
+
+            <div className="space-y-1 pt-1">
+              {DESKTOP_NAV_ITEMS.map((item) => {
+                const isActive = settings.activeAccordion === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => settings.toggleAccordion(item.id)}
+                    className={`w-full px-3 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-all ${
+                      isActive
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold"
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <span className="truncate">{item.label}</span>
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isActive ? "rotate-90 text-emerald-400" : "text-gray-500"}`} />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Desktop Action Buttons Inside Sidebar */}
+            <div className="pt-3 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                disabled={settings.isSaving}
+                onClick={settings.handleSave}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{settings.isSaving ? "Salvando Alterações..." : "Salvar Perfil"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBack}
+                className="w-full py-2 px-3 rounded-xl bg-[#1a2130] hover:bg-[#20293a] text-gray-400 hover:text-white text-xs font-semibold border border-white/5 transition-all text-center"
+              >
+                Descartar &amp; Voltar
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Right Column: Accordions & Sections */}
-        <div className="flex flex-col gap-2.5 w-full">
-          <div className="flex items-center justify-between px-1 text-xs text-gray-400 pt-1 lg:pt-0">
-            <span className="font-bold text-[11px] uppercase tracking-wider text-gray-400">Gavetas de Configuração</span>
-            <span className="font-mono text-[11px] text-[#4edea3]">7 Seções Disponíveis</span>
+        <div className="flex flex-col gap-3 w-full mt-4 lg:mt-0">
+          <div className="flex items-center justify-between px-1 text-xs text-gray-400">
+            <span className="font-bold text-[11px] uppercase tracking-wider text-gray-400">Gavetas de Edição</span>
+            <span className="font-mono text-[11px] text-[#10b981]">Configurações Avançadas</span>
           </div>
 
           <div id="accordion-1">
@@ -214,8 +257,8 @@ export default function ProfileSettingsHub({
             />
           </div>
 
-          <div className="flex items-center justify-center gap-2 py-3 text-gray-500 font-mono text-[11px]">
-            <Cloud className="w-4 h-4 text-[#4edea3]" />
+          <div className="flex items-center justify-center gap-2 py-4 text-gray-500 font-mono text-[11px]">
+            <Cloud className="w-4 h-4 text-[#10b981]" />
             <span>Sincronizado na Nuvem MGL Vault</span>
           </div>
         </div>
@@ -231,14 +274,23 @@ export default function ProfileSettingsHub({
         </div>
       )}
 
-      {/* Sticky Save Bar */}
-      <aside className="fixed bottom-0 w-full z-40 pb-safe bg-[#0b0d12]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-8px_32px_rgba(0,0,0,0.8)]">
-        <div className="p-3.5 flex items-center justify-center max-w-md lg:max-w-6xl mx-auto w-full gap-2.5">
-          <button type="button" onClick={handleBack} className="px-4 h-12 rounded-xl bg-[#1a2130] hover:bg-[#1e2433] text-gray-300 hover:text-white text-xs font-semibold border border-white/10 active:scale-95 transition-all">
+      {/* Mobile Sticky Save Bar (Aparece apenas em Mobile < lg, evitando poluição no desktop) */}
+      <aside className="lg:hidden fixed bottom-0 w-full z-40 pb-safe bg-[#0b0d12]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-8px_32px_rgba(0,0,0,0.8)]">
+        <div className="p-3 flex items-center justify-center max-w-md mx-auto w-full gap-2.5">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="px-4 h-11 rounded-xl bg-[#1a2130] hover:bg-[#1e2433] text-gray-300 text-xs font-semibold border border-white/10 active:scale-95 transition-all"
+          >
             Descartar
           </button>
-          <button type="button" disabled={settings.isSaving} onClick={settings.handleSave} className="flex-1 h-12 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-sm font-bold flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(16,185,129,0.35)] active:scale-[0.98] transition-all disabled:opacity-50">
-            <Save className="w-5 h-5" />
+          <button
+            type="button"
+            disabled={settings.isSaving}
+            onClick={settings.handleSave}
+            className="flex-1 h-11 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 shadow-[0_0_24px_rgba(16,185,129,0.35)] active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
             <span>{settings.isSaving ? "Salvando..." : "Salvar Alterações"}</span>
           </button>
         </div>

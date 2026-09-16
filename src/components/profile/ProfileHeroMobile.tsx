@@ -19,6 +19,7 @@ import {
   Upload,
   Layers,
   Edit2,
+  Award,
 } from "lucide-react";
 
 export interface ProfileHeroMobileProps {
@@ -212,6 +213,47 @@ export default function ProfileHeroMobile({
             <span>Adicionar uma bio...</span>
           </button>
         ) : null}
+
+        {/* Insígnias Gamer Equipadas */}
+        {(() => {
+          const titlesToDisplay =
+            user.customTitles && user.customTitles.length > 0
+              ? user.customTitles
+              : user.customTitle
+              ? [user.customTitle]
+              : [];
+
+          if (titlesToDisplay.length === 0 && !isOwner) return null;
+
+          return (
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {titlesToDisplay.map((title, idx) => (
+                <span
+                  key={`${title}-${idx}`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-sm transition-all border ${
+                    idx === 0
+                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                      : "bg-[#1c2230] border-white/10 text-gray-300 hover:border-white/25"
+                  }`}
+                >
+                  <Award className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span className="truncate max-w-[150px]">{title}</span>
+                </span>
+              ))}
+
+              {titlesToDisplay.length === 0 && isOwner && (
+                <button
+                  type="button"
+                  onClick={() => handleAction(onOpenEditProfile)}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-gray-400 hover:text-white text-[11px] font-medium transition-all"
+                >
+                  <Award className="w-3 h-3 text-amber-400/80" />
+                  <span>Equipar Insígnias</span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Gamertags / Redes Sociais Compactas */}
         {user.socialLinks && Object.values(user.socialLinks).some(Boolean) && (

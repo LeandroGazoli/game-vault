@@ -141,12 +141,16 @@ export default function BadgesAccordion({
           </div>
 
           {/* Criador de Insígnia Custom */}
-          <div className="p-3 rounded-xl bg-[#1a2130]/70 border border-white/10 space-y-2">
+          <div className="p-3.5 rounded-2xl bg-[#1a2130]/70 border border-white/10 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <PlusCircle className="w-4 h-4 text-[#00E5FF]" /> Criador de Insígnia Custom
+                <PlusCircle className="w-4 h-4 text-[#10b981]" /> Criador de Insígnia Custom
               </span>
-              <span className="text-[9px] font-mono text-[#00E5FF] px-1.5 py-0.5 rounded bg-[#00E5FF]/10 font-bold">
+              <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold border ${
+                isPremium
+                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                  : "bg-amber-500/15 text-amber-300 border-amber-500/30"
+              }`}>
                 {isPremium ? "PRO ATIVO" : "PRO EXCLUSIVO"}
               </span>
             </div>
@@ -154,7 +158,7 @@ export default function BadgesAccordion({
               <select
                 value={newTitleEmoji}
                 onChange={(e) => setNewTitleEmoji(e.target.value)}
-                className="w-14 bg-[#141822] text-center rounded-lg border border-white/10 text-base py-1 text-white focus:outline-none"
+                className="w-14 bg-[#141822] text-center rounded-xl border border-white/10 text-base py-1.5 text-white focus:outline-none focus:border-emerald-500"
               >
                 {GAMER_EMOJI_SUGGESTIONS.map((em) => (
                   <option key={em} value={em}>{em}</option>
@@ -164,25 +168,56 @@ export default function BadgesAccordion({
                 type="text"
                 value={newTitleInput}
                 onChange={(e) => setNewTitleInput(e.target.value)}
-                placeholder="Nome da insígnia..."
-                className="flex-1 bg-[#141822] rounded-lg px-2.5 py-1 text-xs border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF]"
+                placeholder="Ex: Mestre dos Troféus..."
+                className="flex-1 bg-[#141822] rounded-xl px-3 py-1.5 text-xs border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500"
               />
               <button
                 type="button"
                 onClick={handleCreateCustomTitle}
-                className="px-3 rounded-lg bg-[#00E5FF]/20 text-[#00E5FF] text-xs font-bold hover:bg-[#00E5FF]/30 active:scale-95 transition-all"
+                className="px-3.5 py-1.5 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-bold active:scale-95 transition-all cursor-pointer shrink-0"
               >
                 Criar
               </button>
             </div>
           </div>
 
+          {/* Minhas Insígnias Criadas */}
+          {createdTitles && createdTitles.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                Minhas Insígnias Criadas ({createdTitles.length})
+              </span>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {createdTitles.map((title) => {
+                  const isEquipped = equippedTitles.includes(title);
+                  return (
+                    <button
+                      key={title}
+                      type="button"
+                      onClick={() => toggleEquipTitle(title)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer active:scale-95 ${
+                        isEquipped
+                          ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold shadow-sm"
+                          : "bg-[#1a2130] border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
+                      }`}
+                    >
+                      <span>{title}</span>
+                      <span className={`text-[10px] font-mono px-1 rounded ${isEquipped ? "bg-emerald-500/30 text-emerald-200" : "bg-white/10 text-gray-400"}`}>
+                        {isEquipped ? "✓ Equipado" : "+ Equipar"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Catálogo Nativo MGL */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
               Catálogo MGL (Equipar 1-Toque)
             </span>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex flex-wrap gap-2 pt-1">
               {DEFAULT_GAMER_TITLES.map((title) => {
                 const isEquipped = equippedTitles.includes(title);
                 return (
@@ -190,14 +225,14 @@ export default function BadgesAccordion({
                     key={title}
                     type="button"
                     onClick={() => toggleEquipTitle(title)}
-                    className={`px-2.5 py-1.5 rounded-lg border text-xs whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all ${
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                       isEquipped
-                        ? "bg-[#4edea3]/10 border-[#4edea3] text-[#4edea3] font-bold"
-                        : "bg-[#1a2130] border-white/10 text-gray-300 hover:border-white/30"
+                        ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold shadow-sm"
+                        : "bg-[#1a2130] border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
                     }`}
                   >
                     <span>{title}</span>
-                    <span className="text-[10px]">{isEquipped ? "✓" : "+"}</span>
+                    <span className="text-[10px] font-bold">{isEquipped ? "✓" : "+"}</span>
                   </button>
                 );
               })}

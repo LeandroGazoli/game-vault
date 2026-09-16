@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -111,31 +111,73 @@ export default function ProfileDesktopSidebar({
         </Link>
       </div>
 
-      {/* 2. CARD DE DESTAQUES GAMER RÁPIDOS */}
-      <div className="p-4 rounded-3xl bg-[#141822] border border-white/10 shadow-lg space-y-2.5">
+      {/* 2. CARD DE INSÍGNIAS E PRESTÍGIO GAMER */}
+      <div className="p-4 rounded-3xl bg-[#141822] border border-white/10 shadow-lg space-y-3">
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-bold text-white">Insígnias do Gamer</span>
+            <span className="text-xs font-bold text-white">Insígnias de Prestígio</span>
           </div>
-          <span className="text-[10px] font-mono text-gray-400">{stats.completedCount} Zerados</span>
+          <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+            {(user.customTitles?.length || (user.customTitle ? 1 : 0))} equipada(s)
+          </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        {/* Lista de Insígnias Equipadas */}
+        {(() => {
+          const titles =
+            user.customTitles && user.customTitles.length > 0
+              ? user.customTitles
+              : user.customTitle
+              ? [user.customTitle]
+              : [];
+
+          if (titles.length > 0) {
+            return (
+              <div className="space-y-1.5">
+                {titles.map((title, idx) => (
+                  <div
+                    key={`${title}-${idx}`}
+                    className="flex items-center justify-between p-2 rounded-xl bg-[#181d28] border border-white/5 text-xs font-semibold"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 pr-1">
+                      <span className="w-5 h-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <span className="text-white truncate font-bold">{title}</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">
+                      ATIVA
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
+          return (
+            <div className="p-3 rounded-xl bg-[#181d28] border border-white/5 text-center text-xs text-gray-400">
+              Nenhuma insígnia equipada ainda.
+            </div>
+          );
+        })()}
+
+        {/* Métricas Compactas de Prestígio */}
+        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/5">
           <div className="p-2 rounded-xl bg-[#181d28] border border-white/5 text-center">
-            <Gamepad2 className="w-4 h-4 text-cyan-400 mx-auto mb-1" />
-            <span className="text-[9px] font-bold text-gray-400 block uppercase truncate">Passo 1</span>
-            <span className="text-[10px] font-bold text-white">100 XP</span>
+            <Gamepad2 className="w-3.5 h-3.5 text-cyan-400 mx-auto mb-0.5" />
+            <span className="text-[9px] font-bold text-gray-400 block uppercase">Zerados</span>
+            <span className="text-xs font-bold text-white font-mono">{stats.completedCount}</span>
           </div>
           <div className="p-2 rounded-xl bg-[#181d28] border border-white/5 text-center">
-            <Clock className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
-            <span className="text-[9px] font-bold text-gray-400 block uppercase truncate">Horas</span>
-            <span className="text-[10px] font-bold text-white">{stats.totalPlaytimeHours}h</span>
+            <Clock className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-0.5" />
+            <span className="text-[9px] font-bold text-gray-400 block uppercase">Horas</span>
+            <span className="text-xs font-bold text-white font-mono">{stats.totalPlaytimeHours}h</span>
           </div>
           <div className="p-2 rounded-xl bg-[#181d28] border border-white/5 text-center">
-            <Crown className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-            <span className="text-[9px] font-bold text-gray-400 block uppercase truncate">Plano</span>
-            <span className="text-[10px] font-bold text-white uppercase">{user.plan || "Free"}</span>
+            <Crown className="w-3.5 h-3.5 text-amber-400 mx-auto mb-0.5" />
+            <span className="text-[9px] font-bold text-gray-400 block uppercase">Passe</span>
+            <span className="text-xs font-bold text-amber-300 uppercase font-mono">{user.plan || "Free"}</span>
           </div>
         </div>
       </div>
