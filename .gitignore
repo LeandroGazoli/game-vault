@@ -32,3 +32,7 @@ next-env.d.ts
 /capturas
 .vercel
 .env*
+
+# cloudflare / opennext
+.open-next
+.wrangler
