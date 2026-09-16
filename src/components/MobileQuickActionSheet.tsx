@@ -13,6 +13,7 @@ import {
   Sparkles,
   Palette,
   Crown,
+  Trophy,
   X,
   Plus,
   Smartphone,
@@ -168,6 +169,18 @@ export default function MobileQuickActionSheet({
 
         {/* Ações Secundárias */}
         <div className="pt-1 space-y-2">
+          <Link
+            href="/conquistas"
+            onClick={() => handleAction(() => {})}
+            className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#141822] border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold text-amber-300 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Central de Conquistas &amp; Missões</span>
+            </div>
+            <span className="text-[10px] text-amber-400 font-mono">Ver Hub →</span>
+          </Link>
+
           {user ? (
             <Link
               href={user.username ? `/perfil/editar` : "/perfil"}

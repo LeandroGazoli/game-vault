@@ -210,6 +210,17 @@ export default function Navbar() {
                 Ideias &amp; Bugs
               </Link>
               <Link
+                href="/conquistas"
+                className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
+                  pathname?.startsWith("/conquistas")
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                Conquistas
+              </Link>
+              <Link
                 href={user?.username ? getProfileUrl(user.username) : "/perfil"}
                 className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ${
                   pathname?.startsWith("/perfil")
@@ -217,7 +228,7 @@ export default function Navbar() {
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Trophy className="w-3.5 h-3.5 text-emerald-400" />
+                <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
                 Meus Jogos
               </Link>
 
@@ -464,6 +475,15 @@ export default function Navbar() {
                         >
                           <User className="w-4 h-4 text-emerald-400" />
                           <span>Meu Perfil</span>
+                        </Link>
+
+                        <Link
+                          href={user.username ? `/perfil/${encodeURIComponent(user.username)}/conquistas` : "/conquistas"}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-white hover:bg-amber-500/15 transition-colors"
+                        >
+                          <Trophy className="w-4 h-4 text-amber-400" />
+                          <span>Central de Conquistas &amp; Missões</span>
                         </Link>
 
                         <button

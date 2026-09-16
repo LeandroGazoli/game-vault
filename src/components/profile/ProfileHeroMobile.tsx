@@ -10,6 +10,7 @@ import { triggerSelectionHaptic } from "@/lib/capacitor";
 import {
   Crown,
   Sparkles,
+  Trophy,
   Share2,
   Check,
   Plus,
@@ -130,11 +131,15 @@ export default function ProfileHeroMobile({
                   @{user.username}
                 </span>
 
-                {/* Badge de Nível Gamer */}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1c2230] border border-white/10 text-gray-200 font-mono text-[10px] font-bold">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                  <span>LV. {user.gamerLevel || 1}</span>
-                </span>
+                {/* Badge de Nível Gamer com Link Direto para o Hub */}
+                <Link
+                  href={user.username ? `/perfil/${encodeURIComponent(user.username)}/conquistas` : "/conquistas"}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold transition-all active:scale-95 cursor-pointer shadow-sm group"
+                  title="Abrir Central de Conquistas & Missões"
+                >
+                  <Trophy className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform" />
+                  <span>LV. {user.gamerLevel || 1} • CONQUISTAS →</span>
+                </Link>
 
                 {/* Selo de Assinatura */}
                 {access.plan === "vip" ? (
