@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { UserGame, UserProfile, calculateGamerLevel } from "@/lib/types";
+import { UserGame, UserProfile } from "@/lib/types";
 import { ProfileSectionId } from "@/lib/types/profile.types";
-import { getGamerCommunityRank, GamerRankResult } from "@/lib/firebase";
 import { getProfileUrl } from "@/lib/routes";
 import { computeLibraryStats } from "@/lib/gamificationCore";
 import { useProfileModules } from "@/hooks/useProfileModules";
@@ -15,7 +14,7 @@ import { useProfileModules } from "@/hooks/useProfileModules";
 import ProfileHeroMobile from "@/components/profile/ProfileHeroMobile";
 import ProfileGameTracker from "@/components/profile/ProfileGameTracker";
 import ProfileStreamingSections from "@/components/profile/ProfileStreamingSections";
-import ProfileGamificationSection from "@/components/profile/ProfileGamificationSection";
+import ProfileGamificationTeaser from "@/components/profile/ProfileGamificationTeaser";
 import ProfileModularContainer from "@/components/profile/ProfileModularContainer";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
@@ -92,16 +91,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [realGamerRank, setRealGamerRank] = useState<GamerRankResult | null>(null);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!activeUser?.username) return;
-    const currentXp = activeUser.gamerXp || calculateGamerLevel(activeStats, undefined, activeUser.plan, activeUser.bonusXp).xp;
-    getGamerCommunityRank({ uid: activeUser.uid, username: activeUser.username, xp: currentXp })
-      .then((res) => setRealGamerRank(res))
-      .catch((err) => console.warn("Erro no ranking:", err));
-  }, [activeUser?.uid, activeUser?.username, activeUser?.gamerXp, activeUser?.plan, activeStats]);
 
   const renderSection = useCallback((sectionId: ProfileSectionId) => {
     if (!activeUser) return null;
@@ -135,15 +125,10 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         );
       case "achievements":
         return (
-          <ProfileGamificationSection
+          <ProfileGamificationTeaser
             user={activeUser}
             stats={activeStats}
             isOwner={isOwnProfile}
-            realGamerRank={realGamerRank}
-            onOpenUpgrade={() => setIsUpgradeOpen(true)}
-            onOpenManagePlan={() => setIsManagePlanOpen(true)}
-            onOpenXpBreakdown={() => setIsXpBreakdownOpen(true)}
-            onOpenCustomizer={() => router.push("/perfil/editar?tab=showcase")}
           />
         );
       case "bio":
@@ -161,7 +146,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       default:
         return null;
     }
-  }, [activeUser, activeLibrary, activeStats, isOwnProfile, realGamerRank, router, authUser?.socialLinks, updateUserProfile]);
+  }, [activeUser, activeLibrary, activeStats, isOwnProfile, router, authUser?.socialLinks, updateUserProfile]);
 
   if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return <div className="space-y-4 animate-pulse"><div className="h-44 rounded-3xl bg-[#141822]" /><div className="h-64 rounded-3xl bg-[#141822]" /></div>;
@@ -236,7 +221,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         ownLibrary={ownLibrary}
         ownStats={ownStats}
         activeStats={activeStats}
-        realGamerRank={realGamerRank}
+        realGamerRank={null}
         isPremium={isPremium}
         isAdmin={isAdmin}
         levelUpData={levelUpData}

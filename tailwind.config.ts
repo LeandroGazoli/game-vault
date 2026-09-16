@@ -10,18 +10,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0d0f14",
-        foreground: "#f3f4f6",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        border: "var(--border)",
+        "border-active": "var(--border-active)",
         surface: {
+          DEFAULT: "var(--surface)",
+          elevated: "var(--surface-elevated)",
           50: "#181c24",
           100: "#1f2430",
           200: "#272d3b",
           300: "#323a4b",
         },
+        card: {
+          DEFAULT: "var(--card)",
+          hover: "var(--card-hover)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+        },
         accent: {
           DEFAULT: "#6366f1",
           hover: "#4f46e5",
           glow: "rgba(99, 102, 241, 0.25)",
+          cyan: "var(--accent-cyan)",
+          emerald: "var(--accent-emerald)",
+          amber: "var(--accent-amber)",
         },
         meta: {
           green: "#66cc33",

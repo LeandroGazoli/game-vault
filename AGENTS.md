@@ -95,6 +95,14 @@ src/
 └── context/                      # Contextos React globais (Auth, GameLibrary)
 ```
 
+### 3.3. Regra Shadcn First: Verificação Obrigatória de Componentes
+- **Obrigatoriedade Prévia:** Antes de criar qualquer novo componente visual ou de UI do zero, é **terminantemente obrigatório** verificar se já existe um componente correspondente no projeto (em `src/components/ui/`, `src/components/common/`, etc.) ou no catálogo do **shadcn/ui** (Button, Dialog/Modal, Card, Tabs, Badge, Progress, Sheet, DropdownMenu, Avatar, Accordion, Tooltip, etc.).
+- **Prioridade de Adoção:**
+  1. Utilizar componente já existente no repositório.
+  2. Adicionar o componente via shadcn/ui oficial ou importar implementação equivalente padronizada com Tailwind e acessibilidade WAI-ARIA (Radix/Base UI).
+  3. Apenas se nenhuma opção acima suprir a necessidade de negócio, criar um componente novo respeitando estritamente o budget de linhas e o design system do projeto.
+- **Proibição de Duplicidade:** Nunca crie botões artesanais, modais customizados ou abas com estilos divergentes quando componentes atômicos já estiverem disponíveis.
+
 ---
 
 ## ♻️ 4. Reutilização de Código e Princípio DRY

@@ -5,17 +5,30 @@
 @tailwind utilities;
 
 :root {
-  --background: #131219;
-  --foreground: #f4f4f5;
-  --surface-0: #131219;
-  --surface-1: #1c1a24;
-  --surface-2: #242230;
-  --surface-3: #2d2a3c;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --accent-cyan: #00E5FF;
-  --accent-amber: #FFB800;
-  --accent-emerald: #10B981;
+  /* Paleta Semântica Centralizada (Lighter Dark Mode com Alto Contraste & Base Sólida) */
+  --background: #0f1219;
+  --foreground: #f8fafc;
+  --surface: #161b26;
+  --surface-elevated: #1e2536;
+  --card: #151a24;
+  --card-hover: #1c2230;
+  --border: #262f40;
+  --border-active: #10b981;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --muted: #1e2536;
+  --muted-foreground: #94a3b8;
+  --accent: #00e5ff;
+  --accent-amber: #f59e0b;
+  --accent-cyan: #00e5ff;
+  --accent-emerald: #10b981;
+
+  --surface-0: #0f1219;
+  --surface-1: #161b26;
+  --surface-2: #1e2536;
+  --surface-3: #262f40;
+  --border-subtle: #262f40;
+  --border-strong: #3b465c;
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
