@@ -16,6 +16,7 @@ import ProfileGameTracker from "@/components/profile/ProfileGameTracker";
 import ProfileStreamingSections from "@/components/profile/ProfileStreamingSections";
 import ProfileGamificationTeaser from "@/components/profile/ProfileGamificationTeaser";
 import ProfileModularContainer from "@/components/profile/ProfileModularContainer";
+import ProfileDesktopSidebar from "@/components/profile/ProfileDesktopSidebar";
 import ShowcaseGameCard from "@/components/ShowcaseGameCard";
 import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
@@ -210,8 +211,25 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onOpenSectionsOrder={() => setIsSectionsModalOpen(true)}
       />
 
-      {/* Container Modular de Seções */}
-      <ProfileModularContainer sections={sections} renderSection={renderSection} />
+      {/* Container Principal: 2 Colunas no Desktop (Principal + Sidebar Lateral com Links e XP) */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Coluna Principal: Game Tracker HUD, Seções de Streaming, Bio, Showcase */}
+        <div className="flex-1 w-full min-w-0">
+          <ProfileModularContainer sections={sections} renderSection={renderSection} />
+        </div>
+
+        {/* Coluna Lateral no Desktop (Sidebar com Nível/XP, Insígnias e Links Úteis) */}
+        <aside className="hidden lg:block w-80 shrink-0 sticky top-20 space-y-4" aria-label="Painel Lateral do Perfil">
+          <ProfileDesktopSidebar
+            user={activeUser}
+            stats={activeStats}
+            isOwner={isOwnProfile}
+            onOpenImporter={() => setIsImporterOpen(true)}
+            onOpenShare={() => setIsShareOpen(true)}
+            onOpenRoulette={() => setIsRouletteOpen(true)}
+          />
+        </aside>
+      </div>
 
       {/* Modais do Perfil */}
       <ProfileModalsContainer
