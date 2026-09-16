@@ -2,7 +2,7 @@
 // GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v4";
+const SW_VERSION = "v4.1.0"; // Atualize este valor a cada deploy para invalidar caches antigos
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,
@@ -14,11 +14,7 @@ const CACHE_WHITELIST = Object.values(CACHE_NAMES);
 
 // 1. APP SHELL MÍNIMO E ULTRA-LEVE (Menos de 45 KB total)
 // Evita baixar imagens pesadas (>500KB) e a rota raiz dinâmica durante o install
-const PRECACHE_ASSETS = [
-  "/offline.html",
-  "/favicon.svg",
-  "/icon-192.png",
-];
+const PRECACHE_ASSETS = ["/offline.html", "/favicon.svg", "/icon-192.png"];
 
 // Instalação do Service Worker
 self.addEventListener("install", (event) => {
@@ -27,7 +23,7 @@ self.addEventListener("install", (event) => {
       return cache.addAll(PRECACHE_ASSETS).catch((err) => {
         console.warn("[SW] Falha parcial no precache do App Shell:", err);
       });
-    })
+    }),
   );
   // NOTA DE PERFORMANCE: NÃO chamamos self.skipWaiting() aqui!
   // Evita interrupção da execução JS da página atual e saturação de I/O em disco.
@@ -47,18 +43,21 @@ self.addEventListener("message", (event) => {
 // Ativação e limpeza atômica de caches obsoletos
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!CACHE_WHITELIST.includes(cacheName)) {
-            console.log("[SW] Removendo cache obsoleto:", cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (!CACHE_WHITELIST.includes(cacheName)) {
+              console.log("[SW] Removendo cache obsoleto:", cacheName);
+              return caches.delete(cacheName);
+            }
+          }),
+        );
+      })
+      .then(() => {
+        return self.clients.claim();
+      }),
   );
 });
 
@@ -118,11 +117,14 @@ self.addEventListener("fetch", (event) => {
         const cached = await caches.match(request);
         if (cached) return cached;
         const offlineFallback = await caches.match("/offline.html");
-        return offlineFallback || new Response("Offline", {
-          status: 503,
-          headers: { "Content-Type": "text/html; charset=utf-8" },
-        });
-      })
+        return (
+          offlineFallback ||
+          new Response("Offline", {
+            status: 503,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          })
+        );
+      }),
     );
     return;
   }
@@ -137,7 +139,9 @@ self.addEventListener("fetch", (event) => {
           .then((response) => {
             if (response && response.status === 200) {
               const clone = response.clone();
-              caches.open(CACHE_NAMES.assets).then((cache) => cache.put(request, clone));
+              caches
+                .open(CACHE_NAMES.assets)
+                .then((cache) => cache.put(request, clone));
             }
             return response;
           })
@@ -145,7 +149,7 @@ self.addEventListener("fetch", (event) => {
             // Em caso de falha de rede ao baixar chunk, tenta qualquer correspondência em cache
             return caches.match(request) || new Response("", { status: 408 });
           });
-      })
+      }),
     );
     return;
   }
@@ -172,7 +176,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         });
-      })
+      }),
     );
     return;
   }
@@ -180,20 +184,19 @@ self.addEventListener("fetch", (event) => {
   // 4. Rotas de API locais: Network First transparente sem inflar o Cache Storage
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
-      fetch(request).catch(() =>
-        new Response(JSON.stringify({ error: "offline" }), {
-          status: 503,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
+      fetch(request).catch(
+        () =>
+          new Response(JSON.stringify({ error: "offline" }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
     );
     return;
   }
 
   // Padrão: Network First com fallback de cache
-  event.respondWith(
-    fetch(request).catch(() => caches.match(request))
-  );
+  event.respondWith(fetch(request).catch(() => caches.match(request)));
 });
 
 // ==========================================
@@ -247,6 +250,6 @@ self.addEventListener("notificationclick", (event) => {
         if (clients.openWindow) {
           return clients.openWindow(targetUrl);
         }
-      })
+      }),
   );
 });
