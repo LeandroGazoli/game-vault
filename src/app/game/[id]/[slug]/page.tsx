@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getGameDetailsApi } from "@/lib/gameApi";
+import { IgdbIndisponivelError } from "@/lib/igdbApi";
 import GameDetailClient from "../GameDetailClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { getGameUrl } from "@/lib/routes";
@@ -70,17 +72,51 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+/**
+ * Mostrado quando a base do IGDB não respondeu. Deliberadamente NÃO chama `notFound()`:
+ * a ficha existe, só não deu para carregar agora, e um 404 aqui tiraria a página do índice
+ * do Google por um problema passageiro.
+ */
+function FichaIndisponivel() {
+  return (
+    <div className="max-w-xl mx-auto px-4 py-24 text-center space-y-4">
+      <h1 className="text-2xl font-black text-white">Ficha temporariamente indisponível</h1>
+      <p className="text-sm text-gray-400">
+        Não conseguimos carregar os dados deste jogo agora. É uma falha momentânea da nossa
+        base de dados, não um jogo removido — tente recarregar em instantes.
+      </p>
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-black"
+      >
+        Voltar ao catálogo
+      </Link>
+    </div>
+  );
+}
+
 export default async function GameSlugPage({ params }: PageProps) {
   const { id, slug } = await params;
-  // SEM `.catch(() => null)` aqui, de propósito.
+  // Três desfechos possíveis, e cada um merece resposta diferente:
   //
-  // Engolir o erro transformava indisponibilidade do IGDB em `notFound()`, e a página de um
-  // jogo válido — que está no nosso sitemap — passava a responder "Página Não Encontrada".
-  // Deixar a exceção subir faz o Next devolver erro de servidor: o Google volta depois em
-  // vez de desindexar, e nós enxergamos a falha no log em vez de um 404 silencioso.
+  //   jogo existe        → renderiza
+  //   IGDB diz que não   → notFound(), que é a verdade
+  //   IGDB indisponível  → aviso de instabilidade, NUNCA 404 e NUNCA exceção
   //
-  // `getGameDetailsApi` só devolve null quando o IGDB respondeu que o jogo não existe.
-  const game = await getGameDetailsApi(id);
+  // O último caso já foi tratado das duas formas erradas. Engolir o erro (`.catch(() => null)`)
+  // transformava instabilidade em "Página Não Encontrada" numa URL do nosso sitemap — convite
+  // para o Google desindexar. Deixar a exceção subir derrubava a página inteira com "erro na
+  // aplicação", o que é pior ainda para quem está lendo.
+  let game: Awaited<ReturnType<typeof getGameDetailsApi>> = null;
+  try {
+    game = await getGameDetailsApi(id);
+  } catch (erro) {
+    if (erro instanceof IgdbIndisponivelError) {
+      console.error(`[game/${id}] IGDB indisponível — servindo aviso em vez de 404:`, erro.message);
+      return <FichaIndisponivel />;
+    }
+    throw erro;
+  }
 
   if (!game) {
     notFound();
