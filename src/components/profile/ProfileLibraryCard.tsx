@@ -73,7 +73,10 @@ export default function ProfileLibraryCard({
           <div className="text-right">
             <div className="text-[10px] text-gray-400">Nota</div>
             <div className="text-xs font-bold text-amber-300">
-              {userGame.userRating !== null ? `★ ${userGame.userRating.toFixed(1)}` : "--"}
+              {/* `!== null` não basta: `cleanFirestoreData` descarta campos undefined antes de
+                gravar, então um jogo salvo SEM nota não tem `userRating` no documento e volta
+                como `undefined` — que passa no teste e quebra no `.toFixed`. */}
+              {typeof userGame.userRating === "number" ? `★ ${userGame.userRating.toFixed(1)}` : "--"}
             </div>
           </div>
 
@@ -134,7 +137,7 @@ export default function ProfileLibraryCard({
 
         <div className="pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px] font-mono">
           <span className="text-amber-400 font-bold">
-            {userGame.userRating !== null ? `★ ${userGame.userRating.toFixed(1)}` : "--"}
+            {typeof userGame.userRating === "number" ? `★ ${userGame.userRating.toFixed(1)}` : "--"}
           </span>
           <span className="text-cyan-300 font-semibold flex items-center gap-0.5">
             <Clock className="w-2.5 h-2.5" />

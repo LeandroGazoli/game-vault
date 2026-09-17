@@ -88,13 +88,13 @@ export default function ShowcaseGameCard({
 
           {/* Badges de Avaliação e Tempo */}
           <div className="flex items-center justify-center sm:justify-start gap-4 text-xs">
-            {game.userRating !== null && (
+            {typeof game.userRating === "number" && (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span>Nota Pessoal: {game.userRating}/10</span>
               </div>
             )}
-            {game.userPlaytimeHours !== null && (
+            {typeof game.userPlaytimeHours === "number" && (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-[#00E5FF] font-bold">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{game.userPlaytimeHours}h registradas</span>

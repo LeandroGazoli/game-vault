@@ -312,7 +312,7 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
           {/* Rodapé Compacto: Pill de Nota / Duração & Ação Rápida */}
           <div className="pt-1.5 border-t border-white/[0.06] flex items-center justify-between text-xs">
             {/* Pill de Avaliação (Estilo Print 1 com Estrela Amarela) */}
-            {userGame && userGame.userRating !== null ? (
+            {userGame && typeof userGame.userRating === "number" ? (
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-400/10 border border-amber-400/25 text-amber-400 font-mono font-bold text-[11px]">
                 <Star className="w-3 h-3 fill-amber-400" />
                 <span>{userGame.userRating.toFixed(1)}</span>
