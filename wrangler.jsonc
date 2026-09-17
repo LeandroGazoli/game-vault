@@ -30,9 +30,10 @@
     "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
     "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
     "NEXT_PUBLIC_SITE_URL": "https://game-vault.leandro-gazoli.workers.dev",
-    // Teto de leituras do Firestore no sitemap (Spark: 50k/dia). Sem isto o default é 45.000.
-    // Decisão consciente: 3k URLs no sitemap de produção.
-    "SITEMAP_GAME_LIMIT": "3000",
+    // SITEMAP_GAME_LIMIT foi REMOVIDO de propósito: existia para conter leituras quando o
+    // sitemap varria game_translations. Com o índice agregado o custo é ~10 leituras
+    // independente do total, e o particionamento (10k URLs por arquivo) cuida do tamanho.
+    // Mantê-lo em 3000 truncava o sitemap a 3k das 33k páginas, prejudicando o SEO.
     // FREIO DE EMERGÊNCIA apenas. O controle normal é pelo painel admin (grava no KV
     // APP_CONFIG, que o middleware consulta). Deixe "false": com "true" o site fica
     // bloqueado independentemente do painel, para o caso de o próprio painel estar fora.

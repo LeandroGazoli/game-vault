@@ -18,7 +18,7 @@
 // Transporte: Firestore REST API v1 (fetch nativo) — sem gRPC/protobufjs, que quebram no workerd.
 import { getGameUrl } from "./routes";
 import { firestoreRestQuery } from "./firestoreRest";
-import { readSitemapIndex } from "./sitemapIndex";
+import { readSitemapIndex, readSitemapRange } from "./sitemapIndex";
 
 /** Teto de segurança: um sitemap único aceita no máximo 50.000 URLs. */
 const HARD_CAP = 45_000;
@@ -35,6 +35,8 @@ export interface RegistryQuery {
   limit?: number;
   /** "desc" traz as mais recentes (sitemap); "asc" percorre a fila do delta. */
   direction?: "asc" | "desc";
+  /** Início da faixa. Usado para particionar o sitemap em arquivos de 10.000 URLs. */
+  offset?: number;
 }
 
 /**
@@ -71,7 +73,10 @@ export async function getRegisteredGamePages(
 
     // Caminho normal: índice agregado (~9 leituras). A varredura de `game_translations`
     // custava 1 leitura POR JOGO — 33.249 delas, em todo build e toda regeneração.
-    const indexed = await readSitemapIndex(limit);
+    const offset = Math.max(0, options.offset ?? 0);
+    const indexed = offset > 0
+      ? await readSitemapRange(offset, limit)
+      : await readSitemapIndex(limit);
     if (indexed.length > 0) {
       const pages: RegisteredGamePage[] = [];
       const seen = new Set<string>();

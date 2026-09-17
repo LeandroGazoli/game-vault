@@ -5,6 +5,7 @@ import { getCombinedArticles } from "@/lib/articlesService";
 import { getRankingsIGDB, getRecentReleasesIGDB } from "@/lib/igdbApi";
 import { slugify, getGameUrl } from "@/lib/routes";
 import { getRegisteredGamePages } from "@/lib/gameRegistry";
+import { readSitemapMeta } from "@/lib/sitemapIndex";
 
 /**
  * O sitemap era estático (gerado só no build), então páginas de jogos novas ficavam de
@@ -39,8 +40,13 @@ export const revalidate = 86400;
  * Um sitemap único aceita 50.000 URLs e 50 MB. Para publicar as 33.249, é preciso particionar
  * em sitemap index — está em pauta.
  */
-const SITEMAP_DEFAULT_LIMIT = 3000;
+const SITEMAP_DEFAULT_LIMIT = 50_000;
 const REGISTRY_GAME_LIMIT = Number(process.env.SITEMAP_GAME_LIMIT || SITEMAP_DEFAULT_LIMIT);
+
+/** Total de URLs de jogo efetivamente publicadas, respeitando o teto do protocolo. */
+export function sitemapGameLimit(entryCount: number): number {
+  return Math.min(entryCount, REGISTRY_GAME_LIMIT, 50_000);
+}
 
 const POPULAR_FALLBACK_IDS = [
   1942,   // The Witcher 3
@@ -58,7 +64,31 @@ const POPULAR_FALLBACK_IDS = [
   2155,   // Red Dead Redemption 2
 ];
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+/**
+ * URLs por partição. O padrão do protocolo aceita 50.000 por arquivo, mas o Google recomenda
+ * fatiar acima de ~10.000 — arquivos menores são reprocessados mais rápido e um erro de
+ * parsing invalida menos coisa.
+ */
+const URLS_PER_SITEMAP = 10_000;
+
+/**
+ * Particiona o sitemap. A partição 0 leva as páginas estáticas, artigos, categorias,
+ * coleções e rankings; as demais levam só jogos do registro.
+ *
+ * Custo: 1 leitura (meta do índice) aqui, e cada partição lê apenas os chunks que cobrem a
+ * sua faixa. Nenhuma varredura de coleção.
+ */
+export async function generateSitemaps() {
+  const { entryCount } = await readSitemapMeta();
+  const gameTotal = Math.min(entryCount, REGISTRY_GAME_LIMIT);
+  // Partição 0 já carrega o conteúdo fixo; reserva-se espaço para ele.
+  const partitions = Math.max(1, Math.ceil(gameTotal / URLS_PER_SITEMAP));
+  return Array.from({ length: partitions }, (_, id) => ({ id }));
+}
+
+export default async function sitemap({
+  id = 0,
+}: { id?: number } = {}): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
   const lastModified = new Date();
 
@@ -223,8 +253,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 5. Páginas de jogos já registradas (todo jogo cuja página renderizou e ganhou
   // tradução PT-BR). É o que faz o catálogo real aparecer no sitemap, e não apenas os
   // ~60 títulos de rankings acima. Falha aqui nunca derruba o sitemap.
+  const gameOffset = id * URLS_PER_SITEMAP;
+  const gameCount = Math.min(URLS_PER_SITEMAP, Math.max(0, REGISTRY_GAME_LIMIT - gameOffset));
+
   const registryPages: MetadataRoute.Sitemap = (
-    await getRegisteredGamePages({ limit: REGISTRY_GAME_LIMIT, direction: "desc" })
+    await getRegisteredGamePages({ offset: gameOffset, limit: gameCount, direction: "desc" })
   ).map((page) => {
     // Um `updatedAt` corrompido geraria Invalid Date e quebraria a serialização do
     // sitemap inteiro — na dúvida, usa a data da geração.
@@ -240,14 +273,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dedupe por URL — um jogo popular também está no registro. A primeira ocorrência
   // vence, então rankings (priority 0.7) têm precedência sobre o registro (0.6).
   const byUrl = new Map<string, MetadataRoute.Sitemap[number]>();
-  for (const entry of [
-    ...staticPages,
-    ...articlePages,
-    ...categoryPages,
-    ...collectionPages,
-    ...gamePages,
-    ...registryPages,
-  ]) {
+  // Conteúdo fixo só na partição 0 — repeti-lo em todas duplicaria URL entre arquivos,
+  // o que o Google trata como erro de sitemap.
+  const fixedPages = id === 0
+    ? [...staticPages, ...articlePages, ...categoryPages, ...collectionPages, ...gamePages]
+    : [];
+
+  for (const entry of [...fixedPages, ...registryPages]) {
     if (!byUrl.has(entry.url)) byUrl.set(entry.url, entry);
   }
 

@@ -46,29 +46,61 @@ function chunkRef(n: number) {
     .doc(String(n));
 }
 
-/** Lê o índice inteiro. Custo: 1 + nº de chunks (hoje ~9 leituras para 33k jogos). */
-export async function readSitemapIndex(limit?: number): Promise<SitemapGameEntry[]> {
+/** Metadados do índice (1 leitura). Usado para dimensionar as partições do sitemap. */
+export async function readSitemapMeta(): Promise<{ chunkCount: number; entryCount: number }> {
   try {
     const meta = await metaRef().get();
-    if (!meta.exists) return [];
+    if (!meta.exists) return { chunkCount: 0, entryCount: 0 };
+    const d = (meta.data() || {}) as IndexMeta;
+    return { chunkCount: d.chunkCount ?? 0, entryCount: d.entryCount ?? 0 };
+  } catch (e) {
+    console.warn("[sitemapIndex] Falha ao ler meta:", e);
+    return { chunkCount: 0, entryCount: 0 };
+  }
+}
 
-    const { chunkCount = 0 } = (meta.data() || {}) as IndexMeta;
-    if (chunkCount <= 0) return [];
+/**
+ * Lê uma FAIXA de entradas — só os chunks que a cobrem.
+ *
+ * O chunk 0 tem os jogos MAIS RECENTES (o bootstrap ordena por `updatedAt` desc antes de
+ * fatiar), então percorrer 0→N devolve do mais novo para o mais antigo. A versão anterior
+ * percorria N→0 e, com `limit`, publicava os jogos mais ANTIGOS no sitemap — o oposto do
+ * pretendido.
+ *
+ * Custo: 1 (meta) + ceil(count / CHUNK_SIZE) leituras, e não o índice inteiro.
+ */
+export async function readSitemapRange(
+  offset: number,
+  count: number
+): Promise<SitemapGameEntry[]> {
+  try {
+    const { chunkCount } = await readSitemapMeta();
+    if (chunkCount <= 0 || count <= 0) return [];
+
+    const firstChunk = Math.floor(offset / CHUNK_SIZE);
+    const lastChunk = Math.floor((offset + count - 1) / CHUNK_SIZE);
 
     const out: SitemapGameEntry[] = [];
-    // Percorre do mais recente para o mais antigo: com `limit`, ficam os jogos mais novos.
-    for (let n = chunkCount - 1; n >= 0; n--) {
+    for (let n = firstChunk; n <= Math.min(lastChunk, chunkCount - 1); n++) {
       const snap = await chunkRef(n).get();
       if (!snap.exists) continue;
-      const entries = ((snap.data() || {}) as { entries?: SitemapGameEntry[] }).entries || [];
-      out.push(...entries);
-      if (limit && out.length >= limit) return out.slice(0, limit);
+      out.push(...(((snap.data() || {}) as { entries?: SitemapGameEntry[] }).entries || []));
     }
-    return limit ? out.slice(0, limit) : out;
+
+    // `out` começa no início de firstChunk; recorta para a faixa pedida.
+    const start = offset - firstChunk * CHUNK_SIZE;
+    return out.slice(start, start + count);
   } catch (e) {
-    console.warn("[sitemapIndex] Falha ao ler o índice:", e);
+    console.warn("[sitemapIndex] Falha ao ler faixa do índice:", e);
     return [];
   }
+}
+
+/** Compatibilidade: primeiras `limit` entradas (as mais recentes). */
+export async function readSitemapIndex(limit?: number): Promise<SitemapGameEntry[]> {
+  const { entryCount } = await readSitemapMeta();
+  if (entryCount <= 0) return [];
+  return readSitemapRange(0, limit ?? entryCount);
 }
 
 /**
