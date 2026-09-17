@@ -15,6 +15,21 @@
       "id": "14af2ff978f14212a77fb35fe0b4aac2"
     },
     {
+      /**
+       * Cache das fichas do IGDB — namespace PRÓPRIO, separado do cache incremental.
+       *
+       * Duas razões para não reaproveitar `NEXT_INC_CACHE_KV`: a purga de deploy apaga
+       * gerações antigas daquele namespace e levaria estas chaves junto, e o TTL aqui é
+       * de dias enquanto o de lá segue o ciclo de build.
+       *
+       * Por que existe: o IGDB aceita 3 requisições por segundo. A Cache API sozinha é por
+       * datacenter, então cada colo pagava sua própria primeira visita. O KV é global: o
+       * jogo buscado uma vez serve todos os pontos de presença.
+       */
+      "binding": "IGDB_CACHE",
+      "id": "9dffda58976849469a245eb97441b467"
+    },
+    {
       // Flags operacionais alternáveis pelo painel admin (ex.: modo manutenção).
       // Fica no KV porque o middleware consulta em toda requisição — no Firestore
       // isso custaria 1 leitura por request.
@@ -126,6 +141,11 @@
         {
           "binding": "APP_CONFIG",
           "id": "439b6f94d9304d1cbafaff7b7f2f597d"
+        },
+        {
+          // Namespace próprio: cache de homologação não deve poluir o de produção.
+          "binding": "IGDB_CACHE",
+          "id": "7ad2909a8879409692788138a4cfd5dd"
         }
       ],
       "assets": {

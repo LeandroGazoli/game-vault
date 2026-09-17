@@ -1,4 +1,4 @@
-import { withEdgeCache } from "./edgeCache";
+import { withEdgeCache, withSharedCache } from "./edgeCache";
 import { Game, GenreItem, PlatformItem } from "./types";
 import { isAdultGame } from "./gameUtils";
 
@@ -443,6 +443,17 @@ const igdbDispatcher = new RequestDispatcher();
 const IGDB_EDGE_TTL_SECONDS = 3600;
 
 /**
+ * TTL de borda para FICHA DE JOGO — muito maior que o de listas, e de propósito.
+ *
+ * Ficha técnica (nome, capa, gêneros, data, sinopse) praticamente não muda, enquanto
+ * ranking e lançamentos mudam o tempo todo. Com 22 mil acessos/dia contra o limite de
+ * 3 req/s do IGDB, o que decide é quantos jogos DISTINTOS são pedidos, não quantas
+ * visitas acontecem: com 7 dias de cache, cada jogo custa UMA chamada por semana por
+ * datacenter da Cloudflare, e o resto é servido sem tocar no IGDB.
+ */
+const IGDB_DETAILS_EDGE_TTL_SECONDS = 7 * 24 * 3600;
+
+/**
  * O IGDB é consultado por POST, então nem o cache de `fetch` do Next nem o cache HTTP da
  * Cloudflare pegam essas chamadas sozinhos. A Cache API (gratuita, por datacenter) cobre
  * justamente esse buraco — e sobrevive à morte do isolate, ao contrário do Map em memória.
@@ -566,8 +577,15 @@ export async function fetchIGDBOuFalhar(endpoint: string, body: string): Promise
   if (cached && !cached.isStale) return cached.data;
 
   try {
-    const data = await igdbDispatcher.schedule(() =>
-      fetchIGDBFromOrigin(endpoint, body, 3, true)
+    // Ordem das camadas, da mais barata para a mais cara:
+    //   memória (acima)  → borda (Cache API, compartilhada)  → fila  → IGDB
+    //
+    // A de memória vive dentro de UM isolate e some quando ele recicla — sozinha ela não
+    // segura 22 mil acessos/dia. A de borda é compartilhada e persiste, e é ela que faz o
+    // consumo do IGDB depender do número de jogos DISTINTOS, não do número de visitas.
+    // A fila fica DENTRO do produtor: só entra nela quem realmente vai à origem.
+    const data = await withSharedCache("igdb-detalhe", cacheKey, IGDB_DETAILS_EDGE_TTL_SECONDS, () =>
+      igdbDispatcher.schedule(() => fetchIGDBFromOrigin(endpoint, body, 3, true))
     );
     if (data && data.length > 0) {
       setToCache(cacheKey, data, TTL_CONFIG.GAME_DETAILS);

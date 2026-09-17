@@ -14,6 +14,8 @@
  * tudo vira passthrough.
  */
 
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
 const CACHE_NAME = "gv-edge";
 /** Host sintético: a Cache API exige uma URL válida como chave. */
 const KEY_ORIGIN = "https://edge-cache.internal";
@@ -86,4 +88,72 @@ export async function withEdgeCache<T>(
   }
 
   return value;
+}
+
+// =========================================================================
+// CACHE EM DUAS CAMADAS: Cache API (por datacenter) + KV (global)
+// =========================================================================
+
+interface IgdbCacheKV {
+  get: (key: string, options?: { cacheTtl?: number }) => Promise<string | null>;
+  put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
+}
+
+function getIgdbKV(): IgdbCacheKV | null {
+  try {
+    const { env } = getCloudflareContext();
+    return ((env as Record<string, unknown>).IGDB_CACHE as IgdbCacheKV) || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Como `withEdgeCache`, mas com o KV atrás da Cache API.
+ *
+ * POR QUE DUAS CAMADAS: a Cache API vive **por datacenter**. Com tráfego espalhado, cada
+ * ponto de presença paga sua própria primeira visita a cada jogo — e o IGDB aceita só
+ * 3 requisições por segundo. O KV é global: o jogo buscado uma vez em São Paulo já serve
+ * qualquer outro colo. Assim o consumo do IGDB passa a depender de quantos jogos DISTINTOS
+ * existem, não de quantas visitas o site recebe.
+ *
+ * Ordem de custo: Cache API (µs, local) → KV (ms, global) → origem (rede + cota).
+ *
+ * Igual à versão de uma camada, **resultado vazio nunca é gravado**: fixar um vazio vindo
+ * de falha transitória é como um jogo válido vira "não encontrado" para sempre.
+ */
+export async function withSharedCache<T>(
+  namespace: string,
+  key: string,
+  ttlSeconds: number,
+  produce: () => Promise<T>
+): Promise<T> {
+  const kv = getIgdbKV();
+  const kvKey = `${namespace}:${key}`;
+
+  return withEdgeCache(namespace, key, ttlSeconds, async () => {
+    if (kv) {
+      try {
+        // `cacheTtl` faz o próprio KV guardar a leitura no colo, evitando ida ao storage
+        // a cada requisição. 300s é curto perto do TTL do dado e já corta a maior parte.
+        const bruto = await kv.get(kvKey, { cacheTtl: 300 });
+        if (bruto) return JSON.parse(bruto) as T;
+      } catch {
+        /* KV indisponível não pode derrubar a requisição — segue para a origem */
+      }
+    }
+
+    const valor = await produce();
+
+    const vazio = valor == null || (Array.isArray(valor) && valor.length === 0);
+    if (kv && !vazio) {
+      try {
+        await kv.put(kvKey, JSON.stringify(valor), { expirationTtl: ttlSeconds });
+      } catch {
+        /* falha ao gravar é perda de desempenho, não de correção */
+      }
+    }
+
+    return valor;
+  });
 }
