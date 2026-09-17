@@ -2,8 +2,11 @@ import { withEdgeCache } from "./edgeCache";
 import { Game, GenreItem, PlatformItem } from "./types";
 import { isAdultGame } from "./gameUtils";
 
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "";
-const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
+// `.trim()` não é zelo excessivo: secret gravado por pipe (`echo "..." | wrangler secret put`)
+// carrega um \n no fim, e o Twitch responde "invalid client secret" sem dizer por quê — a
+// credencial parece certa a olho nu e o erro sugere que ela está errada.
+const TWITCH_CLIENT_ID = (process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "").trim();
+const TWITCH_CLIENT_SECRET = (process.env.TWITCH_CLIENT_SECRET || "").trim();
 const IGDB_API_URL = "https://api.igdb.com/v4";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -14,13 +17,24 @@ export async function getTwitchAccessToken(): Promise<string | null> {
     return null;
   }
 
+  // Diagnóstico sem vazar credencial: o TAMANHO já distingue os casos que confundem.
+  // Twitch usa 30 caracteres nos dois. 31 quase sempre é \n de secret gravado por pipe;
+  // "sujo" indica espaço ou quebra de linha que o trim acabou de remover.
+  const idSujo = (process.env.TWITCH_CLIENT_ID || "").length !== TWITCH_CLIENT_ID.length;
+  const secretSujo = (process.env.TWITCH_CLIENT_SECRET || "").length !== TWITCH_CLIENT_SECRET.length;
+  console.log(
+    `[Twitch/IGDB] credenciais: id=${TWITCH_CLIENT_ID.length} chars${idSujo ? " (tinha espaço/quebra — removido)" : ""}, ` +
+      `secret=${TWITCH_CLIENT_SECRET.length} chars${secretSujo ? " (tinha espaço/quebra — removido)" : ""}`
+  );
+
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60000) {
     return cachedToken.token;
   }
 
   try {
     const res = await fetch(
-      `https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
+      // `encodeURIComponent` para o caso de o segredo trazer algo que a URL interprete.
+      `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(TWITCH_CLIENT_ID)}&client_secret=${encodeURIComponent(TWITCH_CLIENT_SECRET)}&grant_type=client_credentials`,
       { method: "POST" }
     );
 
