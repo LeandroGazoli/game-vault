@@ -40,6 +40,7 @@ import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCar
 import HomeEditorialSection from "@/components/home/HomeEditorialSection";
 import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
 import HomeIndiesSection from "@/components/home/HomeIndiesSection";
+import { useRotatingSlot } from "@/hooks/useRotatingSlot";
 import { DEFAULT_SYSTEM_SETTINGS } from "@/lib/types";
 import { SystemSettings } from "@/lib/types";
 
@@ -228,6 +229,24 @@ export default function HomePage() {
     }));
   }, [library, topTenGames]);
 
+  // Vagas rotativas dos dois CTAs. Nenhum deles fica no topo: pedir cadastro ou feedback
+  // antes de a pessoa ver o catálogo é o que faz a chamada ser ignorada. Eles entram no
+  // meio do conteúdo, e a vaga muda a cada visita — ver `useRotatingSlot`.
+  const vagaConta = useRotatingSlot("mgl_home_cta_conta", 3);
+  const vagaFeedback = useRotatingSlot("mgl_home_cta_feedback", 3);
+
+  // Criar conta: só para deslogado, e só depois de conteúdo que justifique a conta.
+  const ctaCriarConta = (vaga: number) =>
+    !user && !isAuthLoading && vagaConta === vaga ? (
+      <HomeConversionBanner onOpenAuth={() => setIsAuthOpen(true)} />
+    ) : null;
+
+  // Feedback: vagas na metade de baixo da página. Pedir opinião faz sentido depois do uso,
+  // não na chegada. As faixas se sobrepõem um pouco às do cadastro, mas os dois nunca
+  // disputam a mesma posição — as vagas são pontos distintos do JSX.
+  const ctaFeedback = (vaga: number) =>
+    vagaFeedback === vaga ? <HomeFeatureAnnouncementCard /> : null;
+
   return (
     <div className="space-y-8 pb-12">
       {/* ==========================================
@@ -236,16 +255,6 @@ export default function HomePage() {
       <HomeSearchHero
         onOpenRoulette={() => setIsRouletteOpen(true)}
       />
-
-      {/* ==========================================
-          CTA DE CONVERSÃO / CAPTURA DE LEADS (DESLOGADOS)
-          Exibido em destaque para reduzir a taxa de rejeição de anúncios
-      ========================================== */}
-      {!user && !isAuthLoading && (
-        <HomeConversionBanner
-          onOpenAuth={() => setIsAuthOpen(true)}
-        />
-      )}
 
       {/* ==========================================
           BANNER DE DESTAQUE INDIE NA HOME
@@ -278,17 +287,6 @@ export default function HomePage() {
       )}
 
       {/* ==========================================
-          3. EXPLORE POR CATEGORIA (CARROSSEL VISUAL)
-      ========================================== */}
-      <CategoriesCarousel />
-
-      {/* ==========================================
-          CARD DE ANÚNCIO DE NOVO RECURSO
-      ========================================== */}
-      <HomeFeatureAnnouncementCard />
-
-
-      {/* ==========================================
           PUBLICIDADE 1: LEADERBOARD SUPERIOR
       ========================================== */}
       <AdBanner slot="HOME_TOP_LEADERBOARD" />
@@ -299,14 +297,11 @@ export default function HomePage() {
       <HomeIndiesSection />
 
       {/* ==========================================
-          COLEÇÕES ESPECIAIS DO ACERVO
-      ========================================== */}
-      <CollectionsSection />
-
-      {/* ==========================================
           2. RANKINGS OFICIAIS MYGAMELIST (UNIFICADO COM ABAS)
       ========================================== */}
       <UnifiedRankingsSection initialGames={topTenGames} />
+
+      {ctaCriarConta(0)}
 
       {/* ==========================================
           PUBLICIDADE 2: IN-FEED BANNER CENTRAL
@@ -332,6 +327,8 @@ export default function HomePage() {
           actionText="Mostrar Tudo"
         />
       ) : null}
+
+      {ctaCriarConta(1)}
 
       {/* ==========================================
           🌴 SAGA GRAND THEFT AUTO & ROCKSTAR (ESPECIAL GTA VI)
@@ -433,6 +430,8 @@ export default function HomePage() {
         />
       ) : null}
 
+      {ctaFeedback(0)}
+
       {/* ==========================================
           7. SEÇÃO: EXPLORAR POR FRANQUIAS LENDÁRIAS
       ========================================== */}
@@ -480,11 +479,14 @@ export default function HomePage() {
         </div>
       </section>
 
+      {ctaCriarConta(2)}
 
       {/* ==========================================
           8. CENTRAL EDITORIAL: ARTIGOS & GUIAS (SEO & ADSENSE COMPLIANCE)
       ========================================== */}
       <HomeEditorialSection />
+
+      {ctaFeedback(1)}
 
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS
@@ -510,6 +512,20 @@ export default function HomePage() {
           <ArrowRight className="w-4 h-4 shrink-0 text-black" />
         </Link>
       </section>
+
+      {ctaFeedback(2)}
+
+      {/* ==========================================
+          FIM DA HOME: NAVEGAÇÃO POR ACERVO
+
+          Categorias e coleções são atalhos de exploração, não conteúdo. Ficavam no topo
+          empurrando o catálogo para baixo; aqui embaixo pegam quem chegou ao fim e ainda
+          quer continuar — que é exatamente o momento em que um atalho serve para alguma
+          coisa.
+      ========================================== */}
+      <CategoriesCarousel />
+
+      <CollectionsSection />
 
       {/* Modal da Roleta Gamer */}
       {isRouletteOpen && (

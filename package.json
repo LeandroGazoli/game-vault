@@ -15,7 +15,8 @@
     "doctor": "npx react-doctor@latest",
     "deploy": "bash scripts/deploy.sh",
     "deploy:homolog": "bash scripts/deploy-homolog.sh",
-    "purge:kv": "node scripts/purge-kv-cache.mjs --from-kv"
+    "purge:kv": "node scripts/purge-kv-cache.mjs --from-kv",
+    "secrets:homolog": "bash scripts/sync-homolog-secrets.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
