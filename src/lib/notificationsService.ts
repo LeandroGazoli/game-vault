@@ -133,6 +133,7 @@ export async function sendGroupNotification(input: GroupNotificationInput): Prom
       category: input.category || "general",
       linkUrl: input.linkUrl?.trim() || null,
       linkLabel: input.linkLabel?.trim() || null,
+      isPinned: Boolean(input.isPinned),
       createdAt: now,
       createdBy: input.createdBy || "Admin",
     });

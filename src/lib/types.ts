@@ -1310,6 +1310,8 @@ export interface GroupNotificationInput {
   linkLabel?: string | null;
   createdBy?: string;
   sendEmail?: boolean;
+  /** Só se aplica a targetType "all", que vira uma notificação de sistema. */
+  isPinned?: boolean;
 }
 
 export const NOTIFICATION_CATEGORIES: Record<

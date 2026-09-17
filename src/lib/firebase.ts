@@ -757,7 +757,12 @@ export async function createSystemNotification(
     createdAt: now,
   };
 
-  await setDoc(newDocRef, notification);
+  // O SDK do Firestore lança em qualquer campo `undefined`; null é o vazio aceito.
+  const sanitized = Object.fromEntries(
+    Object.entries(notification).filter(([, v]) => v !== undefined)
+  ) as SystemNotification;
+
+  await setDoc(newDocRef, sanitized);
   return newDocRef.id;
 }
 

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { SystemNotification, NotificationCategory } from "@/lib/types";
 import {
-  createSystemNotification,
   getSystemNotifications,
   deleteSystemNotification,
   recordAuditLog,
@@ -130,22 +129,12 @@ export default function AdminNotificationManager() {
           targetType,
           targetUserIds: parsedCustomIds,
           sendEmail,
+          isPinned,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha ao despachar notificação.");
-
-      if (targetType === "all") {
-        await createSystemNotification({
-          title: title.trim(),
-          message: message.trim(),
-          category,
-          linkUrl: linkUrl.trim() || undefined,
-          linkLabel: linkLabel.trim() || undefined,
-          isPinned,
-        });
-      }
 
       if (sendPush && getNotificationPermission() === "granted") {
         await showLocalNotification(title.trim(), {

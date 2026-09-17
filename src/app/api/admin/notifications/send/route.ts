@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, message, category, linkUrl, linkLabel, targetType, targetUserIds, sendEmail } = body;
+    const { title, message, category, linkUrl, linkLabel, targetType, targetUserIds, sendEmail, isPinned } = body;
 
     if (!title?.trim() || !message?.trim()) {
       return NextResponse.json({ error: "Título e mensagem são obrigatórios." }, { status: 400 });
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       linkLabel: linkLabel?.trim() || null,
       createdBy: email,
       sendEmail: Boolean(sendEmail),
+      isPinned: Boolean(isPinned),
     });
 
     // Registra na trilha de auditoria
