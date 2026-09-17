@@ -254,6 +254,7 @@ export default function CalendarView() {
                             <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
                               <Link
                                 href={getGameUrl(game)}
+      prefetch={false}
                                 className="block w-full h-full cursor-pointer"
                                 title={`Ver detalhes de ${game.name}`}
                               >
@@ -296,7 +297,8 @@ export default function CalendarView() {
 
                             {/* Título & Plataforma */}
                             <div className="p-2.5 flex-1 flex flex-col justify-between">
-                              <Link href={getGameUrl(game)}>
+                              <Link href={getGameUrl(game)}
+      prefetch={false}>
                                 <h3 className="text-xs font-semibold text-white hover:text-[#00E5FF] line-clamp-1 transition-colors">
                                   {game.name}
                                 </h3>

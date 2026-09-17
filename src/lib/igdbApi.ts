@@ -549,11 +549,38 @@ async function fetchIGDBFromOrigin(
 
 /**
  * Como `fetchIGDB`, mas distingue "não existe" (lista vazia) de "não deu para perguntar"
- * (exceção). Sem cache de borda de propósito: cachear a ausência é o que perpetuaria um
- * 404 falso.
+ * (exceção).
+ *
+ * ATENÇÃO — a primeira versão disto chamava `fetchIGDBFromOrigin` direto, e com isso pulava
+ * o cache E a fila do `igdbDispatcher`. Toda página de jogo passou a bater no IGDB sem
+ * intermediário; com o prefetch do Next abrindo ~10 delas de uma vez, o IGDB respondeu
+ * **429 Too Many Requests** e o site inteiro caiu. Cache e fila não são otimização aqui,
+ * são o que mantém o consumo dentro do limite da API.
+ *
+ * O cache guarda apenas resultado BOM. Ausência e falha nunca são cacheadas: cachear
+ * ausência perpetuaria um 404 falso, que foi o problema que originou esta função.
  */
 export async function fetchIGDBOuFalhar(endpoint: string, body: string): Promise<any[]> {
-  return fetchIGDBFromOrigin(endpoint, body, 3, true);
+  const cacheKey = `${endpoint}:${body}`;
+  const cached = getFromCache<any[]>(cacheKey);
+  if (cached && !cached.isStale) return cached.data;
+
+  try {
+    const data = await igdbDispatcher.schedule(() =>
+      fetchIGDBFromOrigin(endpoint, body, 3, true)
+    );
+    if (data && data.length > 0) {
+      setToCache(cacheKey, data, TTL_CONFIG.GAME_DETAILS);
+    }
+    return data;
+  } catch (err) {
+    // Dado stale vale mais que uma página de erro: a ficha continua correta, só velha.
+    if (cached?.data?.length) {
+      console.warn(`[IGDB] ${endpoint} falhou; entregando cache stale.`);
+      return cached.data;
+    }
+    throw err;
+  }
 }
 
 // =========================================================================

@@ -66,6 +66,7 @@ export default function TopTenImdbSection({
                 <div className="relative w-28 sm:w-32 aspect-[2/3] rounded-xl overflow-hidden bg-neutral-900 flex-shrink-0 border border-white/10 shadow-lg">
                   <Link
                     href={getGameUrl(game)}
+      prefetch={false}
                     className="block w-full h-full cursor-pointer"
                     title={`Ver detalhes de ${game.name}`}
                   >
@@ -104,7 +105,8 @@ export default function TopTenImdbSection({
                       #{rank}
                     </div>
 
-                    <Link href={getGameUrl(game)}>
+                    <Link href={getGameUrl(game)}
+      prefetch={false}>
                       <h3 className="text-base font-bold text-white hover:text-[#00E5FF] transition-colors line-clamp-1">
                         {game.name}
                       </h3>
@@ -178,6 +180,7 @@ export default function TopTenImdbSection({
                   <div className="relative aspect-[2/3] w-full bg-neutral-900 overflow-hidden">
                     <Link
                       href={getGameUrl(game)}
+      prefetch={false}
                       className="block w-full h-full cursor-pointer"
                       title={`Ver detalhes de ${game.name}`}
                     >
@@ -215,7 +218,8 @@ export default function TopTenImdbSection({
                   </div>
 
                   <div className="p-2.5 flex-1 flex flex-col justify-between">
-                    <Link href={getGameUrl(game)}>
+                    <Link href={getGameUrl(game)}
+      prefetch={false}>
                       <h4 className="text-xs font-semibold text-white hover:text-[#00E5FF] line-clamp-1 transition-colors">
                         {game.name}
                       </h4>

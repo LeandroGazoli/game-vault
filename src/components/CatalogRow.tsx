@@ -97,6 +97,7 @@ export default function CatalogRow({
               >
                 <Link
                   href={getGameUrl(game)}
+      prefetch={false}
                   className="block w-full h-full"
                   title={game.name}
                 >

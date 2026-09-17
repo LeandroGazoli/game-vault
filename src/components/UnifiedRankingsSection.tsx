@@ -226,7 +226,8 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                   >
                     {/* Poster do Jogo */}
                     <div className="relative w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden bg-neutral-950 flex-shrink-0 border border-white/10 shadow-md">
-                      <Link href={getGameUrl(game)} className="block w-full h-full">
+                      <Link href={getGameUrl(game)}
+      prefetch={false} className="block w-full h-full">
                         {game.background_image ? (
                           <img
                             src={game.background_image}
@@ -262,7 +263,8 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                           )}
                         </div>
 
-                        <Link href={getGameUrl(game)}>
+                        <Link href={getGameUrl(game)}
+      prefetch={false}>
                           <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-[#00E5FF] transition-colors line-clamp-2 leading-snug">
                             {game.name}
                           </h3>
@@ -321,6 +323,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
 
                         <Link
                           href={getGameUrl(game)}
+      prefetch={false}
                           className="relative w-10 h-13 aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 border border-white/5 shrink-0 block"
                         >
                           {game.background_image ? (
@@ -334,7 +337,8 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
                         </Link>
 
                         <div className="min-w-0">
-                          <Link href={getGameUrl(game)}>
+                          <Link href={getGameUrl(game)}
+      prefetch={false}>
                             <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#00E5FF] transition-colors truncate max-w-[180px] sm:max-w-xs">
                               {game.name}
                             </h4>

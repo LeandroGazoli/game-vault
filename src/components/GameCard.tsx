@@ -82,6 +82,7 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-950">
               <Link
                 href={getGameUrl(game)}
+      prefetch={false}
                 className="block w-full h-full cursor-pointer"
                 title={`Ver detalhes de ${game.name}`}
               >
@@ -289,7 +290,8 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
         <div className="p-3 flex-1 flex flex-col justify-between gap-2 bg-[#141822]">
           <div className="space-y-0.5">
             {/* Título em destaque */}
-            <Link href={getGameUrl(game)} className="block">
+            <Link href={getGameUrl(game)}
+      prefetch={false} className="block">
               <h3
                 className="font-bold text-xs sm:text-sm text-white group-hover:text-emerald-400 transition-colors line-clamp-1 leading-snug"
                 title={game.name}
