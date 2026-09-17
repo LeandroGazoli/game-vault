@@ -5,8 +5,54 @@ import {
   verifyAppToken,
 } from "@/lib/apiSecurity";
 
+/**
+ * Modo de manutenção APLICADO NA BORDA.
+ *
+ * O `MaintenanceOverlay` é um componente client: ele desenha uma tela por cima, mas a
+ * página já renderizou no servidor e o app já inicializou — AuthContext, os listeners de
+ * `system/settings`, o NotificationBell e a home continuam lendo o Firestore. E crawlers
+ * ignoram o overlay por completo. Resultado observado: 76k leituras até as 9h com o site
+ * "bloqueado".
+ *
+ * Aqui o corte é antes de qualquer renderização, então custa ZERO leitura. O estado vem de
+ * uma var do Worker (não do Firestore) justamente para não gastar leitura para decidir.
+ */
+function isMaintenanceOn(): boolean {
+  return String(process.env.MAINTENANCE_MODE || "").toLowerCase() === "true";
+}
+
+/** Caminhos que seguem acessíveis durante a manutenção (admin precisa entrar e desligar). */
+const MAINTENANCE_ALLOWLIST = [
+  "/admin",
+  "/api/admin",
+  "/api/auth",
+  "/login",
+  "/_next",
+  "/offline.html",
+];
+
+const MAINTENANCE_HTML = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Em manutencao - MyGameList</title>
+<style>body{background:#0b0d11;color:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:24px}h1{font-size:20px;margin:0 0 8px}p{color:#9ca3af;font-size:14px;margin:0}</style>
+</head><body><div><h1>Estamos em manutencao</h1><p>Voltamos em instantes.</p></div></body></html>`;
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isMaintenanceOn() && !MAINTENANCE_ALLOWLIST.some((p) => pathname.startsWith(p))) {
+    // 503 + Retry-After é o que crawler entende: ele volta depois em vez de
+    // desindexar, e para de bater no sitemap enquanto isso.
+    return new NextResponse(MAINTENANCE_HTML, {
+      status: 503,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Retry-After": "3600",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
 
   // 1. Intercepta e protege estritamente todas as rotas internas /api/games/*
   // Aplica as Opções A (Same-Origin & Anti-Direct Access), B (Rate Limit) e C (App Token)
@@ -48,6 +94,8 @@ export const config = {
      * - a chave de verificacao do IndexNow na raiz (<32 hex>.txt), que precisa ser
      *   servida crua para Bing/Yandex validarem a posse do dominio
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|icon.svg|manifest.webmanifest|manifest.json|sw.js|offline.html|[a-f0-9]{32}\.txt).*)",
+    // sitemap.xml e robots.txt PRECISAM passar por aqui: são justamente o que os
+    // crawlers pedem, e o sitemap é a rota mais cara do site em leituras do Firestore.
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|manifest.json|sw.js|offline.html|[a-f0-9]{32}\.txt).*)",
   ],
 };

@@ -24,7 +24,13 @@
     "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
     "NEXT_PUBLIC_SITE_URL": "https://game-vault.leandro-gazoli.workers.dev",
     // Teto de leituras do Firestore no sitemap (Spark: 50k/dia). Sem isto o default é 45.000.
-    "SITEMAP_GAME_LIMIT": "3000"
+    "SITEMAP_GAME_LIMIT": "3000",
+    // Manutenção aplicada NA BORDA pelo middleware: corta a requisição antes de qualquer
+    // render, então custa ZERO leitura do Firestore e também alcança crawlers.
+    // Para reabrir o site: mude para "false" e faça deploy.
+    // ATENÇÃO: o toggle do painel admin controla apenas o overlay visual (client-side);
+    // quem realmente bloqueia é esta var.
+    "MAINTENANCE_MODE": "true"
   },
   "observability": {
     "logs": {

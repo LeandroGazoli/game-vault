@@ -54,7 +54,10 @@ service cloud.firestore {
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'planSource', 'planLabel', 'grantedBy', 'grantedAt', 'email', 'uid', 'username', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
-          'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles'
+          'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles',
+          // Template customizado é benefício exclusivo VIP/PRO, validado em /api/profile/template.
+          // Sem bloquear aqui, um usuário free grava direto pelo SDK e leva o benefício sem pagar.
+          'customProfileTemplate', 'activeProfileTemplate', 'profileSectionsOrder'
         ])
       );
 
@@ -182,9 +185,26 @@ service cloud.firestore {
         request.resource.data.submittedBy == request.auth.uid &&
         request.resource.data.votesCount == 0 &&
         request.resource.data.voters.size() == 0;
+      // hasOnly limita QUAIS campos mudam, nunca os VALORES. Sem as condições abaixo,
+      // qualquer autenticado podia gravar votesCount: 999999 e dominar o ranking indie
+      // (fetchApprovedIndiesServer ordena por votesCount), ou zerar o de um concorrente.
       allow update: if isVerifiedAdmin() || (
         isAuthenticated() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voters', 'votesCount', 'updatedAt'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voters', 'votesCount', 'updatedAt']) &&
+        // votesCount só pode variar de exatamente 1, e tem que bater com o tamanho de voters
+        request.resource.data.votesCount == request.resource.data.voters.size() &&
+        (
+          request.resource.data.votesCount == resource.data.votesCount + 1 ||
+          request.resource.data.votesCount == resource.data.votesCount - 1
+        ) &&
+        // o usuário só pode adicionar ou remover A SI MESMO da lista de votantes
+        (
+          (request.resource.data.voters.hasAll(resource.data.voters) &&
+           request.resource.data.voters.removeAll(resource.data.voters) == [request.auth.uid])
+          ||
+          (resource.data.voters.hasAll(request.resource.data.voters) &&
+           resource.data.voters.removeAll(request.resource.data.voters) == [request.auth.uid])
+        )
       );
       allow delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid);
 

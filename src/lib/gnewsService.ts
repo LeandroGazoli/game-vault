@@ -47,6 +47,19 @@ export async function fetchGNewsArticles(params: GNewsSearchParams = {}): Promis
   let keySource: "custom" | "system_db" | "env" = "custom";
   let dailyLimit = 100;
 
+  // Secret do servidor tem PRIORIDADE sobre o Firestore: `system/settings` é
+  // `allow read: if true` nas rules, então qualquer um consegue ler o que estiver lá
+  // usando só a API key pública do Firebase. Guardar chave de terceiro ali é vazamento.
+  if (!apiKey) {
+    const envKey = process.env.GNEWS_API_KEY?.trim();
+    if (envKey) {
+      apiKey = envKey;
+      keySource = "env";
+    }
+  }
+
+  // Compatibilidade com instalações que ainda tenham a chave no Firestore.
+  // Migre para `wrangler secret put GNEWS_API_KEY` e limpe o campo do documento.
   if (!apiKey) {
     try {
       const settings = await getSystemSettingsServer();
@@ -60,9 +73,12 @@ export async function fetchGNewsArticles(params: GNewsSearchParams = {}): Promis
     }
   }
 
+  // Sem chave configurada, falha explicitamente em vez de chamar a API com `undefined`.
+  // Configure com: npx wrangler secret put GNEWS_API_KEY
   if (!apiKey) {
-    apiKey = process.env.GNEWS_API_KEY?.trim() || "0600cfe9b21879c95f36213718b366f3";
-    keySource = "env";
+    throw new Error(
+      "Chave da API do GNews não configurada. Defina o secret GNEWS_API_KEY no servidor."
+    );
   }
 
   // 2. Verificação do limite diário baseado na chave

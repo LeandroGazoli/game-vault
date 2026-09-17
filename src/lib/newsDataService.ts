@@ -50,6 +50,16 @@ export async function fetchNewsDataArticles(params: NewsDataSearchParams = {}): 
 
   let dailyLimit = 200;
 
+  // Secret do servidor tem PRIORIDADE sobre o Firestore — ver comentário em gnewsService.
+  if (!apiKey) {
+    const envKey = process.env.NEWSDATA_API_KEY?.trim();
+    if (envKey) {
+      apiKey = envKey;
+      keySource = "env";
+    }
+  }
+
+  // Compatibilidade; migre para `wrangler secret put NEWSDATA_API_KEY`.
   if (!apiKey) {
     try {
       const settings = await getSystemSettingsServer();
@@ -62,11 +72,14 @@ export async function fetchNewsDataArticles(params: NewsDataSearchParams = {}): 
       // Fallback gracioso
     }
   }
-
+  // Sem chave configurada, falha explicitamente em vez de chamar a API com `undefined`.
+  // Configure com: npx wrangler secret put NEWSDATA_API_KEY
   if (!apiKey) {
-    apiKey = process.env.NEWSDATA_API_KEY?.trim() || "pub_f6f2cf344e8b4d62a121a89953104b29";
-    keySource = "env";
+    throw new Error(
+      "Chave da API do NewsData não configurada. Defina o secret NEWSDATA_API_KEY no servidor."
+    );
   }
+
 
   // 2. Verificação do limite diário baseado na chave
   const currentUsage = await getDailyKeyUsage("newsdata", apiKey);
