@@ -172,6 +172,13 @@ export default function RootLayout({
           <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
         )}
 
+        {/* Cinto e suspensório: robots.txt impede o rastreamento, mas se alguma URL de
+            homologação vazar (link compartilhado, referer), só a meta noindex garante que
+            ela não entre no índice. */}
+        {process.env.IS_HOMOLOG === "true" && (
+          <meta name="robots" content="noindex, nofollow, noarchive" />
+        )}
+
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

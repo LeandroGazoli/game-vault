@@ -35,6 +35,16 @@ export default function robots(): MetadataRoute.Robots {
     ],
   }));
 
+  // AMBIENTE DE HOMOLOGAÇÃO: bloqueia tudo.
+  // Sem isto o Google indexaria o ambiente de revisão e criaria conteúdo duplicado
+  // concorrendo com o site real — problema clássico de SEO em preview público, e que
+  // demora para desfazer depois de indexado.
+  if (process.env.IS_HOMOLOG === "true") {
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+    };
+  }
+
   return {
     rules: [
       {

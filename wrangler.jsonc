@@ -52,4 +52,57 @@
       "persist": true
     }
   }
+,
+
+  /**
+   * AMBIENTE DE HOMOLOGAÇÃO — worker separado para revisar branches antes do merge.
+   *
+   * Deploy:  npx wrangler deploy --env homolog
+   * URL:     https://game-vault-homolog.<seu-subdominio>.workers.dev
+   *
+   * KV PRÓPRIO, e isso é essencial: com o namespace compartilhado, ligar o modo manutenção
+   * em homologação BLOQUEARIA O SITE REAL, já que o middleware lê a mesma chave. O cache
+   * incremental também é separado, senão as duas versões se sobrescreveriam.
+   *
+   * ⚠️ O FIRESTORE É O MESMO de produção. Não há projeto Firebase separado, então escrita
+   * feita em homologação altera dados reais. Use para revisar UI e navegação; evite testar
+   * fluxos destrutivos (moderação, concessão de plano, exclusão).
+   *
+   * ⚠️ SEO: `NEXT_PUBLIC_SITE_URL` aponta para o domínio de homologação e `IS_HOMOLOG`
+   * liga o bloqueio total em robots.txt — sem isso o Google indexaria o ambiente e criaria
+   * conteúdo duplicado concorrendo com o site real.
+   */
+  "env": {
+    "homolog": {
+      "name": "game-vault-homolog",
+      "vars": {
+        "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyCBeWB14tmyQZZddMia62SpzQ5iTRio8TI",
+        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "gamevault-profile.firebaseapp.com",
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "gamevault-profile",
+        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "gamevault-profile.firebasestorage.app",
+        "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
+        "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
+        "NEXT_PUBLIC_SITE_URL": "https://game-vault-homolog.leandro-gazoli.workers.dev",
+        "MAINTENANCE_MODE": "false",
+        "IS_HOMOLOG": "true",
+        // Sitemap curto: homologação não é indexada, então não há motivo para gastar
+        // leitura do Firestore montando 33 mil URLs aqui.
+        "SITEMAP_GAME_LIMIT": "50"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "NEXT_INC_CACHE_KV",
+          "id": "5ba84aafacf245cdb8fa9e0efe5dcba8"
+        },
+        {
+          "binding": "APP_CONFIG",
+          "id": "439b6f94d9304d1cbafaff7b7f2f597d"
+        }
+      ],
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      }
+    }
+  }
 }
