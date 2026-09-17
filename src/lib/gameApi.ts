@@ -14,6 +14,7 @@ import {
 import { fetchHLTBData } from "./hltbApi";
 import { translateToPortuguese } from "./translate";
 import { getStoredGameTranslations, saveGameTranslations } from "./translationsDb";
+import { cache } from "react";
 
 // Função auxiliar otimizada para enriquecer listas de jogos rapidamente com HowLongToBeat
 // OBS: Traduções de sinopse NÃO são executadas em listas para máxima velocidade e zero latência;
@@ -135,7 +136,7 @@ export async function getPopularGamesApi(limit = 20): Promise<Game[]> {
   return await enrichWithHLTB(games, 3);
 }
 
-export async function getGameDetailsApi(id: string | number): Promise<Game | null> {
+async function getGameDetailsApi_uncached(id: string | number): Promise<Game | null> {
   const game = await getGameDetailsIGDB(id);
   if (!game) return null;
 
@@ -195,3 +196,11 @@ export async function getGameDetailsApi(id: string | number): Promise<Game | nul
 
   return game;
 }
+
+/**
+ * `generateMetadata` e o corpo da página rodam na MESMA requisição e ambos chamam isto.
+ * Sem memoização, cada pageview de jogo pagava 2x: 2 chamadas ao IGDB (que é POST, então a
+ * dedupe automática do Next não alcança), 2 leituras de `game_translations` e 2 chamadas
+ * ao HowLongToBeat.
+ */
+export const getGameDetailsApi = cache(getGameDetailsApi_uncached);

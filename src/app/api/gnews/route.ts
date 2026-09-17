@@ -20,7 +20,12 @@ export async function GET(req: NextRequest) {
       customApiKey,
     });
 
-    return NextResponse.json(data);
+    // Sem header, cada chamada queima cota da GNews (chave de terceiro com limite diário).
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+      },
+    });
   } catch (error: any) {
     console.error("Erro na rota /api/gnews:", error);
     return NextResponse.json(

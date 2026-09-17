@@ -8,7 +8,13 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const config = await getPlansConfigServer();
-    return NextResponse.json(config);
+    // Config pública de preços, lida do Firestore. Chamada por PlanosClient e pelo
+    // UpgradeModal (que abre a cada upsell) — sem header, era 1 leitura por abertura.
+    return NextResponse.json(config, {
+      headers: {
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+      },
+    });
   } catch (error: any) {
     console.error("Erro ao obter planos:", error);
     return NextResponse.json({ error: "Erro ao obter planos" }, { status: 500 });

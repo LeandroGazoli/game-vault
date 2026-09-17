@@ -81,9 +81,15 @@ export async function getStoredGameTranslations(
     }
   } catch (err) {
     console.warn(`Aviso ao buscar traduções do jogo ${key} no Firestore:`, err);
+    // Erro (ex.: 429) NÃO é cacheado: quando a cota voltar, queremos tentar de novo.
+    return { description: null, storyline: null };
   }
 
-  return { description: null, storyline: null };
+  // Cacheia a AUSÊNCIA de tradução. Sem isto, todo jogo sem tradução custava 1 leitura do
+  // Firestore por requisição, para sempre — e a maioria do catálogo não tem tradução.
+  const empty: GameTranslations = { description: null, storyline: null };
+  setMemoryCache(key, empty);
+  return empty;
 }
 
 /**

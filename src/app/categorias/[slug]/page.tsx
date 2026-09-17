@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCategoryBySlug } from "@/lib/categoriesData";
+import { CATEGORIES_DATA, getCategoryBySlug } from "@/lib/categoriesData";
 import CategoryDetailClient from "./CategoryDetailClient";
 import JsonLd from "@/components/seo/JsonLd";
 
@@ -9,7 +9,15 @@ interface PageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
-export const revalidate = 86400; // ISR: 24 horas em cache na CDN Edge
+export const dynamic = "force-static";
+
+/**
+ * As categorias vêm de um arquivo estático do repositório, não do Firestore — então todas as
+ * rotas podem ser pré-renderizadas no build. Evita ISR (e a escrita no KV que ele custa).
+ */
+export async function generateStaticParams() {
+  return CATEGORIES_DATA.map((item) => ({ slug: item.slug }));
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

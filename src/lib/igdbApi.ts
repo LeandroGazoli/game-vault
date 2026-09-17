@@ -1,3 +1,4 @@
+import { withEdgeCache } from "./edgeCache";
 import { Game, GenreItem, PlatformItem } from "./types";
 import { isAdultGame } from "./gameUtils";
 
@@ -416,7 +417,28 @@ const igdbDispatcher = new RequestDispatcher();
 // =========================================================================
 // RETRY COM BACKOFF EXPONENCIAL & JITTER CONTRA 429
 // =========================================================================
+/** TTL no cache de borda. Dados do IGDB mudam devagar; 1h é conservador. */
+const IGDB_EDGE_TTL_SECONDS = 3600;
+
+/**
+ * O IGDB é consultado por POST, então nem o cache de `fetch` do Next nem o cache HTTP da
+ * Cloudflare pegam essas chamadas sozinhos. A Cache API (gratuita, por datacenter) cobre
+ * justamente esse buraco — e sobrevive à morte do isolate, ao contrário do Map em memória.
+ */
 async function fetchIGDBWithRetry(
+  endpoint: string,
+  body: string,
+  maxRetries = 3
+): Promise<any[]> {
+  return withEdgeCache(
+    "igdb",
+    `${endpoint}:${body}`,
+    IGDB_EDGE_TTL_SECONDS,
+    () => fetchIGDBFromOrigin(endpoint, body, maxRetries)
+  );
+}
+
+async function fetchIGDBFromOrigin(
   endpoint: string,
   body: string,
   maxRetries = 3
