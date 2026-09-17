@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { getPlansConfig, PlanKey } from "@/lib/plans";
+import { getPlansConfigServer } from "@/lib/serverData";
+import type { PlanKey } from "@/lib/plans.types";
 import { getAuthenticatedUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Carrega configurações dinâmicas de planos do Firestore
-    const plansConfig = await getPlansConfig();
+    const plansConfig = await getPlansConfigServer();
     const validPlanKey = (planId as PlanKey) in plansConfig ? (planId as PlanKey) : "pro_monthly";
     const selectedPlan = plansConfig[validPlanKey];
 

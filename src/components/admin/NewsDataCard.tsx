@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Clock, Download, ExternalLink, Sparkles } from "lucide-react";
-import { NewsDataArticle } from "@/lib/newsDataService";
+import type { NewsDataArticle } from "@/lib/newsDataService";
 
 interface NewsDataCardProps {
   item: NewsDataArticle;

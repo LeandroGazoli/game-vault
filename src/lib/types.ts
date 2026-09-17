@@ -1169,6 +1169,108 @@ export const DEFAULT_REWARD_TITLES = [
 
 export type NotificationCategory = "feature" | "content" | "update" | "reward" | "general";
 
+// Configurações do Sistema (default). Vive aqui — e não em firebase.ts — para que
+// código de servidor possa consumi-lo sem arrastar o SDK cliente do Firebase.
+export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
+  maintenanceMode: false,
+  maintenanceNotice: "Estamos realizando atualizações programadas no MyGameList. Voltamos em instantes!",
+  allowRegistrations: true,
+  announcementBanner: {
+    enabled: false,
+    text: "🎉 Bem-vindo à nova versão do MyGameList!",
+    linkUrl: "/planos",
+    linkLabel: "Conhecer Planos",
+    variant: "info",
+  },
+  heroCarousel: {
+    enabled: false,
+    maxItems: 5,
+    items: [
+      {
+        id: "gta-6",
+        title: "Grand Theft Auto VI",
+        subtitle: "A volta a Vice City na experiência definitiva de mundo aberto da Rockstar Games.",
+        bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80",
+        linkUrl: "/search?q=Grand+Theft+Auto",
+        tag: "MAIS AGUARDADO",
+      },
+      {
+        id: "cyberpunk-2077",
+        title: "Cyberpunk 2077: Phantom Liberty",
+        subtitle: "Mergulhe nas ruas sombrias de Night City como um mercenário aprimorado.",
+        bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80",
+        linkUrl: "/search?q=Cyberpunk",
+        tag: "DESTAQUE RETROFUTURISTA",
+      },
+      {
+        id: "elden-ring",
+        title: "Elden Ring: Shadow of the Erdtree",
+        subtitle: "Explore a misteriosa Terra das Sombras e enfrente desafios implacáveis.",
+        bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80",
+        linkUrl: "/search?q=Elden+Ring",
+        tag: "GOTY MASTER",
+      },
+      {
+        id: "witcher-3",
+        title: "The Witcher 3: Wild Hunt",
+        subtitle: "A jornada épica de Geralt de Rívia em busca da Criança da Profecia.",
+        bannerUrl: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1600&auto=format&fit=crop&q=80",
+        linkUrl: "/search?q=The+Witcher",
+        tag: "OBRA-PRIMA",
+      },
+    ],
+  },
+  defaultBackground: {
+    type: "preset",
+    value: "/assets/bg/city.webp",
+    animationId: "parallax",
+  },
+  features: {
+    aiRecommendations: true,
+    communityChat: false,
+    bountiesEnabled: true,
+    instantSyncSteam: true,
+  },
+  newsApiSettings: {
+    newsdataDailyLimit: 200,
+    gnewsDailyLimit: 100,
+  },
+  emailTemplates: {
+    vipWelcome: {
+      subject: "👑 Você recebeu acesso VIP no MyGameList!",
+      badgeText: "👑 ACESSO VIP CONCEDIDO",
+      heading: "Parabéns, {username}!",
+      subheading: "Você acabou de receber acesso exclusivo de nível VIP Vitalício no MyGameList.",
+      defaultMessage: "Concedemos a você acesso de Membro VIP no MyGameList com 2.0x XP em dobro, sem anúncios e todos os recursos liberados.",
+      ctaText: "Acessar Meu Perfil VIP →",
+      ctaUrl: "https://www.mygameslist.com.br/perfil",
+      accentColor: "#F59E0B",
+      benefits: [
+        "Zero Anúncios em toda a plataforma",
+        "2.0x de XP em Dobro para subir de nível",
+        "Insígnia Dourada e destaque exclusivo no seu perfil",
+        "Estatísticas Avançadas e backup total da sua biblioteca",
+      ],
+    },
+    proWelcome: {
+      subject: "⚡ Seu acesso PRO foi ativado no MyGameList!",
+      badgeText: "⚡ ACESSO PRO ATIVADO",
+      heading: "Parabéns, {username}!",
+      subheading: "Você acabou de receber acesso exclusivo de nível PRO no MyGameList.",
+      defaultMessage: "Seu acesso PRO está liberado com 1.5x de XP Boost e navegação 100% livre de anúncios.",
+      ctaText: "Acessar Plataforma →",
+      ctaUrl: "https://www.mygameslist.com.br/perfil",
+      accentColor: "#00E5FF",
+      benefits: [
+        "Zero Anúncios em toda a plataforma",
+        "1.5x de XP Boost nas atividades",
+        "Insígnia Ciano PRO no seu perfil",
+        "Acesso antecipado a novos recursos",
+      ],
+    },
+  },
+};
+
 export interface SystemNotification {
   id: string;
   title: string;

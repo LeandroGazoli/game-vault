@@ -1,14 +1,9 @@
-import { db } from "./firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from "firebase/firestore";
+/**
+ * Notícias da Steam traduzidas — SOMENTE SERVIDOR.
+ * Usa o transporte REST; o SDK cliente arrasta gRPC/protobufjs para o bundle de
+ * servidor e quebra no isolate V8 do Cloudflare Workers.
+ */
+import { getRestFirestore } from "./firestoreAdminRest";
 
 export interface StoredSteamNewsItem {
   gid: string;
@@ -44,11 +39,11 @@ export async function saveTranslatedSteamNews(
   // Atualiza cache em memória
   memoryCache.set(item.gid, item);
 
-  if (!db) return;
-
   try {
-    const docRef = doc(db, COLLECTION_NAME, item.gid);
-    await setDoc(docRef, item, { merge: true });
+    await getRestFirestore()
+      .collection(COLLECTION_NAME)
+      .doc(item.gid)
+      .set(item, { merge: true });
   } catch (error) {
     console.warn(`[SteamNewsDb] Erro ao salvar notícia ${item.gid}:`, error);
   }
@@ -66,12 +61,9 @@ export async function getStoredSteamNews(
     return memoryCache.get(gid)!;
   }
 
-  if (!db) return null;
-
   try {
-    const docRef = doc(db, COLLECTION_NAME, gid);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
+    const snap = await getRestFirestore().collection(COLLECTION_NAME).doc(gid).get();
+    if (snap.exists) {
       const data = snap.data() as StoredSteamNewsItem;
       memoryCache.set(gid, data);
       return data;
@@ -90,16 +82,13 @@ export async function getStoredSteamNews(
 export async function getRecentSteamNews(
   maxItems: number = 15
 ): Promise<StoredSteamNewsItem[]> {
-  if (!db) return [];
-
   try {
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      orderBy("date", "desc"),
-      limit(maxItems)
-    );
+    const snapshot = await getRestFirestore()
+      .collection(COLLECTION_NAME)
+      .orderBy("date", "desc")
+      .limit(maxItems)
+      .get();
 
-    const snapshot = await getDocs(q);
     const results: StoredSteamNewsItem[] = [];
 
     snapshot.forEach((docSnap) => {

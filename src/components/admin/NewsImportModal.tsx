@@ -19,9 +19,9 @@ import {
   cleanSteamBBCode,
   extractFirstSteamImage,
 } from "@/lib/steamNewsService";
-import { NewsDataArticle } from "@/lib/newsDataService";
-import { GNewsArticle } from "@/lib/gnewsService";
-import { ApiQuotaStatus } from "@/lib/apiKeyUsageTracker";
+import type { NewsDataArticle } from "@/lib/newsDataService";
+import type { GNewsArticle } from "@/lib/gnewsService";
+import type { ApiQuotaStatus } from "@/lib/apiKeyUsageTracker";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import SteamNewsCard from "./SteamNewsCard";
 import SteamAppIdSearchForm from "./SteamAppIdSearchForm";

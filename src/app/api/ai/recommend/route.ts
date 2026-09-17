@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSystemSettings } from "@/lib/firebase";
+import { getSystemSettingsServer } from "@/lib/serverData";
 import { searchAndFilterGamesIGDB } from "@/lib/igdbApi";
 import { Game } from "@/lib/types";
 
@@ -12,7 +12,7 @@ const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas de cache
 export async function POST(request: NextRequest) {
   try {
     // 1. Verifica se a feature flag 'aiRecommendations' está ativa no Admin
-    const settings = await getSystemSettings();
+    const settings = await getSystemSettingsServer();
     if (!settings.features?.aiRecommendations) {
       return NextResponse.json(
         { error: "O assistente de IA está temporariamente desativado nas configurações da plataforma." },

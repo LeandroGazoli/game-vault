@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
-import { recordAuditLog } from "@/lib/firebase";
+import { recordAuditLogServer } from "@/lib/serverData";
 import {
   collectSitemapUrls,
   getIndexNowKey,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.submitted > 0 && auth.via === "admin" && auth.email) {
-      await recordAuditLog({
+      await recordAuditLogServer({
         adminEmail: auth.email,
         adminUid: auth.uid || "",
         action: "IndexNow acionado (delta)",
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     // Disparos manuais do painel ficam rastreados na auditoria; cron/CI não polui o log.
     if (auth.via === "admin" && auth.email) {
-      await recordAuditLog({
+      await recordAuditLogServer({
         adminEmail: auth.email,
         adminUid: auth.uid || "",
         action: "IndexNow acionado",

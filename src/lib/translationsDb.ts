@@ -1,6 +1,14 @@
-import { db } from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+/**
+ * Traduções persistidas de jogos — SOMENTE SERVIDOR.
+ *
+ * Usa o transporte REST (firestoreAdminRest) em vez do SDK cliente: o SDK
+ * resolve pela condição "node" no bundle de servidor e arrasta gRPC/protobufjs,
+ * que quebram no isolate V8 do Cloudflare Workers.
+ */
+import { getRestFirestore } from "./firestoreAdminRest";
 import { sanitizeTranslation } from "./translate";
+
+const TRANSLATIONS_COLLECTION = "game_translations";
 
 export interface StoredTranslation {
   gameId: string;
@@ -37,7 +45,7 @@ function setMemoryCache(key: string, data: GameTranslations) {
 export async function getStoredGameTranslations(
   gameId: string | number
 ): Promise<GameTranslations> {
-  if (!db || !gameId) return { description: null, storyline: null };
+  if (!gameId) return { description: null, storyline: null };
 
   const key = String(gameId);
 
@@ -48,14 +56,17 @@ export async function getStoredGameTranslations(
 
   try {
     // Timeout de 1.5s para garantir que lentidão de rede nunca trave a página
-    const fetchPromise = getDoc(doc(db, "game_translations", key));
+    const fetchPromise = getRestFirestore()
+      .collection(TRANSLATIONS_COLLECTION)
+      .doc(key)
+      .get();
     const timeoutPromise = new Promise<null>((resolve) =>
       setTimeout(() => resolve(null), 1500)
     );
 
-    const docSnap: any = await Promise.race([fetchPromise, timeoutPromise]);
+    const docSnap = await Promise.race([fetchPromise, timeoutPromise]);
 
-    if (docSnap && docSnap.exists && docSnap.exists()) {
+    if (docSnap && docSnap.exists) {
       const data = docSnap.data() as StoredTranslation;
       const cleanDesc = sanitizeTranslation(data?.translatedText) || null;
       const cleanStoryline = sanitizeTranslation(data?.translatedStoryline) || null;
@@ -99,7 +110,7 @@ export async function saveGameTranslations(
     gameName?: string;
   }
 ): Promise<void> {
-  if (!db || !gameId) return;
+  if (!gameId) return;
 
   const key = String(gameId);
   const cleanDesc = params.translatedDescription
@@ -129,7 +140,10 @@ export async function saveGameTranslations(
   if (cleanStoryline) docData.translatedStoryline = cleanStoryline;
 
   try {
-    await setDoc(doc(db, "game_translations", key), docData, { merge: true });
+    await getRestFirestore()
+      .collection(TRANSLATIONS_COLLECTION)
+      .doc(key)
+      .set(docData, { merge: true });
   } catch (err) {
     console.warn(`Erro ao salvar tradução do jogo ${key} no Firestore:`, err);
   }

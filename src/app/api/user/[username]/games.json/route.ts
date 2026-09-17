@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, limit } from "firebase/firestore";
+import { getUserGamesServer, resolveUserServer } from "@/lib/serverData";
 import { UserGame, UserProfile } from "@/lib/types";
 
 export async function GET(
@@ -20,33 +19,10 @@ export async function GET(
   }
 
   try {
-    let targetUserId = username;
-    let targetProfile: UserProfile | null = null;
-
-    // 1. Tenta buscar o perfil do usuário pelo UID direto ou campo username
-    if (db) {
-      const raw = username.trim();
-      const clean = raw.toLowerCase();
-
-      const userDirectDoc = await getDoc(doc(db, "users", raw));
-      if (userDirectDoc.exists()) {
-        targetUserId = userDirectDoc.id;
-        targetProfile = userDirectDoc.data() as UserProfile;
-      } else {
-        // Busca por campo username (case-insensitive)
-        const qUsers = query(collection(db, "users"), where("username", "==", clean), limit(1));
-        let snapUsers = await getDocs(qUsers);
-        if (snapUsers.empty && clean !== raw) {
-          const qUsersExact = query(collection(db, "users"), where("username", "==", raw), limit(1));
-          snapUsers = await getDocs(qUsersExact);
-        }
-        if (!snapUsers.empty) {
-          const first = snapUsers.docs[0];
-          targetUserId = first.id;
-          targetProfile = first.data() as UserProfile;
-        }
-      }
-    }
+    // 1. Resolve o perfil pelo UID direto ou pelo campo username
+    const resolved = await resolveUserServer(username);
+    const targetUserId = resolved?.userId || username;
+    const targetProfile: UserProfile | null = resolved?.profile || null;
 
     if (!targetProfile) {
       return NextResponse.json({ error: "Perfil não encontrado" }, { status: 404 });
@@ -81,14 +57,7 @@ export async function GET(
     }
 
     // 2. Busca todos os jogos da biblioteca do usuário
-    let games: UserGame[] = [];
-    if (db) {
-      const qGames = query(collection(db, "users", targetUserId, "games"));
-      const snapGames = await getDocs(qGames);
-      snapGames.forEach((docSnap) => {
-        games.push(docSnap.data() as UserGame);
-      });
-    }
+    const games: UserGame[] = await getUserGamesServer(targetUserId);
 
     // 3. Aplica filtros da URL
     let filteredGames = games;

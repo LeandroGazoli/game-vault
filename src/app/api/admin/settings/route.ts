@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
-import { getSystemSettings, updateSystemSettings, recordAuditLog } from "@/lib/firebase";
+import { getSystemSettingsServer, updateSystemSettingsServer, recordAuditLogServer } from "@/lib/serverData";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const settings = await getSystemSettings();
+    const settings = await getSystemSettingsServer();
     return NextResponse.json({ settings });
   } catch (error: any) {
     console.error("Erro na API /api/admin/settings [GET]:", error);
@@ -39,9 +39,9 @@ export async function PUT(request: NextRequest) {
     const adminEmail = authCheck.user.email;
     const adminUid = authCheck.user.uid;
 
-    await updateSystemSettings(body, adminEmail);
+    await updateSystemSettingsServer(body, adminEmail);
 
-    await recordAuditLog({
+    await recordAuditLogServer({
       adminEmail,
       adminUid,
       action: "Configurações do Sistema Atualizadas",

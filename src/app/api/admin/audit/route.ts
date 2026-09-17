@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
-import { getAuditLogs, recordAuditLog } from "@/lib/firebase";
+import { getAuditLogsServer, recordAuditLogServer } from "@/lib/serverData";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const safeLimit = Math.min(Math.max(limit, 1), 100);
 
-    const logs = await getAuditLogs(safeLimit);
+    const logs = await getAuditLogsServer(safeLimit);
     return NextResponse.json({ logs });
   } catch (error: any) {
     console.error("Erro na API /api/admin/audit [GET]:", error);
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await recordAuditLog({
+    await recordAuditLogServer({
       adminEmail: authCheck.user.email,
       adminUid: authCheck.user.uid,
       action: action.slice(0, 100),

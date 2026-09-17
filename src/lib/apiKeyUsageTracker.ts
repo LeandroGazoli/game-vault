@@ -1,5 +1,12 @@
-import { db } from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+/**
+ * Controle de cota das chaves de API externas — SOMENTE SERVIDOR.
+ * Usa o transporte REST; o SDK cliente arrasta gRPC/protobufjs para o bundle de
+ * servidor e quebra no workerd. Componentes client importam apenas o tipo
+ * ApiQuotaStatus daqui (via `import type`), sem carregar este módulo em runtime.
+ */
+import { getRestFirestore } from "./firestoreAdminRest";
+
+const USAGE_COLLECTION = "system_api_usage";
 
 export interface ApiKeyUsage {
   apiKeyHash: string; // Hash seguro ou prefixo+sufixo mascarado da chave para indexação
@@ -66,11 +73,9 @@ export async function getDailyKeyUsage(service: "newsdata" | "gnews", key: strin
     lastUsedAt: new Date().toISOString(),
   };
 
-  if (!db) return defaultUsage;
-
   try {
-    const snap = await getDoc(doc(db, "system_api_usage", docId));
-    if (snap.exists()) {
+    const snap = await getRestFirestore().collection(USAGE_COLLECTION).doc(docId).get();
+    if (snap.exists) {
       return { ...defaultUsage, ...snap.data() } as ApiKeyUsage;
     }
   } catch (e) {
@@ -92,26 +97,24 @@ export async function incrementKeyUsage(service: "newsdata" | "gnews", key: stri
 
   let currentCount = 0;
 
-  if (db) {
-    try {
-      const snap = await getDoc(doc(db, "system_api_usage", docId));
-      if (snap.exists()) {
-        currentCount = snap.data().count || 0;
-      }
-      const newCount = currentCount + 1;
-      const payload: ApiKeyUsage = {
-        apiKeyHash: keyHash,
-        date,
-        count: newCount,
-        limit: effectiveLimit,
-        service,
-        lastUsedAt: now,
-      };
-      await setDoc(doc(db, "system_api_usage", docId), payload, { merge: true });
-      return payload;
-    } catch (e) {
-      console.warn(`[apiKeyUsageTracker] Erro ao incrementar uso da API ${service}:`, e);
+  try {
+    const usageRef = getRestFirestore().collection(USAGE_COLLECTION).doc(docId);
+    const snap = await usageRef.get();
+    if (snap.exists) {
+      currentCount = (snap.data() as ApiKeyUsage)?.count || 0;
     }
+    const payload: ApiKeyUsage = {
+      apiKeyHash: keyHash,
+      date,
+      count: currentCount + 1,
+      limit: effectiveLimit,
+      service,
+      lastUsedAt: now,
+    };
+    await usageRef.set(payload, { merge: true });
+    return payload;
+  } catch (e) {
+    console.warn(`[apiKeyUsageTracker] Erro ao incrementar uso da API ${service}:`, e);
   }
 
   return {

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPlansConfig, savePlansConfig, PlansConfig } from "@/lib/plans";
+import { getPlansConfigServer, savePlansConfigServer } from "@/lib/serverData";
+import type { PlansConfig } from "@/lib/plans.types";
 import { requireAdminUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const config = await getPlansConfig();
+    const config = await getPlansConfigServer();
     return NextResponse.json(config);
   } catch (error: any) {
     console.error("Erro ao obter planos:", error);
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await savePlansConfig(config as PlansConfig);
+    await savePlansConfigServer(config as PlansConfig);
     return NextResponse.json({ success: true, message: "Planos atualizados com sucesso!" });
   } catch (error: any) {
     console.error("Erro ao salvar planos:", error);

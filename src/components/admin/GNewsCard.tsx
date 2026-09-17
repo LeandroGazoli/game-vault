@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Clock, Download, ExternalLink, Sparkles } from "lucide-react";
-import { GNewsArticle } from "@/lib/gnewsService";
+import type { GNewsArticle } from "@/lib/gnewsService";
 
 interface GNewsCardProps {
   item: GNewsArticle;

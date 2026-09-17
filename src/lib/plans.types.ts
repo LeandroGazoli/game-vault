@@ -1,0 +1,122 @@
+/**
+ * Tipos e configuração padrão dos planos.
+ *
+ * Vive separado de plans.ts (que depende do SDK cliente do Firebase) para que o
+ * código de servidor possa consumir tipos e defaults sem arrastar gRPC/protobufjs
+ * para o bundle do Cloudflare Workers.
+ */
+
+export type PlanKey = "pro_monthly" | "pro_single_month" | "pro_annual" | "vip_lifetime";
+export type PlanType = PlanKey;
+
+export interface PlanItemConfig {
+  id: PlanKey;
+  name: string;
+  description: string;
+  price: number;
+  formattedPrice: string;
+  intervalText: string;
+  priceId: string;
+  mode: "subscription" | "payment";
+  badge?: string;
+  enabled: boolean;
+  features: string[];
+}
+
+export interface PlansConfig {
+  pro_monthly: PlanItemConfig;
+  pro_single_month: PlanItemConfig;
+  pro_annual: PlanItemConfig;
+  vip_lifetime: PlanItemConfig;
+  updatedAt?: string;
+}
+
+export const DEFAULT_PLANS_CONFIG: PlansConfig = {
+  pro_monthly: {
+    id: "pro_monthly",
+    name: "MyGameList PRO (Mensal)",
+    description: "Acesso total a todos os recursos PRO com cobrança mensal automática. Cancele quando quiser.",
+    price: 9.9,
+    formattedPrice: "R$ 9,90",
+    intervalText: "/mês",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || "price_1UBHDW2Kf2AAuQLblxkNUioG",
+    mode: "subscription",
+    badge: "Recorrente",
+    enabled: true,
+    features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) para subir no Ranking",
+      "100% Livre de Anúncios e Banners",
+      "Selo PRO oficial no perfil e comentários",
+      "Crie até 10 títulos e insígnias personalizadas",
+      "Personalização total com temas e banners",
+      "Estatísticas avançadas de tempo e backlog",
+      "Exportação completa (Excel, JSON e API)",
+      "Roleta de backlog com filtros ilimitados",
+    ],
+  },
+  pro_single_month: {
+    id: "pro_single_month",
+    name: "MyGameList PRO (1 Mês Avulso)",
+    description: "30 dias de acesso PRO sem renovação automática. Pague apenas 1 único mês e não se preocupe com cobranças futuras.",
+    price: 9.9,
+    formattedPrice: "R$ 9,90",
+    intervalText: "único (30 dias)",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_SINGLE_MONTH || "price_1UBJ8C2Kf2AAuQLbQMZlsl4B",
+    mode: "payment",
+    badge: "Sem Renovação",
+    enabled: true,
+    features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) por 30 dias",
+      "30 dias de todos os benefícios PRO",
+      "Crie até 10 títulos e insígnias personalizadas",
+      "Pagamento único sem surpresas no cartão",
+      "Zero cobranças recorrentes automáticas",
+      "100% Livre de Anúncios no período",
+      "Selo PRO oficial e temas desbloqueados",
+      "Exportação e ferramentas liberadas",
+    ],
+  },
+  pro_annual: {
+    id: "pro_annual",
+    name: "MyGameList PRO (Anual)",
+    description: "Economize mais de 30% com o plano anual. O melhor custo-benefício para gamers assíduos.",
+    price: 79.9,
+    formattedPrice: "R$ 79,90",
+    intervalText: "/ano",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "price_1UBHDW2Kf2AAuQLblBdLv8op",
+    mode: "subscription",
+    badge: "Mais Popular (Economize 33%)",
+    enabled: true,
+    features: [
+      "⚡ Boost de +50% no Ganho de XP (1.5x) por 1 ano completo",
+      "Tudo do plano PRO por 1 ano completo",
+      "Crie até 10 títulos e insígnias personalizadas",
+      "Equivalente a R$ 6,65 por mês",
+      "Economia de R$ 38,90 no ano",
+      "Badge dourado de Apoiador Anual",
+      "Prioridade em novas funcionalidades",
+    ],
+  },
+  vip_lifetime: {
+    id: "vip_lifetime",
+    name: "MyGameList VIP (Membro Fundador)",
+    description: "Acesso vitalício para sempre. Um único pagamento e você é VIP eterno do MyGameList.",
+    price: 149.9,
+    formattedPrice: "R$ 149,90",
+    intervalText: "vitalício",
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_VIP_LIFETIME || "price_1UBHDX2Kf2AAuQLbsbuoD6ll",
+    mode: "payment",
+    badge: "Acesso Vitalício Eterno",
+    enabled: true,
+    features: [
+      "👑 Boost Supremo de 2.0x XP (Ganho de XP em Dobro Vitalício)",
+      "Acesso PRO e VIP para toda a vida",
+      "Crie até 10 títulos e insígnias personalizadas",
+      "Pagamento único de R$ 149,90 sem mensalidades",
+      "Selo exclusivo de Membro Fundador VIP",
+      "Capa Obsidian Gold VIP exclusiva",
+      "Seu nome eternizado na página de Apoiadores",
+      "Todas as futuras atualizações incluídas",
+    ],
+  },
+};

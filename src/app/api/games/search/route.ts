@@ -7,7 +7,7 @@ import {
   findGameModeFilter,
 } from "@/lib/filterConstants";
 import { getAuthenticatedUser } from "@/lib/serverAuth";
-import { getUserProfile } from "@/lib/firebase";
+import { getUserProfileServer } from "@/lib/serverData";
 import { isUserAdult } from "@/lib/gameUtils";
 
 export async function GET(request: NextRequest) {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       try {
         const authResult = await getAuthenticatedUser(request);
         if (authResult.authenticated && authResult.user?.uid) {
-          const profile = await getUserProfile(authResult.user.uid);
+          const profile = await getUserProfileServer(authResult.user.uid);
           if (profile?.birthDate && isUserAdult(profile.birthDate)) {
             isAuthorized = true;
           }

@@ -379,16 +379,32 @@ export function fromDocumentName(name: string): string {
   return idx === -1 ? name || "" : name.slice(idx + marker.length);
 }
 
+/**
+ * @param allowApiKey  Leituras aceitam cair para a API key pública quando não há
+ *   service account — o Firestore então aplica as Security Rules como anônimo.
+ *   Escritas nunca usam esse caminho: exigem a service account.
+ */
 async function firestoreFetch(
   url: string,
-  init: RequestInit & { headers?: Record<string, string> } = {}
+  init: RequestInit & { headers?: Record<string, string> } = {},
+  allowApiKey = false
 ): Promise<any> {
-  const token = await requireGoogleAccessToken();
-  const res = await fetch(url, {
+  let target = url;
+  let auth: Record<string, string> = {};
+
+  if (allowApiKey) {
+    const built = await buildReadRequest(url);
+    target = built.url;
+    auth = built.headers;
+  } else {
+    auth = { Authorization: `Bearer ${await requireGoogleAccessToken()}` };
+  }
+
+  const res = await fetch(target, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...auth,
       ...(init.headers || {}),
     },
   });
@@ -436,9 +452,12 @@ export async function restGetDocument(
   opts: { transaction?: string } = {}
 ): Promise<any | null> {
   try {
-    return await firestoreFetch(docUrl(path, { transaction: opts.transaction }), {
-      method: "GET",
-    });
+    return await firestoreFetch(
+      docUrl(path, { transaction: opts.transaction }),
+      { method: "GET" },
+      // Leitura dentro de transação depende da service account de qualquer forma.
+      !opts.transaction
+    );
   } catch (err) {
     if (err instanceof FirestoreRestError && err.status === 404) return null;
     throw err;
@@ -453,10 +472,11 @@ export async function restRunQuery(
   parentPath: string,
   structuredQuery: Record<string, any>
 ): Promise<any[]> {
-  const data = await firestoreFetch(methodUrl(parentPath, "runQuery"), {
-    method: "POST",
-    body: JSON.stringify({ structuredQuery }),
-  });
+  const data = await firestoreFetch(
+    methodUrl(parentPath, "runQuery"),
+    { method: "POST", body: JSON.stringify({ structuredQuery }) },
+    true
+  );
 
   if (!Array.isArray(data)) return [];
   return data.filter((row) => row && row.document).map((row) => row.document);
@@ -467,15 +487,19 @@ export async function restCountQuery(
   parentPath: string,
   structuredQuery: Record<string, any>
 ): Promise<number> {
-  const data = await firestoreFetch(methodUrl(parentPath, "runAggregationQuery"), {
-    method: "POST",
-    body: JSON.stringify({
-      structuredAggregationQuery: {
-        structuredQuery,
-        aggregations: [{ alias: "count", count: {} }],
-      },
-    }),
-  });
+  const data = await firestoreFetch(
+    methodUrl(parentPath, "runAggregationQuery"),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        structuredAggregationQuery: {
+          structuredQuery,
+          aggregations: [{ alias: "count", count: {} }],
+        },
+      }),
+    },
+    true
+  );
 
   if (!Array.isArray(data)) return 0;
   for (const row of data) {

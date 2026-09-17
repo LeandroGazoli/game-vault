@@ -1,4 +1,4 @@
-import { getSystemSettings } from "./firebase";
+import { getSystemSettingsServer } from "./serverData";
 import { incrementKeyUsage, getDailyKeyUsage, ApiQuotaStatus, maskApiKey } from "./apiKeyUsageTracker";
 
 export interface GNewsSource {
@@ -49,7 +49,7 @@ export async function fetchGNewsArticles(params: GNewsSearchParams = {}): Promis
 
   if (!apiKey) {
     try {
-      const settings = await getSystemSettings();
+      const settings = await getSystemSettingsServer();
       if (settings.newsApiSettings?.gnewsApiKey?.trim()) {
         apiKey = settings.newsApiSettings.gnewsApiKey.trim();
         keySource = "system_db";

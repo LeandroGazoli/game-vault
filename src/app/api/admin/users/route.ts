@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
-import {
-  getAllUsersForAdmin,
-  recordAuditLog,
-  getUserProfileByUsername,
-  getSystemSettings,
-} from "@/lib/firebase";
+import { getAllUsersForAdminServer, recordAuditLogServer, getUserProfileByUsernameServer, getSystemSettingsServer } from "@/lib/serverData";
 import {
   adminGrantAccess,
   adminUpdateUserModeration,
@@ -32,7 +27,7 @@ export async function GET(request: NextRequest) {
     const query = (searchParams.get("q") || "").toLowerCase().trim();
     const moderation = searchParams.get("moderation"); // 'banned' | 'suspended' | 'active'
 
-    let users = await getAllUsersForAdmin();
+    let users = await getAllUsersForAdminServer();
 
     if (plan && plan !== "all") {
       users = users.filter((u) => (u.plan || "free") === plan);
@@ -153,7 +148,7 @@ export async function PATCH(request: NextRequest) {
         grantedByEmail: adminEmail,
       });
 
-      await recordAuditLog({
+      await recordAuditLogServer({
         adminEmail,
         adminUid,
         action:
@@ -192,7 +187,7 @@ export async function PATCH(request: NextRequest) {
       // Disparo opcional de E-mail via Resend
       if (sendEmail && userEmail && (plan === "vip" || plan === "pro")) {
         try {
-          const sysSettings = await getSystemSettings();
+          const sysSettings = await getSystemSettingsServer();
           const templateOverride =
             plan === "vip"
               ? sysSettings.emailTemplates?.vipWelcome
@@ -227,7 +222,7 @@ export async function PATCH(request: NextRequest) {
         ? "Usuário Suspenso"
         : "Restrições de Usuário Removidas";
 
-      await recordAuditLog({
+      await recordAuditLogServer({
         adminEmail,
         adminUid,
         action: actionText,
@@ -309,7 +304,7 @@ export async function POST(request: NextRequest) {
     const targetPlan: UserPlan = ["free", "pro", "vip"].includes(plan) ? plan : "free";
 
     // 5. Verificar se o Username já está em uso no Firestore
-    const existingUser = await getUserProfileByUsername(cleanUsername);
+    const existingUser = await getUserProfileByUsernameServer(cleanUsername);
     if (existingUser) {
       return NextResponse.json(
         { error: `O nome de usuário @${cleanUsername} já está cadastrado na plataforma.` },
@@ -409,7 +404,7 @@ export async function POST(request: NextRequest) {
     const adminEmail = authCheck.user.email;
     const adminUid = authCheck.user.uid;
 
-    await recordAuditLog({
+    await recordAuditLogServer({
       adminEmail,
       adminUid,
       action: "Novo Usuário Criado no Painel",

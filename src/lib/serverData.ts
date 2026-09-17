@@ -19,8 +19,11 @@
  * depende de APIs de servidor (Buffer) no caminho da service account.
  */
 import { firestoreRestGet, firestoreRestQuery } from "./firestoreRest";
+import { getRestFirestore } from "./firestoreAdminRest";
 import type { IndieGame } from "./types/indie.types";
-import type { UserProfile } from "./types";
+import { DEFAULT_SYSTEM_SETTINGS } from "./types";
+import type { AuditLogEntry, SystemSettings, UserGame, UserProfile } from "./types";
+import { DEFAULT_PLANS_CONFIG, type PlansConfig } from "./plans.types";
 
 const INDIES_COLLECTION = "indie_games";
 
@@ -98,4 +101,205 @@ export async function getUserProfileByUsernameServer(
   }
 
   return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Configurações do sistema                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Espelha `getSystemSettings` de firebase.ts. */
+export async function getSystemSettingsServer(): Promise<SystemSettings> {
+  try {
+    const snap = await getRestFirestore().collection("system").doc("settings").get();
+    if (snap.exists) {
+      return { ...DEFAULT_SYSTEM_SETTINGS, ...snap.data() } as SystemSettings;
+    }
+  } catch (e) {
+    console.error("Erro ao obter configurações do sistema:", e);
+  }
+  return DEFAULT_SYSTEM_SETTINGS;
+}
+
+/** Espelha `updateSystemSettings` de firebase.ts — propaga o erro, como o original. */
+export async function updateSystemSettingsServer(
+  settings: Partial<SystemSettings>,
+  adminEmail: string
+): Promise<void> {
+  try {
+    await getRestFirestore()
+      .collection("system")
+      .doc("settings")
+      .set(
+        { ...settings, updatedAt: new Date().toISOString(), updatedBy: adminEmail },
+        { merge: true }
+      );
+  } catch (e) {
+    console.error("Erro ao atualizar configurações do sistema:", e);
+    throw e;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Auditoria                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Espelha `recordAuditLog` — nunca propaga erro, para não derrubar a ação auditada. */
+export async function recordAuditLogServer(
+  log: Omit<AuditLogEntry, "id" | "createdAt">
+): Promise<void> {
+  try {
+    const docRef = getRestFirestore().collection("audit_logs").doc();
+    await docRef.set({ ...log, id: docRef.id, createdAt: new Date().toISOString() });
+  } catch (e) {
+    console.error("Erro ao registrar log de auditoria:", e);
+  }
+}
+
+/** Espelha `getAuditLogs`. */
+export async function getAuditLogsServer(limitCount = 50): Promise<AuditLogEntry[]> {
+  try {
+    const snap = await getRestFirestore()
+      .collection("audit_logs")
+      .orderBy("createdAt", "desc")
+      .limit(limitCount)
+      .get();
+    return snap.docs.map((d) => d.data() as AuditLogEntry);
+  } catch (e) {
+    console.error("Erro ao buscar logs de auditoria:", e);
+    return [];
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Usuários                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Espelha `getUserProfile`. */
+export async function getUserProfileServer(userId: string): Promise<UserProfile | null> {
+  if (!userId) return null;
+  try {
+    const snap = await getRestFirestore().collection("users").doc(userId).get();
+    if (snap.exists) return snap.data() as UserProfile;
+  } catch (e) {
+    console.error("Erro ao buscar perfil no Firestore:", e);
+  }
+  return null;
+}
+
+/**
+ * Espelha `getAllUsersForAdmin`, inclusive a contagem de jogos por usuário.
+ *
+ * Atenção de cota: é 1 leitura por usuário mais 1 agregação por usuário. A
+ * agregação count() é cobrada bem mais barato que ler a subcoleção inteira,
+ * mas continua sendo O(nº de usuários) em chamadas.
+ */
+export async function getAllUsersForAdminServer(): Promise<UserProfile[]> {
+  try {
+    const db = getRestFirestore();
+    const snapshot = await db.collection("users").get();
+    const users = snapshot.docs.map((d) => d.data() as UserProfile);
+
+    const counts = await Promise.allSettled(
+      users.map(async (u) => {
+        if (!u.uid) return 0;
+        const agg = await db.collection("users").doc(u.uid).collection("games").count().get();
+        return agg.data().count;
+      })
+    );
+
+    users.forEach((u, i) => {
+      const res = counts[i];
+      u.gamesCount = res.status === "fulfilled" ? res.value : 0;
+    });
+
+    return users;
+  } catch (e) {
+    console.error("Erro ao listar usuários para o admin:", e);
+    return [];
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Biblioteca pública de um usuário                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Resolve um perfil a partir do UID direto ou do campo username (com fallback
+ * para o username gravado com maiúsculas). Devolve também o id do documento,
+ * necessário para alcançar a subcoleção de jogos.
+ */
+export async function resolveUserServer(
+  usernameOrId: string
+): Promise<{ userId: string; profile: UserProfile } | null> {
+  const raw = (usernameOrId || "").trim();
+  if (!raw) return null;
+
+  const direct = await getRestFirestore().collection("users").doc(raw).get();
+  if (direct.exists) {
+    return { userId: direct.id, profile: direct.data() as UserProfile };
+  }
+
+  const clean = raw.toLowerCase();
+  for (const candidate of clean !== raw ? [clean, raw] : [clean]) {
+    const found = await firestoreRestQuery<UserProfile>("users", {
+      where: equals("username", candidate),
+      limit: 1,
+    });
+    if (found[0]) {
+      return { userId: found[0].id, profile: found[0] };
+    }
+  }
+
+  return null;
+}
+
+/** Todos os jogos da subcoleção users/{uid}/games. */
+export async function getUserGamesServer(userId: string): Promise<UserGame[]> {
+  if (!userId) return [];
+  const snap = await getRestFirestore()
+    .collection("users")
+    .doc(userId)
+    .collection("games")
+    .get();
+  return snap.docs.map((d) => d.data() as UserGame);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Planos                                                                     */
+/* -------------------------------------------------------------------------- */
+
+const PLANS_DOC_REF = "plans_config";
+
+/** Espelha `getPlansConfig` de plans.ts. */
+export async function getPlansConfigServer(): Promise<PlansConfig> {
+  try {
+    const snap = await getRestFirestore().collection("system").doc(PLANS_DOC_REF).get();
+    if (snap.exists) {
+      const data = (snap.data() || {}) as Partial<PlansConfig>;
+      return {
+        pro_monthly: { ...DEFAULT_PLANS_CONFIG.pro_monthly, ...data.pro_monthly },
+        pro_single_month: { ...DEFAULT_PLANS_CONFIG.pro_single_month, ...data.pro_single_month },
+        pro_annual: { ...DEFAULT_PLANS_CONFIG.pro_annual, ...data.pro_annual },
+        vip_lifetime: { ...DEFAULT_PLANS_CONFIG.vip_lifetime, ...data.vip_lifetime },
+        updatedAt: data.updatedAt,
+      };
+    }
+  } catch (error) {
+    console.error("Erro ao buscar configurações de planos no Firestore:", error);
+  }
+  return DEFAULT_PLANS_CONFIG;
+}
+
+/** Espelha `savePlansConfig` — propaga o erro, como o original. */
+export async function savePlansConfigServer(config: PlansConfig): Promise<boolean> {
+  try {
+    await getRestFirestore()
+      .collection("system")
+      .doc(PLANS_DOC_REF)
+      .set({ ...config, updatedAt: new Date().toISOString() });
+    return true;
+  } catch (error) {
+    console.error("Erro ao salvar configurações de planos no Firestore:", error);
+    throw error;
+  }
 }
