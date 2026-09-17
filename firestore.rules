@@ -55,9 +55,12 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'plan', 'isAdmin', 'isPremium', 'premiumUntil', 'planSource', 'planLabel', 'grantedBy', 'grantedAt', 'email', 'uid', 'username', 'banned', 'suspended', 'moderationReason', 'moderatedAt',
           'gamerXp', 'gamerLevel', 'bonusXp', 'claimedRewards', 'isVerified', 'hideAds', 'customTitles', 'createdCustomTitles',
-          // Template customizado é benefício exclusivo VIP/PRO, validado em /api/profile/template.
-          // Sem bloquear aqui, um usuário free grava direto pelo SDK e leva o benefício sem pagar.
-          'customProfileTemplate', 'activeProfileTemplate', 'profileSectionsOrder'
+          // O BENEFÍCIO PAGO é o template customizado (validado em /api/profile/template).
+          // Só ele é bloqueado: `activeProfileTemplate` e `profileSectionsOrder` são escritos
+          // legitimamente pelo cliente em useProfileModules.applySections (reordenar seções e
+          // escolher entre os templates padrão é recurso gratuito) — bloqueá-los quebraria
+          // essa funcionalidade para todos os usuários.
+          'customProfileTemplate'
         ])
       );
 
@@ -191,19 +194,21 @@ service cloud.firestore {
       allow update: if isVerifiedAdmin() || (
         isAuthenticated() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voters', 'votesCount', 'updatedAt']) &&
-        // votesCount só pode variar de exatamente 1, e tem que bater com o tamanho de voters
-        request.resource.data.votesCount == request.resource.data.voters.size() &&
-        (
-          request.resource.data.votesCount == resource.data.votesCount + 1 ||
-          request.resource.data.votesCount == resource.data.votesCount - 1
-        ) &&
-        // o usuário só pode adicionar ou remover A SI MESMO da lista de votantes
+        // A direção da mudança em `voters` tem que casar com o delta de `votesCount`, e o
+        // usuário só pode adicionar/remover A SI MESMO. Assim votar é +1 entrando e -1 saindo,
+        // e não há como gravar votesCount arbitrário.
+        //
+        // Deliberadamente NÃO exijo `votesCount == voters.size()`: essa invariante é a
+        // desejada, mas pode já estar quebrada nos dados (o contador era forjável antes desta
+        // regra) e travaria o voto para sempre nos documentos dessincronizados.
         (
           (request.resource.data.voters.hasAll(resource.data.voters) &&
-           request.resource.data.voters.removeAll(resource.data.voters) == [request.auth.uid])
+           request.resource.data.voters.removeAll(resource.data.voters) == [request.auth.uid] &&
+           request.resource.data.votesCount == resource.data.votesCount + 1)
           ||
           (resource.data.voters.hasAll(request.resource.data.voters) &&
-           resource.data.voters.removeAll(request.resource.data.voters) == [request.auth.uid])
+           resource.data.voters.removeAll(request.resource.data.voters) == [request.auth.uid] &&
+           request.resource.data.votesCount == resource.data.votesCount - 1)
         )
       );
       allow delete: if isVerifiedAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid);
