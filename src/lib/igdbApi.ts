@@ -21,7 +21,9 @@ export async function getTwitchAccessToken(): Promise<string | null> {
   try {
     const res = await fetch(
       `https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
-      { method: "POST" }
+      // Sem timeout, um fetch pendurado trava a requisição INTEIRA do Worker até o runtime
+      // matá-la ("your Worker's code had hung and would never generate a response").
+      { method: "POST", signal: AbortSignal.timeout(5000) }
     );
 
     if (res.ok) {
@@ -456,6 +458,12 @@ async function fetchIGDBFromOrigin(
           "Content-Type": "text/plain",
         },
         body,
+      // Sem timeout, um fetch pendurado trava a requisição INTEIRA do Worker até o
+      // runtime matá-la ("your Worker's code had hung and would never generate a
+      // response"). Foi o que derrubava os prefetch de RSC das páginas de jogo.
+        // O timeout é POR TENTATIVA: estourar aqui cai no retry com backoff logo abaixo,
+        // que é o comportamento desejado para instabilidade do IGDB.
+        signal: AbortSignal.timeout(8000),
       });
 
       if (res.ok) {
@@ -890,6 +898,7 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
       if (!token) return { count: 0 };
       const response = await fetch(`${IGDB_API_URL}/games/count`, {
         method: "POST",
+        signal: AbortSignal.timeout(8000),
         headers: {
           "Client-ID": TWITCH_CLIENT_ID,
           "Authorization": `Bearer ${token}`,

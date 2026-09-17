@@ -109,6 +109,7 @@ export async function getGoogleAccessToken(sa?: ServiceAccountData): Promise<str
         grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
         assertion,
       }).toString(),
+      signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -244,6 +245,7 @@ export async function firestoreRestQuery<T = any>(
           ...structuredQuery,
         },
       }),
+      signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -301,6 +303,7 @@ export async function firestoreRestPatch(
       method: "PATCH",
       headers,
       body: JSON.stringify({ fields }),
+      signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS),
     });
 
     return res.ok;
@@ -322,7 +325,9 @@ export async function firestoreRestGet<T = any>(
     const endpoint = `${baseUrl}/${collectionPath}/${encodeURIComponent(docId)}`;
     const { url, headers } = await buildReadRequest(endpoint);
 
-    const res = await fetch(url, { method: "GET", headers });
+    const res = await fetch(url, { method: "GET", headers,
+      signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS),
+    });
 
     if (!res.ok) {
       return null;
@@ -354,6 +359,19 @@ export async function firestoreRestGet<T = any>(
  * Existe porque a fatura do Firestore é por DOCUMENTO lido, e isso é invisível no código:
  * uma linha inocente como `collection.get()` pode custar dezenas de milhares.
  */
+/**
+ * Teto de espera para qualquer chamada ao Firestore/Google.
+ *
+ * Um fetch sem timeout que pendura trava a requisição INTEIRA do Worker, até o runtime
+ * matá-la com "your Worker's code had hung and would never generate a response" — e o
+ * cliente recebe um RSC truncado ("Connection closed."). Como isto aqui está no caminho de
+ * TODA renderização de servidor, é onde mais dói.
+ *
+ * 10s é generoso para uma chamada que normalmente leva dezenas de ms: o objetivo é cortar o
+ * pendurado, não a lentidão ocasional.
+ */
+const FIRESTORE_TIMEOUT_MS = 10_000;
+
 let readCount = 0;
 const READ_LOG = process.env.FIRESTORE_READ_LOG === "1";
 
@@ -433,7 +451,8 @@ async function firestoreFetch(
       ...auth,
       ...(init.headers || {}),
     },
-  });
+      signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS),
+    });
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");

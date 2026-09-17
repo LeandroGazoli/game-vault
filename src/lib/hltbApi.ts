@@ -28,6 +28,11 @@ async function getHltbHandshake(force = false) {
         "User-Agent": USER_AGENT,
         Referer: "https://howlongtobeat.com/",
       },
+      // Sem timeout, um fetch pendurado trava a requisição INTEIRA do Worker até o runtime
+      // matá-la ("your Worker's code had hung and would never generate a response"). O
+      // HowLongToBeat é endpoint não oficial e instável — o candidato mais provável.
+      // Tempo de jogo é complementar: sem ele a página renderiza normalmente.
+      signal: AbortSignal.timeout(4000),
     });
 
     if (res.ok) {
@@ -111,6 +116,7 @@ export async function fetchHLTBData(gameName: string): Promise<HLTBData | null> 
         ...(handshake.hpKey ? { "x-hp-key": handshake.hpKey, "x-hp-val": handshake.hpVal } : {}),
       },
       body: JSON.stringify(searchPayload),
+      signal: AbortSignal.timeout(5000),
     });
 
     // Se 403, tenta renovar o token
@@ -130,6 +136,7 @@ export async function fetchHLTBData(gameName: string): Promise<HLTBData | null> 
             ...(handshake.hpKey ? { "x-hp-key": handshake.hpKey, "x-hp-val": handshake.hpVal } : {}),
           },
           body: JSON.stringify(searchPayload),
+          signal: AbortSignal.timeout(5000),
         });
       }
     }
