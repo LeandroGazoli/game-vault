@@ -24,9 +24,13 @@ export default function HomeSearchHero({
   const backdropImage = GTA_VI_OFFICIAL_ARTWORK;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-[#13121a] border border-white/[0.08] shadow-2xl group min-h-[380px] sm:min-h-[520px] flex flex-col justify-between">
+    // SEM `overflow-hidden` aqui: os resultados da busca são `absolute` dentro deste bloco,
+    // e o recorte cortava a lista na borda do hero — aparecia só metade do primeiro jogo.
+    // O arredondamento continua garantido porque quem recorta a imagem de fundo é o próprio
+    // contêiner dela, logo abaixo, que repete o mesmo `rounded-*`.
+    <div className="relative w-full rounded-2xl sm:rounded-3xl bg-[#13121a] border border-white/[0.08] shadow-2xl group min-h-[380px] sm:min-h-[520px] flex flex-col justify-between">
       {/* Imagem de Fundo Oficial GTA VI em Alta Definição (1080p) */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl sm:rounded-3xl pointer-events-none">
         <img
           src={backdropImage}
           alt={featuredGameTitle || "GTA VI Official Artwork - Jason & Lucia Vice City"}
