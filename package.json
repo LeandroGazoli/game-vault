@@ -16,7 +16,8 @@
     "deploy": "bash scripts/deploy.sh",
     "deploy:homolog": "bash scripts/deploy-homolog.sh",
     "purge:kv": "node scripts/purge-kv-cache.mjs --from-kv",
-    "secrets:homolog": "bash scripts/sync-homolog-secrets.sh"
+    "secrets:homolog": "bash scripts/sync-homolog-secrets.sh",
+    "check:twitch": "bash scripts/check-twitch.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
