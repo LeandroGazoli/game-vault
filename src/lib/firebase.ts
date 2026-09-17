@@ -858,7 +858,7 @@ export function subscribeToSystemNotifications(
     const notifColl = query(
       collection(db, "system_notifications"),
       orderBy("createdAt", "desc"),
-      limit(30)
+      limit(10)
     );
     return onSnapshot(
       notifColl,
@@ -898,7 +898,7 @@ export function subscribeToUserPrivateNotifications(
     const userNotifColl = query(
       collection(db, "users", userId, "notifications"),
       orderBy("createdAt", "desc"),
-      limit(30)
+      limit(10)
     );
     return onSnapshot(
       userNotifColl,
@@ -963,40 +963,15 @@ export async function getTopGamersLeaderboard(
     for (const docSnap of snapAll.docs) {
       const u = docSnap.data() as UserProfile;
       if (u.username && u.isPublic !== false) {
-        // Se gamerXp ainda não estiver gravado no perfil, calcula através dos jogos dele
-        if (typeof u.gamerXp !== "number" || typeof u.gamerLevel !== "number") {
-          try {
-            const gamesSnap = await getDocs(collection(db, "users", docSnap.id, "games"));
-            if (gamesSnap.size > 0) {
-              let completed = 0, playing = 0, hours = 0, rated = 0;
-              gamesSnap.forEach((g) => {
-                const d = g.data();
-                if (d.status === "completed") completed++;
-                if (d.status === "playing") playing++;
-                if (d.userPlaytimeHours) hours += d.userPlaytimeHours;
-                if (d.userRating) rated++;
-              });
-              const library = gamesSnap.size;
-              const completedXp = completed * 60;
-              const hoursXp = Math.floor(hours * 0.2);
-              const playingXp = playing * 20;
-              const libraryXp = library * 10;
-              const ratingXp = Math.min(rated, RATED_XP_CAP) * 20;
-              const baseXp = completedXp + hoursXp + playingXp + libraryXp + ratingXp;
-              const multiplier = u.plan === "vip" ? 2.0 : u.plan === "pro" ? 1.5 : 1.0;
-              // Inclui o XP bônus de conquistas/missões (recompensa fixa, sem multiplicador de plano)
-              // para manter o ranking consistente com o nível exibido no perfil.
-              u.gamerXp = Math.floor(baseXp * multiplier) + Math.max(0, Math.floor(u.bonusXp || 0));
-              u.gamerLevel = levelFromXp(u.gamerXp);
-            } else {
-              u.gamerXp = 0;
-              u.gamerLevel = 1;
-            }
-          } catch {
-            u.gamerXp = 0;
-            u.gamerLevel = 1;
-          }
-        }
+        // O fallback que varria `users/{uid}/games` de cada usuário sem `gamerXp` foi
+        // REMOVIDO: era um N+1 no NAVEGADOR de cada visitante — 100 usuários × a biblioteca
+        // inteira de cada um, estimado em até 6.100 leituras por visualização do ranking.
+        //
+        // `gamerXp`/`gamerLevel` são gravados no perfil por /api/gamification/sync, que é a
+        // fonte de verdade. Quem ainda não sincronizou entra com 0 e sobe assim que abrir o
+        // próprio perfil — custo zero em vez de milhares de leituras por visitante.
+        if (typeof u.gamerXp !== "number") u.gamerXp = 0;
+        if (typeof u.gamerLevel !== "number") u.gamerLevel = levelFromXp(u.gamerXp);
         list.push(u);
       }
     }

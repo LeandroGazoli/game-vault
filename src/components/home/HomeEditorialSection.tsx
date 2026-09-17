@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ARTICLES_DATA } from "@/lib/articlesData";
-import { getCombinedArticles } from "@/lib/articlesService";
 import { Article } from "@/lib/types/article.types";
 import { BookOpen, ArrowRight, Clock } from "lucide-react";
 
@@ -11,9 +10,12 @@ export default function HomeEditorialSection() {
   const [articles, setArticles] = useState<Article[]>(ARTICLES_DATA.slice(0, 3));
 
   useEffect(() => {
-    getCombinedArticles()
-      .then((data) => {
-        if (data.length > 0) setArticles(data.slice(0, 3));
+    // Rota cacheada em vez de ler a coleção `articles` direto do Firestore: lá eram 32
+    // leituras POR VISITA à home, invisíveis nos logs do Worker por serem browser→Firestore.
+    fetch("/api/articles/latest")
+      .then((r) => (r.ok ? (r.json() as Promise<{ articles?: Article[] }>) : null))
+      .then((data: { articles?: Article[] } | null) => {
+        if (data?.articles?.length) setArticles(data.articles.slice(0, 3));
       })
       .catch(() => {});
   }, []);
