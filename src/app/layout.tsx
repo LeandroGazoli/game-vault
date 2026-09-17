@@ -89,13 +89,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "MyGameList",
   },
-  // O Next gera `apple-mobile-web-app-capable` a partir de `appleWebApp.capable`, e o
-  // Chrome avisa no console que ela está obsoleta. A substituta padronizada não tem campo
-  // próprio na API de metadata, então vai por `other`. As duas convivem: navegadores
-  // antigos leem a da Apple, os atuais leem esta.
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
   icons: {
     icon: [
       // O .ico existe porque o navegador pede /favicon.ico por conta própria, sem olhar
@@ -188,9 +181,9 @@ export default function RootLayout({
         )}
 
         <link rel="manifest" href="/manifest.webmanifest" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="MyGameList" />
+        {/* As metas `apple-mobile-web-app-*` NÃO vão aqui: o Next já as emite a partir de
+            `appleWebApp` no objeto `metadata`. Declarar nos dois lugares saía duplicado no
+            HTML (status-bar-style e title apareciam duas vezes). */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <GoogleAdScript />
         <JsonLd data={globalStructuredData} />
