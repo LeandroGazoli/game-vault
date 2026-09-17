@@ -28,6 +28,16 @@ echo
 
 echo "  id: ${#ID} caracteres | secret: ${#SECRET} caracteres  (o Twitch usa 30 nos dois)"
 
+# Impressão digital: 8 hex de SHA-256. Não revela o valor, mas permite comparar com o que o
+# worker reporta no log e descobrir QUAL das duas credenciais está desatualizada.
+digital() { printf '%s' "$1" | shasum -a 256 | cut -c1-8; }
+echo "  digital do id    : $(digital "$ID")"
+echo "  digital do secret: $(digital "$SECRET")"
+echo
+echo "  produção hoje usa: id e48f92de | secret 437f767d"
+echo "  → se a digital do ID bater e a do secret não, o segredo no Cloudflare é antigo."
+echo "  → se a do ID não bater, é o ID no Cloudflare que está errado."
+
 RESP="$(curl -s -m 25 -X POST \
   "https://id.twitch.tv/oauth2/token?client_id=${ID}&client_secret=${SECRET}&grant_type=client_credentials")"
 
@@ -42,9 +52,11 @@ case "$RESP" in
   *"invalid client secret"*)
     echo "  ✗ O Twitch RECONHECE o ID mas RECUSA o segredo."
     echo
-    echo "  Quase sempre significa que os dois são de apps diferentes, ou que o segredo"
-    echo "  foi regenerado depois de você copiá-lo. Abra o app, clique em New Secret e"
-    echo "  copie o Client ID DA MESMA TELA."
+    echo "  O ID existe, então o problema é o segredo: ele foi SUBSTITUÍDO. Cada clique em"
+    echo "  'New Secret' invalida o anterior no mesmo instante — se você gerou mais de uma"
+    echo "  vez, só o ÚLTIMO vale, e os que copiou antes já morreram."
+    echo
+    echo "  Gere um agora e cole ESTE, sem gerar outro no meio do caminho."
     ;;
   *"invalid client"*)
     echo "  ✗ O Twitch não reconhece este Client ID."
