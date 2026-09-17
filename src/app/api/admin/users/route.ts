@@ -236,6 +236,18 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Erro na API /api/admin/users [PATCH]:", error);
+    // Banir agora desabilita a conta no Firebase Auth; se ISSO falhar (service account
+    // ausente, permissão), o admin precisa saber que o banimento NÃO teve efeito real —
+    // um "erro interno" genérico faria parecer que só a UI falhou.
+    const message = typeof error?.message === "string" ? error.message : "";
+    if (message.includes("conta no Auth") || message.includes("FIREBASE_SERVICE_ACCOUNT_KEY")) {
+      return NextResponse.json(
+        {
+          error: `Perfil atualizado, mas o bloqueio da conta NÃO foi aplicado: ${message}`,
+        },
+        { status: 502 }
+      );
+    }
     return NextResponse.json(
       { error: "Erro interno ao atualizar usuário." },
       { status: 500 }

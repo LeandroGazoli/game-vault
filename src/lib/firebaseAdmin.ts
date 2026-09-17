@@ -27,7 +27,12 @@ import {
   RestFieldValue,
   type RestFirestore,
 } from "./firestoreAdminRest";
-import { parseServiceAccount, type ServiceAccountData } from "./firestoreRest";
+import {
+  getFirestoreEndpoint,
+  parseServiceAccount,
+  requireGoogleAccessToken,
+  type ServiceAccountData,
+} from "./firestoreRest";
 import { verifyFirebaseIdToken } from "./firebaseAuthRest";
 
 /** Credenciais efetivas usadas pelo adaptador REST. */
@@ -155,12 +160,55 @@ export async function adminGrantAccess(uid: string, input: AdminGrantInput): Pro
   });
 }
 
+/**
+ * Desabilita/reabilita a conta no Firebase Auth via Identity Toolkit.
+ *
+ * É o que dá EFEITO REAL ao banimento: sem isso o campo `banned` era cosmético — as
+ * Security Rules não o consultam, nenhuma rota o checa, e o usuário seguia com um ID token
+ * válido, bastando bloquear o modal no DevTools (ou usar o SDK direto) para continuar
+ * escrevendo em users, feedback, indie_games e chamando as rotas de API.
+ *
+ * Por que aqui e não nas rules: consultar `banned` numa rule exigiria
+ * `get(/databases/$(db)/documents/users/$(uid))`, e cada `get()` de regra é cobrado como
+ * leitura — encareceria TODA escrita do site. Desabilitar no Auth custa uma chamada só no
+ * momento da moderação: o token do usuário deixa de ser renovável e expira em até 1h.
+ */
+async function setAuthAccountDisabled(uid: string, disabled: boolean): Promise<void> {
+  const token = await requireGoogleAccessToken();
+  const { projectId } = getFirestoreEndpoint();
+
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:update`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ localId: uid, disableUser: disabled }),
+    }
+  );
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `Falha ao ${disabled ? "desabilitar" : "reabilitar"} a conta no Auth: ${res.status} ${detail.slice(0, 300)}`
+    );
+  }
+}
+
 /** Admin: aplica moderação (ban/suspensão) — campos travados no cliente. */
 export async function adminUpdateUserModeration(
   uid: string,
   data: { banned?: boolean; suspended?: boolean; moderationReason?: string | null }
 ): Promise<void> {
   await adminSaveUserProfile(uid, { ...data, moderatedAt: new Date().toISOString() });
+
+  // Só mexe no Auth quando `banned` foi explicitamente informado — uma suspensão isolada
+  // não deve derrubar a conta.
+  if (typeof data.banned === "boolean") {
+    await setAuthAccountDisabled(uid, data.banned);
+  }
 }
 
 /** Admin: cria notificação de sistema (global ou direcionada) */
