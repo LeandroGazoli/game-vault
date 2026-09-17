@@ -20,6 +20,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
+import { fetchOwnPrivateData, saveOwnPrivateData } from "@/lib/userPrivateClient";
 import { UserProfile, UserPlan, ADMIN_EMAILS, getEffectiveAccess } from "@/lib/types";
 import { getStoredAcquisition } from "@/lib/utm";
 
@@ -153,6 +154,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   isAdmin: true,
                 };
               }
+              // `email` e `birthDate` vivem em users/{uid}/private/data (fora do doc público,
+              // que é legível por qualquer um). Mesclados aqui para que todo o app continue
+              // lendo `user.birthDate` / `user.email` sem mudança — inclusive a verificação
+              // de maioridade que libera conteúdo adulto.
+              try {
+                const priv = await fetchOwnPrivateData(fbUser.uid);
+                if (priv) {
+                  profile = {
+                    ...profile,
+                    email: priv.email ?? profile.email,
+                    ...(priv.birthDate != null ? { birthDate: priv.birthDate } : {}),
+                  } as UserProfile;
+                }
+              } catch {
+                // Mantém o que veio do doc público (fallback de transição).
+              }
+
               updateAndCacheUser(profile);
             } else {
               const cleanUsername = fbUser.displayName
@@ -307,8 +325,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const patch = { ...data, updatedAt: new Date().toISOString() };
     const updated = { ...user, ...patch };
     updateAndCacheUser(updated);
+
+    // PII vai para users/{uid}/private/data; o resto para o doc público. Sem esta separação,
+    // gravar a data de nascimento pelo formulário a devolveria ao doc que qualquer um lê.
+    const { email, birthDate, ...publicPatch } = patch as Partial<UserProfile> & {
+      birthDate?: string | null;
+    };
+
+    if (email !== undefined || birthDate !== undefined) {
+      await saveOwnPrivateData(user.uid, {
+        ...(email !== undefined ? { email } : {}),
+        ...(birthDate !== undefined ? { birthDate } : {}),
+      });
+    }
+
     // Grava SOMENTE os campos alterados — evita reescrever campos travados e rejeição por valor obsoleto
-    await saveUserProfile(user.uid, patch);
+    if (Object.keys(publicPatch).length > 1) {
+      await saveUserProfile(user.uid, publicPatch);
+    }
   }, [user, updateAndCacheUser]);
 
   const upgradePlan = useCallback(async (plan: UserPlan, hideAds = true) => {

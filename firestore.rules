@@ -67,6 +67,21 @@ service cloud.firestore {
       // Deleção permitida apenas pelo próprio usuário ou admin verificado
       allow delete: if isOwner(userId) || isVerifiedAdmin();
 
+      /**
+       * PII do usuário (email, birthDate) isolada do doc público.
+       *
+       * `users/{uid}` é `allow read: if true` porque o perfil público depende disso — e em
+       * Firestore `read` cobre `get` E `list`, então qualquer um conseguia exportar e-mail e
+       * data de nascimento da base inteira com a API key pública.
+       *
+       * A verificação de maioridade continua funcionando: `birthDate` só é lido para o
+       * PRÓPRIO usuário (AuthContext no cliente, uid do token verificado no servidor), nunca
+       * para terceiros. O admin lê por collection group com a service account.
+       */
+      match /private/{docId} {
+        allow read, write: if isOwner(userId) || isVerifiedAdmin();
+      }
+
       // Regras para jogos do usuário
       match /games/{gameId} {
         allow read: if true;

@@ -317,3 +317,83 @@ export async function savePlansConfigServer(config: PlansConfig): Promise<boolea
  */
 export const fetchIndieBySlugServer = cache(fetchIndieBySlugServer_uncached);
 export const getUserProfileByUsernameServer = cache(getUserProfileByUsernameServer_uncached);
+
+/* -------------------------------------------------------------------------- */
+/*  PII isolada (users/{uid}/private/data)                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Campos que saíram do doc público do usuário por serem dados pessoais. */
+export interface UserPrivateData {
+  email?: string | null;
+  birthDate?: string | null;
+}
+
+export const USER_PRIVATE_DOC = "data";
+
+/**
+ * Lê a PII de UM usuário. Durante a transição cai de volta no doc público, para o site não
+ * quebrar enquanto a migração não rodou — a remoção dos campos do doc público é o passo que
+ * de fato fecha a exposição.
+ */
+export async function getUserPrivateDataServer(uid: string): Promise<UserPrivateData> {
+  if (!uid) return {};
+
+  try {
+    const snap = await getRestFirestore()
+      .collection("users")
+      .doc(uid)
+      .collection("private")
+      .doc(USER_PRIVATE_DOC)
+      .get();
+    if (snap.exists) {
+      const d = snap.data() as UserPrivateData;
+      if (d && (d.email != null || d.birthDate != null)) return d;
+    }
+  } catch (e) {
+    console.warn("[serverData] Falha ao ler PII privada:", e);
+  }
+
+  // Fallback de transição.
+  const legacy = await getUserProfileServer(uid);
+  return { email: legacy?.email ?? null, birthDate: (legacy as any)?.birthDate ?? null };
+}
+
+/**
+ * PII de TODOS os usuários, numa única collection group query — para o painel admin, que
+ * precisa de e-mail para busca, concessão e exportação.
+ *
+ * Custo: 1 leitura por usuário. É caro, mas roda só no painel admin e é o preço de não
+ * deixar a base inteira de e-mails exposta publicamente.
+ */
+export async function getAllUserPrivateDataServer(): Promise<Map<string, UserPrivateData>> {
+  const byUid = new Map<string, UserPrivateData>();
+  try {
+    const snap = await getRestFirestore()
+      .collection("private")
+      .collectionGroup()
+      .get();
+
+    for (const doc of snap.docs) {
+      // path = users/{uid}/private/data
+      const uid = doc.ref.path.split("/")[1];
+      if (uid) byUid.set(uid, doc.data() as UserPrivateData);
+    }
+  } catch (e) {
+    console.warn("[serverData] Falha na collection group de PII:", e);
+  }
+  return byUid;
+}
+
+/** Grava a PII no doc privado. */
+export async function saveUserPrivateDataServer(
+  uid: string,
+  data: UserPrivateData
+): Promise<void> {
+  if (!uid) throw new Error("uid ausente.");
+  await getRestFirestore()
+    .collection("users")
+    .doc(uid)
+    .collection("private")
+    .doc(USER_PRIVATE_DOC)
+    .set({ ...data, updatedAt: new Date().toISOString() }, { merge: true });
+}

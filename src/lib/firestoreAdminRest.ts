@@ -203,9 +203,22 @@ export class RestQuery<T = any> {
     return this.clone({ offsetValue: n });
   }
 
+  /**
+   * Transforma numa collection group query: busca a coleção em TODOS os níveis, não só sob
+   * o parent. Usado para ler as subcoleções `private` de todos os usuários de uma vez.
+   */
+  collectionGroup(): RestQuery<T> {
+    const q = this.clone({});
+    (q as unknown as { allDescendants: boolean }).allDescendants = true;
+    return q;
+  }
+
   /** Monta o objeto `structuredQuery` enviado à REST API. */
   toStructuredQuery(): Record<string, any> {
-    const sq: Record<string, any> = { from: [{ collectionId: this.collectionId }] };
+    const allDescendants = (this as unknown as { allDescendants?: boolean }).allDescendants;
+    const sq: Record<string, any> = {
+      from: [{ collectionId: this.collectionId, ...(allDescendants ? { allDescendants: true } : {}) }],
+    };
 
     if (this.wheres.length === 1) {
       sq.where = toFilter(this.wheres[0]);
