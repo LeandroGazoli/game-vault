@@ -853,7 +853,13 @@ export function subscribeToSystemNotifications(
   }
 
   try {
-    const notifColl = collection(db, "system_notifications");
+    // limit() é essencial: sem ele cada (re)assinatura relê a coleção INTEIRA,
+    // e o NotificationBell re-assina a cada escrita no doc do usuário.
+    const notifColl = query(
+      collection(db, "system_notifications"),
+      orderBy("createdAt", "desc"),
+      limit(30)
+    );
     return onSnapshot(
       notifColl,
       (snapshot) => {
@@ -889,7 +895,11 @@ export function subscribeToUserPrivateNotifications(
   }
 
   try {
-    const userNotifColl = collection(db, "users", userId, "notifications");
+    const userNotifColl = query(
+      collection(db, "users", userId, "notifications"),
+      orderBy("createdAt", "desc"),
+      limit(30)
+    );
     return onSnapshot(
       userNotifColl,
       (snapshot) => {

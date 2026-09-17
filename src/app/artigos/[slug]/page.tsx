@@ -24,7 +24,7 @@ interface PageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
-export const revalidate = 60;
+export const revalidate = 86400; // artigo publicado é praticamente imutável; cada regeneração custa 1 escrita no KV (teto 1.000/dia no free)
 
 export async function generateStaticParams() {
   const articles = await getCombinedArticles();

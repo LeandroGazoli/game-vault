@@ -2,6 +2,7 @@ import { Article } from "./types/article.types";
 import { ARTICLES_DATA } from "./articlesData";
 import {
   buildReadRequest,
+  firestoreRestQuery,
   firestoreDocToJs,
   getFirestoreEndpoint,
   requireGoogleAccessToken,
@@ -60,9 +61,19 @@ export async function fetchArticlesFromFirestore(): Promise<Article[]> {
  */
 export async function fetchArticleBySlugFromFirestore(slug: string): Promise<Article | null> {
   try {
-    const articles = await fetchArticlesFromFirestore();
-    const found = articles.find((a) => a.slug === slug);
-    return found || null;
+    // Consulta direta por slug: 1 leitura. Antes isto varria a coleção inteira e
+    // filtrava em JS, custando N leituras para devolver 1 documento.
+    const found = await firestoreRestQuery<Article>(ARTICLES_COLLECTION, {
+      where: {
+        fieldFilter: {
+          field: { fieldPath: "slug" },
+          op: "EQUAL",
+          value: { stringValue: slug },
+        },
+      },
+      limit: 1,
+    });
+    return found[0] || null;
   } catch (error) {
     console.error("Erro ao buscar artigo por slug no Firestore:", error);
     return null;

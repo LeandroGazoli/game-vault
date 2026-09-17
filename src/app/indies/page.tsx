@@ -9,7 +9,7 @@ import { Gamepad2, Plus, Sparkles, Heart, Trophy } from "lucide-react";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
-export const revalidate = 60; // ISR 1 minuto
+export const revalidate = 1800; // catálogo indie muda por aprovação manual; cada regeneração custa 1 escrita no KV (teto 1.000/dia no free)
 
 export const metadata: Metadata = {
   title: "Jogos Indie & Comunidade • Votação e Apoio a Criadores",

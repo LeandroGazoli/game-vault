@@ -85,7 +85,9 @@ export default function NotificationBell() {
       if (typeof unsubGlobal === "function") unsubGlobal();
       if (typeof unsubPrivate === "function") unsubPrivate();
     };
-  }, [user]);
+    // `user` é objeto novo a cada snapshot do doc do usuário; depender dele fazia
+    // marcar-como-lida (que escreve no doc) derrubar e recriar os dois listeners.
+  }, [user?.uid]);
 
   // Filtra notificações ativas removendo as que o usuário excluiu/dispensou do perfil
   const activeNotifications = useMemo(() => {

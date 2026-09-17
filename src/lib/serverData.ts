@@ -18,6 +18,7 @@
  * módulo NÃO deve ser importado de nenhum componente com "use client", porque
  * depende de APIs de servidor (Buffer) no caminho da service account.
  */
+import { cache } from "react";
 import { firestoreRestGet, firestoreRestQuery } from "./firestoreRest";
 import { getRestFirestore } from "./firestoreAdminRest";
 import type { IndieGame } from "./types/indie.types";
@@ -62,7 +63,7 @@ export async function fetchApprovedIndiesServer(
  * Indie por id do documento ou por slug.
  * Espelha `fetchIndieBySlug`: tenta o id direto e, não achando, consulta o campo slug.
  */
-export async function fetchIndieBySlugServer(slugOrId: string): Promise<IndieGame | null> {
+async function fetchIndieBySlugServer_uncached(slugOrId: string): Promise<IndieGame | null> {
   const direct = await firestoreRestGet<IndieGame>(INDIES_COLLECTION, slugOrId);
   if (direct) return direct;
 
@@ -78,7 +79,7 @@ export async function fetchIndieBySlugServer(slugOrId: string): Promise<IndieGam
  * Espelha `getUserProfileByUsername` de firebase.ts, incluindo o fallback para
  * usernames antigos gravados com maiúsculas.
  */
-export async function getUserProfileByUsernameServer(
+async function getUserProfileByUsernameServer_uncached(
   username: string
 ): Promise<UserProfile | null> {
   if (!username || !username.trim()) return null;
@@ -303,3 +304,16 @@ export async function savePlansConfigServer(config: PlansConfig): Promise<boolea
     throw error;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Deduplicação por requisição                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `generateMetadata` e o corpo da página são executados na MESMA requisição e chamam as
+ * mesmas funções — sem isto, toda página dinâmica pagava 2x as leituras do Firestore.
+ * A memoização automática do Next cobre apenas `fetch` GET, o que não alcança estas
+ * funções (usam POST em :runQuery).
+ */
+export const fetchIndieBySlugServer = cache(fetchIndieBySlugServer_uncached);
+export const getUserProfileByUsernameServer = cache(getUserProfileByUsernameServer_uncached);

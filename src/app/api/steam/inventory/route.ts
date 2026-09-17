@@ -9,6 +9,21 @@ interface CachedInventory {
 }
 const inventoryCache = new Map<string, CachedInventory>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+// A chave inclui o SteamID64, que qualquer um pode variar — sem teto o Map cresce
+// indefinidamente dentro do isolate do Worker.
+const MAX_INVENTORY_CACHE = 100;
+
+function setInventoryCache(key: string, value: CachedInventory) {
+  const now = Date.now();
+  for (const [k, v] of inventoryCache) {
+    if (now - v.timestamp >= CACHE_TTL_MS) inventoryCache.delete(k);
+  }
+  if (inventoryCache.size >= MAX_INVENTORY_CACHE) {
+    const oldest = inventoryCache.keys().next().value;
+    if (oldest) inventoryCache.delete(oldest);
+  }
+  inventoryCache.set(key, value);
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -239,7 +254,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Salva no cache
-    inventoryCache.set(cacheKey, {
+    setInventoryCache(cacheKey, {
       data: responsePayload,
       timestamp: Date.now(),
     });

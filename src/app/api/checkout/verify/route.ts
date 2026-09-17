@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { adminSaveUserProfile } from "@/lib/firebaseAdmin";
+import { getAuthenticatedUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  // Esta rota concede acesso premium via Admin SDK (ignora as Security Rules), então
+  // exige identidade. Sem isso, qualquer um que obtivesse um `cs_...` — que trafega na
+  // barra de endereço, no histórico e em scripts de terceiros da página de retorno —
+  // poderia reaplicar a concessão sem estar logado.
+  const authCheck = await getAuthenticatedUser(request);
+  if (!authCheck.authenticated || !authCheck.user) {
+    return NextResponse.json(
+      { error: authCheck.error || "Autenticação necessária." },
+      { status: authCheck.status || 401 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("session_id");
 
@@ -24,7 +37,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Sessão não encontrada no Stripe." }, { status: 404 });
     }
 
-    const isPaid = session.payment_status === "paid" || session.status === "complete";
+    // `status === "complete"` sozinho aceitaria sessão sem pagamento efetivo
+    // (payment_status "no_payment_required", caso de cupom de 100%).
+    const isPaid = session.payment_status === "paid";
     if (!isPaid) {
       return NextResponse.json({
         paid: false,
@@ -37,6 +52,15 @@ export async function GET(request: NextRequest) {
     // 2. Extrai dados do usuário e plano
     const userId = session.client_reference_id || session.metadata?.userId;
     const planId = session.metadata?.planId;
+
+    // A sessão precisa pertencer a quem está chamando — senão um `cs_...` vazado
+    // concederia premium à conta embutida nele, seja ela de quem for.
+    if (userId && userId !== authCheck.user.uid) {
+      return NextResponse.json(
+        { error: "Esta sessão de checkout não pertence à sua conta." },
+        { status: 403 }
+      );
+    }
 
     if (!userId) {
       return NextResponse.json({

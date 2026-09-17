@@ -18,22 +18,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { planId, returnUrl } = body;
 
-    // Tenta obter o usuário autenticado via ID Token
-    let effectiveUserId: string = body.userId;
-    let effectiveUserEmail: string | undefined = body.userEmail;
-
+    // Identidade SEMPRE derivada do ID Token verificado. `body.userId`/`body.userEmail`
+    // são ignorados de propósito: eles viram `client_reference_id`/`metadata.userId`, que
+    // é o que o webhook do Stripe usa para decidir QUAL conta vira premium — aceitá-los do
+    // corpo permitiria a um anônimo atribuir uma compra à conta de qualquer pessoa.
     const authCheck = await getAuthenticatedUser(request);
-    if (authCheck.authenticated && authCheck.user) {
-      effectiveUserId = authCheck.user.uid;
-      effectiveUserEmail = authCheck.user.email || effectiveUserEmail;
-    }
-
-    if (!effectiveUserId) {
+    if (!authCheck.authenticated || !authCheck.user) {
       return NextResponse.json(
-        { error: "Você precisa estar conectado à sua conta para assinar." },
-        { status: 401 }
+        { error: authCheck.error || "Você precisa estar conectado à sua conta para assinar." },
+        { status: authCheck.status || 401 }
       );
     }
+
+    const effectiveUserId: string = authCheck.user.uid;
+    const effectiveUserEmail: string | undefined = authCheck.user.email;
 
     // Carrega configurações dinâmicas de planos do Firestore
     const plansConfig = await getPlansConfigServer();

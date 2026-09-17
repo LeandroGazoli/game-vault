@@ -5,9 +5,25 @@ import { Game } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// Cache em memória para evitar chamadas duplicadas à API Gemini
+// Cache em memória para evitar chamadas duplicadas à API Gemini.
+// A chave é texto livre do usuário, então SEM teto isto é um vetor de DoS por memória:
+// basta enumerar prompts distintos para o Map crescer até o isolate do Worker ser morto.
 const aiRecommendationCache = new Map<string, { games: Game[]; explanation: string; timestamp: number }>();
 const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas de cache
+const MAX_AI_CACHE = 200;
+
+function setAiCache(key: string, value: { games: Game[]; explanation: string; timestamp: number }) {
+  // Descarta expirados antes de medir, e cai para evicção FIFO se ainda estiver cheio.
+  const now = Date.now();
+  for (const [k, v] of aiRecommendationCache) {
+    if (now - v.timestamp >= CACHE_TTL_MS) aiRecommendationCache.delete(k);
+  }
+  if (aiRecommendationCache.size >= MAX_AI_CACHE) {
+    const oldest = aiRecommendationCache.keys().next().value;
+    if (oldest) aiRecommendationCache.delete(oldest);
+  }
+  aiRecommendationCache.set(key, value);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -250,7 +266,7 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
 
     // Salva no cache da sessão
     if (matchedGames.length > 0) {
-      aiRecommendationCache.set(cacheKey, {
+      setAiCache(cacheKey, {
         games: matchedGames,
         explanation: parsedResult.explanation,
         timestamp: Date.now(),

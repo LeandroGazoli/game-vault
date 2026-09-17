@@ -7,7 +7,7 @@ import { BookOpen, Sparkles, Flame, ShieldCheck } from "lucide-react";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
-export const revalidate = 60; // ISR revalidação a cada 1 minuto
+export const revalidate = 3600; // conteúdo editorial muda raramente; cada regeneração custa 1 escrita no KV (teto 1.000/dia no free)
 
 export const metadata: Metadata = {
   title: "Artigos, Guias e Análises Gamer • Central Editorial",

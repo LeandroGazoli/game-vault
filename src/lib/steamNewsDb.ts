@@ -25,8 +25,19 @@ export interface StoredSteamNewsItem {
 
 const COLLECTION_NAME = "steam_news";
 
-// Cache em memória para acesso ultrarrápido
+// Cache em memória para acesso ultrarrápido.
+// Precisa de teto: cada entrada guarda o corpo HTML completo da notícia (5-50 KB) e, no
+// isolate do Worker, o estado de módulo persiste entre requisições até estourar os 128 MB.
+const MAX_STEAM_NEWS_CACHE = 200;
 const memoryCache = new Map<string, StoredSteamNewsItem>();
+
+function setMemoryCache(key: string, item: StoredSteamNewsItem) {
+  if (memoryCache.size >= MAX_STEAM_NEWS_CACHE) {
+    const oldestKey = memoryCache.keys().next().value;
+    if (oldestKey) memoryCache.delete(oldestKey);
+  }
+  memoryCache.set(key, item);
+}
 
 /**
  * Salva ou atualiza uma notícia da Steam com tradução no Firestore.
@@ -37,7 +48,7 @@ export async function saveTranslatedSteamNews(
   if (!item.gid) return;
 
   // Atualiza cache em memória
-  memoryCache.set(item.gid, item);
+  setMemoryCache(item.gid, item);
 
   try {
     await getRestFirestore()
@@ -65,7 +76,7 @@ export async function getStoredSteamNews(
     const snap = await getRestFirestore().collection(COLLECTION_NAME).doc(gid).get();
     if (snap.exists) {
       const data = snap.data() as StoredSteamNewsItem;
-      memoryCache.set(gid, data);
+      setMemoryCache(gid, data);
       return data;
     }
   } catch (error) {
@@ -94,7 +105,7 @@ export async function getRecentSteamNews(
     snapshot.forEach((docSnap) => {
       const data = docSnap.data() as StoredSteamNewsItem;
       results.push(data);
-      memoryCache.set(data.gid, data);
+      setMemoryCache(data.gid, data);
     });
 
     return results;
