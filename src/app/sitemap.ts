@@ -27,7 +27,19 @@ export const revalidate = 86400;
  * Para publicar o sitemap completo, defina SITEMAP_GAME_LIMIT explicitamente no ambiente
  * que vai gerá-lo — assim o custo é uma decisão consciente, nunca um acidente.
  */
-const SITEMAP_DEFAULT_LIMIT = 500;
+/**
+ * 3.000 é o default porque o custo deixou de depender dele: o sitemap lê o índice agregado
+ * (`system/sitemap_index`), e buscar 3.000 ou 33.249 entradas custa as mesmas ~2-9 leituras.
+ * O limite controla só o tamanho do XML.
+ *
+ * Antes o default era 45.000 E o sitemap varria `game_translations` — 33.249 leituras por
+ * build. Baixei para 500 como contenção emergencial; com o índice no lugar, 500 só
+ * empobrecia o SEO sem economizar nada.
+ *
+ * Um sitemap único aceita 50.000 URLs e 50 MB. Para publicar as 33.249, é preciso particionar
+ * em sitemap index — está em pauta.
+ */
+const SITEMAP_DEFAULT_LIMIT = 3000;
 const REGISTRY_GAME_LIMIT = Number(process.env.SITEMAP_GAME_LIMIT || SITEMAP_DEFAULT_LIMIT);
 
 const POPULAR_FALLBACK_IDS = [
