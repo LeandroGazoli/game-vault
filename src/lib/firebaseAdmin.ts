@@ -227,3 +227,51 @@ export async function adminCreateNotification(
 
 /** Sentinelas de campo (increment, arrayUnion, serverTimestamp, delete). */
 export const FieldValue = RestFieldValue;
+
+/**
+ * E-mails de TODOS os usuários, direto do Firebase Auth (Identity Toolkit).
+ *
+ * O Auth é a fonte autoritativa do e-mail — o campo no Firestore era cópia, que podia ficar
+ * defasada. E, principalmente: esta chamada **não consome cota do Firestore**. Ler os mesmos
+ * e-mails de uma subcoleção custaria 1 leitura por usuário a cada abertura do painel admin.
+ *
+ * Pagina de 1000 em 1000, que é o teto do endpoint.
+ */
+export async function listAuthUserEmails(): Promise<Map<string, string>> {
+  const byUid = new Map<string, string>();
+  const token = await requireGoogleAccessToken();
+  const { projectId } = getFirestoreEndpoint();
+
+  let pageToken: string | undefined;
+  // Trava de segurança: evita laço infinito se a API devolver sempre o mesmo token.
+  for (let page = 0; page < 50; page++) {
+    const url = new URL(
+      `https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:batchGet`
+    );
+    url.searchParams.set("maxResults", "1000");
+    if (pageToken) url.searchParams.set("nextPageToken", pageToken);
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`Falha ao listar contas no Auth: ${res.status} ${detail.slice(0, 300)}`);
+    }
+
+    const data = (await res.json()) as {
+      users?: Array<{ localId?: string; email?: string }>;
+      nextPageToken?: string;
+    };
+
+    for (const u of data.users || []) {
+      if (u.localId && u.email) byUid.set(u.localId, u.email);
+    }
+
+    if (!data.nextPageToken || data.nextPageToken === pageToken) break;
+    pageToken = data.nextPageToken;
+  }
+
+  return byUid;
+}

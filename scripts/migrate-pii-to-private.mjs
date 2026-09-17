@@ -1,5 +1,10 @@
 /**
- * Migra `email` e `birthDate` de `users/{uid}` para `users/{uid}/private/data`.
+ * Move a PII para fora do doc público de `users/{uid}`.
+ *
+ * - `birthDate` -> copiado para `users/{uid}/private/data` (o gate de conteúdo adulto lê de lá)
+ * - `email`     -> apenas REMOVIDO. Não é recriado em lugar nenhum do Firestore: a fonte
+ *                  autoritativa é o Firebase Auth, que o cliente já tem via `fbUser.email` e
+ *                  o servidor lê pelo Identity Toolkit — sem consumir cota do Firestore.
  *
  * Por que: `users/{uid}` é `allow read: if true` (o perfil público depende disso), e em
  * Firestore `read` cobre `get` E `list` — qualquer um exportava a base inteira de e-mails e
@@ -56,21 +61,21 @@ for (const doc of snap.docs) {
 
   try {
     if (APPLY) {
-      await doc.ref
-        .collection("private")
-        .doc("data")
-        .set(
-          { email, birthDate, migratedAt: new Date().toISOString() },
-          { merge: true }
-        );
+      // Só birthDate vai para o doc privado. O e-mail não é copiado: já existe no Auth.
+      if (birthDate != null) {
+        await doc.ref
+          .collection("private")
+          .doc("data")
+          .set({ birthDate, migratedAt: new Date().toISOString() }, { merge: true });
+      }
       stats.copiados++;
 
       if (PURGE) {
         // Relê o privado antes de apagar: nunca remover sem confirmar o destino.
+        // birthDate só é removido do público depois de confirmado no privado.
+        // email pode ser removido direto: o Auth continua tendo.
         const check = await doc.ref.collection("private").doc("data").get();
-        const ok = check.exists &&
-          (check.data()?.email ?? null) === email &&
-          (check.data()?.birthDate ?? null) === birthDate;
+        const ok = birthDate == null || (check.exists && (check.data()?.birthDate ?? null) === birthDate);
 
         if (ok) {
           await doc.ref.update({

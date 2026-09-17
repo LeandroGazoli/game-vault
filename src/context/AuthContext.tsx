@@ -160,13 +160,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // de maioridade que libera conteúdo adulto.
               try {
                 const priv = await fetchOwnPrivateData(fbUser.uid);
-                if (priv) {
-                  profile = {
-                    ...profile,
-                    email: priv.email ?? profile.email,
-                    ...(priv.birthDate != null ? { birthDate: priv.birthDate } : {}),
-                  } as UserProfile;
-                }
+                profile = {
+                  ...profile,
+                  // E-mail sempre do Auth: é a fonte autoritativa e não custa leitura.
+                  email: fbUser.email || profile.email,
+                  ...(priv?.birthDate != null ? { birthDate: priv.birthDate } : {}),
+                } as UserProfile;
               } catch {
                 // Mantém o que veio do doc público (fallback de transição).
               }
@@ -328,15 +327,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // PII vai para users/{uid}/private/data; o resto para o doc público. Sem esta separação,
     // gravar a data de nascimento pelo formulário a devolveria ao doc que qualquer um lê.
-    const { email, birthDate, ...publicPatch } = patch as Partial<UserProfile> & {
+    const { email: _ignoredEmail, birthDate, ...publicPatch } = patch as Partial<UserProfile> & {
       birthDate?: string | null;
     };
 
-    if (email !== undefined || birthDate !== undefined) {
-      await saveOwnPrivateData(user.uid, {
-        ...(email !== undefined ? { email } : {}),
-        ...(birthDate !== undefined ? { birthDate } : {}),
-      });
+    // `email` é descartado de propósito: quem manda é o Firebase Auth. Gravá-lo no Firestore
+    // só recriaria a cópia exposta que este trabalho removeu.
+    if (birthDate !== undefined) {
+      await saveOwnPrivateData(user.uid, { birthDate });
     }
 
     // Grava SOMENTE os campos alterados — evita reescrever campos travados e rejeição por valor obsoleto

@@ -15,7 +15,11 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export interface UserPrivateData {
-  email?: string | null;
+  /**
+   * Só `birthDate` mora aqui. `email` NÃO é guardado no Firestore: a fonte autoritativa é o
+   * Firebase Auth, que o cliente já tem via `fbUser.email` e o servidor lê pelo Identity
+   * Toolkit — sem consumir cota do Firestore e sem risco de cópia defasada.
+   */
   birthDate?: string | null;
 }
 

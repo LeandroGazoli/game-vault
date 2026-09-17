@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/serverAuth";
-import { getAllUsersForAdminServer, getAllUserPrivateDataServer, recordAuditLogServer, getUserProfileByUsernameServer, getSystemSettingsServer } from "@/lib/serverData";
+import { getAllUsersForAdminServer, recordAuditLogServer, getUserProfileByUsernameServer, getSystemSettingsServer } from "@/lib/serverData";
 import {
+  listAuthUserEmails,
   adminGrantAccess,
   adminUpdateUserModeration,
   adminSaveUserProfile,
@@ -41,20 +42,18 @@ export async function GET(request: NextRequest) {
       users = users.filter((u) => !u.banned && !u.suspended);
     }
 
-    // `email` saiu do doc público (users/{uid} é legível por qualquer um). O painel admin
-    // precisa dele para busca, concessão e exportação — vem da subcoleção privada, numa
-    // collection group query só, com a service account.
+    // `email` não é mais guardado no Firestore: a fonte autoritativa é o Firebase Auth.
+    // Buscar daqui não consome cota do Firestore — ler de uma subcoleção custaria 1 leitura
+    // por usuário a cada abertura deste painel.
     try {
-      const privateByUid = await getAllUserPrivateDataServer();
-      if (privateByUid.size > 0) {
+      const emailByUid = await listAuthUserEmails();
+      if (emailByUid.size > 0) {
         users = users.map((u) =>
-          u.uid && privateByUid.has(u.uid)
-            ? { ...u, email: privateByUid.get(u.uid)?.email ?? u.email }
-            : u
+          u.uid && emailByUid.has(u.uid) ? { ...u, email: emailByUid.get(u.uid) || u.email } : u
         );
       }
     } catch (e) {
-      console.warn("[admin/users] Falha ao mesclar PII privada:", e);
+      console.warn("[admin/users] Falha ao obter e-mails do Auth:", e);
     }
 
     if (query) {
