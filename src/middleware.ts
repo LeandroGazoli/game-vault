@@ -4,6 +4,7 @@ import {
   generateAppToken,
   verifyAppToken,
 } from "@/lib/apiSecurity";
+import { isMaintenanceOn } from "@/lib/maintenanceFlag";
 
 /**
  * Modo de manutenção APLICADO NA BORDA.
@@ -14,17 +15,14 @@ import {
  * ignoram o overlay por completo. Resultado observado: 76k leituras até as 9h com o site
  * "bloqueado".
  *
- * Aqui o corte é antes de qualquer renderização, então custa ZERO leitura. O estado vem de
- * uma var do Worker (não do Firestore) justamente para não gastar leitura para decidir.
+ * Aqui o corte acontece antes de qualquer renderização, custando ZERO leitura do Firestore.
+ * O estado vem do KV (ver src/lib/maintenanceFlag.ts), alternável pelo painel admin.
  */
-function isMaintenanceOn(): boolean {
-  return String(process.env.MAINTENANCE_MODE || "").toLowerCase() === "true";
-}
 
 /** Caminhos que seguem acessíveis durante a manutenção (admin precisa entrar e desligar). */
 const MAINTENANCE_ALLOWLIST = [
   "/admin",
-  "/api/admin",
+  "/api/admin", // inclui /api/admin/maintenance, que é como o painel desliga o bloqueio
   "/api/auth",
   "/login",
   "/_next",
@@ -41,7 +39,10 @@ const MAINTENANCE_HTML = `<!DOCTYPE html>
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (isMaintenanceOn() && !MAINTENANCE_ALLOWLIST.some((p) => pathname.startsWith(p))) {
+  if (
+    !MAINTENANCE_ALLOWLIST.some((p) => pathname.startsWith(p)) &&
+    (await isMaintenanceOn())
+  ) {
     // 503 + Retry-After é o que crawler entende: ele volta depois em vez de
     // desindexar, e para de bater no sitemap enquanto isso.
     return new NextResponse(MAINTENANCE_HTML, {

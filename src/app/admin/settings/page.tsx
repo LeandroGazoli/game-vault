@@ -25,6 +25,7 @@ export default function AdminSettingsPage() {
   const { user } = useAuth();
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [maintenanceNotice, setMaintenanceNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [indexNow, setIndexNow] = useState<{
@@ -55,6 +56,36 @@ export default function AdminSettingsPage() {
     setIsSaving(true);
     try {
       await updateSystemSettings(settings, user.email);
+
+      // O toggle de manutenção precisa chegar no KV: é ele que o middleware consulta para
+      // bloquear na BORDA. Só gravar no Firestore mexeria apenas no overlay visual — a
+      // página continuaria renderizando, lendo o Firestore, e crawlers ignorariam.
+      const token = await auth.currentUser?.getIdToken();
+      const maintRes = await fetch("/api/admin/maintenance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ enabled: Boolean(settings.maintenanceMode) }),
+      });
+
+      const maintData = (await maintRes.json().catch(() => ({}))) as {
+        error?: string;
+        forcedByEnv?: boolean;
+        propagationSeconds?: number;
+      };
+      if (!maintRes.ok) {
+        throw new Error(maintData?.error || "Falha ao aplicar o modo manutenção na borda.");
+      }
+      setMaintenanceNotice(
+        maintData.forcedByEnv
+          ? "Atenção: a variável MAINTENANCE_MODE está ligada e o site fica bloqueado independentemente deste toggle."
+          : settings.maintenanceMode
+            ? `Site bloqueado. Pode levar até ${maintData.propagationSeconds ?? 30}s para valer em todos os pontos.`
+            : `Site liberado. Pode levar até ${maintData.propagationSeconds ?? 30}s para valer em todos os pontos.`
+      );
+
       await recordAuditLog({
         adminEmail: user.email,
         adminUid: user.uid,
@@ -64,8 +95,10 @@ export default function AdminSettingsPage() {
       });
       setToastMessage("Configurações salvas com sucesso!");
       setTimeout(() => setToastMessage(null), 3500);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Erro ao salvar configurações:", e);
+      setToastMessage(e?.message || "Erro ao salvar configurações.");
+      setTimeout(() => setToastMessage(null), 6000);
     } finally {
       setIsSaving(false);
     }
@@ -179,6 +212,10 @@ export default function AdminSettingsPage() {
               <div className="w-12 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[12px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
             </label>
           </div>
+
+          {maintenanceNotice && (
+            <p className="text-xs font-mono text-amber-400 pt-2">{maintenanceNotice}</p>
+          )}
 
           {settings.maintenanceMode && (
             <div className="pt-2">
