@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
+import { useSanitizedHtml } from "@/lib/sanitizeHtml";
 import { Code, Sparkles, Edit2 } from "lucide-react";
 
 interface CustomHtmlBioProps {
@@ -11,10 +11,7 @@ interface CustomHtmlBioProps {
 }
 
 export default function CustomHtmlBio({ html, className = "", onEdit }: CustomHtmlBioProps) {
-  const sanitizedHtml = useMemo(() => {
-    if (!html || !html.trim()) return "";
-    return sanitizeCustomHtml(html);
-  }, [html]);
+  const sanitizedHtml = useSanitizedHtml(html);
 
   if (!sanitizedHtml) return null;
 

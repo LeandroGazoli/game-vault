@@ -23,12 +23,22 @@ export default function ParallaxBackground() {
       }
     };
 
+    // Mesmo padrão de rAF que `handleScroll` usa dez linhas acima. Sem isso, cada evento
+    // nativo de mousemove disparava um setState com objeto novo: 60-120 re-renders por
+    // segundo de um background full-screen com várias camadas.
+    let mouseTicking = false;
     const handleMouseMove = (e: MouseEvent) => {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      const offsetX = (e.clientX - centerX) / centerX;
-      const offsetY = (e.clientY - centerY) / centerY;
-      setMouseOffset({ x: offsetX, y: offsetY });
+      if (mouseTicking) return;
+      mouseTicking = true;
+      window.requestAnimationFrame(() => {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        setMouseOffset({
+          x: (e.clientX - centerX) / centerX,
+          y: (e.clientY - centerY) / centerY,
+        });
+        mouseTicking = false;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });

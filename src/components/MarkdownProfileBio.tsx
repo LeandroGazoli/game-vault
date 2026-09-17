@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
+import { useSanitizedHtml } from "@/lib/sanitizeHtml";
 import { Sparkles, FileText, Edit2 } from "lucide-react";
 
 interface MarkdownProfileBioProps {
@@ -18,10 +18,7 @@ export default function MarkdownProfileBio({
   className = "",
   onEdit,
 }: MarkdownProfileBioProps) {
-  const sanitizedContent = useMemo(() => {
-    if (!content || !content.trim()) return "";
-    return sanitizeCustomHtml(content);
-  }, [content]);
+  const sanitizedContent = useSanitizedHtml(content);
 
   if (!sanitizedContent) return null;
 

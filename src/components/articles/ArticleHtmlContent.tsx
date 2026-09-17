@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
+import { useSanitizedHtml } from "@/lib/sanitizeHtml";
 
 /**
  * Renderiza o HTML do artigo sanitizado — NO CLIENTE, de propósito.
@@ -20,7 +20,7 @@ import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
  * HTML limpo; fica registrado como melhoria.
  */
 export default function ArticleHtmlContent({ html }: { html: string }) {
-  const clean = useMemo(() => sanitizeCustomHtml(html), [html]);
+  const clean = useSanitizedHtml(html);
 
   return (
     <div

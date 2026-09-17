@@ -7,7 +7,6 @@ import Logo from "@/components/Logo";
 import PwaRegister from "@/components/PwaRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
-import SpotlightSearchModal from "@/components/SpotlightSearchModal";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
@@ -201,7 +200,6 @@ export default function RootLayout({
             <MobileBottomNav />
 
             {/* Modais Globais: Busca Spotlight, Instalação PWA & Consentimento de Cookies */}
-            <SpotlightSearchModal />
             <PwaInstallPrompt />
             <BannedUserModal />
             <MaintenanceOverlay />

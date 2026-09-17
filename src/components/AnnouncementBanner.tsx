@@ -14,19 +14,19 @@ export default function AnnouncementBanner() {
   useEffect(() => {
     if (!db) return;
 
-    // Escuta em tempo real as configurações do sistema para atualizar o banner instantaneamente
-    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data() as SystemSettings;
-        if (data.announcementBanner?.enabled && data.announcementBanner?.text?.trim()) {
+    // Rota cacheada em vez de listener: este componente está no layout (toda página),
+    // então um onSnapshot aqui custava leitura do Firestore por visitante.
+    fetch("/api/system/settings")
+      .then((r) => (r.ok ? (r.json() as Promise<{ settings?: SystemSettings | null }>) : null))
+      .then((res) => {
+        const data = res?.settings;
+        if (data?.announcementBanner?.enabled && data.announcementBanner?.text?.trim()) {
           setBanner(data.announcementBanner);
         } else {
           setBanner(null);
         }
-      }
-    });
-
-    return () => unsub();
+      })
+      .catch(() => {});
   }, []);
 
   if (!banner || !banner.enabled || isDismissed) return null;

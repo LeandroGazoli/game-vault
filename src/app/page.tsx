@@ -5,7 +5,6 @@ import { Game, UserGame } from "@/lib/types";
 import UnifiedRankingsSection from "@/components/UnifiedRankingsSection";
 import GamerDashboardWidget from "@/components/GamerDashboardWidget";
 import CatalogRow, { CatalogRowSkeleton } from "@/components/CatalogRow";
-import { openSpotlightSearch } from "@/components/SpotlightSearchModal";
 import GameRouletteModal from "@/components/GameRouletteModal";
 import GameModal from "@/components/GameModal";
 import AdBanner from "@/components/ads/AdBanner";
@@ -41,8 +40,7 @@ import HomeFeatureAnnouncementCard from "@/components/HomeFeatureAnnouncementCar
 import HomeEditorialSection from "@/components/home/HomeEditorialSection";
 import IndieSpotlightBanner from "@/components/indies/IndieSpotlightBanner";
 import HomeIndiesSection from "@/components/home/HomeIndiesSection";
-import { db, getSystemSettings, DEFAULT_SYSTEM_SETTINGS } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { DEFAULT_SYSTEM_SETTINGS } from "@/lib/types";
 import { SystemSettings } from "@/lib/types";
 
 // Franquias consagradas para a seção de exploração
@@ -112,40 +110,27 @@ export default function HomePage() {
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
+  // Configurações via rota cacheada, não por listener do Firestore.
+  //
+  // Esta é a HOME: um `onSnapshot` aqui custa leitura do Firestore por VISITANTE, e leitura
+  // feita do navegador não aparece em `wrangler tail` nem no contador do servidor — só na
+  // fatura. O carrossel e os banners são conteúdo editorial; propagar em até 5 minutos é
+  // perfeitamente aceitável para eles.
   useEffect(() => {
-    if (!db) {
-      getSystemSettings()
-        .then((s) => {
-          setSettings(s);
-          setSettingsLoaded(true);
-        })
-        .catch((err) => {
-          console.warn(err);
-          setSettingsLoaded(true);
-        });
-      return;
-    }
-    const unsub = onSnapshot(
-      doc(db, "system", "settings"),
-      (snap) => {
-        if (snap.exists()) {
-          setSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...snap.data() } as SystemSettings);
-        } else {
-          setSettings(DEFAULT_SYSTEM_SETTINGS);
-        }
+    let cancelled = false;
+    fetch("/api/system/settings")
+      .then((r) => (r.ok ? (r.json() as Promise<{ settings?: SystemSettings }>) : null))
+      .then((data) => {
+        if (cancelled) return;
+        setSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...(data?.settings ?? {}) } as SystemSettings);
         setSettingsLoaded(true);
-      },
-      (err) => {
-        console.warn("Erro ao sincronizar configurações do sistema:", err);
-        getSystemSettings()
-          .then((s) => {
-            setSettings(s);
-            setSettingsLoaded(true);
-          })
-          .catch(() => setSettingsLoaded(true));
-      }
-    );
-    return () => unsub();
+      })
+      .catch(() => {
+        if (!cancelled) setSettingsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

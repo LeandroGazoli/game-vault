@@ -125,13 +125,12 @@ function SearchContent() {
   // Monitora a feature flag em tempo real do Admin
   useEffect(() => {
     if (!db) return;
-    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data() as SystemSettings;
-        setIsAiEnabled(Boolean(data.features?.aiRecommendations ?? true));
-      }
-    });
-    return () => unsub();
+    // Flag por rota cacheada: um listener por visitante custava leitura do Firestore, e
+    // leitura feita do navegador não aparece em nenhum log de servidor.
+    fetch("/api/system/features")
+      .then((r) => (r.ok ? (r.json() as Promise<{ features?: { aiRecommendations?: boolean } }>) : null))
+      .then((res) => setIsAiEnabled(Boolean(res?.features?.aiRecommendations ?? true)))
+      .catch(() => {});
   }, []);
 
   // Estados de UI expansível e utilitários

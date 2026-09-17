@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Article } from "@/lib/types/article.types";
-import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
+import { useSanitizedHtml } from "@/lib/sanitizeHtml";
 import ArticleCard from "@/components/articles/ArticleCard";
 import {
   X,
@@ -27,6 +27,8 @@ export default function ArticlePreviewModal({
   onClose,
   article,
 }: ArticlePreviewModalProps) {
+  // Sanitização adiada para depois da hidratação: no SSR não há DOM e o jsdom quebra no workerd.
+  const previewHtml = useSanitizedHtml(article?.contentHtml);
   const [viewMode, setViewMode] = useState<"full" | "card">("full");
   const [deviceView, setDeviceView] = useState<"desktop" | "mobile">("desktop");
 
@@ -225,7 +227,7 @@ export default function ArticlePreviewModal({
                   <div
                     className="prose prose-invert prose-emerald max-w-none space-y-6 text-sm sm:text-base text-gray-300 leading-relaxed font-sans"
                     dangerouslySetInnerHTML={{
-                      __html: sanitizeCustomHtml(article.contentHtml),
+                      __html: previewHtml,
                     }}
                   />
                 ) : (

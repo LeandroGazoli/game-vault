@@ -64,13 +64,11 @@ export default function FeedbackClient() {
   // Escuta a feature flag 'bountiesEnabled' em tempo real
   useEffect(() => {
     if (!db) return;
-    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data() as SystemSettings;
-        setBountiesEnabled(Boolean(data.features?.bountiesEnabled));
-      }
-    });
-    return () => unsub();
+    // Flag por rota cacheada — ver comentário equivalente em SearchClient.
+    fetch("/api/system/features")
+      .then((r) => (r.ok ? (r.json() as Promise<{ features?: { bountiesEnabled?: boolean } }>) : null))
+      .then((res) => setBountiesEnabled(Boolean(res?.features?.bountiesEnabled)))
+      .catch(() => {});
   }, []);
 
   // Aba Principal: Sugestões Ativas vs Área Exclusiva de Implementados

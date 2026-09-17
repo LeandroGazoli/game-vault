@@ -84,7 +84,10 @@ export default function BackgroundController() {
       window.removeEventListener("gv-background-theme-change", handleThemeChange);
       window.removeEventListener("gv-background-config-change", handleConfigChange);
     };
-  }, [user, isPremium, isAdmin]);
+      // `user` é objeto NOVO a cada snapshot do doc do usuário, então depender dele fazia
+    // este effect (montado no layout, ou seja, em toda página) refazer um getDoc de
+    // `system/settings` a cada escrita no perfil. Só estes campos importam de fato.
+  }, [user?.customBackground, isPremium, isAdmin]);
 
   if (!mounted) return null;
 

@@ -9,6 +9,11 @@ const config: Config = {
   darkMode: "class",
   theme: {
     extend: {
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
@@ -25,7 +30,23 @@ const config: Config = {
         card: {
           DEFAULT: "var(--card)",
           hover: "var(--card-hover)",
+          foreground: "var(--card-foreground)",
         },
+        // Exigidos pelos componentes shadcn. Aditivos — nenhum token existente mudou.
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        input: "var(--input)",
+        ring: "var(--ring)",
         muted: {
           DEFAULT: "var(--muted)",
           foreground: "var(--muted-foreground)",
@@ -38,6 +59,7 @@ const config: Config = {
           DEFAULT: "#6366f1",
           hover: "#4f46e5",
           glow: "rgba(99, 102, 241, 0.25)",
+          foreground: "var(--accent-foreground)",
           cyan: "var(--accent-cyan)",
           emerald: "var(--accent-emerald)",
           amber: "var(--accent-amber)",

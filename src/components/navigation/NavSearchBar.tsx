@@ -1,14 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { openSpotlightSearch } from "@/components/SpotlightSearchModal";
+import LiveSearchInput from "@/components/LiveSearchInput";
 
 interface NavSearchBarProps {
   className?: string;
 }
 
+/**
+ * Busca da navbar — SEM popup.
+ *
+ * O modal anterior (SpotlightSearchModal) tinha dois problemas no mobile:
+ *  1. Sobreposição em tela cheia disputa espaço com o teclado virtual, e o campo some
+ *     atrás dele em telas menores.
+ *  2. Num app empacotado com Capacitor, o botão VOLTAR do Android não fecha um modal —
+ *     ele sai da tela ou do app. Isso quebra a expectativa mais básica de navegação nativa.
+ *
+ * Estratégia por contexto:
+ *  - MOBILE: toque leva para /search, que é uma ROTA REAL. O botão voltar volta, o estado
+ *    entra no histórico, a URL é compartilhável e o teclado tem a tela inteira.
+ *  - DESKTOP: campo real com dropdown ancorado logo abaixo (LiveSearchInput). Sem overlay,
+ *    sem roubo de foco, sem escurecer a página — o usuário continua vendo o contexto.
+ */
 export default function NavSearchBar({ className = "" }: NavSearchBarProps) {
+  const router = useRouter();
   const [isMac, setIsMac] = useState(false);
 
   useEffect(() => {
@@ -17,26 +34,41 @@ export default function NavSearchBar({ className = "" }: NavSearchBarProps) {
     }
   }, []);
 
+  // Atalho de teclado leva ao campo do desktop; no mobile não há teclado físico.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const input = document.querySelector<HTMLInputElement>("[data-nav-search] input");
+        if (input) input.focus();
+        else router.push("/search");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
+
   return (
     <div className={`flex items-center justify-center flex-1 max-w-sm lg:max-w-md mx-2 ${className}`}>
+      {/* MOBILE: atalho para a rota real */}
       <button
         type="button"
-        onClick={() => openSpotlightSearch()}
-        className="w-full flex items-center justify-between gap-2 h-9 px-3 rounded-full bg-[#141822]/90 hover:bg-[#1a202c] border border-white/10 hover:border-emerald-500/40 text-neutral-400 hover:text-neutral-200 transition-all duration-200 shadow-inner group cursor-pointer"
-        title="Buscar jogos (Atalho: ⌘K ou Ctrl+K)"
-        aria-label="Abrir busca de jogos"
+        onClick={() => router.push("/search")}
+        className="md:hidden w-full flex items-center gap-2 h-11 px-3 rounded-full bg-[#141822]/90 active:bg-[#1a202c] border border-white/10 text-neutral-400 transition-colors"
+        aria-label="Buscar jogos"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <Search className="w-3.5 h-3.5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-          <span className="text-xs truncate font-medium text-neutral-400 group-hover:text-neutral-200">
-            Buscar jogos, plataformas...
-          </span>
-        </div>
-
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-400 shrink-0 group-hover:border-emerald-500/30 group-hover:text-emerald-400 transition-colors">
-          {isMac ? "⌘K" : "Ctrl+K"}
-        </kbd>
+        <Search className="w-4 h-4 text-emerald-400 shrink-0" />
+        <span className="text-sm truncate font-medium">Buscar jogos...</span>
       </button>
+
+      {/* DESKTOP: campo real com dropdown ancorado */}
+      <div className="hidden md:block w-full" data-nav-search>
+        <LiveSearchInput variant="navbar" placeholder="Buscar jogos, plataformas..." />
+      </div>
+
+      <kbd className="hidden lg:inline-flex items-center gap-0.5 ml-2 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-500 shrink-0">
+        {isMac ? "⌘K" : "Ctrl+K"}
+      </kbd>
     </div>
   );
 }

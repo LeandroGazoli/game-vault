@@ -37,14 +37,11 @@ export default function AiRecommendationBox() {
     if (!db) return;
 
     // Monitora a feature flag em tempo real do Admin
-    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data() as SystemSettings;
-        setIsEnabled(Boolean(data.features?.aiRecommendations));
-      }
-    });
-
-    return () => unsub();
+    // Flag por rota cacheada — ver comentário equivalente em SearchClient.
+    fetch("/api/system/features")
+      .then((r) => (r.ok ? (r.json() as Promise<{ features?: { aiRecommendations?: boolean } }>) : null))
+      .then((res) => setIsEnabled(Boolean(res?.features?.aiRecommendations)))
+      .catch(() => {});
   }, []);
 
   if (!isEnabled) return null;

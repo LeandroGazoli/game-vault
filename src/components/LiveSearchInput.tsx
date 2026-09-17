@@ -14,9 +14,6 @@ import {
   AI_SEARCH_DEBOUNCE_MS,
   MIN_AI_QUERY_LENGTH,
 } from "@/lib/searchUtils";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { SystemSettings } from "@/lib/types";
 
 interface LiveSearchInputProps {
   placeholder?: string;
@@ -49,20 +46,35 @@ export default function LiveSearchInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchCacheRef = useRef<Map<string, Game[]>>(new Map());
-
-  // Observa feature flag de IA em tempo real do Firestore
-  useEffect(() => {
-    try {
-      const unsub = onSnapshot(doc(db, "system", "settings"), (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data() as SystemSettings;
-          setIsAiEnabled(data.features?.aiRecommendations !== false);
-        }
-      });
-      return () => unsub();
-    } catch (e) {
-      console.error("Erro ao escutar configurações no LiveSearchInput:", e);
+  /**
+   * Teto do cache de busca. A chave é o termo digitado, então sem limite cresce uma entrada
+   * por prefixo enquanto o usuário digita — e este componente vive na navbar durante toda a
+   * sessão (crítico no app Capacitor, que quase nunca é fechado).
+   */
+  const MAX_SEARCH_CACHE = 40;
+  const setSearchCache = (key: string, value: Game[]) => {
+    const c = searchCacheRef.current;
+    if (c.size >= MAX_SEARCH_CACHE) {
+      const oldest = c.keys().next().value;
+      if (oldest) c.delete(oldest);
     }
+    c.set(key, value);
+  };
+
+  // Flag de IA via rota cacheada, não por listener do Firestore.
+  // Este componente vive na navbar, ou seja, em TODA página: um `onSnapshot` aqui custaria
+  // leitura por visitante, e leitura feita do navegador não aparece em log de servidor.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/system/features")
+      .then((r) => (r.ok ? (r.json() as Promise<{ features?: { aiRecommendations?: boolean } }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setIsAiEnabled(data.features?.aiRecommendations !== false);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Dispara a Curadoria Inteligente com Gemini
@@ -197,7 +209,7 @@ export default function LiveSearchInput({
         if (res.ok) {
           const data = await res.json();
           items = (data.games || []).slice(0, 6);
-          searchCacheRef.current.set(cacheKey, items);
+          setSearchCache(cacheKey, items);
           setResults(items);
           setIsOpen(true);
         }
