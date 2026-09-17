@@ -92,10 +92,10 @@ verificação visual, é mudança cega. Vale fazer com o site aberto ao lado.
 
 ---
 
-## ⚠️ Limite de escrita do KV — restrição operacional descoberta em 17/09
+## Limite de escrita do KV — resolvido com o Workers Paid em 17/09
 
-O plano gratuito do Workers dá **1.000 escritas de KV por dia**, e isso é mais apertado do
-que parece:
+**A conta assinou o Workers Paid (US$ 5/mês) em 17/09.** Esta seção fica como registro do
+que apertava antes e do que passou a valer.
 
 | Operação | Custo em escritas |
 |---|---|
@@ -103,21 +103,22 @@ que parece:
 | Cada regeneração de ISR | 1 por página regenerada |
 | Toggle de manutenção pelo painel | 1 |
 
-Ou seja: **cerca de 8 deploys por dia** esgotam a cota sozinhos. Foi o que aconteceu em
-17/09 — o erro é `your account has reached the free usage limit for this operation for today
-[code: 10048]`.
+| | Gratuito (antes) | Paid (agora) |
+|---|---|---|
+| Escritas | 1.000/**dia** | 1 mi/**mês** (≈33 mil/dia) |
+| Exclusões | 1.000/dia | 1 mi/mês |
+| Leituras | 100 mil/dia | 10 mi/mês |
+| Armazenamento | 1 GB | 1 GB, depois $0,50/GB-mês |
 
-### Duas consequências que importam
+No gratuito, ~8 deploys esgotavam a cota do dia (`your account has reached the free usage
+limit for this operation for today [code: 10048]`) — e com ela esgotada **nem o deploy nem o
+toggle de manutenção do painel funcionavam**, porque os dois gravam no KV. O freio de
+emergência para esse caso é a var `MAINTENANCE_MODE` no `wrangler.jsonc`, que não depende de
+KV; ela continua existindo, mas deixou de ser o plano A.
 
-**1. Com a cota esgotada, não dá para deployar.** O `deploy` falha na etapa de popular o
-cache, antes de publicar. Se houver correção urgente, ela fica bloqueada.
-
-**2. Com a cota esgotada, o painel não liga nem desliga a manutenção**, porque o toggle
-grava no KV.
-
-**A saída nos dois casos é a var `MAINTENANCE_MODE`** no `wrangler.jsonc` — o freio de
-emergência. Ela não depende de KV. Mas ativá-la exige deploy, que também está bloqueado...
-então o freio só ajuda se a cota estourar DEPOIS de você já ter deployado.
+**O que ainda merece atenção no plano pago:** cada regeneração de ISR é 1 escrita. Com ~33
+mil páginas de jogo em `revalidate` de 24h, o teto teórico chega perto do 1 milhão incluído.
+O excedente é barato ($5/milhão), mas é a única linha que pode crescer sem aviso.
 
 ### Espaço: a faxina agora vem no deploy
 
@@ -146,14 +147,14 @@ branch e não deployou, ele aponta para algo que nunca esteve no ar — e a purg
 produção inteira como órfã. O script **aborta** se nada confirmar que o build preservado
 está no ar. Essa guarda já pegou exatamente esse caso no primeiro teste.
 
-Teto de 900 exclusões por execução (a exclusão tem cota própria de 1.000/dia), então uma
-faxina acumulada pode precisar de duas rodadas. Falha na purga não invalida o deploy — o
-site já está no ar.
+Teto de 10.000 chaves por rodada (limite da própria API de bulk delete), ajustável com
+`--max`. A faxina acumulada de 1.392 chaves cabe numa rodada só. Falha na purga não invalida
+o deploy — o site já está no ar.
 
 ### Como reduzir o consumo
 
-- Agrupe alterações em menos deploys (o maior consumidor de longe).
 - `revalidate` longo: cada regeneração é uma escrita. Nada abaixo de 1800s.
 - Menos páginas pré-renderizadas: `generateStaticParams` vazio quando a página puder nascer
   sob demanda (já feito em `/artigos/[slug]`).
-- Se virar gargalo recorrente, o caminho é KV pago ou trocar o backend do cache incremental.
+- Agrupar alterações em menos deploys deixou de ser necessário no plano pago, mas continua
+  sendo bom hábito.

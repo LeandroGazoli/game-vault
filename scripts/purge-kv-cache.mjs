@@ -30,6 +30,7 @@
  *   node scripts/purge-kv-cache.mjs --from-kv --apply      # apaga (o que o deploy faz)
  *   node scripts/purge-kv-cache.mjs --apply --keep ABC123  # preserva um ID específico
  *   node scripts/purge-kv-cache.mjs --env homolog          # age no KV de homologação
+ *   node scripts/purge-kv-cache.mjs --apply --max 500      # limita a rodada
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -48,8 +49,15 @@ const ENV_ARGS = envIdx !== -1 ? ["--env", process.argv[envIdx + 1]] : [];
 /** Chave onde `scripts/deploy.sh` registra o build que foi para produção. */
 const CURRENT_BUILD_KEY = "deploy/current-build-id";
 
-/** Teto diário de exclusões no plano gratuito. Margem para não travar outras operações. */
-const DAILY_DELETE_BUDGET = 900;
+/**
+ * Teto de exclusões por execução.
+ *
+ * No Workers Paid a cota é de 1 milhão de exclusões POR MÊS (era 1.000/dia no gratuito),
+ * então o limite que sobra é o da própria API: `kv bulk delete` aceita 10.000 chaves por
+ * chamada. Na prática a faxina inteira cabe numa rodada só.
+ */
+const maxIdx = process.argv.indexOf("--max");
+const DELETE_BUDGET = maxIdx !== -1 ? Number(process.argv[maxIdx + 1]) : 10_000;
 
 function wrangler(args) {
   return execFileSync("npx", ["wrangler", ...args, ...ENV_ARGS], {
@@ -140,13 +148,13 @@ if (orphanKeys.length === 0) {
 }
 
 // 3. Respeita o teto diário
-const batch = orphanKeys.slice(0, DAILY_DELETE_BUDGET);
+const batch = orphanKeys.slice(0, DELETE_BUDGET);
 const remaining = orphanKeys.length - batch.length;
 
 console.log();
 console.log(`  a apagar agora   : ${batch.length}`);
 if (remaining > 0) {
-  console.log(`  ficam para depois: ${remaining} (teto de ${DAILY_DELETE_BUDGET}/dia; rode de novo após as 21h)`);
+  console.log(`  ficam para depois: ${remaining} (teto de ${DELETE_BUDGET} por rodada — rode de novo)`);
 }
 
 if (!APPLY) {
@@ -160,11 +168,11 @@ fs.writeFileSync(tmp, JSON.stringify(batch));
 try {
   wrangler(["kv", "bulk", "delete", tmp, "--binding", BINDING, "--remote", "--force"]);
   console.log(`\n✓ ${batch.length} chaves apagadas.`);
-  if (remaining > 0) console.log(`  Restam ${remaining}. Rode novamente amanhã (reset 00:00 UTC = 21h de Brasília).`);
+  if (remaining > 0) console.log(`  Restam ${remaining}. Rode o script de novo para concluir.`);
 } catch (e) {
   const msg = String(e?.stderr || e?.message || e);
   if (msg.includes("10048")) {
-    console.error("\n✗ Cota diária de exclusão esgotada. Tente após as 21h (reset 00:00 UTC).");
+    console.error("\n✗ Cota de exclusão esgotada (1 mi/mês no Paid). Confira o uso no painel.");
   } else {
     console.error("\n✗ Falha:", msg.slice(0, 400));
   }
