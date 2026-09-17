@@ -22,9 +22,17 @@ export async function getTwitchAccessToken(): Promise<string | null> {
   // "sujo" indica espaço ou quebra de linha que o trim acabou de remover.
   const idSujo = (process.env.TWITCH_CLIENT_ID || "").length !== TWITCH_CLIENT_ID.length;
   const secretSujo = (process.env.TWITCH_CLIENT_SECRET || "").length !== TWITCH_CLIENT_SECRET.length;
+  // Impressão digital em vez do valor: 8 hex de SHA-256 bastam para comparar QUAL segredo
+  // chegou ao worker (o do painel ou o que o build embutiu do .env.local), sem expor nada.
+  const digitais = await Promise.all(
+    [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET].map(async (v) => {
+      const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+      return [...new Uint8Array(h)].slice(0, 4).map((b) => b.toString(16).padStart(2, "0")).join("");
+    })
+  );
   console.log(
-    `[Twitch/IGDB] credenciais: id=${TWITCH_CLIENT_ID.length} chars${idSujo ? " (tinha espaço/quebra — removido)" : ""}, ` +
-      `secret=${TWITCH_CLIENT_SECRET.length} chars${secretSujo ? " (tinha espaço/quebra — removido)" : ""}`
+    `[Twitch/IGDB] credenciais: id=${TWITCH_CLIENT_ID.length}c/${digitais[0]}${idSujo ? " (limpo)" : ""}, ` +
+      `secret=${TWITCH_CLIENT_SECRET.length}c/${digitais[1]}${secretSujo ? " (limpo)" : ""}`
   );
 
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60000) {
