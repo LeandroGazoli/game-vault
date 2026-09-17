@@ -262,6 +262,7 @@ export async function firestoreRestQuery<T = any>(
         if (parsed) items.push(parsed);
       }
     }
+    countFirestoreReads(items.length, `query ${collectionId}`);
     return items;
   } catch (err) {
     console.warn("[firestoreRestQuery] Falha de conexão:", err);
@@ -340,6 +341,31 @@ export async function firestoreRestGet<T = any>(
 /* -------------------------------------------------------------------------- */
 /*  Núcleo de transporte REST (usado pelo shim compatível com o Admin SDK)     */
 /* -------------------------------------------------------------------------- */
+
+
+/* -------------------------------------------------------------------------- */
+/*  Contador de leituras (diagnóstico)                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Conta documentos lidos, para saber o custo real de um build ou de uma rota.
+ * Só imprime quando FIRESTORE_READ_LOG=1 — em produção fica inerte.
+ *
+ * Existe porque a fatura do Firestore é por DOCUMENTO lido, e isso é invisível no código:
+ * uma linha inocente como `collection.get()` pode custar dezenas de milhares.
+ */
+let readCount = 0;
+const READ_LOG = process.env.FIRESTORE_READ_LOG === "1";
+
+export function countFirestoreReads(n: number, label: string): void {
+  if (!READ_LOG) return;
+  readCount += n;
+  if (n > 0) console.log(`[firestore-reads] +${n} (${label}) — total ${readCount}`);
+}
+
+export function getFirestoreReadCount(): number {
+  return readCount;
+}
 
 /** Erro de transporte com o status HTTP devolvido pela Firestore REST API. */
 export class FirestoreRestError extends Error {
@@ -452,12 +478,14 @@ export async function restGetDocument(
   opts: { transaction?: string } = {}
 ): Promise<any | null> {
   try {
-    return await firestoreFetch(
+    const doc = await firestoreFetch(
       docUrl(path, { transaction: opts.transaction }),
       { method: "GET" },
       // Leitura dentro de transação depende da service account de qualquer forma.
       !opts.transaction
     );
+    countFirestoreReads(1, `get ${path}`);
+    return doc;
   } catch (err) {
     if (err instanceof FirestoreRestError && err.status === 404) return null;
     throw err;
@@ -479,7 +507,9 @@ export async function restRunQuery(
   );
 
   if (!Array.isArray(data)) return [];
-  return data.filter((row) => row && row.document).map((row) => row.document);
+  const docs = data.filter((row) => row && row.document).map((row) => row.document);
+  countFirestoreReads(docs.length, `runQuery ${parentPath || "/"}:${structuredQuery?.from?.[0]?.collectionId ?? "?"}`);
+  return docs;
 }
 
 /** Roda uma aggregation query (usada por `.count()`) e devolve o total. */

@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCombinedArticleBySlug, getCombinedArticles } from "@/lib/articlesService";
+import { getCombinedArticleBySlug } from "@/lib/articlesService";
 import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
@@ -26,11 +26,18 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 
 export const revalidate = 86400; // artigo publicado é praticamente imutável; cada regeneração custa 1 escrita no KV (teto 1.000/dia no free)
 
+/**
+ * Deliberadamente NÃO pré-renderiza os artigos no build.
+ *
+ * Antes, isto lia a coleção `articles` inteira em todo `next build` — e cada artigo gerado
+ * pagava mais leituras. Devolvendo lista vazia, as páginas passam a ser geradas sob demanda
+ * na primeira visita e ficam em cache pelo ISR (KV) por `revalidate`. O resultado servido é
+ * o mesmo; o que some é o custo repetido a cada build.
+ *
+ * `dynamicParams` continua true (padrão), então qualquer slug é atendido normalmente.
+ */
 export async function generateStaticParams() {
-  const articles = await getCombinedArticles();
-  return articles.map((article) => ({
-    slug: article.slug,
-  }));
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

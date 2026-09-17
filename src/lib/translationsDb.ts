@@ -6,6 +6,7 @@
  * que quebram no isolate V8 do Cloudflare Workers.
  */
 import { getRestFirestore } from "./firestoreAdminRest";
+import { registerGameInSitemapIndex } from "./sitemapIndex";
 import { sanitizeTranslation } from "./translate";
 
 const TRANSLATIONS_COLLECTION = "game_translations";
@@ -150,6 +151,16 @@ export async function saveGameTranslations(
       .collection(TRANSLATIONS_COLLECTION)
       .doc(key)
       .set(docData, { merge: true });
+
+    // Mantém o índice do sitemap incremental: custa 1 leitura + 1 escrita apenas quando o
+    // jogo é NOVO. Sem isto, o sitemap voltaria a varrer a coleção inteira para se montar.
+    if (params.gameName) {
+      await registerGameInSitemapIndex({
+        i: key,
+        n: params.gameName,
+        u: docData.updatedAt,
+      });
+    }
   } catch (err) {
     console.warn(`Erro ao salvar tradução do jogo ${key} no Firestore:`, err);
   }

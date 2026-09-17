@@ -6,7 +6,7 @@
  * e o envio simultâneo de e-mails via Resend com prevenção contra IDOR.
  */
 
-import { getAdminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb, listAuthUserEmails } from "@/lib/firebaseAdmin";
 import type { RestDocumentSnapshot } from "@/lib/firestoreAdminRest";
 import { getResendClient } from "@/lib/email";
 import type { TargetedNotificationInput, GroupNotificationInput } from "@/lib/types";
@@ -159,6 +159,17 @@ export async function sendGroupNotification(input: GroupNotificationInput): Prom
     }
   }
 
+  // E-mails vêm do Firebase Auth, não do doc do usuário: `email` saiu do Firestore quando a
+  // PII foi isolada. Sem isto, o envio pararia silenciosamente depois da migração.
+  let emailByUid = new Map<string, string>();
+  if (input.sendEmail) {
+    try {
+      emailByUid = await listAuthUserEmails();
+    } catch (e) {
+      console.warn("[NotificationService] Falha ao obter e-mails do Auth:", e);
+    }
+  }
+
   let totalSent = 0;
   let errors = 0;
 
@@ -174,7 +185,7 @@ export async function sendGroupNotification(input: GroupNotificationInput): Prom
         linkLabel: input.linkLabel,
         createdBy: input.createdBy,
         sendEmail: input.sendEmail,
-        userEmail: uData.email,
+        userEmail: emailByUid.get(uDoc.id) ?? uData.email,
         userName: uData.displayName || uData.username,
       });
       totalSent++;

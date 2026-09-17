@@ -18,6 +18,7 @@
 // Transporte: Firestore REST API v1 (fetch nativo) — sem gRPC/protobufjs, que quebram no workerd.
 import { getGameUrl } from "./routes";
 import { firestoreRestQuery } from "./firestoreRest";
+import { readSitemapIndex } from "./sitemapIndex";
 
 /** Teto de segurança: um sitemap único aceita no máximo 50.000 URLs. */
 const HARD_CAP = 45_000;
@@ -68,6 +69,29 @@ export async function getRegisteredGamePages(
       };
     }
 
+    // Caminho normal: índice agregado (~9 leituras). A varredura de `game_translations`
+    // custava 1 leitura POR JOGO — 33.249 delas, em todo build e toda regeneração.
+    const indexed = await readSitemapIndex(limit);
+    if (indexed.length > 0) {
+      const pages: RegisteredGamePage[] = [];
+      const seen = new Set<string>();
+      for (const e of indexed) {
+        const id = String(e.i || "").trim();
+        const name = String(e.n || "").trim();
+        if (!id || !name || seen.has(id)) continue;
+        seen.add(id);
+        if (since && e.u && e.u <= since) continue;
+        pages.push({ path: getGameUrl({ id, name }), updatedAt: String(e.u || "") });
+      }
+      return pages;
+    }
+
+    // Fallback: índice ainda não populado (rodar scripts/build-sitemap-index.mjs).
+    // Mantido para não deixar o sitemap vazio, mas é o caminho CARO.
+    console.warn(
+      "[gameRegistry] Índice do sitemap vazio — caindo na varredura completa de game_translations. " +
+        "Rode scripts/build-sitemap-index.mjs para popular o índice."
+    );
     const docs = await firestoreRestQuery<{ gameId?: string; gameName?: string; updatedAt?: string }>(
       "game_translations",
       structuredQuery

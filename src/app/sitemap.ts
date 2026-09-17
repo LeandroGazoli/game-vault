@@ -14,14 +14,21 @@ import { getRegisteredGamePages } from "@/lib/gameRegistry";
 export const revalidate = 86400;
 
 /**
- * Teto de páginas de jogos vindas do registro. O padrão é o limite do próprio formato
- * (um sitemap único aceita no máximo 50.000 URLs, com margem) — truncar abaixo disso só
- * esconderia páginas que existem. Em 2026-09-08 o registro tinha 11.802 jogos.
+ * Teto de páginas de jogos no sitemap. Cada documento é UMA LEITURA do Firestore a cada
+ * regeneração, e `game_translations` tem dezenas de milhares de docs.
  *
- * O custo é uma leitura no Firestore por documento a cada regeneração (1x/dia via ISR).
- * Baixe `SITEMAP_GAME_LIMIT` se essas leituras pesarem na cota.
+ * O default é BAIXO de propósito. O default anterior era 45.000, e isso mordia de dois
+ * jeitos que passaram despercebidos:
+ *  - as vars do `wrangler.jsonc` são do RUNTIME do Worker e NÃO alcançam o `next build`,
+ *    então todo build local ignorava o limite configurado e lia a coleção inteira;
+ *  - um sitemap sem cache multiplicava isso por requisição de crawler.
+ * Resultado real observado: ~33k leituras por build, 144k num dia.
+ *
+ * Para publicar o sitemap completo, defina SITEMAP_GAME_LIMIT explicitamente no ambiente
+ * que vai gerá-lo — assim o custo é uma decisão consciente, nunca um acidente.
  */
-const REGISTRY_GAME_LIMIT = Number(process.env.SITEMAP_GAME_LIMIT || 45_000);
+const SITEMAP_DEFAULT_LIMIT = 500;
+const REGISTRY_GAME_LIMIT = Number(process.env.SITEMAP_GAME_LIMIT || SITEMAP_DEFAULT_LIMIT);
 
 const POPULAR_FALLBACK_IDS = [
   1942,   // The Witcher 3
