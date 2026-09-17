@@ -89,6 +89,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "MyGameList",
   },
+  // O Next gera `apple-mobile-web-app-capable` a partir de `appleWebApp.capable`, e o
+  // Chrome avisa no console que ela está obsoleta. A substituta padronizada não tem campo
+  // próprio na API de metadata, então vai por `other`. As duas convivem: navegadores
+  // antigos leem a da Apple, os atuais leem esta.
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: [
       // O .ico existe porque o navegador pede /favicon.ico por conta própria, sem olhar

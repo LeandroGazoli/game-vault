@@ -438,13 +438,34 @@ async function fetchIGDBWithRetry(
   );
 }
 
+/**
+ * Falha de COMUNICAÇÃO com o IGDB — categoricamente diferente de "o jogo não existe".
+ *
+ * A confusão entre as duas tinha consequência real: `fetchIGDBFromOrigin` devolvia `[]`
+ * nos dois casos, a página de jogo chamava `notFound()` e uma indisponibilidade passageira
+ * do IGDB virava "Página Não Encontrada" numa URL que está no nosso sitemap. Para o Google
+ * isso é um convite a desindexar; um 500 ele apenas tenta de novo depois.
+ */
+export class IgdbIndisponivelError extends Error {
+  constructor(endpoint: string, detalhe: string) {
+    super(`IGDB indisponível em '${endpoint}': ${detalhe}`);
+    this.name = "IgdbIndisponivelError";
+  }
+}
+
 async function fetchIGDBFromOrigin(
   endpoint: string,
   body: string,
-  maxRetries = 3
+  maxRetries = 3,
+  // Quando true, falha de comunicação vira exceção em vez de lista vazia. Só quem sabe
+  // diferenciar os dois casos deve ligar isto — hoje, a página de detalhe do jogo.
+  lancarSeFalhar = false
 ): Promise<any[]> {
   const token = await getTwitchAccessToken();
-  if (!token) return [];
+  if (!token) {
+    if (lancarSeFalhar) throw new IgdbIndisponivelError(endpoint, "sem token do Twitch");
+    return [];
+  }
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -483,19 +504,34 @@ async function fetchIGDBFromOrigin(
         }
       }
 
-      console.warn(`Erro IGDB (${endpoint}):`, res.status, await res.text());
+      const corpoErro = await res.text();
+      console.warn(`Erro IGDB (${endpoint}):`, res.status, corpoErro);
+      if (lancarSeFalhar) throw new IgdbIndisponivelError(endpoint, `HTTP ${res.status}`);
       break;
     } catch (err) {
+      // Um erro nosso, já classificado, não deve ser reclassificado como tentativa perdida.
+      if (err instanceof IgdbIndisponivelError) throw err;
       console.error(`Exceção IGDB (${endpoint}) tentativa ${attempt}:`, err);
       if (attempt < maxRetries) {
         const delayMs = 500 * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         continue;
       }
+      if (lancarSeFalhar) throw new IgdbIndisponivelError(endpoint, String(err));
     }
   }
 
+  if (lancarSeFalhar) throw new IgdbIndisponivelError(endpoint, "todas as tentativas falharam");
   return [];
+}
+
+/**
+ * Como `fetchIGDB`, mas distingue "não existe" (lista vazia) de "não deu para perguntar"
+ * (exceção). Sem cache de borda de propósito: cachear a ausência é o que perpetuaria um
+ * 404 falso.
+ */
+export async function fetchIGDBOuFalhar(endpoint: string, body: string): Promise<any[]> {
+  return fetchIGDBFromOrigin(endpoint, body, 3, true);
 }
 
 // =========================================================================
@@ -759,10 +795,12 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
 
   // Consulta rica do jogo e duração nativa (game_time_to_beats) em paralelo
   const [gameData, hltbData] = await Promise.all([
-    fetchIGDB(
+    // `fetchIGDBOuFalhar` em vez de `fetchIGDB`: aqui a diferença entre "o IGDB não tem
+    // esse jogo" e "não consegui falar com o IGDB" decide entre 404 e 500, e devolver 404
+    // numa URL que está no nosso sitemap faz o Google desindexá-la.
+    fetchIGDBOuFalhar(
       "games",
       `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, keywords.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.category, age_ratings.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id; where id = ${numId}; limit 1;`,
-      TTL_CONFIG.GAME_DETAILS
     ),
     fetchIGDB(
       "game_time_to_beats",

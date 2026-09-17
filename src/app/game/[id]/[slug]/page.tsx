@@ -72,7 +72,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function GameSlugPage({ params }: PageProps) {
   const { id, slug } = await params;
-  const game = await getGameDetailsApi(id).catch(() => null);
+  // SEM `.catch(() => null)` aqui, de propósito.
+  //
+  // Engolir o erro transformava indisponibilidade do IGDB em `notFound()`, e a página de um
+  // jogo válido — que está no nosso sitemap — passava a responder "Página Não Encontrada".
+  // Deixar a exceção subir faz o Next devolver erro de servidor: o Google volta depois em
+  // vez de desindexar, e nós enxergamos a falha no log em vez de um 404 silencioso.
+  //
+  // `getGameDetailsApi` só devolve null quando o IGDB respondeu que o jogo não existe.
+  const game = await getGameDetailsApi(id);
 
   if (!game) {
     notFound();
