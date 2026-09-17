@@ -43,6 +43,9 @@ export default function LevelUpCelebrationModal({
       const end = Date.now() + 2.5 * 1000;
       const colors = ["#00E5FF", "#F59E0B", "#A855F7", "#34D399", "#FFFFFF"];
 
+      // O laço precisa ser cancelável: fechar o modal antes dos 2,5s deixava o confetti
+      // disparando sobre a tela seguinte.
+      let rafId = 0;
       (function frame() {
         confetti({
           particleCount: 4,
@@ -62,9 +65,13 @@ export default function LevelUpCelebrationModal({
         });
 
         if (Date.now() < end) {
-          requestAnimationFrame(frame);
+          rafId = requestAnimationFrame(frame);
         }
       })();
+
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+      };
     } catch (e) {
       console.warn("Confetti effect failed:", e);
     }

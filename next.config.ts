@@ -64,12 +64,23 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://adservice.google.com https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com https://js.stripe.com https://*.adtrafficquality.google https://tpc.googlesyndication.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      // `static.cloudflareinsights.com` é o beacon do Cloudflare Web Analytics, injetado na
+      // resposta pela própria borda — não tem como declarar em outro lugar. Sem ele aqui o
+      // CSP bloqueia e não há métrica nenhuma.
+      // `googleads.g.doubleclick.net` e `www.googleadservices.com` servem o script de
+      // conversão do Google Ads que o gtag carrega em seguida.
+      // `unpkg.com` só entra em desenvolvimento: é de onde vem o react-scan, que o
+      // layout injeta apenas quando NODE_ENV === "development". Não vai para produção.
+      `script-src 'self' 'unsafe-eval' 'unsafe-inline'${
+        process.env.NODE_ENV === "development" ? " https://unpkg.com" : ""
+      } https://accounts.google.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://www.googleadservices.com https://adservice.google.com https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com https://js.stripe.com https://*.adtrafficquality.google https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com`,
+      // `accounts.google.com` serve a folha de estilo do Google One Tap. Sem ela o prompt
+      // aparece sem formatação nenhuma — e o bloqueio acontece em produção, não só em dev.
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
       "img-src 'self' data: blob: https:",
       "media-src 'self' data: blob: https:",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://accounts.google.com https://api.stripe.com https://api.igdb.com https://id.twitch.tv https://api.mymemory.translated.net https://howlongtobeat.com https://*.google-analytics.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.googleadservices.com",
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://accounts.google.com https://api.stripe.com https://api.igdb.com https://id.twitch.tv https://api.mymemory.translated.net https://howlongtobeat.com https://*.google-analytics.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.googleadservices.com https://cloudflareinsights.com https://static.cloudflareinsights.com",
       "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://accounts.google.com https://checkout.stripe.com https://billing.stripe.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://www.youtube.com https://www.youtube-nocookie.com",
       "frame-ancestors 'self'",
       "object-src 'none'",

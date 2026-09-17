@@ -14,13 +14,13 @@ export default function MaintenanceOverlay() {
   useEffect(() => {
     if (!db) return;
 
-    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
-      if (snap.exists()) {
-        setSettings(snap.data() as SystemSettings);
-      }
-    });
-
-    return () => unsub();
+    // Rota cacheada: este overlay monta em toda página. O bloqueio REAL de manutenção
+    // acontece no middleware (503 na borda) e não depende disto — aqui é só o aviso visual
+    // para o admin, que é quem consegue navegar durante a manutenção.
+    fetch("/api/system/settings")
+      .then((r) => (r.ok ? (r.json() as Promise<{ settings?: SystemSettings | null }>) : null))
+      .then((res) => setSettings(res?.settings ?? null))
+      .catch(() => {});
   }, []);
 
   // Se o modo manutenção estiver desativado, ou for o admin, ou ainda carregando auth, não bloqueia

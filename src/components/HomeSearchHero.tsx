@@ -2,8 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
+import LiveSearchInput from "@/components/LiveSearchInput";
 import { Search, Dices, Languages, Trophy, Clock, Calendar as CalendarIcon, Sparkles } from "lucide-react";
-import { openSpotlightSearch } from "@/components/SpotlightSearchModal";
 import GtaViCountdownBadge from "@/components/GtaViCountdownBadge";
 
 interface HomeSearchHeroProps {
@@ -69,20 +69,25 @@ export default function HomeSearchHero({
 
         {/* Barra de Busca Ampla em Destaque com Efeito Neon Sunset */}
         <div className="w-full max-w-2xl mb-2 sm:mb-5">
-          <div
-            onClick={() => openSpotlightSearch()}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && openSpotlightSearch()}
-            className="group/search relative flex items-center gap-3.5 w-full px-5 py-4 rounded-2xl bg-black/75 hover:bg-black/90 border border-white/15 hover:border-[#ff007f]/70 focus-within:border-[#ff6b00] text-neutral-300 hover:text-white transition-all shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl cursor-pointer active:scale-[0.995]"
+          {/* MOBILE: leva para /search (rota real — o botão voltar do Android funciona,
+              e o teclado virtual ganha a tela inteira em vez de disputar com um overlay). */}
+          <Link
+            href="/search"
+            className="md:hidden group/search relative flex items-center gap-3.5 w-full px-5 py-4 rounded-2xl bg-black/75 active:bg-black/90 border border-white/15 text-neutral-300 transition-all shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl active:scale-[0.995]"
+            aria-label="Buscar jogos"
           >
-            <Search className="w-5 h-5 text-[#ff6b00] group-hover/search:text-[#ff007f] shrink-0 transition-colors" />
-            <span className="text-xs sm:text-sm md:text-base font-medium text-neutral-300 group-hover/search:text-white truncate text-left flex-1">
-              Buscar entre mais de 150.000 jogos, franquias ou dublagens...
+            <Search className="w-5 h-5 text-[#ff6b00] shrink-0" />
+            <span className="text-sm font-medium text-neutral-300 truncate text-left flex-1">
+              Buscar jogos, franquias ou dublagens...
             </span>
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 text-neutral-300 font-mono text-xs border border-white/10 shadow-inner group-hover/search:border-[#ff007f]/50">
-              ⌘K
-            </kbd>
+          </Link>
+
+          {/* DESKTOP: campo real com resultados ancorados abaixo, sem overlay. */}
+          <div className="hidden md:block">
+            <LiveSearchInput
+              variant="hero"
+              placeholder="Buscar entre mais de 150.000 jogos, franquias ou dublagens..."
+            />
           </div>
         </div>
 

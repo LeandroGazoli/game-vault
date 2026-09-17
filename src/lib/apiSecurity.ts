@@ -19,6 +19,31 @@ const ALLOWED_HOSTS = new Set([
 ]);
 
 /**
+ * Sufixos aceitos além da lista exata. O ponto inicial é essencial: sem ele,
+ * `evilmygameslist.com.br` passaria no teste.
+ *
+ * `.mygameslist.com.br` cobre qualquer ambiente nosso — homologação e o que vier depois.
+ * Sem isto, `homolog.mygameslist.com.br` levava 403 em toda rota de jogos e a home subia
+ * com o catálogo vazio.
+ *
+ * `.vercel.app` é resquício: o site saiu da Vercel. Enquanto estiver aqui, qualquer app
+ * hospedado lá pode consumir nossa API de jogos. Vale remover numa limpeza dedicada.
+ */
+const ALLOWED_HOST_SUFFIXES = [
+  ".mygameslist.com.br",
+  ".workers.dev",
+  ".pages.dev",
+  ".vercel.app",
+];
+
+function isHostPermitido(host: string): boolean {
+  return (
+    ALLOWED_HOSTS.has(host) ||
+    ALLOWED_HOST_SUFFIXES.some((sufixo) => host.endsWith(sufixo))
+  );
+}
+
+/**
  * Cache de chave criptográfica HMAC importada para máximo desempenho no Edge/Node.
  */
 let cachedCryptoKey: CryptoKey | null = null;
@@ -189,12 +214,7 @@ export function isSameOriginOrLegit(request: NextRequest): {
   if (origin) {
     try {
       const originHost = new URL(origin).hostname;
-      const isAllowedHost =
-        ALLOWED_HOSTS.has(originHost) ||
-        originHost.endsWith(".vercel.app") ||
-        originHost.endsWith(".workers.dev") ||
-        originHost.endsWith(".pages.dev");
-      if (!isAllowedHost) {
+      if (!isHostPermitido(originHost)) {
         return {
           allowed: false,
           reason: `Origem '${originHost}' não autorizada.`,
@@ -210,12 +230,7 @@ export function isSameOriginOrLegit(request: NextRequest): {
   if (referer) {
     try {
       const refererHost = new URL(referer).hostname;
-      const isAllowedReferer =
-        ALLOWED_HOSTS.has(refererHost) ||
-        refererHost.endsWith(".vercel.app") ||
-        refererHost.endsWith(".workers.dev") ||
-        refererHost.endsWith(".pages.dev");
-      if (!isAllowedReferer) {
+      if (!isHostPermitido(refererHost)) {
         return {
           allowed: false,
           reason: `Referer '${refererHost}' não autorizado.`,

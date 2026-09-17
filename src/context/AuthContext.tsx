@@ -66,9 +66,27 @@ function setCachedUserProfile(profile: UserProfile | null) {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => getCachedUserProfile());
+  // O cache do localStorage NÃO pode entrar no primeiro render.
+  //
+  // O servidor sempre renderiza deslogado (não há localStorage lá). Se o cliente já começar
+  // com o perfil em mãos, a primeira árvore que o React monta diverge do HTML que veio do
+  // servidor — e como meio app ramifica em `user`/`isPremium` (navbar, AdBanner, menus), a
+  // divergência é ESTRUTURAL. É exatamente o React #418 que aparecia no console em produção,
+  // e o custo não é só o aviso: o React descarta a árvore e remonta tudo no cliente.
+  //
+  // O cache continua valendo — só entra logo abaixo, depois da montagem.
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState(() => !getCachedUserProfile());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const cached = getCachedUserProfile();
+    if (!cached) return;
+    // `?? cached` porque o onAuthStateChanged pode ter chegado antes: o perfil real do
+    // servidor é sempre mais novo que o cache e não pode ser sobrescrito por ele.
+    setUser((atual) => atual ?? cached);
+    setIsLoading(false);
+  }, []);
 
   const updateAndCacheUser = useCallback((newProfile: UserProfile | null) => {
     setUser(newProfile);

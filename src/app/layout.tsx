@@ -7,13 +7,10 @@ import Logo from "@/components/Logo";
 import PwaRegister from "@/components/PwaRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
-import SpotlightSearchModal from "@/components/SpotlightSearchModal";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import GoogleAdScript from "@/components/ads/GoogleAdScript";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import BackgroundController from "@/components/background/BackgroundController";
 import BackgroundSwitcherFloating from "@/components/background/BackgroundSwitcherFloating";
@@ -94,6 +91,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      // O .ico existe porque o navegador pede /favicon.ico por conta própria, sem olhar
+      // estas declarações — sem o arquivo, 404 em toda visita.
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
       { url: "/icon.svg", type: "image/svg+xml" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
@@ -173,6 +173,13 @@ export default function RootLayout({
           <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
         )}
 
+        {/* Cinto e suspensório: robots.txt impede o rastreamento, mas se alguma URL de
+            homologação vazar (link compartilhado, referer), só a meta noindex garante que
+            ela não entre no índice. */}
+        {process.env.IS_HOMOLOG === "true" && (
+          <meta name="robots" content="noindex, nofollow, noarchive" />
+        )}
+
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -201,7 +208,6 @@ export default function RootLayout({
             <MobileBottomNav />
 
             {/* Modais Globais: Busca Spotlight, Instalação PWA & Consentimento de Cookies */}
-            <SpotlightSearchModal />
             <PwaInstallPrompt />
             <BannedUserModal />
             <MaintenanceOverlay />
@@ -360,8 +366,9 @@ export default function RootLayout({
           </GameLibraryProvider>
         </AuthProvider>
       </ViewTransitionsProvider>
-        <Analytics />
-        <SpeedInsights />
+        {/* Analytics da Vercel saiu junto com a Vercel: os scripts moram em /_vercel/*,
+            que na Cloudflare devolve 404 e o navegador recusa por MIME type. Quem mede
+            agora é o Cloudflare Web Analytics, injetado pela borda (ver CSP). */}
         <GoogleAnalytics gaId="G-G7QH1XG25C" />
         <SecurityTokenInterceptor />
       </body>

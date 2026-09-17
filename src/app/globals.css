@@ -23,6 +23,21 @@
   --accent-cyan: #00e5ff;
   --accent-emerald: #10b981;
 
+  /* Tokens exigidos pelos componentes shadcn. ADITIVOS: nenhum valor existente foi
+     alterado, então a aparência atual do site permanece idêntica. Os valores reaproveitam
+     a paleta já definida acima em vez de introduzir cores novas. */
+  --card-foreground: #f8fafc;
+  --popover: #1e2536;
+  --popover-foreground: #f8fafc;
+  --secondary: #1e2536;
+  --secondary-foreground: #f8fafc;
+  --accent-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --input: #262f40;
+  --ring: #10b981;
+  --radius: 0.75rem;
+
   --surface-0: #0f1219;
   --surface-1: #161b26;
   --surface-2: #1e2536;

@@ -94,7 +94,7 @@ export default function GameVaultCard({
                 </div>
               )}
 
-              {userGame.userRating !== null && (
+              {typeof userGame.userRating === "number" && (
                 <div className="flex items-center justify-between py-1.5 border-b border-white/5">
                   <span className="text-zinc-400">Sua Avaliação:</span>
                   <span className="font-bold text-amber-400 font-mono flex items-center gap-1">

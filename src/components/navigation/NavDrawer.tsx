@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -61,7 +61,20 @@ export default function NavDrawer({ isOpen, onClose, onOpenAuth }: NavDrawerProp
     }
   }, [isOpen, onClose]);
 
-  if (typeof document === "undefined") return null;
+  // O portal não pode existir no PRIMEIRO render do cliente.
+  //
+  // `typeof document === "undefined"` só protege o servidor. Na hidratação o document já
+  // existe, então o React injetava esta <div> em document.body — um nó que não estava no
+  // HTML do servidor. Resultado: "server rendered HTML didn't match the client" (#418), e o
+  // React descartava a árvore inteira para remontar.
+  //
+  // Diferente dos outros portais do projeto, este não pode sair com `!isOpen`: a <div> fica
+  // montada de propósito, com `opacity-0`, para a transição de abrir/fechar funcionar.
+  // Por isso a flag de montagem.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  if (!montado || typeof document === "undefined") return null;
 
   return createPortal(
     <div

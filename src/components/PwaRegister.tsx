@@ -5,6 +5,7 @@ import { isNativePlatform } from "@/lib/capacitor";
 
 export default function PwaRegister() {
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // Se estiver rodando dentro do WebView nativo do Capacitor (iOS ou Android),
@@ -62,7 +63,11 @@ export default function PwaRegister() {
           reg.update().catch(() => {});
         }, 60 * 60 * 1000);
 
-        return () => {
+        // Estes precisam ser guardados FORA: `registerSW` é async, então este `return`
+        // devolveria uma Promise<() => void> — que o React descarta, e o listener de `load`
+        // também. Resultado: o setInterval de 1h e o listener de visibilitychange nunca
+        // eram removidos. Único desbalanceamento add/remove do projeto.
+        cleanupRef.current = () => {
           clearInterval(intervalId);
           document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
@@ -75,10 +80,13 @@ export default function PwaRegister() {
       registerSW();
     } else {
       window.addEventListener("load", registerSW);
-      return () => {
-        window.removeEventListener("load", registerSW);
-      };
     }
+
+    return () => {
+      window.removeEventListener("load", registerSW);
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+    };
   }, []);
 
   // PwaRegister opera 100% silenciosamente em segundo plano, sem pop-ups ou toasts

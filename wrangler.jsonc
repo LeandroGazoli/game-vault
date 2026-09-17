@@ -29,6 +29,10 @@
     "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "gamevault-profile.firebasestorage.app",
     "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
     "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
+    // ⚠️ INERTE. O Next substitui `process.env.NEXT_PUBLIC_*` pelo valor literal no BUILD,
+    // então declarar aqui não muda o bundle. O valor que vale em produção é o do build —
+    // hoje o fallback do código, "https://www.mygameslist.com.br" (confira em
+    // `src/app/sitemap.ts`). Mantido só para não parecer que a var sumiu.
     "NEXT_PUBLIC_SITE_URL": "https://game-vault.leandro-gazoli.workers.dev",
     // SITEMAP_GAME_LIMIT foi REMOVIDO de propósito: existia para conter leituras quando o
     // sitemap varria game_translations. Com o índice agregado o custo é ~10 leituras
@@ -50,6 +54,95 @@
       "enabled": true,
       "head_sampling_rate": 1,
       "persist": true
+    }
+  }
+,
+
+  /**
+   * AMBIENTE DE HOMOLOGAÇÃO — worker separado para revisar branches antes do merge.
+   *
+   * Deploy:  npm run deploy:homolog
+   * URL:     https://homolog.mygameslist.com.br
+   *
+   * KV PRÓPRIO, e isso é essencial: com o namespace compartilhado, ligar o modo manutenção
+   * em homologação BLOQUEARIA O SITE REAL, já que o middleware lê a mesma chave. O cache
+   * incremental também é separado, senão as duas versões se sobrescreveriam.
+   *
+   * ⚠️ O FIRESTORE É O MESMO de produção. Não há projeto Firebase separado, então escrita
+   * feita em homologação altera dados reais. Use para revisar UI e navegação; evite testar
+   * fluxos destrutivos (moderação, concessão de plano, exclusão).
+   *
+   * ⚠️ SEO: `NEXT_PUBLIC_SITE_URL` aponta para o domínio de homologação e `IS_HOMOLOG`
+   * liga o bloqueio total em robots.txt — sem isso o Google indexaria o ambiente e criaria
+   * conteúdo duplicado concorrendo com o site real.
+   */
+  "env": {
+    "homolog": {
+      "name": "game-vault-homolog",
+      // `custom_domain: true` faz o wrangler criar o registro DNS e emitir o certificado
+      // no primeiro deploy — não há nada a configurar à mão no painel.
+      //
+      // ⚠️ DEPOIS DO PRIMEIRO DEPLOY, um passo manual que o wrangler não faz: adicionar
+      // `homolog.mygameslist.com.br` em Firebase → Authentication → Settings → Authorized
+      // domains. Sem isso o login com Google falha com `auth/unauthorized-domain` e você
+      // não consegue revisar nada que dependa de usuário logado.
+      "routes": [
+        {
+          "pattern": "homolog.mygameslist.com.br",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyCBeWB14tmyQZZddMia62SpzQ5iTRio8TI",
+        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "gamevault-profile.firebaseapp.com",
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "gamevault-profile",
+        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "gamevault-profile.firebasestorage.app",
+        "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
+        "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
+        // ⚠️ INERTE, pelo mesmo motivo da var de produção: quem realmente define isto é o
+        // `NEXT_PUBLIC_SITE_URL` exportado no build por `scripts/deploy-homolog.sh`.
+        "NEXT_PUBLIC_SITE_URL": "https://homolog.mygameslist.com.br",
+        "MAINTENANCE_MODE": "false",
+        "IS_HOMOLOG": "true",
+        // Sitemap curto: homologação não é indexada, então não há motivo para gastar
+        // leitura do Firestore montando 33 mil URLs aqui.
+        "SITEMAP_GAME_LIMIT": "50"
+      },
+      // Namespaces PRÓPRIOS, separados dos de produção. O isolamento é o ponto todo:
+      //
+      // - `APP_CONFIG` guarda a flag de manutenção. Compartilhar significaria que ligar
+      //   manutenção em homologação DERRUBARIA O SITE REAL, já que o middleware lê a mesma
+      //   chave.
+      // - `NEXT_INC_CACHE_KV` guarda o cache incremental. Compartilhado, as duas versões se
+      //   sobrescreveriam e você revisaria páginas de produção achando que são da branch.
+      //
+      // Custo: cada deploy aqui popula o cache (~115 escritas) na cota da conta, hoje de
+      // 1 mi/mês no Workers Paid. Era proibitivo no gratuito (1.000/dia); deixou de ser.
+      "kv_namespaces": [
+        {
+          "binding": "NEXT_INC_CACHE_KV",
+          "id": "5ba84aafacf245cdb8fa9e0efe5dcba8"
+        },
+        {
+          "binding": "APP_CONFIG",
+          "id": "439b6f94d9304d1cbafaff7b7f2f597d"
+        }
+      ],
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      // Blocos `env.*` NÃO herdam `observability` do topo — sem repetir aqui, o
+      // `wrangler tail --env homolog` mostra só a linha da requisição e nenhum console.log,
+      // que é justamente o que se quer ler quando algo falha em homologação.
+      "observability": {
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+          "persist": true
+        }
+      }
     }
   }
 }

@@ -1,4 +1,16 @@
-import DOMPurify from "isomorphic-dompurify";
+import { useEffect, useState } from "react";
+/**
+ * `dompurify` (só-browser) em vez de `isomorphic-dompurify`.
+ *
+ * O pacote isomórfico inicializa o **jsdom no momento do IMPORT**, não na chamada — então
+ * bastava um módulo renderizado no servidor importá-lo para disparar
+ * `ReferenceError: MessagePort is not defined` no isolate V8 do Cloudflare. Guardar a
+ * CHAMADA não resolvia; era preciso não carregar o jsdom.
+ *
+ * Como toda sanitização aqui acontece depois da hidratação (ver `useSanitizedHtml`), a
+ * versão de browser é suficiente e não arrasta dependência de Node nenhuma.
+ */
+import DOMPurify from "dompurify";
 
 /**
  * Normaliza SVGs não codificados dentro de data URIs no CSS (ex: cursores e backgrounds),
@@ -16,8 +28,25 @@ function normalizeSvgDataUris(input: string): string {
   });
 }
 
+/**
+ * Só há DOM real no navegador. No servidor, `isomorphic-dompurify` recorre ao **jsdom**, que
+ * depende de APIs do Node inexistentes no isolate V8 do Cloudflare Workers — o sintoma é
+ * `ReferenceError: MessagePort is not defined` seguido de `JSDOM is not a constructor`.
+ *
+ * Componentes `"use client"` TAMBÉM são renderizados no servidor (SSR), então marcar o
+ * componente como client não basta: a sanitização precisa ser adiada para depois da
+ * hidratação. Ver `useSanitizedHtml`.
+ */
+function hasDom(): boolean {
+  return typeof window !== "undefined" && typeof window.document !== "undefined";
+}
+
 export function sanitizeCustomHtml(dirtyHtml: string): string {
   if (!dirtyHtml || typeof dirtyHtml !== "string") return "";
+
+  // Sem DOM: devolve vazio em vez de tentar (e quebrar). NUNCA devolver o HTML cru aqui —
+  // seria injetar conteúdo não sanitizado no SSR.
+  if (!hasDom()) return "";
 
   const preprocessed = normalizeSvgDataUris(dirtyHtml);
   const clean = DOMPurify.sanitize(preprocessed, {
@@ -81,3 +110,24 @@ export function isPureHtmlBio(content?: string | null): boolean {
   return /^\s*<(style|div|section|main|article|table|svg|button|header|footer|nav|aside|input)/i.test(trimmed);
 }
 
+/**
+ * Hook para renderizar HTML sanitizado em componente client sem quebrar no SSR nem causar
+ * divergência de hidratação.
+ *
+ * O servidor renderiza vazio (não há DOM para sanitizar com segurança) e o conteúdo aparece
+ * logo após a hidratação. Como é conteúdo decorativo de perfil/descrição, o efeito visual é
+ * imperceptível — e evita tanto o crash do jsdom quanto injetar HTML não sanitizado no SSR.
+ */
+export function useSanitizedHtml(dirtyHtml?: string | null): string {
+  const [clean, setClean] = useState("");
+
+  useEffect(() => {
+    if (!dirtyHtml || !dirtyHtml.trim()) {
+      setClean("");
+      return;
+    }
+    setClean(sanitizeCustomHtml(dirtyHtml));
+  }, [dirtyHtml]);
+
+  return clean;
+}

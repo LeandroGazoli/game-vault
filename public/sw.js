@@ -2,7 +2,7 @@
 // GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v4.1.0"; // Atualize este valor a cada deploy para invalidar caches antigos
+const SW_VERSION = "v4.2.0"; // Atualize este valor a cada deploy para invalidar caches antigos
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,
@@ -76,6 +76,29 @@ async function limitCacheEntries(cacheName, maxItems = 50) {
   }
 }
 
+/**
+ * `respondWith` EXIGE um Response. `caches.match()` resolve para `undefined` quando não há
+ * correspondência, e entregar isso derruba a requisição inteira com
+ * "Failed to convert value to 'Response'" — foi o que quebrava navegação por link no site.
+ *
+ * Cuidado com o atalho `caches.match(req) || fallback`: `caches.match` devolve uma PROMISE,
+ * que é sempre truthy, então o `||` nunca dispara. Só o await resolve isso.
+ */
+async function cacheOuEntao(request, fallback) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  return fallback();
+}
+
+/** Resposta de último recurso, para nunca rejeitar um FetchEvent. */
+function respostaDeFalha(status = 504) {
+  return new Response("", {
+    status,
+    statusText: "Sem rede e sem cache",
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
 // Interceptação inteligente de requisições
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -94,12 +117,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1. Navegação de páginas HTML: Network First com timeout de segurança (2500ms) e fallback offline
+  // 1. Navegação de páginas HTML: Network First com timeout de segurança e fallback offline
   if (request.mode === "navigate") {
     const fetchWithTimeout = new Promise((resolve, reject) => {
+      // 2500ms era agressivo demais: uma página de jogo com worker frio passa disso com
+      // facilidade e o usuário recebia a tela de offline com a rede funcionando. O fallback
+      // existe para quem está SEM rede — 10s separa os dois casos sem punir o lento.
       const timeoutId = setTimeout(() => {
         reject(new Error("Network timeout"));
-      }, 2500);
+      }, 10000);
 
       fetch(request)
         .then((res) => {
@@ -145,10 +171,7 @@ self.addEventListener("fetch", (event) => {
             }
             return response;
           })
-          .catch(() => {
-            // Em caso de falha de rede ao baixar chunk, tenta qualquer correspondência em cache
-            return caches.match(request) || new Response("", { status: 408 });
-          });
+          .catch(() => cacheOuEntao(request, () => respostaDeFalha(408)));
       }),
     );
     return;
@@ -166,16 +189,18 @@ self.addEventListener("fetch", (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached;
 
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAMES.images).then((cache) => {
-              cache.put(request, clone);
-              limitCacheEntries(CACHE_NAMES.images, 50);
-            });
-          }
-          return response;
-        });
+        return fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAMES.images).then((cache) => {
+                cache.put(request, clone);
+                limitCacheEntries(CACHE_NAMES.images, 50);
+              });
+            }
+            return response;
+          })
+          .catch(() => respostaDeFalha());
       }),
     );
     return;
@@ -195,8 +220,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Padrão: Network First com fallback de cache
-  event.respondWith(fetch(request).catch(() => caches.match(request)));
+  // Padrão: Network First com fallback de cache.
+  //
+  // Aqui caem, entre outras coisas, as requisições RSC do Next (`?_rsc=...`): navegar por
+  // um <Link> não tem `mode: "navigate"`, então NÃO passa pelo bloco 1. Era este ramo que
+  // devolvia `undefined` e produzia o "Failed to convert value to 'Response'" ao abrir uma
+  // página de jogo pelo catálogo.
+  event.respondWith(
+    fetch(request).catch(() => cacheOuEntao(request, () => respostaDeFalha()))
+  );
 });
 
 // ==========================================

@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { sanitizeCustomHtml, isPureHtmlBio } from "@/lib/sanitizeHtml";
+import { useSanitizedHtml, isPureHtmlBio } from "@/lib/sanitizeHtml";
 
 interface IndieDescriptionRendererProps {
   content?: string | null;
@@ -33,10 +33,7 @@ export default function IndieDescriptionRenderer({
     return "markdown";
   }, [content, mode]);
 
-  const sanitizedHtml = useMemo(() => {
-    if (!content || !content.trim()) return "";
-    return sanitizeCustomHtml(content);
-  }, [content]);
+  const sanitizedHtml = useSanitizedHtml(content);
 
   if (!content || !content.trim()) {
     return (
