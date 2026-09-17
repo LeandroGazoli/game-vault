@@ -36,3 +36,15 @@ next-env.d.ts
 # cloudflare / opennext
 .open-next
 .wrangler
+
+# credenciais — NUNCA versionar
+# A chave da service account do Firebase dá acesso administrativo total ao Firestore e ao
+# Auth, ignorando todas as Security Rules. Os padrões abaixo pegam os nomes que o console
+# do Google gera por padrão, para o arquivo nunca entrar num commit por descuido.
+*serviceaccount*.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+gamevault-profile-*.json
+firebase-adminsdk*.json
+*.pem
+*.p12
