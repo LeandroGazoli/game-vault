@@ -119,6 +119,37 @@ grava no KV.
 emergência. Ela não depende de KV. Mas ativá-la exige deploy, que também está bloqueado...
 então o freio só ajuda se a cota estourar DEPOIS de você já ter deployado.
 
+### Espaço: a faxina agora vem no deploy
+
+Escrita e espaço são limites diferentes. O limite de 1.000/dia é de **operações**; o de
+1 GB é de **espaço** — e esse vinha sendo consumido sem ninguém apagar nada: cada deploy
+grava as páginas sob um build ID novo e deixa o anterior para trás. Em 17/09 o namespace
+tinha **1.392 chaves em 23 gerações, com só 1 em uso, ~190 MB** — crescendo ~9 MB por deploy.
+
+Por isso o deploy de produção passou a ser um script:
+
+```
+npm run deploy              # build + deploy + faxina
+npm run deploy -- --no-purge
+npm run purge:kv            # simula a faxina avulsa (--apply para valer)
+```
+
+A ordem é o que torna isso seguro:
+
+1. `wrangler deploy` (que num projeto OpenNext dispara `opennextjs-cloudflare deploy`:
+   popula o cache e só então publica);
+2. **com o deploy confirmado**, o build ID vai para a chave `deploy/current-build-id`;
+3. a purga apaga tudo que **não** é esse ID.
+
+O passo 2 existe porque o `.next/BUILD_ID` local é uma fonte enganosa: se você buildou uma
+branch e não deployou, ele aponta para algo que nunca esteve no ar — e a purga trataria
+produção inteira como órfã. O script **aborta** se nada confirmar que o build preservado
+está no ar. Essa guarda já pegou exatamente esse caso no primeiro teste.
+
+Teto de 900 exclusões por execução (a exclusão tem cota própria de 1.000/dia), então uma
+faxina acumulada pode precisar de duas rodadas. Falha na purga não invalida o deploy — o
+site já está no ar.
+
 ### Como reduzir o consumo
 
 - Agrupe alterações em menos deploys (o maior consumidor de longe).

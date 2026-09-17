@@ -13,7 +13,9 @@
     "cap:ios": "cap open ios",
     "build:worker": "opennextjs-cloudflare build",
     "doctor": "npx react-doctor@latest",
-    "deploy:homolog": "bash scripts/deploy-homolog.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:homolog": "bash scripts/deploy-homolog.sh",
+    "purge:kv": "node scripts/purge-kv-cache.mjs --from-kv"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
