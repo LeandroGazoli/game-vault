@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCombinedArticleBySlug } from "@/lib/articlesService";
-import { sanitizeCustomHtml } from "@/lib/sanitizeHtml";
+import ArticleHtmlContent from "@/components/articles/ArticleHtmlContent";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
 import {
@@ -202,12 +202,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
 
         {/* Conteúdo Principal do Artigo */}
         {article.contentHtml ? (
-          <div
-            className="prose prose-invert prose-emerald max-w-none space-y-6 text-sm sm:text-base text-gray-300 leading-relaxed font-sans"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeCustomHtml(article.contentHtml),
-            }}
-          />
+          <ArticleHtmlContent html={article.contentHtml} />
         ) : (
           <div className="prose prose-invert max-w-none space-y-8 text-sm sm:text-base text-gray-300 leading-relaxed">
             {article.sections.map((section, idx) => (
