@@ -386,16 +386,41 @@ class RequestDispatcher {
   private lastDispatchTime = 0;
   private isTimerScheduled = false;
 
+  /**
+   * Espera máxima na fila antes de a tarefa ser executada direto.
+   *
+   * ISTO NÃO É AJUSTE FINO, É PROTEÇÃO CONTRA TRAVAMENTO. No Workers, o `setTimeout` que
+   * move a fila é agendado DENTRO de uma requisição e morre junto com ela. Quando isso
+   * acontece, tarefas enfileiradas por OUTRAS requisições ficam presas para sempre, e o
+   * runtime mata cada uma com "your Worker's code had hung and would never generate a
+   * response" — foi assim que as rotas de catálogo passaram a devolver 500.
+   *
+   * Estourado o teto, a tarefa roda imediatamente: prefiro passar do limite do IGDB e levar
+   * um 429 (que tem retry e cai no cache stale) a pendurar a requisição do usuário.
+   */
+  private readonly maxQueueWaitMs = 2500;
+
   async schedule<T>(task: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this.queue.push(async () => {
+      let jaExecutou = false;
+
+      const executar = async () => {
+        if (jaExecutou) return;
+        jaExecutou = true;
+        clearTimeout(escapeTimer);
         try {
-          const result = await task();
-          resolve(result);
+          resolve(await task());
         } catch (err) {
           reject(err);
         }
-      });
+      };
+
+      // A válvula de escape é agendada na requisição que está chamando, então ela morre
+      // junto com essa requisição — exatamente o que se quer: ninguém fica esperando por
+      // um temporizador de terceiros.
+      const escapeTimer = setTimeout(executar, this.maxQueueWaitMs);
+
+      this.queue.push(executar);
       this.processNext();
     });
   }
