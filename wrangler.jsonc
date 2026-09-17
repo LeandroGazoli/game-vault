@@ -89,6 +89,18 @@
         // leitura do Firestore montando 33 mil URLs aqui.
         "SITEMAP_GAME_LIMIT": "50"
       },
+      // SEM `NEXT_INC_CACHE_KV` de propósito — duas razões:
+      //
+      // 1. CUSTO: todo deploy popula o cache incremental escrevendo uma chave por página, e
+      //    o plano gratuito dá 1.000 ESCRITAS de KV por dia, compartilhadas com produção.
+      //    Um ambiente de revisão não deve competir por esse orçamento (foi exatamente o
+      //    que estourou na primeira tentativa: "free usage limit for this operation").
+      //
+      // 2. É MELHOR ASSIM PARA REVISÃO: sem ISR, cada acesso renderiza na hora. Você sempre
+      //    vê o que a branch produz, nunca uma versão em cache de um deploy anterior.
+      //
+      // O preço é leitura do Firestore por requisição — irrelevante num ambiente com um
+      // único revisor, ainda mais com SITEMAP_GAME_LIMIT=50.
       "kv_namespaces": [
         {
           "binding": "NEXT_INC_CACHE_KV",

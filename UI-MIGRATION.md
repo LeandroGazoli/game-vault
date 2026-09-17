@@ -89,3 +89,40 @@ verificação visual, é mudança cega. Vale fazer com o site aberto ao lado.
   `/api/system/settings` ou `/api/system/features`.
 - Sanitizar HTML: use o hook `useSanitizedHtml`. O `dompurify` só funciona no navegador —
   chamar no SSR quebra no workerd.
+
+---
+
+## ⚠️ Limite de escrita do KV — restrição operacional descoberta em 17/09
+
+O plano gratuito do Workers dá **1.000 escritas de KV por dia**, e isso é mais apertado do
+que parece:
+
+| Operação | Custo em escritas |
+|---|---|
+| Um `wrangler deploy` | **~115** (o cache incremental grava uma chave por página) |
+| Cada regeneração de ISR | 1 por página regenerada |
+| Toggle de manutenção pelo painel | 1 |
+
+Ou seja: **cerca de 8 deploys por dia** esgotam a cota sozinhos. Foi o que aconteceu em
+17/09 — o erro é `your account has reached the free usage limit for this operation for today
+[code: 10048]`.
+
+### Duas consequências que importam
+
+**1. Com a cota esgotada, não dá para deployar.** O `deploy` falha na etapa de popular o
+cache, antes de publicar. Se houver correção urgente, ela fica bloqueada.
+
+**2. Com a cota esgotada, o painel não liga nem desliga a manutenção**, porque o toggle
+grava no KV.
+
+**A saída nos dois casos é a var `MAINTENANCE_MODE`** no `wrangler.jsonc` — o freio de
+emergência. Ela não depende de KV. Mas ativá-la exige deploy, que também está bloqueado...
+então o freio só ajuda se a cota estourar DEPOIS de você já ter deployado.
+
+### Como reduzir o consumo
+
+- Agrupe alterações em menos deploys (o maior consumidor de longe).
+- `revalidate` longo: cada regeneração é uma escrita. Nada abaixo de 1800s.
+- Menos páginas pré-renderizadas: `generateStaticParams` vazio quando a página puder nascer
+  sob demanda (já feito em `/artigos/[slug]`).
+- Se virar gargalo recorrente, o caminho é KV pago ou trocar o backend do cache incremental.
