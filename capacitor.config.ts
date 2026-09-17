@@ -3,7 +3,10 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.gamevault.app",
   appName: "GameVault",
-  webDir: "public",
+  // Shell nativo do Capacitor. NÃO pode ser "public": o Next.js serve public/ na
+  // raiz do site, e no Cloudflare Workers o asset public/index.html passava a
+  // responder "/" antes do Worker, servindo o splash no lugar da home.
+  webDir: "capacitor-shell",
   server: {
     // Aponta para o ambiente de produção por padrão, ou para o IP local (ex: http://192.168.0.x:3000)
     // ao rodar em desenvolvimento via variável de ambiente CAPACITOR_SERVER_URL

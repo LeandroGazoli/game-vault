@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ProfilePage from "../page";
 import JsonLd from "@/components/seo/JsonLd";
 import { getProfileUrl } from "@/lib/routes";
-import { getUserProfileByUsername } from "@/lib/firebase";
+import { getUserProfileByUsernameServer } from "@/lib/serverData";
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -13,7 +13,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
   const cleanUsername = decodeURIComponent(username);
-  const targetUser = await getUserProfileByUsername(cleanUsername);
+  const targetUser = await getUserProfileByUsernameServer(cleanUsername);
 
   const displayName = targetUser?.displayName || cleanUsername;
   const isVip = targetUser?.plan === "vip";
@@ -94,7 +94,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PublicProfilePage({ params }: PageProps) {
   const { username } = await params;
   const cleanUsername = decodeURIComponent(username);
-  const targetUser = await getUserProfileByUsername(cleanUsername);
+  const targetUser = await getUserProfileByUsernameServer(cleanUsername);
 
   const structuredData = [
     {

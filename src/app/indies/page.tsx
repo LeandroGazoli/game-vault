@@ -1,7 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchApprovedIndies } from "@/lib/indieService";
+import { fetchApprovedIndiesServer } from "@/lib/serverData";
 import IndieGameCard from "@/components/indies/IndieGameCard";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
@@ -53,7 +53,7 @@ const structuredData = [
 ];
 
 export default async function IndiesPage() {
-  const approvedGames = await fetchApprovedIndies("votes");
+  const approvedGames = await fetchApprovedIndiesServer("votes");
 
   return (
     <>

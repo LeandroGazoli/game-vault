@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { fetchIndieBySlug } from "@/lib/indieService";
+import { fetchIndieBySlugServer } from "@/lib/serverData";
 import IndieCommentsSection from "@/components/indies/IndieCommentsSection";
 import IndieMainContentTabs from "@/components/indies/IndieMainContentTabs";
 import IndieHeroCompact from "@/components/indies/IndieHeroCompact";
@@ -21,7 +21,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const game = await fetchIndieBySlug(slug);
+  const game = await fetchIndieBySlugServer(slug);
 
   if (!game) {
     return {
@@ -73,7 +73,7 @@ function getMediaEmbedUrl(url?: string): string | null {
 
 export default async function IndieGameDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const game = await fetchIndieBySlug(slug);
+  const game = await fetchIndieBySlugServer(slug);
 
   if (!game) {
     notFound();

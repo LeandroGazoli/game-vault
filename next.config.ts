@@ -1,4 +1,39 @@
 import type { NextConfig } from "next";
+import fs from "node:fs";
+import path from "node:path";
+
+/**
+ * O SDK cliente do Firebase resolve pela condição "node" no bundle de servidor,
+ * e esse build usa @grpc/grpc-js + protobufjs, que chamam `new Function` —
+ * proibido no isolate V8 do workerd ("Code generation from strings disallowed").
+ * Como componentes client são renderizados no servidor (SSR), esse build entrava
+ * no worker e derrubava as páginas com HTTP 500.
+ *
+ * O build de browser usa WebChannel/fetch e funciona no workerd, então forçamos
+ * a resolução para ele. O `exports` do pacote bloqueia deep imports, por isso o
+ * alias precisa ser um caminho absoluto no disco.
+ */
+const FIREBASE_BROWSER_BUILDS: Record<string, string> = {
+  "@firebase/firestore": "node_modules/@firebase/firestore/dist/index.esm2017.js",
+  "@firebase/auth": "node_modules/@firebase/auth/dist/esm2017/index.js",
+};
+
+function firebaseBrowserAliases(): Record<string, string> {
+  const aliases: Record<string, string> = {};
+  for (const [pkg, relative] of Object.entries(FIREBASE_BROWSER_BUILDS)) {
+    const absolute = path.resolve(process.cwd(), relative);
+    if (fs.existsSync(absolute)) {
+      aliases[pkg] = absolute;
+    } else {
+      // Falha ruidosa: um upgrade do firebase que mova o dist reintroduz o 500 em produção.
+      throw new Error(
+        `[next.config] Build de browser de ${pkg} não encontrado em ${relative}. ` +
+          "Atualize FIREBASE_BROWSER_BUILDS após mudar a versão do firebase."
+      );
+    }
+  }
+  return aliases;
+}
 
 const securityHeaders = [
   {
@@ -152,6 +187,16 @@ const nextConfig: NextConfig = {
   },
   // firebase-admin usa dependências nativas (gRPC) — nunca deve ser empacotado no bundle.
   serverExternalPackages: ["firebase-admin", "jose"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        ...firebaseBrowserAliases(),
+      };
+    }
+    return config;
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "canvas-confetti"],
   },
