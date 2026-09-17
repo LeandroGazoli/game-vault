@@ -55,9 +55,47 @@ enviar() {
   return 0
 }
 
+# As credenciais do Twitch/IGDB sao testaveis antes de subir — e precisam ser. O .env.local
+# tinha um par REVOGADO, que foi para o worker sem reclamar e deixou a home sem catalogo
+# (a API responde 200 com lista vazia, entao nada denuncia o problema).
+validar_twitch() {
+  local id secret resposta
+  id="$(ler_valor TWITCH_CLIENT_ID)"
+  secret="$(ler_valor TWITCH_CLIENT_SECRET)"
+  [ -z "$id" ] || [ -z "$secret" ] && return 1
+  resposta="$(curl -s -m 25 -X POST \
+    "https://id.twitch.tv/oauth2/token?client_id=$id&client_secret=$secret&grant_type=client_credentials")"
+  case "$resposta" in
+    *access_token*) return 0 ;;
+    *) echo "  ✗ O Twitch RECUSOU as credenciais de $ENV_FILE:"
+       echo "    $(printf '%s' "$resposta" | head -c 120)"
+       echo "    Pegue um par válido em https://dev.twitch.tv/console/apps e atualize o arquivo."
+       echo "    Subir assim deixaria a home sem catálogo, sem nenhum erro aparente."
+       return 1 ;;
+  esac
+}
+
+echo "→ Validando credenciais do Twitch/IGDB"
+if validar_twitch; then
+  echo "  ✓ o Twitch aceitou o par"
+  TWITCH_OK=1
+else
+  TWITCH_OK=0
+fi
+
+echo
 echo "→ Secrets necessários"
 faltando=()
 for nome in "${SECRETS_NECESSARIOS[@]}"; do
+  case "$nome" in
+    TWITCH_*)
+      if [ "$TWITCH_OK" != "1" ]; then
+        echo "  ⊘ $nome — não enviado (par inválido)"
+        faltando+=("$nome")
+        continue
+      fi
+      ;;
+  esac
   enviar "$nome" || { echo "  ✗ $nome — ausente em $ENV_FILE"; faltando+=("$nome"); }
 done
 

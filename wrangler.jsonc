@@ -131,6 +131,17 @@
       "assets": {
         "directory": ".open-next/assets",
         "binding": "ASSETS"
+      },
+      // Blocos `env.*` NÃO herdam `observability` do topo — sem repetir aqui, o
+      // `wrangler tail --env homolog` mostra só a linha da requisição e nenhum console.log,
+      // que é justamente o que se quer ler quando algo falha em homologação.
+      "observability": {
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+          "persist": true
+        }
       }
     }
   }
