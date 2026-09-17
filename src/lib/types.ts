@@ -1184,6 +1184,32 @@ export interface SystemNotification {
   createdBy?: string;
 }
 
+export interface TargetedNotificationInput {
+  userId: string;
+  title: string;
+  message: string;
+  category?: NotificationCategory;
+  linkUrl?: string | null;
+  linkLabel?: string | null;
+  createdBy?: string;
+  sendEmail?: boolean;
+  userEmail?: string | null;
+  userName?: string | null;
+  emailSubject?: string;
+}
+
+export interface GroupNotificationInput {
+  targetType: "all" | "vip" | "pro" | "steam_linked" | "custom_users";
+  targetUserIds?: string[];
+  title: string;
+  message: string;
+  category?: NotificationCategory;
+  linkUrl?: string | null;
+  linkLabel?: string | null;
+  createdBy?: string;
+  sendEmail?: boolean;
+}
+
 export const NOTIFICATION_CATEGORIES: Record<
   NotificationCategory,
   {

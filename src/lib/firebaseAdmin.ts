@@ -1,81 +1,79 @@
 /**
- * Firebase Admin SDK — SOMENTE SERVIDOR.
+ * Camada administrativa do Firestore — SOMENTE SERVIDOR.
  *
- * Roda no servidor Next.js (ex.: funções serverless da Vercel) e autentica com uma
- * Service Account, ignorando as Security Rules do Firestore. É a base de confiança para
- * escritas sensíveis (XP/nível, plano premium) que NUNCA devem ser aceitas do cliente.
+ * Autentica com a Service Account e ignora as Security Rules do Firestore. É a
+ * base de confiança para escritas sensíveis (XP/nível, plano premium) que NUNCA
+ * devem ser aceitas do cliente.
  *
- * NÃO importe este arquivo em nenhum componente client. Ele depende de `firebase-admin`,
- * que só existe no ambiente Node.
+ * Transporte: HTTP puro contra a Firestore REST API v1 (`fetch` nativo), via o
+ * shim `firestoreAdminRest`. O `firebase-admin` / `@google-cloud/firestore` NÃO
+ * é mais usado aqui porque depende de gRPC + protobufjs, que quebram no isolate
+ * V8 do Cloudflare Workers (workerd) — a causa dos HTTP 500 nas rotas de servidor.
  *
- * Configuração (env do host — Vercel → Settings → Environment Variables):
+ * A superfície pública deste módulo (nomes, assinaturas e retornos) é idêntica à
+ * anterior: nenhum consumidor precisou ser alterado.
+ *
+ * NÃO importe este arquivo em nenhum componente client.
+ *
+ * Configuração (env do host):
  *   FIREBASE_SERVICE_ACCOUNT_KEY = <conteúdo do JSON da service account>
  *   (aceita o JSON puro OU o JSON codificado em base64)
+ *
+ * No Cloudflare Workers, defina como secret:
+ *   npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_KEY
  */
-import { cert, getApps, initializeApp, type App, type ServiceAccount } from "firebase-admin/app";
-import { getFirestore, type Firestore, FieldValue } from "firebase-admin/firestore";
-import { getAuth, type Auth } from "firebase-admin/auth";
+import {
+  getRestFirestore,
+  RestFieldValue,
+  type RestFirestore,
+} from "./firestoreAdminRest";
+import { parseServiceAccount, type ServiceAccountData } from "./firestoreRest";
+import { verifyFirebaseIdToken } from "./firebaseAuthRest";
 
-let cachedApp: App | null = null;
+/** Credenciais efetivas usadas pelo adaptador REST. */
+export interface AdminApp {
+  projectId: string;
+  clientEmail: string;
+}
 
-function parseServiceAccount(): ServiceAccount & { project_id?: string } {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!raw || !raw.trim()) {
+let cachedApp: AdminApp | null = null;
+
+/**
+ * Valida que a service account está presente e utilizável.
+ * Mantido para o health check de `/api/gamification/sync` (GET).
+ */
+export function getAdminApp(): AdminApp {
+  if (cachedApp) return cachedApp;
+
+  const sa: ServiceAccountData | null = parseServiceAccount();
+  if (!sa) {
     throw new Error(
       "FIREBASE_SERVICE_ACCOUNT_KEY não configurada. Adicione a chave da service account nas variáveis de ambiente do servidor."
     );
   }
-
-  let jsonStr = raw.trim();
-  // Suporta valor em base64 (útil para colar em painéis que não gostam de multilinha)
-  if (!jsonStr.startsWith("{")) {
-    try {
-      jsonStr = Buffer.from(jsonStr, "base64").toString("utf8");
-    } catch {
-      /* segue para o parse direto abaixo, que lançará erro claro */
-    }
+  if (!sa.project_id || !sa.client_email || !sa.private_key) {
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY inválida: project_id, client_email e private_key são obrigatórios."
+    );
   }
 
-  let parsed: any;
-  try {
-    parsed = JSON.parse(jsonStr);
-  } catch {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY inválida: não foi possível fazer parse do JSON.");
-  }
-
-  // Chaves privadas coladas em .env costumam vir com \n escapado
-  if (typeof parsed.private_key === "string") {
-    parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
-  }
-  return parsed;
-}
-
-export function getAdminApp(): App {
-  if (cachedApp) return cachedApp;
-  const existing = getApps();
-  if (existing.length > 0) {
-    cachedApp = existing[0];
-    return cachedApp;
-  }
-  const sa = parseServiceAccount();
-  cachedApp = initializeApp({
-    credential: cert(sa),
-    projectId: (sa as any).project_id,
-  });
+  cachedApp = { projectId: sa.project_id, clientEmail: sa.client_email };
   return cachedApp;
 }
 
-export function getAdminDb(): Firestore {
-  return getFirestore(getAdminApp());
+/** Instância do Firestore administrativo (REST). Mesma API encadeável de antes. */
+export function getAdminDb(): RestFirestore {
+  return getRestFirestore();
 }
 
-export function getAdminAuth(): Auth {
-  return getAuth(getAdminApp());
+/** Superfície mínima de auth usada no projeto. */
+export function getAdminAuth(): { verifyIdToken: typeof verifyFirebaseIdToken } {
+  return { verifyIdToken: verifyFirebaseIdToken };
 }
 
 /** Verifica um Firebase ID token e retorna o uid, ou lança em caso de token inválido. */
 export async function verifyIdToken(idToken: string): Promise<{ uid: string; email?: string }> {
-  const decoded = await getAdminAuth().verifyIdToken(idToken);
+  const decoded = await verifyFirebaseIdToken(idToken);
   return { uid: decoded.uid, email: decoded.email };
 }
 
@@ -89,8 +87,9 @@ function stripUndefined<T extends Record<string, any>>(obj: T): T {
 }
 
 /**
- * Escreve (merge) no doc do usuário via Admin SDK — ignora as Security Rules.
- * Use para campos travados no cliente (plan, isPremium, hideAds, gamerXp, bonusXp, ...).
+ * Escreve (merge) no doc do usuário via credenciais administrativas — ignora as
+ * Security Rules. Use para campos travados no cliente (plan, isPremium, hideAds,
+ * gamerXp, bonusXp, ...).
  */
 export async function adminSaveUserProfile(
   uid: string,
@@ -168,8 +167,7 @@ export async function adminUpdateUserModeration(
 export async function adminCreateNotification(
   data: Omit<import("./types").SystemNotification, "id" | "createdAt">
 ): Promise<string> {
-  const colRef = getAdminDb().collection("system_notifications");
-  const docRef = colRef.doc();
+  const docRef = getAdminDb().collection("system_notifications").doc();
   const now = new Date().toISOString();
   await docRef.set({
     ...data,
@@ -179,4 +177,5 @@ export async function adminCreateNotification(
   return docRef.id;
 }
 
-export { FieldValue };
+/** Sentinelas de campo (increment, arrayUnion, serverTimestamp, delete). */
+export const FieldValue = RestFieldValue;

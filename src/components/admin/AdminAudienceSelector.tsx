@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Users, Crown, Zap, Gamepad2, UserCheck, Loader2 } from "lucide-react";
-import { GroupNotificationInput } from "@/lib/notificationsService";
+import { GroupNotificationInput } from "@/lib/types";
 
 interface AdminAudienceSelectorProps {
   targetType: GroupNotificationInput["targetType"];

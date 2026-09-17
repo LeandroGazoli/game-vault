@@ -1,30 +1,54 @@
-import { db } from "./firebase";
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  deleteDoc,
-  query,
-  orderBy,
-} from "firebase/firestore";
 import { Article } from "./types/article.types";
 import { ARTICLES_DATA } from "./articlesData";
+import {
+  buildReadRequest,
+  firestoreDocToJs,
+  getFirestoreEndpoint,
+  requireGoogleAccessToken,
+  jsValueToFirestore,
+} from "./firestoreRest";
 
 const ARTICLES_COLLECTION = "articles";
 
+
 /**
- * Busca todos os artigos salvos no Firestore
+ * Busca todos os artigos salvos no Firestore usando REST API pura (sem gRPC / protobufjs).
  */
 export async function fetchArticlesFromFirestore(): Promise<Article[]> {
   try {
-    const q = query(
-      collection(db, ARTICLES_COLLECTION),
-      orderBy("publishedAt", "desc")
+    const { baseUrl } = getFirestoreEndpoint();
+    const articles: Article[] = [];
+    let pageToken: string | undefined;
+
+    // Percorre todas as páginas — a REST API limita cada resposta a `pageSize`.
+    do {
+      const endpoint = new URL(`${baseUrl}/${ARTICLES_COLLECTION}`);
+      endpoint.searchParams.set("pageSize", "300");
+      if (pageToken) endpoint.searchParams.set("pageToken", pageToken);
+
+      const { url, headers } = await buildReadRequest(endpoint.toString());
+      const res = await fetch(url, { method: "GET", headers });
+
+      if (!res.ok) {
+        console.error(
+          "Erro ao buscar artigos do Firestore:",
+          res.status,
+          await res.text().catch(() => "")
+        );
+        break;
+      }
+
+      const data = (await res.json()) as { documents?: any[]; nextPageToken?: string };
+      for (const doc of data.documents || []) {
+        const parsed = firestoreDocToJs<Article>(doc);
+        if (parsed) articles.push(parsed);
+      }
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    return articles.sort(
+      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Article));
   } catch (error) {
     console.error("Erro ao buscar artigos do Firestore:", error);
     return [];
@@ -32,15 +56,13 @@ export async function fetchArticlesFromFirestore(): Promise<Article[]> {
 }
 
 /**
- * Busca um artigo pelo slug no Firestore
+ * Busca um artigo pelo slug no Firestore usando REST API pura.
  */
 export async function fetchArticleBySlugFromFirestore(slug: string): Promise<Article | null> {
   try {
-    const q = query(collection(db, ARTICLES_COLLECTION));
-    const snap = await getDocs(q);
-    const found = snap.docs.find((d) => d.data().slug === slug);
-    if (!found) return null;
-    return { id: found.id, ...found.data() } as Article;
+    const articles = await fetchArticlesFromFirestore();
+    const found = articles.find((a) => a.slug === slug);
+    return found || null;
   } catch (error) {
     console.error("Erro ao buscar artigo por slug no Firestore:", error);
     return null;
@@ -48,25 +70,59 @@ export async function fetchArticleBySlugFromFirestore(slug: string): Promise<Art
 }
 
 /**
- * Salva ou atualiza um artigo no Firestore
+ * Salva ou atualiza um artigo no Firestore usando REST API pura.
  */
 export async function saveArticleToFirestore(article: Article): Promise<void> {
   const docId = article.id || article.slug;
-  const docRef = doc(db, ARTICLES_COLLECTION, docId);
+  const { baseUrl } = getFirestoreEndpoint();
+  const token = await requireGoogleAccessToken();
+
   const dataToSave = {
     ...article,
     id: docId,
     updatedAt: new Date().toISOString(),
   };
-  await setDoc(docRef, dataToSave, { merge: true });
+
+  const fields: Record<string, any> = {};
+  const maskParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(dataToSave)) {
+    if (v === undefined) continue;
+    fields[k] = jsValueToFirestore(v);
+    // updateMask preserva a semântica de setDoc(..., { merge: true })
+    maskParams.append("updateMask.fieldPaths", k);
+  }
+
+  const url = `${baseUrl}/${ARTICLES_COLLECTION}/${encodeURIComponent(docId)}?${maskParams}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ fields }),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Falha ao salvar artigo (${res.status}): ${await res.text().catch(() => "")}`
+    );
+  }
 }
 
 /**
- * Exclui um artigo do Firestore
+ * Exclui um artigo do Firestore usando REST API pura.
  */
 export async function deleteArticleFromFirestore(articleId: string): Promise<void> {
-  const docRef = doc(db, ARTICLES_COLLECTION, articleId);
-  await deleteDoc(docRef);
+  const { baseUrl } = getFirestoreEndpoint();
+  const token = await requireGoogleAccessToken();
+
+  const res = await fetch(`${baseUrl}/${ARTICLES_COLLECTION}/${encodeURIComponent(articleId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Falha ao excluir artigo (${res.status}): ${await res.text().catch(() => "")}`
+    );
+  }
 }
 
 /**
@@ -75,7 +131,6 @@ export async function deleteArticleFromFirestore(articleId: string): Promise<voi
 export async function getCombinedArticles(): Promise<Article[]> {
   const firestoreArticles = await fetchArticlesFromFirestore();
 
-  // Cria um mapa onde os artigos do Firestore sobrepõem os estáticos pelo slug ou id
   const map = new Map<string, Article>();
 
   ARTICLES_DATA.forEach((art) => {

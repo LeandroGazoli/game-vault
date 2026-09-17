@@ -15,7 +15,7 @@ import {
   requestNotificationPermission,
   getNotificationPermission,
 } from "@/lib/notifications";
-import { GroupNotificationInput } from "@/lib/notificationsService";
+import { GroupNotificationInput } from "@/lib/types";
 import AdminNotificationForm from "./admin/AdminNotificationForm";
 import AdminNotificationConfirmModal from "./admin/AdminNotificationConfirmModal";
 import AdminNotificationHistory from "./admin/AdminNotificationHistory";

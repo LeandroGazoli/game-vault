@@ -193,6 +193,8 @@ export async function collectSitemapUrls(): Promise<string[]> {
  */
 const STATE_DOC = { collection: "system", doc: "indexnow" };
 
+import { firestoreRestGet, firestoreRestPatch } from "./firestoreRest";
+
 export interface IndexNowState {
   lastSubmittedAt: string | null;
   lastRunAt?: string | null;
@@ -201,13 +203,8 @@ export interface IndexNowState {
 
 export async function getIndexNowState(): Promise<IndexNowState> {
   try {
-    const { getAdminDb } = await import("./firebaseAdmin");
-    const snap = await getAdminDb()
-      .collection(STATE_DOC.collection)
-      .doc(STATE_DOC.doc)
-      .get();
-
-    const data = snap.exists ? snap.data() || {} : {};
+    const doc = await firestoreRestGet<any>(STATE_DOC.collection, STATE_DOC.doc);
+    const data = doc || {};
     return {
       lastSubmittedAt: data.lastSubmittedAt ? String(data.lastSubmittedAt) : null,
       lastRunAt: data.lastRunAt ? String(data.lastRunAt) : null,
@@ -221,15 +218,15 @@ export async function getIndexNowState(): Promise<IndexNowState> {
 
 async function saveIndexNowState(state: IndexNowState): Promise<void> {
   try {
-    const { getAdminDb } = await import("./firebaseAdmin");
-    await getAdminDb()
-      .collection(STATE_DOC.collection)
-      .doc(STATE_DOC.doc)
-      .set({ ...state, lastRunAt: new Date().toISOString() }, { merge: true });
+    await firestoreRestPatch(STATE_DOC.collection, STATE_DOC.doc, {
+      ...state,
+      lastRunAt: new Date().toISOString(),
+    });
   } catch (error: any) {
     console.warn(`[indexnow] Não foi possível salvar o estado (${error?.message || error}).`);
   }
 }
+
 
 export interface DeltaResult extends IndexNowResult {
   mode: "delta";

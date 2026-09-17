@@ -7,34 +7,13 @@
  */
 
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import type { RestDocumentSnapshot } from "@/lib/firestoreAdminRest";
 import { getResendClient } from "@/lib/email";
-import { NotificationCategory, SystemNotification } from "@/lib/types";
+import type { TargetedNotificationInput, GroupNotificationInput } from "@/lib/types";
 
-export interface TargetedNotificationInput {
-  userId: string;
-  title: string;
-  message: string;
-  category?: NotificationCategory;
-  linkUrl?: string | null;
-  linkLabel?: string | null;
-  createdBy?: string;
-  sendEmail?: boolean;
-  userEmail?: string | null;
-  userName?: string | null;
-  emailSubject?: string;
-}
-
-export interface GroupNotificationInput {
-  targetType: "all" | "vip" | "pro" | "steam_linked" | "custom_users";
-  targetUserIds?: string[];
-  title: string;
-  message: string;
-  category?: NotificationCategory;
-  linkUrl?: string | null;
-  linkLabel?: string | null;
-  createdBy?: string;
-  sendEmail?: boolean;
-}
+// Os inputs vivem em types.ts para que componentes client possam tipá-los sem
+// importar este módulo (que é server-only e carrega credenciais administrativas).
+export type { TargetedNotificationInput, GroupNotificationInput };
 
 /**
  * Envia uma notificação privada e isolada para um usuário específico.
@@ -161,7 +140,7 @@ export async function sendGroupNotification(input: GroupNotificationInput): Prom
   }
 
   // 2. Busca lista de usuários para envio direcionado
-  let userDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  let userDocs: RestDocumentSnapshot[] = [];
 
   if (input.targetType === "vip") {
     const snap = await db.collection("users").where("plan", "==", "vip").get();

@@ -15,8 +15,9 @@
  * service account não estiver configurada, devolve lista vazia para não quebrar o build
  * do sitemap nem o endpoint do IndexNow.
  */
-import { getAdminDb } from "./firebaseAdmin";
+// Transporte: Firestore REST API v1 (fetch nativo) — sem gRPC/protobufjs, que quebram no workerd.
 import { getGameUrl } from "./routes";
+import { firestoreRestQuery } from "./firestoreRest";
 
 /** Teto de segurança: um sitemap único aceita no máximo 50.000 URLs. */
 const HARD_CAP = 45_000;
@@ -47,28 +48,43 @@ export async function getRegisteredGamePages(
   const limit = Math.min(options.limit ?? 10_000, HARD_CAP);
 
   try {
-    const db = getAdminDb();
+    const structuredQuery: Record<string, any> = {
+      limit,
+      orderBy: [
+        {
+          field: { fieldPath: "updatedAt" },
+          direction: direction === "asc" ? "ASCENDING" : "DESCENDING",
+        },
+      ],
+    };
 
-    let query: any = db.collection("game_translations");
     if (since) {
-      query = query.where("updatedAt", ">", since);
+      structuredQuery.where = {
+        fieldFilter: {
+          field: { fieldPath: "updatedAt" },
+          op: "GREATER_THAN",
+          value: { stringValue: since },
+        },
+      };
     }
-    query = query.orderBy("updatedAt", direction).limit(limit);
 
-    const snapshot = await query.get();
+    const docs = await firestoreRestQuery<{ gameId?: string; gameName?: string; updatedAt?: string }>(
+      "game_translations",
+      structuredQuery
+    );
+
     const pages: RegisteredGamePage[] = [];
 
-    snapshot.forEach((docSnap: any) => {
-      const data = docSnap.data() || {};
-      const id = String(data.gameId || docSnap.id || "").trim();
+    for (const data of docs) {
+      const id = String(data.gameId || data.id || "").trim();
       const name = typeof data.gameName === "string" ? data.gameName.trim() : "";
-      if (!id || !name) return;
+      if (!id || !name) continue;
 
       pages.push({
         path: getGameUrl({ id, name }),
         updatedAt: String(data.updatedAt || ""),
       });
-    });
+    }
 
     return pages;
   } catch (error: any) {

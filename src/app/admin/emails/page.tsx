@@ -148,8 +148,8 @@ export default function AdminEmailsPage() {
         }),
       });
 
-      const data = await res.json();
-      if (res.ok && data.html) {
+      const data = (await res.json()) as { html?: string };
+      if (res.ok && data?.html) {
         setPreviewHtml(data.html);
       }
     } catch (err) {
@@ -215,8 +215,8 @@ export default function AdminEmailsPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Falha no disparo.");
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data?.error || "Falha no disparo.");
 
       setToastMessage({ type: "success", text: `E-mail de teste enviado para ${target}` });
       setTimeout(() => setToastMessage(null), 4000);

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { GroupNotificationInput } from "@/lib/notificationsService";
-import { NotificationCategory } from "@/lib/types";
+import { NotificationCategory, GroupNotificationInput } from "@/lib/types";
 import AdminAudienceSelector from "./AdminAudienceSelector";
 import AdminNotificationCategorySelector from "./AdminNotificationCategorySelector";
 import { Volume2, Send, Mail } from "lucide-react";

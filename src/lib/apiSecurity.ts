@@ -189,7 +189,12 @@ export function isSameOriginOrLegit(request: NextRequest): {
   if (origin) {
     try {
       const originHost = new URL(origin).hostname;
-      if (!ALLOWED_HOSTS.has(originHost) && !originHost.endsWith(".vercel.app")) {
+      const isAllowedHost =
+        ALLOWED_HOSTS.has(originHost) ||
+        originHost.endsWith(".vercel.app") ||
+        originHost.endsWith(".workers.dev") ||
+        originHost.endsWith(".pages.dev");
+      if (!isAllowedHost) {
         return {
           allowed: false,
           reason: `Origem '${originHost}' não autorizada.`,
@@ -205,7 +210,12 @@ export function isSameOriginOrLegit(request: NextRequest): {
   if (referer) {
     try {
       const refererHost = new URL(referer).hostname;
-      if (!ALLOWED_HOSTS.has(refererHost) && !refererHost.endsWith(".vercel.app")) {
+      const isAllowedReferer =
+        ALLOWED_HOSTS.has(refererHost) ||
+        refererHost.endsWith(".vercel.app") ||
+        refererHost.endsWith(".workers.dev") ||
+        refererHost.endsWith(".pages.dev");
+      if (!isAllowedReferer) {
         return {
           allowed: false,
           reason: `Referer '${refererHost}' não autorizado.`,

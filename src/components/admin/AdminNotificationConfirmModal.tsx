@@ -2,8 +2,7 @@
 
 import React from "react";
 import { AlertTriangle, Send, X, Mail, Bell, Loader2 } from "lucide-react";
-import { GroupNotificationInput } from "@/lib/notificationsService";
-import { NotificationCategory } from "@/lib/types";
+import { NotificationCategory, GroupNotificationInput } from "@/lib/types";
 
 interface AdminNotificationConfirmModalProps {
   isOpen: boolean;
