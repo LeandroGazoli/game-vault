@@ -89,18 +89,16 @@
         // leitura do Firestore montando 33 mil URLs aqui.
         "SITEMAP_GAME_LIMIT": "50"
       },
-      // SEM `NEXT_INC_CACHE_KV` de propósito — duas razões:
+      // Namespaces PRÓPRIOS, separados dos de produção. O isolamento é o ponto todo:
       //
-      // 1. CUSTO: todo deploy popula o cache incremental escrevendo uma chave por página, e
-      //    o plano gratuito dá 1.000 ESCRITAS de KV por dia, compartilhadas com produção.
-      //    Um ambiente de revisão não deve competir por esse orçamento (foi exatamente o
-      //    que estourou na primeira tentativa: "free usage limit for this operation").
+      // - `APP_CONFIG` guarda a flag de manutenção. Compartilhar significaria que ligar
+      //   manutenção em homologação DERRUBARIA O SITE REAL, já que o middleware lê a mesma
+      //   chave.
+      // - `NEXT_INC_CACHE_KV` guarda o cache incremental. Compartilhado, as duas versões se
+      //   sobrescreveriam e você revisaria páginas de produção achando que são da branch.
       //
-      // 2. É MELHOR ASSIM PARA REVISÃO: sem ISR, cada acesso renderiza na hora. Você sempre
-      //    vê o que a branch produz, nunca uma versão em cache de um deploy anterior.
-      //
-      // O preço é leitura do Firestore por requisição — irrelevante num ambiente com um
-      // único revisor, ainda mais com SITEMAP_GAME_LIMIT=50.
+      // Custo: cada deploy aqui popula o cache (~115 escritas) na cota da conta, hoje de
+      // 1 mi/mês no Workers Paid. Era proibitivo no gratuito (1.000/dia); deixou de ser.
       "kv_namespaces": [
         {
           "binding": "NEXT_INC_CACHE_KV",
