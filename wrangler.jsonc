@@ -29,6 +29,10 @@
     "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "gamevault-profile.firebasestorage.app",
     "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
     "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
+    // ⚠️ INERTE. O Next substitui `process.env.NEXT_PUBLIC_*` pelo valor literal no BUILD,
+    // então declarar aqui não muda o bundle. O valor que vale em produção é o do build —
+    // hoje o fallback do código, "https://www.mygameslist.com.br" (confira em
+    // `src/app/sitemap.ts`). Mantido só para não parecer que a var sumiu.
     "NEXT_PUBLIC_SITE_URL": "https://game-vault.leandro-gazoli.workers.dev",
     // SITEMAP_GAME_LIMIT foi REMOVIDO de propósito: existia para conter leituras quando o
     // sitemap varria game_translations. Com o índice agregado o custo é ~10 leituras
@@ -57,8 +61,8 @@
   /**
    * AMBIENTE DE HOMOLOGAÇÃO — worker separado para revisar branches antes do merge.
    *
-   * Deploy:  npx wrangler deploy --env homolog
-   * URL:     https://game-vault-homolog.<seu-subdominio>.workers.dev
+   * Deploy:  npm run deploy:homolog
+   * URL:     https://homolog.mygameslist.com.br
    *
    * KV PRÓPRIO, e isso é essencial: com o namespace compartilhado, ligar o modo manutenção
    * em homologação BLOQUEARIA O SITE REAL, já que o middleware lê a mesma chave. O cache
@@ -75,6 +79,19 @@
   "env": {
     "homolog": {
       "name": "game-vault-homolog",
+      // `custom_domain: true` faz o wrangler criar o registro DNS e emitir o certificado
+      // no primeiro deploy — não há nada a configurar à mão no painel.
+      //
+      // ⚠️ DEPOIS DO PRIMEIRO DEPLOY, um passo manual que o wrangler não faz: adicionar
+      // `homolog.mygameslist.com.br` em Firebase → Authentication → Settings → Authorized
+      // domains. Sem isso o login com Google falha com `auth/unauthorized-domain` e você
+      // não consegue revisar nada que dependa de usuário logado.
+      "routes": [
+        {
+          "pattern": "homolog.mygameslist.com.br",
+          "custom_domain": true
+        }
+      ],
       "vars": {
         "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyCBeWB14tmyQZZddMia62SpzQ5iTRio8TI",
         "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "gamevault-profile.firebaseapp.com",
@@ -82,7 +99,9 @@
         "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "gamevault-profile.firebasestorage.app",
         "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "310412819391",
         "NEXT_PUBLIC_FIREBASE_APP_ID": "1:310412819391:web:b61a5616735ef4c3fdbf0a",
-        "NEXT_PUBLIC_SITE_URL": "https://game-vault-homolog.leandro-gazoli.workers.dev",
+        // ⚠️ INERTE, pelo mesmo motivo da var de produção: quem realmente define isto é o
+        // `NEXT_PUBLIC_SITE_URL` exportado no build por `scripts/deploy-homolog.sh`.
+        "NEXT_PUBLIC_SITE_URL": "https://homolog.mygameslist.com.br",
         "MAINTENANCE_MODE": "false",
         "IS_HOMOLOG": "true",
         // Sitemap curto: homologação não é indexada, então não há motivo para gastar
