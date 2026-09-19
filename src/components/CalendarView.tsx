@@ -1,92 +1,40 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { Game } from "@/lib/types";
+import React, { useMemo } from "react";
 import GameModal from "./GameModal";
 import AdBanner from "./ads/AdBanner";
-import Link from "next/link";
-import { getGameUrl } from "@/lib/routes";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Flame,
-  Plus,
-  Check,
-  Clock,
-  Sparkles,
-  Filter,
 } from "lucide-react";
-import { useGameLibrary } from "@/context/GameLibraryContext";
+import { useCalendarState } from "@/hooks/useCalendarState";
+import CalendarMiniSidebar from "./calendar/CalendarMiniSidebar";
+import CalendarGameCard from "./calendar/CalendarGameCard";
 
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-const WEEK_DAYS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
-
 export default function CalendarView() {
-  const { getGameInLibrary } = useGameLibrary();
-  const today = new Date();
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth() + 1); // 1-12
-  const [calendarData, setCalendarData] = useState<Record<string, Game[]>>({});
-  const [loading, setLoading] = useState(true);
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [selectedDayFilter, setSelectedDayFilter] = useState<number | null>(null);
+  const {
+    currentYear,
+    currentMonth,
+    calendarData,
+    loading,
+    selectedGame,
+    setSelectedGame,
+    selectedDayFilter,
+    setSelectedDayFilter,
+    saveCardClick,
+    handlePrevMonth,
+    handleNextMonth,
+    handleGoToday,
+  } = useCalendarState();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/games/calendar?year=${currentYear}&month=${currentMonth}`);
-        if (res.ok) {
-          const data = await res.json();
-          setCalendarData(data.calendar || {});
-        }
-      } catch (err) {
-        console.error("Erro ao carregar calendário:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [currentYear, currentMonth]);
-
-  // Navegação de mês
-  const handlePrevMonth = () => {
-    if (currentMonth === 1) {
-      setCurrentMonth(12);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth - 1);
-    }
-    setSelectedDayFilter(null);
-  };
-
-  const handleNextMonth = () => {
-    if (currentMonth === 12) {
-      setCurrentMonth(1);
-      setCurrentYear(currentYear + 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
-    }
-    setSelectedDayFilter(null);
-  };
-
-  const handleGoToday = () => {
-    setCurrentYear(today.getFullYear());
-    setCurrentMonth(today.getMonth() + 1);
-    setSelectedDayFilter(today.getDate());
-  };
-
-  // Cálculo dos dias do mês para o mini-calendário lateral
-  const { daysInMonth, firstDayIndex } = useMemo(() => {
-    const days = new Date(currentYear, currentMonth, 0).getDate();
-    const firstDay = (new Date(currentYear, currentMonth - 1, 1).getDay() + 6) % 7; // Começa na segunda-feira
-    return { daysInMonth: days, firstDayIndex: firstDay };
-  }, [currentYear, currentMonth]);
+  const today = useMemo(() => new Date(), []);
 
   // Agrupa e ordena as datas do mês
   const sortedDates = useMemo(() => Object.keys(calendarData).sort(), [calendarData]);
@@ -242,81 +190,14 @@ export default function CalendarView() {
 
                     {/* Grid de Cards dos Jogos do Dia */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                      {dayGames.map((game) => {
-                        const userGame = getGameInLibrary(game.id);
-
-                        return (
-                          <div
-                            key={game.id}
-                            className="group relative rounded-2xl bg-[#18191c] border border-white/5 hover:border-white/20 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/60"
-                          >
-                            {/* Capa com Proporção de Poster - Clicar abre a página do jogo */}
-                            <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
-                              <Link
-                                href={getGameUrl(game)}
-      prefetch={false}
-                                className="block w-full h-full cursor-pointer"
-                                title={`Ver detalhes de ${game.name}`}
-                              >
-                                {game.background_image ? (
-                                  <img
-                                    src={game.background_image}
-                                    alt={game.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-                                    Sem Capa
-                                  </div>
-                                )}
-                              </Link>
-
-                              {/* Efeito de Fogo / Hype no Canto Inferior Direito */}
-                              <div className="absolute bottom-2 right-2 p-1 rounded-full bg-black/60 backdrop-blur-md text-orange-400 pointer-events-none">
-                                <Flame className="w-3 h-3 fill-orange-400" />
-                              </div>
-
-                              {/* Botão + no Hover */}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setSelectedGame(game);
-                                }}
-                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-white text-white hover:text-black backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20 border border-white/10"
-                                title="Adicionar à biblioteca"
-                              >
-                                {userGame ? (
-                                  <Check className="w-3.5 h-3.5 text-[#00E5FF]" />
-                                ) : (
-                                  <Plus className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </div>
-
-                            {/* Título & Plataforma */}
-                            <div className="p-2.5 flex-1 flex flex-col justify-between">
-                              <Link href={getGameUrl(game)}
-      prefetch={false}>
-                                <h3 className="text-xs font-semibold text-white hover:text-[#00E5FF] line-clamp-1 transition-colors">
-                                  {game.name}
-                                </h3>
-                              </Link>
-                              <div className="flex items-center justify-between text-[10px] text-gray-400 mt-1">
-                                <span className="truncate max-w-[90px]">
-                                  {game.genres && game.genres[0] ? game.genres[0].name : "Game"}
-                                </span>
-                                {game.metacritic && (
-                                  <span className="text-emerald-400 font-bold font-mono">
-                                    {game.metacritic}%
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {dayGames.map((game) => (
+                        <CalendarGameCard
+                          key={game.id}
+                          game={game}
+                          onOpenModal={setSelectedGame}
+                          onCardClick={saveCardClick}
+                        />
+                      ))}
                     </div>
                   </div>
                 );
@@ -327,78 +208,18 @@ export default function CalendarView() {
           {/* ==========================================
               MINI-CALENDÁRIO LATERAL (4 cols)
           ========================================== */}
-          <div className="lg:col-span-4 rounded-3xl bg-[#18191c] border border-white/10 p-5 sm:p-6 space-y-4 sticky top-24">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                {MONTH_NAMES[currentMonth - 1]} {currentYear}
-              </span>
-              <span className="text-[10px] text-gray-500 font-mono">
-                {Object.keys(calendarData).length} dias com lançamentos
-              </span>
-            </div>
+          <div className="lg:col-span-4 space-y-4">
+            <CalendarMiniSidebar
+              currentYear={currentYear}
+              currentMonth={currentMonth}
+              calendarData={calendarData}
+              selectedDayFilter={selectedDayFilter}
+              onSelectDayFilter={setSelectedDayFilter}
+            />
 
-            {/* Cabeçalho dos Dias da Semana */}
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-gray-500">
-              {WEEK_DAYS.map((d) => (
-                <div key={d} className="py-1">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid dos Dias do Mês */}
-            <div className="grid grid-cols-7 gap-1">
-              {/* Espaços vazios antes do primeiro dia */}
-              {Array.from({ length: firstDayIndex }).map((_, i) => (
-                <div key={`empty-${i}`} className="p-2" />
-              ))}
-
-              {/* Dias do Mês */}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const monthPad = String(currentMonth).padStart(2, "0");
-                const dayPad = String(day).padStart(2, "0");
-                const dateKey = `${currentYear}-${monthPad}-${dayPad}`;
-                const hasReleases = Boolean(calendarData[dateKey]);
-                const isSelected = selectedDayFilter === day;
-                const isToday =
-                  day === today.getDate() &&
-                  currentMonth === today.getMonth() + 1 &&
-                  currentYear === today.getFullYear();
-
-                return (
-                  <button
-                    key={day}
-                    onClick={() =>
-                      setSelectedDayFilter(isSelected ? null : day)
-                    }
-                    className={`relative p-2 rounded-xl text-xs font-mono font-medium transition-all flex flex-col items-center justify-center ${
-                      isSelected
-                        ? "bg-white text-black font-bold shadow-lg"
-                        : isToday
-                        ? "bg-[#00E5FF]/20 text-[#00E5FF] font-bold border border-[#00E5FF]/40"
-                        : hasReleases
-                        ? "text-white hover:bg-white/10"
-                        : "text-gray-600 hover:text-gray-400 hover:bg-white/5"
-                    }`}
-                  >
-                    <span>{day}</span>
-                    {/* Ponto indicador de lançamentos */}
-                    {hasReleases && (
-                      <span
-                        className={`w-1 h-1 rounded-full mt-0.5 ${
-                          isSelected ? "bg-black" : "bg-orange-400"
-                        }`}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Anúncio Sidebar no Calendário */}
+            <AdBanner slot="SIDEBAR_STICKY" />
           </div>
-
-          {/* Anúncio Sidebar no Calendário */}
-          <AdBanner slot="SIDEBAR_STICKY" />
         </div>
       </div>
 

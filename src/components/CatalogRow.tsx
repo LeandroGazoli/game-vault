@@ -93,7 +93,9 @@ export default function CatalogRow({
             return (
               <div
                 key={game.id}
-                className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/10 hover:border-emerald-500/50 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:z-20 cursor-pointer select-none"
+                id={`game-card-${game.id}`}
+                data-game-id={game.id}
+                className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/10 hover:border-emerald-500/50 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/60 hover:z-20 cursor-pointer select-none"
               >
                 <Link
                   href={getGameUrl(game)}
