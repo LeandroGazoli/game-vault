@@ -173,6 +173,7 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className="dark"
+      suppressHydrationWarning
       style={{ backgroundColor: "#0e0f12", colorScheme: "dark" }}
     >
       <head>
