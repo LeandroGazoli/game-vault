@@ -25,6 +25,7 @@ import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BannedUserModal from "@/components/BannedUserModal";
 import MaintenanceOverlay from "@/components/MaintenanceOverlay";
 import GoogleOneTap from "@/components/GoogleOneTap";
+import PwaSplashScreen from "@/components/PwaSplashScreen";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.com.br";
 
@@ -222,6 +223,7 @@ export default function RootLayout({
         className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black"
         style={{ backgroundColor: "#0e0f12", colorScheme: "dark" }}
       >
+        <PwaSplashScreen />
         <NavigationTracker />
         <ScrollRestoration />
         <ViewTransitionsProvider>

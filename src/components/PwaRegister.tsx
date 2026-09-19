@@ -63,6 +63,16 @@ export default function PwaRegister() {
           reg.update().catch(() => {});
         }, 60 * 60 * 1000);
 
+        // Recarrega suavemente a página quando uma nova versão do Service Worker assume o controle
+        let refreshing = false;
+        const handleControllerChange = () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        };
+        navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+
         // Estes precisam ser guardados FORA: `registerSW` é async, então este `return`
         // devolveria uma Promise<() => void> — que o React descarta, e o listener de `load`
         // também. Resultado: o setInterval de 1h e o listener de visibilitychange nunca
@@ -70,6 +80,7 @@ export default function PwaRegister() {
         cleanupRef.current = () => {
           clearInterval(intervalId);
           document.removeEventListener("visibilitychange", handleVisibilityChange);
+          navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
         };
       } catch (err) {
         console.warn("[PWA] Falha no registro do Service Worker:", err);
