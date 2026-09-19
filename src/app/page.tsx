@@ -264,11 +264,6 @@ export default function HomePage() {
       <AdBanner slot="HOME_TOP_LEADERBOARD" />
 
       {/* ==========================================
-          SEÇÃO EXCLUSIVA: JOGOS INDIES DA COMUNIDADE
-      ========================================== */}
-      <HomeIndiesSection />
-
-      {/* ==========================================
           2. RANKINGS OFICIAIS MYGAMELIST (UNIFICADO COM ABAS)
       ========================================== */}
       <UnifiedRankingsSection initialGames={topTenGames} />
@@ -455,6 +450,11 @@ export default function HomePage() {
       </section>
 
       {ctaCriarConta(2)}
+
+      {/* ==========================================
+          SEÇÃO EXCLUSIVA: JOGOS INDIES DA COMUNIDADE
+      ========================================== */}
+      <HomeIndiesSection />
 
       {/* ==========================================
           8. CENTRAL EDITORIAL: ARTIGOS & GUIAS (SEO & ADSENSE COMPLIANCE)
