@@ -44,6 +44,12 @@ export function parseReleaseDate(releasedStr: string | null | undefined): Date |
   return isNaN(generic.getTime()) ? null : generic;
 }
 
+const RELEASE_DATE_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
 export function isGameUnreleased(game: Game): boolean {
   // Caso especial GTA VI (Lançamento anunciado para o final de 2026)
   if (
@@ -111,11 +117,7 @@ export default function GameReleaseCountdown({
   }
 
   // Formata data abreviada para o tooltip/title
-  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(targetDate);
+  const formattedDate = RELEASE_DATE_FORMATTER.format(targetDate);
 
   if (variant === "floating") {
     return (

@@ -91,8 +91,9 @@ export default function NotificationBell() {
 
   // Filtra notificações ativas removendo as que o usuário excluiu/dispensou do perfil
   const activeNotifications = useMemo(() => {
+    const dismissedSet = new Set(localDismissedIds);
     const withoutDismissed = rawNotifications.filter((item) => {
-      if (localDismissedIds.includes(item.id)) return false;
+      if (dismissedSet.has(item.id)) return false;
       // Notificação direcionada: só exibe se for para o usuário atual
       if (item.targetUserId && item.targetUserId !== user?.uid) return false;
       return true;
@@ -172,6 +173,7 @@ export default function NotificationBell() {
     }
   }, [activeNotifications, user?.uid]);
 
+  // Ativação de Notificações Push Web/Nativo
   const handleEnablePush = async () => {
     setIsLoadingPush(true);
     try {
@@ -184,12 +186,15 @@ export default function NotificationBell() {
     }
   };
 
+  const unreadCount = useMemo(() => {
+    const readSet = new Set(localReadIds);
+    return activeNotifications.filter((n) => !readSet.has(n.id)).length;
+  }, [activeNotifications, localReadIds]);
+
   // Visitantes não logados não visualizam o sino
   if (!user) {
     return null;
   }
-
-  const unreadCount = activeNotifications.filter((n) => !localReadIds.includes(n.id)).length;
 
   return (
     <>
@@ -197,7 +202,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setIsDrawerOpen(true)}
-        className="relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-neutral-300 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0"
+        className="relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-neutral-300 hover:text-white transition-[border-color,color] duration-200 active:scale-95 cursor-pointer shrink-0"
         title="Notificações & Novidades"
         aria-label="Notificações"
       >

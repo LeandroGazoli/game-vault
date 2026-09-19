@@ -72,7 +72,10 @@ export default function HomeIndiesSection() {
   if (indies.length === 0) return null;
 
   return (
-    <section className="space-y-4 relative group/indierow">
+    <section
+      className="space-y-4 relative group/indierow"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 320px" }}
+    >
       {/* Cabeçalho da Seção */}
       <div className="flex items-center justify-between px-1">
         <Link
@@ -112,7 +115,7 @@ export default function HomeIndiesSection() {
       <div className="relative">
         <button
           onClick={() => scroll("left")}
-          className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/80 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 flex items-center justify-center opacity-0 group-hover/indierow:opacity-100 transition-all shadow-xl backdrop-blur-sm cursor-pointer"
+          className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/80 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 flex items-center justify-center opacity-0 group-hover/indierow:opacity-100 transition-[opacity,background-color,border-color,color] duration-200 shadow-xl backdrop-blur-sm cursor-pointer"
           title="Rolar para a esquerda"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -120,7 +123,7 @@ export default function HomeIndiesSection() {
 
         <button
           onClick={() => scroll("right")}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/80 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 flex items-center justify-center opacity-0 group-hover/indierow:opacity-100 transition-all shadow-xl backdrop-blur-sm cursor-pointer"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/80 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 flex items-center justify-center opacity-0 group-hover/indierow:opacity-100 transition-[opacity,background-color,border-color,color] duration-200 shadow-xl backdrop-blur-sm cursor-pointer"
           title="Rolar para a direita"
         >
           <ChevronRight className="w-5 h-5" />

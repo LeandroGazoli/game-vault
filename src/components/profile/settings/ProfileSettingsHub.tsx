@@ -32,12 +32,14 @@ const DESKTOP_NAV_ITEMS = [
   { id: 7, label: "7. Privacidade & Segurança" },
 ];
 
+const EMPTY_USER_GAMES: UserGame[] = [];
+
 export default function ProfileSettingsHub({
   isPage = false,
   initialTab,
   onClose,
   onOpenUpgrade,
-  games = [],
+  games = EMPTY_USER_GAMES,
 }: ProfileSettingsHubProps) {
   const router = useRouter();
   const handleBack = () => (onClose ? onClose() : router.back());
