@@ -7,7 +7,7 @@ import { Article } from "@/lib/types/article.types";
 import { BookOpen, ArrowRight, Clock } from "lucide-react";
 
 export default function HomeEditorialSection() {
-  const [articles, setArticles] = useState<Article[]>(ARTICLES_DATA.slice(0, 3));
+  const [articles, setArticles] = useState<Article[]>(() => ARTICLES_DATA.slice(0, 3));
 
   useEffect(() => {
     // Rota cacheada em vez de ler a coleção `articles` direto do Firestore: lá eram 32
@@ -56,7 +56,7 @@ export default function HomeEditorialSection() {
             <Link
               key={article.id}
               href={`/artigos/${article.slug}`}
-              className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#141822] hover:border-emerald-500/40 transition-all duration-300 shadow-xl hover:shadow-emerald-950/20 hover:-translate-y-1"
+              className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#141822] hover:border-emerald-500/40 transition-[border-color,transform,box-shadow] duration-200 shadow-xl hover:shadow-emerald-950/20 hover:-translate-y-1"
             >
               <div>
                 <div className="relative h-44 w-full overflow-hidden bg-neutral-900">

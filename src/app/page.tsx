@@ -148,32 +148,32 @@ export default function HomePage() {
         ]);
 
         if (popRes.ok) {
-          const data = await popRes.json();
+          const data = (await popRes.json()) as { games?: Game[] };
           setTopTenGames(data.games || []);
         }
 
         if (relRes.ok) {
-          const data = await relRes.json();
+          const data = (await relRes.json()) as { games?: Game[] };
           setReleases(data.games || []);
         }
 
         if (upRes.ok) {
-          const data = await upRes.json();
+          const data = (await upRes.json()) as { games?: Game[] };
           setUpcoming(data.games || []);
         }
 
         if (ptbrRes.ok) {
-          const data = await ptbrRes.json();
+          const data = (await ptbrRes.json()) as { games?: Game[] };
           setPtbrGames(data.games || []);
         }
 
         if (shortRes.ok) {
-          const data = await shortRes.json();
+          const data = (await shortRes.json()) as { games?: Game[] };
           setShortGames(data.games || []);
         }
 
         if (gtaRes.ok) {
-          const data = await gtaRes.json();
+          const data = (await gtaRes.json()) as { games?: Game[] };
           setGtaGames(data.games || []);
         }
       } catch (err) {
@@ -435,7 +435,10 @@ export default function HomePage() {
       {/* ==========================================
           7. SEÇÃO: EXPLORAR POR FRANQUIAS LENDÁRIAS
       ========================================== */}
-      <section className="franchises-section space-y-4">
+      <section
+        className="franchises-section space-y-4"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "0 280px" }}
+      >
         <div className="franchises-title flex items-center justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
@@ -452,7 +455,7 @@ export default function HomePage() {
             <Link
               key={f.name}
               href={`/search?q=${encodeURIComponent(f.query)}`}
-              className={`franchise-card group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-end min-h-[160px] sm:min-h-[190px] shadow-lg transition-all hover:scale-[1.03] hover:shadow-2xl bg-gradient-to-b ${f.accent}`}
+              className={`franchise-card group relative rounded-2xl overflow-hidden border p-3 flex flex-col justify-end min-h-[160px] sm:min-h-[190px] shadow-lg transition-[transform,box-shadow,border-color] duration-200 hover:scale-[1.03] hover:shadow-2xl bg-gradient-to-b ${f.accent}`}
             >
               {/* Imagem de Fundo Desfocada */}
               <div className="absolute inset-0 -z-0 overflow-hidden opacity-30 group-hover:opacity-40 transition-opacity">
@@ -491,7 +494,10 @@ export default function HomePage() {
       {/* ==========================================
           9. BANNER DO CALENDÁRIO DE LANÇAMENTOS
       ========================================== */}
-      <section className="calendar-banner rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#11141a] to-indigo-950/40 border border-cyan-500/20 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+      <section
+        className="calendar-banner rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#11141a] to-indigo-950/40 border border-cyan-500/20 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "0 220px" }}
+      >
         <div className="space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
             <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" /> Calendário Mensal

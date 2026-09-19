@@ -1,66 +1,119 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
  * ParallaxBackground
- * Camadas dinâmicas que respondem à rolagem e ao movimento do mouse com alta taxa de quadros e baixo custo de GPU.
+ * Camadas de fundo dinâmicas de altíssima performance.
+ * 
+ * Zero Re-renders no React:
+ * Não utiliza useState para scroll ou mouse. Toda a movimentação ocorre diretamente
+ * no DOM via CSS Custom Properties no requestAnimationFrame, garantindo 60-120 FPS
+ * sem travar o scroll nem invalidar a árvore de componentes.
  */
 export default function ParallaxBackground() {
-  const [scrollY, setScrollY] = useState(0);
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let ticking = false;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrollY(window.scrollY || 0);
-          ticking = false;
-        });
-        ticking = true;
+    // Se o usuário prefere movimento reduzido, mantém estático
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) return;
+
+    const isTouch =
+      typeof window !== "undefined" &&
+      (window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768);
+
+    let scrollY = window.scrollY || 0;
+    let targetMouseX = 0;
+    let targetMouseY = 0;
+    let currentMouseX = 0;
+    let currentMouseY = 0;
+    let rafId: number | null = null;
+    let isRunning = true;
+
+    const updateTransforms = () => {
+      if (!container || !isRunning) return;
+
+      // Suavização do mouse via lerp (apenas em desktop com cursor)
+      if (!isTouch) {
+        currentMouseX += (targetMouseX - currentMouseX) * 0.08;
+        currentMouseY += (targetMouseY - currentMouseY) * 0.08;
       }
+
+      const layer1Y = scrollY * 0.05;
+      const layer2Y = scrollY * 0.15;
+      const layer3Y = scrollY * 0.28 * 0.5;
+
+      const mx1 = isTouch ? 0 : currentMouseX * -12;
+      const my1 = isTouch ? 0 : currentMouseY * -10;
+      const mx2 = isTouch ? 0 : currentMouseX * -20;
+      const mx3 = isTouch ? 0 : currentMouseX * -30;
+
+      container.style.setProperty("--l1-x", `${mx1.toFixed(1)}px`);
+      container.style.setProperty("--l1-y", `${(-layer1Y + my1).toFixed(1)}px`);
+      container.style.setProperty("--l2-x", `${mx2.toFixed(1)}px`);
+      container.style.setProperty("--l2-y", `${(-layer2Y).toFixed(1)}px`);
+      container.style.setProperty("--l3-x", `${mx3.toFixed(1)}px`);
+      container.style.setProperty("--l3-y", `${(-layer3Y).toFixed(1)}px`);
+
+      rafId = requestAnimationFrame(updateTransforms);
     };
 
-    // Mesmo padrão de rAF que `handleScroll` usa dez linhas acima. Sem isso, cada evento
-    // nativo de mousemove disparava um setState com objeto novo: 60-120 re-renders por
-    // segundo de um background full-screen com várias camadas.
-    let mouseTicking = false;
+    const handleScroll = () => {
+      scrollY = window.scrollY || 0;
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (mouseTicking) return;
-      mouseTicking = true;
-      window.requestAnimationFrame(() => {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        setMouseOffset({
-          x: (e.clientX - centerX) / centerX,
-          y: (e.clientY - centerY) / centerY,
-        });
-        mouseTicking = false;
-      });
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      targetMouseX = (e.clientX - centerX) / centerX;
+      targetMouseY = (e.clientY - centerY) / centerY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    if (!isTouch) {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    }
+
+    rafId = requestAnimationFrame(updateTransforms);
 
     return () => {
+      isRunning = false;
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("mousemove", handleMouseMove);
+      if (!isTouch) {
+        window.removeEventListener("mousemove", handleMouseMove);
+      }
     };
   }, []);
 
-  const layer1Y = scrollY * 0.05;
-  const layer2Y = scrollY * 0.15;
-  const layer3Y = scrollY * 0.28;
-
   return (
-    <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none" aria-hidden="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none"
+      aria-hidden="true"
+      style={
+        {
+          "--l1-x": "0px",
+          "--l1-y": "0px",
+          "--l2-x": "0px",
+          "--l2-y": "0px",
+          "--l3-x": "0px",
+          "--l3-y": "0px",
+        } as React.CSSProperties
+      }
+    >
       {/* Camada 1: Nebulosa e Aurora Cósmica distante */}
       <div
-        className="absolute inset-[-10%] transition-transform duration-700 ease-out opacity-60"
+        className="absolute inset-[-10%] opacity-60"
         style={{
-          transform: `translate3d(${mouseOffset.x * -12}px, ${-layer1Y + mouseOffset.y * -10}px, 0)`,
+          transform: "translate3d(var(--l1-x), var(--l1-y), 0)",
           background:
             "radial-gradient(ellipse at 20% 15%, rgba(16, 185, 129, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(0, 229, 255, 0.09) 0%, transparent 60%)",
         }}
@@ -68,9 +121,9 @@ export default function ParallaxBackground() {
 
       {/* Camada 2: Estrelas cintilantes e pontos de constelação estáticos */}
       <div
-        className="absolute inset-0 transition-transform duration-500 ease-out opacity-75"
+        className="absolute inset-0 opacity-75"
         style={{
-          transform: `translate3d(${mouseOffset.x * -20}px, ${-layer2Y}px, 0)`,
+          transform: "translate3d(var(--l2-x), var(--l2-y), 0)",
           backgroundImage: `radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.7) 50%, transparent 100%),
                             radial-gradient(2px 2px at 45% 15%, rgba(0,229,255,0.8) 50%, transparent 100%),
                             radial-gradient(1px 1px at 70% 35%, rgba(255,255,255,0.6) 50%, transparent 100%),
@@ -84,9 +137,9 @@ export default function ParallaxBackground() {
 
       {/* Camada 3: Grade Synthwave / Horizon Grid no rodapé */}
       <div
-        className="absolute -bottom-10 left-0 right-0 h-[45vh] transition-transform duration-300 ease-out opacity-25"
+        className="absolute -bottom-10 left-0 right-0 h-[45vh] opacity-25"
         style={{
-          transform: `translate3d(${mouseOffset.x * -30}px, ${-layer3Y * 0.5}px, 0) perspective(400px) rotateX(65deg)`,
+          transform: "translate3d(var(--l3-x), var(--l3-y), 0) perspective(400px) rotateX(65deg)",
           backgroundImage: `linear-gradient(to right, rgba(16, 185, 129, 0.25) 1px, transparent 1px),
                             linear-gradient(to bottom, rgba(0, 229, 255, 0.25) 1px, transparent 1px)`,
           backgroundSize: "44px 44px",

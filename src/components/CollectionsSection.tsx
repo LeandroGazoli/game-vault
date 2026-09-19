@@ -10,7 +10,7 @@ export default function CollectionsSection() {
   const featuredCollections = COLLECTIONS_DATA.slice(0, 4);
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" style={{ contentVisibility: "auto", containIntrinsicSize: "0 280px" }}>
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
@@ -38,7 +38,7 @@ export default function CollectionsSection() {
           <Link
             key={col.slug}
             href={`/colecoes/${col.slug}`}
-            className={`group relative flex flex-col justify-between p-5 rounded-2xl overflow-hidden border ${col.borderAccent} bg-gradient-to-b ${col.accent} min-h-[220px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.99]`}
+            className={`group relative flex flex-col justify-between p-5 rounded-2xl overflow-hidden border ${col.borderAccent} bg-gradient-to-b ${col.accent} min-h-[220px] transition-[border-color,transform,box-shadow] duration-200 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.99]`}
             style={{
               boxShadow: `0 10px 30px -10px ${col.glowColor}`,
             }}

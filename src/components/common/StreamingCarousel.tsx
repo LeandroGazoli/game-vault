@@ -40,8 +40,15 @@ export default function StreamingCarousel({
 
     checkScrollability();
 
+    let ticking = false;
     const handleScroll = () => {
-      checkScrollability();
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          checkScrollability();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     el.addEventListener("scroll", handleScroll, { passive: true });
@@ -58,7 +65,7 @@ export default function StreamingCarousel({
       window.removeEventListener("resize", checkScrollability);
       observer.disconnect();
     };
-  }, [checkScrollability, children]);
+  }, [checkScrollability]);
 
   const handleScroll = (direction: "left" | "right") => {
     triggerSelectionHaptic();

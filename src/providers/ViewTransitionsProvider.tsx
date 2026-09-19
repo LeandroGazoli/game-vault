@@ -4,6 +4,7 @@ import React, {
   createContext,
   useContext,
   useCallback,
+  useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
 
@@ -68,8 +69,13 @@ export default function ViewTransitionsProvider({
     [router]
   );
 
+  const contextValue = useMemo(
+    () => ({ navigateWithTransition }),
+    [navigateWithTransition]
+  );
+
   return (
-    <ViewTransitionContext.Provider value={{ navigateWithTransition }}>
+    <ViewTransitionContext.Provider value={contextValue}>
       {children}
     </ViewTransitionContext.Provider>
   );

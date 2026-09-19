@@ -30,7 +30,9 @@ interface UnifiedRankingsSectionProps {
   initialGames?: Game[];
 }
 
-export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRankingsSectionProps) {
+const EMPTY_GAMES: Game[] = [];
+
+export default function UnifiedRankingsSection({ initialGames = EMPTY_GAMES }: UnifiedRankingsSectionProps) {
   const { user } = useAuth();
   const { getGameInLibrary, addOrUpdateGame } = useGameLibrary();
   const [activeTab, setActiveTab] = useState<RankingTab>("popular");
@@ -75,7 +77,7 @@ export default function UnifiedRankingsSection({ initialGames = [] }: UnifiedRan
           signal: abortController.signal,
         });
         if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()) as { games?: Game[] };
           const items = data.games || [];
           if (items.length > 0) {
             cacheRef.current[activeTab] = items;

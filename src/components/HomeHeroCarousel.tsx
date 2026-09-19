@@ -12,9 +12,11 @@ interface HomeHeroCarouselProps {
   maxItems?: number;
 }
 
+const EMPTY_FALLBACK_GAMES: Game[] = [];
+
 export default function HomeHeroCarousel({
   items,
-  fallbackGames = [],
+  fallbackGames = EMPTY_FALLBACK_GAMES,
   maxItems = 5,
 }: HomeHeroCarouselProps) {
   // Combina itens configurados pelo Admin ou usa fallback dos jogos mais populares

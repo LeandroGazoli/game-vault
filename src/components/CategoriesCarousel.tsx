@@ -16,7 +16,7 @@ export default function CategoriesCarousel() {
   };
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" style={{ contentVisibility: "auto", containIntrinsicSize: "0 210px" }}>
       {/* Cabeçalho da Seção */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
@@ -42,14 +42,14 @@ export default function CategoriesCarousel() {
           <button
             onClick={() => scroll("left")}
             aria-label="Rolar para a esquerda"
-            className="p-2 rounded-xl bg-[#141822] hover:bg-[#1d2331] border border-white/10 text-neutral-300 hover:text-white transition-all active:scale-90 shadow-md cursor-pointer"
+            className="p-2 rounded-xl bg-[#141822] hover:bg-[#1d2331] border border-white/10 text-neutral-300 hover:text-white transition-colors active:scale-90 shadow-md cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => scroll("right")}
             aria-label="Rolar para a direita"
-            className="p-2 rounded-xl bg-[#141822] hover:bg-[#1d2331] border border-white/10 text-neutral-300 hover:text-white transition-all active:scale-90 shadow-md cursor-pointer"
+            className="p-2 rounded-xl bg-[#141822] hover:bg-[#1d2331] border border-white/10 text-neutral-300 hover:text-white transition-colors active:scale-90 shadow-md cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -65,7 +65,7 @@ export default function CategoriesCarousel() {
           <Link
             key={cat.slug}
             href={`/categorias/${cat.slug}`}
-            className="group relative flex-shrink-0 w-[220px] sm:w-[260px] md:w-[280px] h-[125px] sm:h-[145px] rounded-2xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98]"
+            className="group relative flex-shrink-0 w-[220px] sm:w-[260px] md:w-[280px] h-[125px] sm:h-[145px] rounded-2xl overflow-hidden border border-white/10 hover:border-white/30 transition-[border-color,transform,box-shadow] duration-200 hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98]"
             style={{
               boxShadow: `0 10px 25px -5px ${cat.glowColor}`,
             }}

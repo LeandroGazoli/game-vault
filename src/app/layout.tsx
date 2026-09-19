@@ -200,7 +200,7 @@ export default function RootLayout({
 
         {/* react-scan: destaca re-renders em desenvolvimento. Não vai para produção. */}
         {process.env.NODE_ENV === "development" && (
-          <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
+          <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" async />
         )}
 
         {/* Cinto e suspensório: robots.txt impede o rastreamento, mas se alguma URL de

@@ -230,10 +230,20 @@ export default function SpaceDustCanvas() {
     // 5. PARALLAX CONTÍNUO AO LONGO DO SITE (Passivo e Ultraleve)
     // ============================================================
     let targetCameraY = 0;
+    let cachedScrollHeight = Math.max(
+      (document.documentElement.scrollHeight || document.body.scrollHeight || 1) - window.innerHeight,
+      1
+    );
+
+    const updateCachedHeight = () => {
+      cachedScrollHeight = Math.max(
+        (document.documentElement.scrollHeight || document.body.scrollHeight || 1) - window.innerHeight,
+        1
+      );
+    };
 
     const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = scrollHeight > 0 ? window.scrollY / scrollHeight : 0;
+      const progress = window.scrollY / cachedScrollHeight;
       targetCameraY = -2200 * Math.min(Math.max(progress, 0), 1);
     };
 
@@ -296,6 +306,7 @@ export default function SpaceDustCanvas() {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      updateCachedHeight();
     };
 
     window.addEventListener("resize", handleResize, { passive: true });
