@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Check, Edit3, Plus, Heart, Star, Share2, ExternalLink } from "lucide-react";
 import { UserGame } from "@/lib/types";

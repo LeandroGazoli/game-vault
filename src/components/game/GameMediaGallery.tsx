@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useMemo } from "react";
 import {
   Image as ImageIcon,

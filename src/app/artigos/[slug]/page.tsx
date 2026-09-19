@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCombinedArticleBySlug } from "@/lib/articlesService";
+import { getGameUrl } from "@/lib/routes";
 import ArticleHtmlContent from "@/components/articles/ArticleHtmlContent";
 import JsonLd from "@/components/seo/JsonLd";
 import AdBanner from "@/components/ads/AdBanner";
@@ -248,7 +249,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
               {article.relatedGames.map((game) => (
                 <Link
                   key={game.id}
-                  href={`/game/${game.id}/${game.slug}`}
+                  href={getGameUrl(game)}
                   className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 border border-white/5 hover:border-emerald-500/40 transition-colors group"
                 >
                   <img

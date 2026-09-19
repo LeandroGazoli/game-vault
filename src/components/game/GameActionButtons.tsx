@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Heart, Plus, Edit3 } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";

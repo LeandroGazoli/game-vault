@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { ChevronLeft, Share2, Heart, Sparkles } from "lucide-react";

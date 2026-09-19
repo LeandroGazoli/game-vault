@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Languages, ChevronUp, ChevronDown, BookOpen } from "lucide-react";
 import { sanitizeTranslation } from "@/lib/translate";

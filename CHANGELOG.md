@@ -6,6 +6,17 @@ O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0
 
 ---
 
+## [v4.4.1] — 2026-09-19
+
+### 🐛 Correções & Transição de Páginas
+- **Transição e Navegação de Jogos Corrigida:** Solucionado o problema onde o endereço mudava na barra do navegador ao clicar num jogo mas a tela visualmente permanecia na Home.
+- **Padronização de URLs com `getGameUrl`:** Eliminação de discrepâncias de slugs nos componentes `HomeHeroCarousel` e `artigos/[slug]` que causavam redirecionamentos assíncronos no Next.js Router.
+- **Prevenção de Loops e Redirects Desnecessários:** Normalização e decodificação de slugs em `/game/[id]/[slug]`, evitando descompasso entre links client-side e canonicals de SEO.
+- **Fronteira de Hidratação do React:** Inclusão explícita de diretivas `"use client"` em todos os subcomponentes modulares da tela de jogo (`GameSynopsis`, `GameAgeGate`, `GameMediaGallery`, etc.) evitando anomalias de transição na troca de rota.
+- **Tratamento de Falhas com `error.tsx`:** Adicionada boundary dedicada para a rota de jogos com recuperação amigável e botão de recarregar.
+
+---
+
 ## [v4.4.0] — 2026-09-19
 
 ### ⚡ Otimização Extrema & Performance Edge

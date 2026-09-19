@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { ChevronUp, ChevronDown, Edit3, Gamepad2, Plus, Check } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";

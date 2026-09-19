@@ -5,7 +5,7 @@ import { getGameDetailsApi } from "@/lib/gameApi";
 import { IgdbIndisponivelError } from "@/lib/igdbApi";
 import GameDetailClient from "../GameDetailClient";
 import JsonLd from "@/components/seo/JsonLd";
-import { getGameUrl } from "@/lib/routes";
+import { getGameUrl, slugify } from "@/lib/routes";
 
 interface PageProps {
   params: Promise<{ id: string; slug: string }>;
@@ -125,7 +125,13 @@ export default async function GameSlugPage({ params }: PageProps) {
   // 301 Permanent Redirect se o slug na URL divergir do slug CANÔNICO (getGameUrl).
   // Compara contra o slug canônico (não o slug cru do IGDB) para evitar loop de redirecionamento.
   const canonicalPath = getGameUrl(game);
-  if (`/game/${id}/${slug}` !== canonicalPath) {
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch {}
+  const normalizedCurrentPath = `/game/${id}/${slugify(decodedSlug)}`;
+
+  if (normalizedCurrentPath !== canonicalPath) {
     permanentRedirect(canonicalPath);
   }
 

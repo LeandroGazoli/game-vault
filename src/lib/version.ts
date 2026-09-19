@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.4.0";
+export const APP_VERSION = "v4.4.1";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.4.1",
+    date: "19/09/2026",
+    title: "Correção na Transição e Roteamento de Jogos",
+    highlights: [
+      "Correção do problema de navegação onde a URL mudava ao clicar em um jogo mas a página permanecia na Home.",
+      "Padronização de URLs canônicas em todos os carrosséis e artigos com getGameUrl.",
+      "Normalização de slugs e prevenção de loops de redirecionamento RSC.",
+      "Adição de diretivas de cliente e error boundary dedicado para fichas de jogos.",
+    ],
+  },
   {
     version: "v4.4.0",
     date: "19/09/2026",

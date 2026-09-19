@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, Calendar, Lock, ArrowLeft } from "lucide-react";

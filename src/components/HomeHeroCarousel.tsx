@@ -5,6 +5,7 @@ import Link from "next/link";
 import { HeroCarouselItem, Game } from "@/lib/types";
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { getGameUrl } from "@/lib/routes";
 
 interface HomeHeroCarouselProps {
   items?: HeroCarouselItem[];
@@ -32,7 +33,7 @@ export default function HomeHeroCarousel({
         title: g.name,
         subtitle: g.metacritic ? `Nota Metacritic: ${g.metacritic}/100 • Aclamado pela crítica` : "Destaque da comunidade gamer",
         bannerUrl: g.background_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=80",
-        linkUrl: `/game/${g.id}/${g.slug}`,
+        linkUrl: getGameUrl(g),
         tag: g.metacritic && g.metacritic >= 90 ? "OBRA-PRIMA" : "EM DESTAQUE",
       }));
     }

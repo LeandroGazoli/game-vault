@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Globe, Share2, Users, BookOpen, ExternalLink } from "lucide-react";
 import { GameWebsite, getWebsiteMeta } from "./gameDetailHelpers";
