@@ -22,8 +22,8 @@ export default function IndieSearchResultsRow({ query }: IndieSearchResultsRowPr
 
     const q = query.toLowerCase().trim();
     fetch("/api/indies?sortBy=votes")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { indies?: IndieGame[] } | null) => {
+      .then((res) => (res.ok ? (res.json() as Promise<{ indies?: IndieGame[] }>) : null))
+      .then((data) => {
         const indies = data?.indies || [];
         const matches = indies.filter(
           (g) =>

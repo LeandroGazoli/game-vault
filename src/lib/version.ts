@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.5.0";
+export const APP_VERSION = "v4.6.0";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.6.0",
+    date: "19/09/2026",
+    title: "Slider Horizontal 16:9 de Destaques Indie",
+    highlights: [
+      "Carrossel fluido widescreen 16:9 com rolagem horizontal suave e snap para destaques indie.",
+      "Card 'Ver Todos os Indies' ao final do carrossel para navegação direta ao catálogo de jogos independentes.",
+      "Navegação intuitiva entre múltiplos jogos em destaque com setas de navegação e touch swipe nativo.",
+    ],
+  },
   {
     version: "v4.5.0",
     date: "19/09/2026",

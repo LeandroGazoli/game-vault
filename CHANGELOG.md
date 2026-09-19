@@ -4,6 +4,14 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.6.0] — 2026-09-19
+
+### 🚀 Novidades & Experiência Mobile-First
+- **Slider/Carrossel Horizontal 16:9 para Destaques Indie:** Substituição do antigo banner estático com rotação por timer por um carrossel horizontal fluido estilo streaming com cards compactos em proporção 16:9 (`aspect-video`).
+- **Navegação Fluida Entre Múltiplos Destaques:** Suporte a toque nativo com *scroll snap* em dispositivos móveis e setas flutuantes ergonômicas no desktop com feedback tátil (*haptics*).
+- **Card "Ver Todos os Indies" ao Final da Lista:** Integração de card de ação padronizado ao final do slider permitindo acessar instantaneamente a página completa `/indies`.
+- **Cabeçalho com Acesso Rápido:** Título "Destaques Indie" com ícone de brilho, link "Ver todos" e botão discreto para fechar/ocultar a seção durante a sessão atual.
+
 ---
 
 ## [v4.5.0] — 2026-09-19
