@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -54,6 +52,8 @@ html {
   -webkit-tap-highlight-color: transparent;
   max-width: 100%;
   overflow-x: clip;
+  background-color: #0e0f12;
+  color-scheme: dark;
 }
 
 /* Previne zoom automático indesejado no iOS / Safari / Chrome Mobile ao focar campos de texto */

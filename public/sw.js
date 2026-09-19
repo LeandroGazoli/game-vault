@@ -2,19 +2,25 @@
 // GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v4.2.0"; // Atualize este valor a cada deploy para invalidar caches antigos
+const SW_VERSION = "v4.3.0"; // Atualize este valor a cada deploy para invalidar caches antigos
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,
   assets: `mgl-assets-${SW_VERSION}`,
   images: `mgl-images-${SW_VERSION}`,
+  pages: `mgl-pages-${SW_VERSION}`,
 };
 
 const CACHE_WHITELIST = Object.values(CACHE_NAMES);
 
-// 1. APP SHELL MÍNIMO E ULTRA-LEVE (Menos de 45 KB total)
-// Evita baixar imagens pesadas (>500KB) e a rota raiz dinâmica durante o install
-const PRECACHE_ASSETS = ["/offline.html", "/favicon.svg", "/icon-192.png"];
+// 1. APP SHELL MÍNIMO E ULTRA-LEVE (Menos de 60 KB total)
+// Precache dos ativos essenciais para inicialização offline instantânea
+const PRECACHE_ASSETS = [
+  "/offline.html",
+  "/favicon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+];
 
 // Instalação do Service Worker
 self.addEventListener("install", (event) => {
@@ -117,40 +123,84 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1. Navegação de páginas HTML: Network First com timeout de segurança e fallback offline
+  // 1. Navegação de páginas HTML: Stale-While-Revalidate com entrega instantânea do App Shell (0ms)
   if (request.mode === "navigate") {
-    const fetchWithTimeout = new Promise((resolve, reject) => {
-      // 2500ms era agressivo demais: uma página de jogo com worker frio passa disso com
-      // facilidade e o usuário recebia a tela de offline com a rede funcionando. O fallback
-      // existe para quem está SEM rede — 10s separa os dois casos sem punir o lento.
-      const timeoutId = setTimeout(() => {
-        reject(new Error("Network timeout"));
-      }, 10000);
-
-      fetch(request)
-        .then((res) => {
-          clearTimeout(timeoutId);
-          resolve(res);
-        })
-        .catch((err) => {
-          clearTimeout(timeoutId);
-          reject(err);
-        });
-    });
+    // Rotas administrativas ou com token sensível ignoram o cache e vão direto para a rede
+    if (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api")) {
+      event.respondWith(fetch(request));
+      return;
+    }
 
     event.respondWith(
-      fetchWithTimeout.catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        const offlineFallback = await caches.match("/offline.html");
-        return (
-          offlineFallback ||
-          new Response("Offline", {
-            status: 503,
-            headers: { "Content-Type": "text/html; charset=utf-8" },
-          })
-        );
-      }),
+      (async () => {
+        try {
+          const pagesCache = await caches.open(CACHE_NAMES.pages);
+
+          // Tenta encontrar a página em cache: busca exata, sem query string (?source=pwa),
+          // ou fallback da home ("/") para inicializações instantâneas do PWA
+          const cachedResponse =
+            (await pagesCache.match(request)) ||
+            (await pagesCache.match(request, { ignoreSearch: true })) ||
+            (await pagesCache.match("/")) ||
+            (await caches.match(request)) ||
+            (await caches.match("/"));
+
+          // Dispara busca na rede em segundo plano para revalidar e atualizar o cache
+          const networkFetchPromise = fetch(request)
+            .then(async (networkResponse) => {
+              if (
+                networkResponse &&
+                networkResponse.status === 200 &&
+                networkResponse.type === "basic"
+              ) {
+                const clone = networkResponse.clone();
+                try {
+                  await pagesCache.put(request, clone);
+                  // Se for a home ou o atalho do PWA (?source=pwa), armazena sob as duas chaves
+                  if (url.pathname === "/" || url.search.includes("source=pwa")) {
+                    await pagesCache.put("/", clone.clone());
+                  }
+                  limitCacheEntries(CACHE_NAMES.pages, 25);
+                } catch {
+                  // Silencia eventuais cotas de armazenamento
+                }
+              }
+              return networkResponse;
+            })
+            .catch(async () => {
+              // Se a rede falhar e não houver cache da página, entrega o fallback offline
+              if (!cachedResponse) {
+                const offlineFallback = await caches.match("/offline.html");
+                return (
+                  offlineFallback ||
+                  new Response("Offline", {
+                    status: 503,
+                    headers: { "Content-Type": "text/html; charset=utf-8" },
+                  })
+                );
+              }
+              return null;
+            });
+
+          // SE JÁ TEMOS A PÁGINA EM CACHE: Entrega IMEDIATAMENTE (0ms!)
+          // Isso elimina 100% da tela branca na inicialização do PWA.
+          if (cachedResponse) {
+            event.waitUntil(networkFetchPromise);
+            return cachedResponse;
+          }
+
+          // Se for a primeira inicialização absoluta (sem cache prévio), aguarda a rede
+          const networkResponse = await networkFetchPromise;
+          if (networkResponse) {
+            return networkResponse;
+          }
+
+          const offlineFallback = await caches.match("/offline.html");
+          return offlineFallback || respostaDeFalha(504);
+        } catch {
+          return respostaDeFalha(504);
+        }
+      })()
     );
     return;
   }

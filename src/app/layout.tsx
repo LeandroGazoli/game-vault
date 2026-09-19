@@ -29,6 +29,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mygameslist.co
 
 export const viewport: Viewport = {
   themeColor: "#0e0f12",
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -166,8 +167,36 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html
+      lang="pt-BR"
+      className="dark"
+      style={{ backgroundColor: "#0e0f12", colorScheme: "dark" }}
+    >
       <head>
+        {/* Prevenção definitiva contra tela branca (PWA White Flash / FOUC):
+            Garante que o canvas do WebView e o body sejam pintados no tom escuro
+            imediatamente no frame 0, antes mesmo do download ou parse do CSS principal. */}
+        <meta name="color-scheme" content="dark" />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              :root, html, body {
+                background-color: #0e0f12 !important;
+                color-scheme: dark !important;
+                color: #f3f4f6;
+              }
+            `,
+          }}
+        />
+
+        {/* Fontes do Google carregadas com preconnect assíncrono para eliminar o bloqueio de renderização do CSSOM */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap"
+        />
+
         {/* react-scan: destaca re-renders em desenvolvimento. Não vai para produção. */}
         {process.env.NODE_ENV === "development" && (
           <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
@@ -188,7 +217,10 @@ export default function RootLayout({
         <GoogleAdScript />
         <JsonLd data={globalStructuredData} />
       </head>
-      <body className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black">
+      <body
+        className="bg-[#0e0f12] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#00E5FF] selection:text-black"
+        style={{ backgroundColor: "#0e0f12", colorScheme: "dark" }}
+      >
         <NavigationTracker />
         <ViewTransitionsProvider>
           <AuthProvider>
