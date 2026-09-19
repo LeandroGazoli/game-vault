@@ -92,13 +92,13 @@ export function useBackNavigation(defaultFallback: string = "/search") {
 
       router.back();
 
-      // Se após 250ms a página continuar inalterada, aciona navegação direta
+      // Se após 450ms a página continuar inalterada, aciona navegação direta como salvaguarda
       safetyTimer = setTimeout(() => {
         window.removeEventListener("popstate", onPopState);
         if (!navigated && window.location.pathname === currentPath) {
-          router.push(targetUrl);
+          router.push(targetUrl, { scroll: false });
         }
-      }, 250);
+      }, 450);
     },
     [router, defaultFallback]
   );

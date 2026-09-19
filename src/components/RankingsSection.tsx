@@ -348,6 +348,8 @@ export default function RankingsSection() {
                   return (
                     <div
                       key={game.id}
+                      id={`game-card-${game.id}`}
+                      data-game-id={game.id}
                       className={`group relative rounded-2xl bg-[#12151c] border ${rankTheme.border} p-4 flex gap-4 transition-all duration-200 hover:shadow-2xl ${rankTheme.glow}`}
                     >
                       {/* Pôster */}
@@ -455,6 +457,8 @@ export default function RankingsSection() {
                     return (
                       <div
                         key={game.id}
+                        id={`game-card-${game.id}`}
+                        data-game-id={game.id}
                         className="group flex items-center justify-between gap-3 p-2 sm:p-2.5 rounded-xl bg-[#12151c] hover:bg-[#181c25] border border-[#222834] hover:border-[#2f3849] transition-all"
                       >
                         {/* Lado Esquerdo: Rank + Capa + Título */}

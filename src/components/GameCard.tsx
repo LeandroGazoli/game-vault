@@ -75,7 +75,11 @@ function GameCardComponent({ game, onOpenAuthModal, isAiRecommended }: GameCardP
   return (
     <>
       <Card3DTilt maxTilt={8} className="h-full">
-        <div className={isAi ? "ai-card-wrapper h-full" : "h-full"}>
+        <div
+          id={`game-card-${game.id}`}
+          data-game-id={game.id}
+          className={isAi ? "ai-card-wrapper h-full" : "h-full"}
+        >
           {isAi && <div className="ai-card-border-beam" />}
           <div className={`group relative flex flex-col h-full ${isAi ? "rounded-2xl" : "rounded-2xl border border-white/[0.07] hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-black/70"} bg-[#141822] hover:bg-[#181d28] overflow-hidden transition-all duration-200`}>
             {/* Capa do Jogo Vertical Estilo Poster - Clicar abre a página do jogo */}

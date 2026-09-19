@@ -20,6 +20,7 @@ import CapacitorInit from "@/components/CapacitorInit";
 import SecurityTokenInterceptor from "@/components/SecurityTokenInterceptor";
 import ViewTransitionsProvider from "@/providers/ViewTransitionsProvider";
 import NavigationTracker from "@/components/NavigationTracker";
+import ScrollRestoration from "@/components/ScrollRestoration";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BannedUserModal from "@/components/BannedUserModal";
 import MaintenanceOverlay from "@/components/MaintenanceOverlay";
@@ -222,6 +223,7 @@ export default function RootLayout({
         style={{ backgroundColor: "#0e0f12", colorScheme: "dark" }}
       >
         <NavigationTracker />
+        <ScrollRestoration />
         <ViewTransitionsProvider>
           <AuthProvider>
             <BackgroundController />
