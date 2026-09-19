@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IndieGame } from "@/lib/types/indie.types";
 import { fetchApprovedIndies } from "@/lib/indieService";
+import { getGameUrl } from "@/lib/routes";
 import IndieVoteButton from "./IndieVoteButton";
 import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
 
@@ -57,20 +58,30 @@ export default function IndieSearchResultsRow({ query }: IndieSearchResultsRowPr
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {matchingIndies.map((indie) => (
-          <div
-            key={indie.id}
-            className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/5 hover:border-emerald-500/30 transition-all gap-3"
-          >
-            <Link
-              href={`/indies/${indie.slug}`}
-              className="flex items-center gap-2.5 min-w-0 flex-1 group"
+        {matchingIndies.map((indie) => {
+          const targetUrl =
+            indie.isCatalogGame && indie.linkedGameId
+              ? getGameUrl({
+                  id: indie.linkedGameId,
+                  name: indie.linkedGameName || indie.title,
+                  slug: indie.linkedGameSlug,
+                })
+              : `/indies/${indie.slug}`;
+
+          return (
+            <div
+              key={indie.id}
+              className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/5 hover:border-emerald-500/30 transition-all gap-3"
             >
-              <img
-                src={indie.coverImage}
-                alt={indie.title}
-                className="w-10 h-14 rounded-xl object-cover shrink-0 border border-white/10"
-              />
+              <Link
+                href={targetUrl}
+                className="flex items-center gap-2.5 min-w-0 flex-1 group"
+              >
+                <img
+                  src={indie.coverImage}
+                  alt={indie.title}
+                  className="w-10 h-14 rounded-xl object-cover shrink-0 border border-white/10"
+                />
               <div className="min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-emerald-400 truncate">
                   {indie.title}
@@ -84,14 +95,15 @@ export default function IndieSearchResultsRow({ query }: IndieSearchResultsRowPr
               </div>
             </Link>
 
-            <IndieVoteButton
-              gameId={indie.id}
-              initialVotesCount={indie.votesCount || 0}
-              initialVoters={indie.voters || []}
-              size="sm"
-            />
-          </div>
-        ))}
+              <IndieVoteButton
+                gameId={indie.id}
+                initialVotesCount={indie.votesCount || 0}
+                initialVoters={indie.voters || []}
+                size="sm"
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

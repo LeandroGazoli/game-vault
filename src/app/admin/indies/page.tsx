@@ -18,6 +18,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { triggerSuccessHaptic, triggerWarningHaptic } from "@/lib/capacitor";
 import { SOMETHING_MEANINGFUL_DRIVE_DATA } from "@/lib/constants/somethingMeaningfulData";
+import { getGameUrl } from "@/lib/routes";
+import AdminPromoteCatalogModal from "@/components/indies/AdminPromoteCatalogModal";
 import {
   Gamepad2,
   CheckCircle2,
@@ -41,6 +43,7 @@ export default function AdminIndiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
 
   const loadIndies = async () => {
     setIsLoading(true);
@@ -196,6 +199,15 @@ export default function AdminIndiesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPromoteModalOpen(true)}
+            className="px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+          >
+            <Star className="w-4 h-4 fill-black" />
+            <span>Destacar Jogo do Catálogo</span>
+          </button>
+
           <Link
             href="/admin/indies/novo"
             className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
@@ -274,6 +286,11 @@ export default function AdminIndiesPage() {
                       <h4 className="text-sm font-bold text-white truncate">
                         {game.title}
                       </h4>
+                      {game.isCatalogGame && (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
+                          CATÁLOGO IGDB
+                        </span>
+                      )}
                       <span
                         className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                           game.status === "approved"
@@ -381,17 +398,31 @@ export default function AdminIndiesPage() {
                       <Edit3 className="w-4 h-4" />
                     </Link>
                     <Link
-                      href={`/indies/${game.slug}`}
+                      href={
+                        game.isCatalogGame && game.linkedGameId
+                          ? getGameUrl({
+                              id: game.linkedGameId,
+                              name: game.linkedGameName || game.title,
+                              slug: game.linkedGameSlug,
+                            })
+                          : `/indies/${game.slug}`
+                      }
                       target="_blank"
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         game.status !== "approved"
                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
                           : "bg-white/5 hover:bg-white/10 text-gray-300"
                       }`}
-                      title={game.status !== "approved" ? "Visualizar Preview do Rascunho" : "Ver Página do Jogo"}
+                      title={
+                        game.isCatalogGame
+                          ? "Ver Ficha no Catálogo Oficial"
+                          : game.status !== "approved"
+                          ? "Visualizar Preview do Rascunho"
+                          : "Ver Página do Jogo"
+                      }
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>{game.status !== "approved" ? "Preview" : "Ver"}</span>
+                      <span>{game.isCatalogGame ? "Ficha" : game.status !== "approved" ? "Preview" : "Ver"}</span>
                     </Link>
                     <button
                       onClick={() => handleDelete(game)}
@@ -407,6 +438,18 @@ export default function AdminIndiesPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Destaque de Jogos do Catálogo IGDB */}
+      <AdminPromoteCatalogModal
+        isOpen={isPromoteModalOpen}
+        onClose={() => setIsPromoteModalOpen(false)}
+        onSuccess={() => {
+          setToastMessage("Jogo do catálogo destacado com sucesso!");
+          setTimeout(() => setToastMessage(null), 3000);
+          loadIndies();
+        }}
+        userId={user?.uid || "admin"}
+      />
     </div>
   );
 }

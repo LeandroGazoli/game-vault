@@ -110,6 +110,39 @@ export default function IndieFormFields({
   const [minReq, setMinReq] = useState(initialValues?.systemRequirements?.minimum || "");
   const [recReq, setRecReq] = useState(initialValues?.systemRequirements?.recommended || "");
 
+  const handleImportFromIGDB = (fullGame: any) => {
+    if (!fullGame) return;
+    if (fullGame.name && !title) setTitle(fullGame.name);
+    if (fullGame.summary && !description) setDescription(fullGame.summary);
+    if (fullGame.storyline && !storyline) setStoryline(fullGame.storyline);
+    if (fullGame.background_image && !coverImage) setCoverImage(fullGame.background_image);
+    if (fullGame.screenshots && fullGame.screenshots.length > 0 && !screenshotsInput) {
+      setScreenshotsInput(fullGame.screenshots.map((s: any) => s.image || s).join("\n"));
+    }
+    if (fullGame.released && !releaseDate) {
+      setReleaseDate(fullGame.released.slice(0, 10));
+    }
+    if (fullGame.parent_platforms && fullGame.parent_platforms.length > 0 && platformsInput === "PC (Windows), Steam") {
+      const platNames = fullGame.parent_platforms
+        .map((p: any) => p.platform?.name || p.name)
+        .filter(Boolean);
+      if (platNames.length > 0) setPlatformsInput(platNames.join(", "));
+    }
+    if (fullGame.genres && fullGame.genres.length > 0 && genresInput === "Ação, Aventura, Indie") {
+      const gNames = fullGame.genres.map((g: any) => g.name).filter(Boolean);
+      if (gNames.length > 0) setGenresInput(gNames.join(", "));
+    }
+    if (fullGame.developers && fullGame.developers.length > 0 && !developerName) {
+      setDeveloperName(fullGame.developers[0].name || "");
+    }
+    if (fullGame.publishers && fullGame.publishers.length > 0 && !publisherName) {
+      setPublisherName(fullGame.publishers[0].name || "");
+    }
+    if (fullGame.website && !studioWebsite) {
+      setStudioWebsite(fullGame.website);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -550,6 +583,7 @@ export default function IndieFormFields({
           setLinkedGameName(g ? g.name : undefined);
           setLinkedGameSlug(g ? g.slug : undefined);
         }}
+        onImportGameData={handleImportFromIGDB}
         defaultSearchTitle={title}
       />
 
