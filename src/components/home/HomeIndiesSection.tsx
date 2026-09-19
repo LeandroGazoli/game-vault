@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { IndieGame } from "@/lib/types/indie.types";
-import { fetchApprovedIndies } from "@/lib/indieService";
 import {
   Gamepad2,
   Sparkles,
@@ -22,10 +21,11 @@ export default function HomeIndiesSection() {
 
   useEffect(() => {
     let isMounted = true;
-    fetchApprovedIndies("votes")
-      .then((data) => {
+    fetch("/api/indies?sortBy=votes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { indies?: IndieGame[] } | null) => {
         if (isMounted) {
-          setIndies(data);
+          setIndies(data?.indies || []);
           setLoading(false);
         }
       })

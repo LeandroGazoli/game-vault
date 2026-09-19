@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IndieGame } from "@/lib/types/indie.types";
-import { fetchApprovedIndies } from "@/lib/indieService";
 import { getGameUrl } from "@/lib/routes";
 import IndieVoteButton from "./IndieVoteButton";
 import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
@@ -22,8 +21,10 @@ export default function IndieSearchResultsRow({ query }: IndieSearchResultsRowPr
     }
 
     const q = query.toLowerCase().trim();
-    fetchApprovedIndies("votes")
-      .then((indies) => {
+    fetch("/api/indies?sortBy=votes")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { indies?: IndieGame[] } | null) => {
+        const indies = data?.indies || [];
         const matches = indies.filter(
           (g) =>
             g.title.toLowerCase().includes(q) ||

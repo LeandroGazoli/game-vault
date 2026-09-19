@@ -488,8 +488,8 @@ async function fetchIGDBWithRetry(
   body: string,
   maxRetries = 3
 ): Promise<any[]> {
-  return withEdgeCache(
-    "igdb",
+  return withSharedCache(
+    "igdb-list",
     `${endpoint}:${body}`,
     IGDB_EDGE_TTL_SECONDS,
     () => fetchIGDBFromOrigin(endpoint, body, maxRetries)
@@ -638,9 +638,13 @@ async function fetchIGDB(endpoint: string, body: string, ttl = TTL_CONFIG.RECENT
     return cached.data;
   }
 
-  // 2. Se não estiver em cache ou expirou, processa através da fila controlada
+  // 2. Consulta L2 (Cache API) e L3 (KV). Apenas em caso de miss de borda é que a tarefa
+  // entra na fila do dispatcher (preservando o limite de 3 req/s do IGDB apenas para novas consultas).
+  const edgeTtlSeconds = Math.max(300, Math.floor(ttl / 1000));
   try {
-    const data = await igdbDispatcher.schedule(() => fetchIGDBWithRetry(endpoint, body));
+    const data = await withSharedCache("igdb-list", cacheKey, edgeTtlSeconds, () =>
+      igdbDispatcher.schedule(() => fetchIGDBFromOrigin(endpoint, body, 3, false))
+    );
 
     if (data && data.length > 0) {
       setToCache(cacheKey, data, ttl);

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { UserProfile } from "@/lib/types";
-import { getTopGamersLeaderboard } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import UserAvatar from "@/components/UserAvatar";
 import {
@@ -33,8 +32,11 @@ export default function CommunityLeaderboardPage() {
     async function loadLeaderboard() {
       setLoading(true);
       try {
-        const list = await getTopGamersLeaderboard(50);
-        setGamers(list);
+        const res = await fetch("/api/rankings/community?limit=50");
+        if (res.ok) {
+          const data = (await res.json()) as { gamers?: UserProfile[] };
+          setGamers(data.gamers || []);
+        }
       } catch (err) {
         console.error("Erro ao carregar ranking da comunidade:", err);
       } finally {

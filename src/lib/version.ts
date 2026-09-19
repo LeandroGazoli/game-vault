@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.3.0";
+export const APP_VERSION = "v4.4.0";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.4.0",
+    date: "19/09/2026",
+    title: "Ultra Performance: Cloudflare Edge & Firestore",
+    highlights: [
+      "Cache global multicamadas (Cache API + KV) para listas IGDB, HowLongToBeat e traduções.",
+      "Sincronização inteligente da biblioteca gamer: evita leituras redundantes do Firestore via hash de atualização local.",
+      "Catálogo consolidado na Home: substituição de 6 chamadas de rede por 1 única requisição com cache de borda.",
+      "Persistência offline local do Firestore (IndexedDB multi-abas) para carregamento instantâneo.",
+      "Eliminação de refetch duplicado nas páginas de detalhes de jogos renderizadas via SSR.",
+    ],
+  },
   {
     version: "v4.3.0",
     date: "19/09/2026",

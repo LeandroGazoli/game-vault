@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IndieGame, IndieSpotlightLocation } from "@/lib/types/indie.types";
-import { fetchSpotlightIndies } from "@/lib/indieService";
 import { Sparkles, ArrowRight, Heart, X, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getGameUrl } from "@/lib/routes";
@@ -24,10 +23,11 @@ export default function IndieSpotlightBanner({
 
   useEffect(() => {
     let isMounted = true;
-    fetchSpotlightIndies(location)
-      .then((data) => {
+    fetch(`/api/indies?location=${encodeURIComponent(location)}&spotlight=true`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { indies?: IndieGame[] } | null) => {
         if (isMounted) {
-          setIndies(data);
+          setIndies(data?.indies || []);
           setLoading(false);
         }
       })
