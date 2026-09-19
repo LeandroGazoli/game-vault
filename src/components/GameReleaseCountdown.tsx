@@ -18,7 +18,7 @@ interface TimeRemaining {
   totalMs: number;
 }
 
-export function parseReleaseDate(releasedStr: string | null | undefined): Date | null {
+function parseReleaseDate(releasedStr: string | null | undefined): Date | null {
   if (!releasedStr) return null;
 
   // Formato YYYY-MM-DD
@@ -50,6 +50,7 @@ const RELEASE_DATE_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
   year: "numeric",
 });
 
+// react-doctor-disable-next-line react-doctor/only-export-components -- Helper de checagem compartilhado entre componentes de visualização de jogo
 export function isGameUnreleased(game: Game): boolean {
   // Caso especial GTA VI (Lançamento anunciado para o final de 2026)
   if (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { getGameUrl } from "@/lib/routes";
@@ -60,6 +60,7 @@ export default function GameModal({
   const [startDate, setStartDate] = useState<string>("");
   const [completedDate, setCompletedDate] = useState<string>("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
+  const selectedPlatformsSet = useMemo(() => new Set(selectedPlatforms), [selectedPlatforms]);
   const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
   const [review, setReview] = useState<string>("");
   const [hltb, setHltb] = useState<HLTBData | null>(game?.hltb || null);
@@ -1103,7 +1104,7 @@ export default function GameModal({
                         <div className="flex flex-wrap gap-1.5">
                           {game.platforms.map((p) => {
                             const platName = p.platform.name;
-                            const isSelected = selectedPlatforms.includes(platName);
+                            const isSelected = selectedPlatformsSet.has(platName);
                             return (
                               <button
                                 key={platName}
@@ -1128,7 +1129,7 @@ export default function GameModal({
                     {!showAllConsoles && (
                       <div className="flex flex-wrap gap-1.5">
                         {POPULAR_CONSOLES.map((plat) => {
-                          const isSelected = selectedPlatforms.includes(plat);
+                          const isSelected = selectedPlatformsSet.has(plat);
                           return (
                             <button
                               key={plat}
@@ -1156,7 +1157,7 @@ export default function GameModal({
                             <span className="text-[11px] font-semibold text-gray-400 block">{category}</span>
                             <div className="flex flex-wrap gap-1.5">
                               {consoles.map((plat) => {
-                                const isSelected = selectedPlatforms.includes(plat);
+                                const isSelected = selectedPlatformsSet.has(plat);
                                 return (
                                   <button
                                     key={plat}

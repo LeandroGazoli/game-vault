@@ -87,6 +87,7 @@ export default function NotificationBell() {
     };
     // `user` é objeto novo a cada snapshot do doc do usuário; depender dele fazia
     // marcar-como-lida (que escreve no doc) derrubar e recriar os dois listeners.
+    // react-doctor-disable-next-line react-doctor/exhaustive-deps -- user é recriado a cada snapshot, depender de user?.uid evita recriar listeners
   }, [user?.uid]);
 
   // Filtra notificações ativas removendo as que o usuário excluiu/dispensou do perfil

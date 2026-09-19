@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
@@ -33,9 +33,10 @@ interface NotificationDrawerProps {
   onMarkAllAsRead: () => void;
   onDismissNotification?: (id: string) => void;
   onDismissAll?: () => void;
-  onEnablePush: () => Promise<void>;
-  isPushEnabled: boolean;
-  isLoadingPush: boolean;
+  onClearAllNotifications?: () => void;
+  onEnablePush?: () => Promise<void> | void;
+  isPushEnabled?: boolean;
+  isLoadingPush?: boolean;
 }
 
 export default function NotificationDrawer({
@@ -48,15 +49,22 @@ export default function NotificationDrawer({
   onMarkAllAsRead,
   onDismissNotification,
   onDismissAll,
+  onClearAllNotifications,
+  isPushEnabled = true,
   onEnablePush,
-  isPushEnabled,
-  isLoadingPush,
+  isLoadingPush = false,
 }: NotificationDrawerProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const readSet = useMemo(() => new Set(readIds), [readIds]);
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !readSet.has(n.id)).length,
+    [notifications, readSet]
+  );
 
   if (!isOpen || !mounted || typeof document === "undefined") return null;
 
@@ -75,8 +83,6 @@ export default function NotificationDrawer({
         return <Bell className="w-3.5 h-3.5 text-purple-300" />;
     }
   };
-
-  const unreadCount = notifications.filter((n) => !readIds.includes(n.id)).length;
 
   return createPortal(
     <div
@@ -112,7 +118,7 @@ export default function NotificationDrawer({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-neutral-400 hover:text-white transition-all flex items-center justify-center border border-white/10 shrink-0 cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-neutral-400 hover:text-white transition-[background-color,color,transform] flex items-center justify-center border border-white/10 shrink-0 cursor-pointer"
             title="Fechar"
             aria-label="Fechar"
           >
@@ -135,7 +141,7 @@ export default function NotificationDrawer({
             <button
               onClick={onEnablePush}
               disabled={isLoadingPush}
-              className="px-3 py-1.5 rounded-xl bg-[#00E5FF] hover:bg-cyan-400 text-black text-xs font-black shrink-0 transition-all active:scale-95 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#00E5FF] hover:bg-cyan-400 text-black text-xs font-black shrink-0 transition-[background-color,transform,opacity] active:scale-95 disabled:opacity-50"
             >
               {isLoadingPush ? "Ativando..." : "Ativar"}
             </button>
@@ -183,14 +189,14 @@ export default function NotificationDrawer({
             </div>
           ) : (
             notifications.map((notif) => {
-              const isRead = readIds.includes(notif.id);
+              const isRead = readSet.has(notif.id);
               const catConfig = NOTIFICATION_CATEGORIES[notif.category] || NOTIFICATION_CATEGORIES.general;
 
               return (
                 <article
                   key={notif.id}
                   onClick={() => onMarkAsRead(notif.id)}
-                  className={`p-4 rounded-2xl border transition-all space-y-2.5 relative group ${
+                  className={`p-4 rounded-2xl border transition-[background-color,border-color,opacity,box-shadow] duration-200 space-y-2.5 relative group ${
                     isRead
                       ? "bg-[#111319] border-white/5 opacity-80 hover:opacity-100"
                       : "bg-[#161922] border-cyan-500/30 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/20"
@@ -283,7 +289,7 @@ export default function NotificationDrawer({
                             e.stopPropagation();
                             onDismissNotification(notif.id);
                           }}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-neutral-400 hover:text-red-400 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-neutral-400 hover:text-red-400 transition-[background-color,border-color,color,transform] flex items-center gap-1 cursor-pointer active:scale-95"
                           title="Remover do meu perfil"
                           aria-label="Remover notificação do meu perfil"
                         >

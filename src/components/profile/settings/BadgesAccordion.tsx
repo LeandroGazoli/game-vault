@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Trophy,
   ChevronDown,
@@ -42,6 +42,8 @@ export default function BadgesAccordion({
   handleCreateCustomTitle,
   isPremium,
 }: BadgesAccordionProps) {
+  const equippedSet = useMemo(() => new Set(equippedTitles), [equippedTitles]);
+
   return (
     <div className={`rounded-2xl bg-[#141822] border transition-all duration-300 overflow-hidden shadow-sm ${
       isOpen ? "border-amber-400/40 ring-1 ring-amber-400/20" : "border-white/10"
@@ -189,7 +191,7 @@ export default function BadgesAccordion({
               </span>
               <div className="flex flex-wrap gap-2 pt-1">
                 {createdTitles.map((title) => {
-                  const isEquipped = equippedTitles.includes(title);
+                  const isEquipped = equippedSet.has(title);
                   return (
                     <button
                       key={title}
@@ -219,7 +221,7 @@ export default function BadgesAccordion({
             </span>
             <div className="flex flex-wrap gap-2 pt-1">
               {DEFAULT_GAMER_TITLES.map((title) => {
-                const isEquipped = equippedTitles.includes(title);
+                const isEquipped = equippedSet.has(title);
                 return (
                   <button
                     key={title}

@@ -194,5 +194,6 @@ export function getUnreadCount(
   notifications: SystemNotification[],
   readIds: string[] = getReadNotificationIds()
 ): number {
-  return notifications.filter((n) => !readIds.includes(n.id)).length;
+  const readSet = new Set(readIds);
+  return notifications.filter((n) => !readSet.has(n.id)).length;
 }

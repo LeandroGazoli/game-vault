@@ -153,8 +153,10 @@ export async function sendGroupNotification(input: GroupNotificationInput): Prom
     const snap = await db.collection("users").where("socialLinks.steam", ">", "").get();
     userDocs = snap.docs;
   } else if (input.targetType === "custom_users" && input.targetUserIds?.length) {
-    for (const uid of input.targetUserIds) {
-      const d = await db.collection("users").doc(uid).get();
+    const userSnaps = await Promise.all(
+      input.targetUserIds.map((uid) => db.collection("users").doc(uid).get())
+    );
+    for (const d of userSnaps) {
       if (d.exists) userDocs.push(d as any);
     }
   }

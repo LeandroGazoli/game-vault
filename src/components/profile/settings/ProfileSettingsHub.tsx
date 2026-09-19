@@ -48,7 +48,10 @@ export default function ProfileSettingsHub({
   useEffect(() => {
     if (settings.activeAccordion) {
       const el = document.getElementById(`accordion-${settings.activeAccordion}`);
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 120);
+      if (el) {
+        const timer = setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 120);
+        return () => clearTimeout(timer);
+      }
     }
   }, [settings.activeAccordion]);
 
@@ -60,7 +63,7 @@ export default function ProfileSettingsHub({
           <button
             type="button"
             onClick={handleBack}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-white active:scale-95 transition-all py-1.5 pr-3 pl-1 -ml-1"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white active:scale-95 transition-[color,transform] py-1.5 pr-3 pl-1 -ml-1"
           >
             <ArrowLeft className="w-5 h-5 text-[#10b981]" />
             <span className="text-sm font-semibold tracking-tight">Voltar</span>
@@ -76,7 +79,7 @@ export default function ProfileSettingsHub({
               type="button"
               disabled={settings.isSaving}
               onClick={settings.handleSave}
-              className="px-4 py-1.5 rounded-full bg-[#10b981] hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-1.5 rounded-full bg-[#10b981] hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold shadow-md active:scale-95 transition-[background-color,transform,opacity] disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{settings.isSaving ? "Salvando..." : "Salvar"}</span>
@@ -117,10 +120,10 @@ export default function ProfileSettingsHub({
                     key={item.id}
                     type="button"
                     onClick={() => settings.toggleAccordion(item.id)}
-                    className={`w-full px-3 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-[background-color,border-color,color] ${
                       isActive
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        ? "bg-white/10 text-white font-bold border border-white/20 shadow-sm"
+                        : "text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent"
                     }`}
                   >
                     <span className="truncate">{item.label}</span>
@@ -136,7 +139,7 @@ export default function ProfileSettingsHub({
                 type="button"
                 disabled={settings.isSaving}
                 onClick={settings.handleSave}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 active:scale-98 transition-[background-color,transform,opacity] disabled:opacity-50 cursor-pointer"
               >
                 <Save className="w-4 h-4" />
                 <span>{settings.isSaving ? "Salvando Alterações..." : "Salvar Perfil"}</span>
@@ -145,7 +148,7 @@ export default function ProfileSettingsHub({
               <button
                 type="button"
                 onClick={handleBack}
-                className="w-full py-2 px-3 rounded-xl bg-[#1a2130] hover:bg-[#20293a] text-gray-400 hover:text-white text-xs font-semibold border border-white/5 transition-all text-center"
+                className="w-full py-2 px-3 rounded-xl bg-[#1a2130] hover:bg-[#20293a] text-gray-400 hover:text-white text-xs font-semibold border border-white/5 transition-[background-color,color] text-center"
               >
                 Descartar &amp; Voltar
               </button>
@@ -282,7 +285,7 @@ export default function ProfileSettingsHub({
           <button
             type="button"
             onClick={handleBack}
-            className="px-4 h-11 rounded-xl bg-[#1a2130] hover:bg-[#1e2433] text-gray-300 text-xs font-semibold border border-white/10 active:scale-95 transition-all"
+            className="px-4 h-11 rounded-xl bg-[#1a2130] hover:bg-[#1e2433] text-gray-300 text-xs font-semibold border border-white/10 active:scale-95 transition-[background-color,transform]"
           >
             Descartar
           </button>
@@ -290,7 +293,7 @@ export default function ProfileSettingsHub({
             type="button"
             disabled={settings.isSaving}
             onClick={settings.handleSave}
-            className="flex-1 h-11 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 shadow-[0_0_24px_rgba(16,185,129,0.35)] active:scale-[0.98] transition-all disabled:opacity-50"
+            className="flex-1 h-11 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 shadow-[0_0_24px_rgba(16,185,129,0.35)] active:scale-[0.98] transition-[background-color,transform,opacity] disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{settings.isSaving ? "Salvando..." : "Salvar Alterações"}</span>
