@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.6.0";
+export const APP_VERSION = "v4.6.1";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.6.1",
+    date: "19/09/2026",
+    title: "Proteção de Cotas Firestore & Blindagem de Sitemap",
+    highlights: [
+      "Eliminação definitiva do fallback de varredura completa da coleção game_translations no sitemap, prevenindo picos acidentais de milhares de leituras.",
+      "Consumo controlado e previsível em builds exclusivamente através do índice agregado (system/sitemap_index).",
+      "Segurança resiliente contra esgotamento de cotas do banco de dados.",
+    ],
+  },
   {
     version: "v4.6.0",
     date: "19/09/2026",

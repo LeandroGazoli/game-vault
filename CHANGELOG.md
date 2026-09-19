@@ -4,6 +4,15 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.6.1] — 2026-09-19
+ 
+### 🛡️ Otimização & Proteção de Cotas Firestore
+- **Blindagem Definitiva do Sitemap:** Removido o caminho de fallback que executava a varredura completa (`firestoreRestQuery`) da coleção `game_translations` com limite de 45.000 itens quando o índice agregado falhava ou estava inacessível.
+- **Previsibilidade e Economia Extrema em Builds:** O sitemap agora consulta estritamente os documentos particionados de `system/sitemap_index` (~9 leituras para dezenas de milhares de jogos). Em caso de índice ausente ou inacessível, retorna lista vazia segura sem disparar leituras não controladas.
+- **Proteção Contra Picos de Cota:** Eliminação da causa raiz que gerava picos de dezenas de milhares de leituras acidentais durante deploys e builds de produção.
+ 
+---
+
 ## [v4.6.0] — 2026-09-19
 
 ### 🚀 Novidades & Experiência Mobile-First
