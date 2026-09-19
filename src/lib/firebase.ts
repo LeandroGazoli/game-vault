@@ -12,6 +12,9 @@ import {
 } from "firebase/auth";
 import {
   getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc,
   setDoc,
   getDoc,
@@ -62,7 +65,23 @@ export const isFirebaseConfigured = true;
 
 export const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
+
+function initializeFirestoreDb(): Firestore {
+  if (typeof window !== "undefined") {
+    try {
+      return initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      });
+    } catch {
+      return getFirestore(app);
+    }
+  }
+  return getFirestore(app);
+}
+
+export const db: Firestore = initializeFirestoreDb();
 
 // ==========================================
 // FUNÇÕES DE PERSISTÊNCIA (FIRESTORE)

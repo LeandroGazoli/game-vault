@@ -6,6 +6,20 @@ O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0
 
 ---
 
+## [v4.4.0] — 2026-09-19
+
+### ⚡ Otimização Extrema & Performance Edge
+- **Cache Global Multicamadas (Cloudflare Cache API + KV):** Listas do IGDB, dados HowLongToBeat e traduções de jogos passam a ser armazenadas e compartilhadas globalmente entre todos os 300+ datacenters da Cloudflare, blindando os limites de taxa da API e acelerando os tempos de resposta para menos de 50ms.
+- **Catálogo Consolidado da Home (`/api/games/home-catalog`):** A página inicial agora consome todas as 6 seções principais (Populares, Lançamentos, Em Breve, Dublados PT-BR, Curtos e Saga GTA) em uma única requisição HTTP cacheada na borda, eliminando conexões concorrentes e acelerando a abertura em smartphones.
+- **Supressão de Refetch SSR:** Eliminação da busca duplicada no carregamento de detalhes de jogos já renderizados no servidor, economizando requisições redundantes de rede.
+
+### 🛡️ Otimização & Economia de Quota Firestore
+- **Sincronização Condicional da Biblioteca (Smart Sync):** A lista de jogos do usuário é mantida no cache local (`localStorage`) e validada contra o timestamp `libraryUpdatedAt` do perfil. Leituras repetidas de centenas de documentos na inicialização caem para 0 caso a biblioteca não tenha sido modificada em outro dispositivo.
+- **Persistência Offline com IndexedDB Multi-Abas:** Habilitado o `persistentLocalCache` com `persistentMultipleTabManager` no SDK cliente do Firestore, garantindo navegação instantânea e navegação offline sem refazer leituras já efetuadas.
+- **Interceptação na Borda de Consultas Públicas:** As seções de Jogos Indie e Ranking da Comunidade foram desacopladas de consultas diretas no navegador e migradas para rotas de borda cacheadas (`/api/indies` e `/api/rankings/community`), impedindo estouro de cota e eliminando custos invisíveis no cliente.
+
+---
+
 ## [v4.3.0] — 2026-09-19
 
 ### 🚀 Novidades

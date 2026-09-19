@@ -1,4 +1,5 @@
 import { HLTBData } from "./types";
+import { withSharedCache } from "./edgeCache";
 
 const MAX_HLTB_CACHE = 500;
 const cache = new Map<string, { data: HLTBData | null; timestamp: number }>();
@@ -30,7 +31,7 @@ async function getHltbHandshake(force = false) {
       },
     });
 
-    if (res.ok) {
+  if (res.ok) {
       const { token, hpKey, hpVal } = await res.json();
       tokenCache = { token, hpKey, hpVal, timestamp: Date.now() };
       return tokenCache;
@@ -46,13 +47,15 @@ export async function fetchHLTBData(gameName: string): Promise<HLTBData | null> 
 
   const normalized = gameName.trim().toLowerCase();
 
-  // 1. Verifica no Cache
+  // 1. Verifica no Cache L1 em memória
   const cached = cache.get(normalized);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
 
-  // Limpeza de sufixos de edições para maior taxa de acerto
+  // 2. Cache compartilhado L2 (Edge Cache API) + L3 (Cloudflare KV global)
+  const result = await withSharedCache("hltb", normalized, 30 * 86400, async () => {
+    // Limpeza de sufixos de edições para maior taxa de acerto
   const cleanName = gameName
     .replace(/\s*\([^)]*\)/g, "")
     .replace(/\s*\[[^\]]*\]/g, "")
@@ -154,14 +157,18 @@ export async function fetchHLTBData(gameName: string): Promise<HLTBData | null> 
           source: "HowLongToBeat",
         };
 
-        setHltbCache(normalized, data);
         return data;
       }
     }
-    setHltbCache(normalized, null);
+    return null;
   } catch (error) {
     console.warn(`Aviso HLTB para "${gameName}":`, error);
+    return null;
   }
+  });
 
-  return null;
+  if (result) {
+    setHltbCache(normalized, result);
+  }
+  return result;
 }

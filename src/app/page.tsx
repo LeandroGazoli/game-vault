@@ -138,46 +138,18 @@ export default function HomePage() {
     async function loadData() {
       setLoading(true);
       try {
-        const [popRes, relRes, upRes, ptbrRes, shortRes, gtaRes] = await Promise.all([
-          fetch("/api/games/rankings?category=popular&limit=10"),
-          fetch("/api/games/releases"),
-          fetch("/api/games/upcoming"),
-          fetch("/api/games/curated?type=ptbr"),
-          fetch("/api/games/curated?type=short"),
-          fetch("/api/games/search?q=Grand+Theft+Auto&pageSize=10"),
-        ]);
-
-        if (popRes.ok) {
-          const data = (await popRes.json()) as { games?: Game[] };
-          setTopTenGames(data.games || []);
-        }
-
-        if (relRes.ok) {
-          const data = (await relRes.json()) as { games?: Game[] };
-          setReleases(data.games || []);
-        }
-
-        if (upRes.ok) {
-          const data = (await upRes.json()) as { games?: Game[] };
-          setUpcoming(data.games || []);
-        }
-
-        if (ptbrRes.ok) {
-          const data = (await ptbrRes.json()) as { games?: Game[] };
-          setPtbrGames(data.games || []);
-        }
-
-        if (shortRes.ok) {
-          const data = (await shortRes.json()) as { games?: Game[] };
-          setShortGames(data.games || []);
-        }
-
-        if (gtaRes.ok) {
-          const data = (await gtaRes.json()) as { games?: Game[] };
-          setGtaGames(data.games || []);
+        const res = await fetch("/api/games/home-catalog");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.popular) setTopTenGames(data.popular);
+          if (data.releases) setReleases(data.releases);
+          if (data.upcoming) setUpcoming(data.upcoming);
+          if (data.ptbr) setPtbrGames(data.ptbr);
+          if (data.short) setShortGames(data.short);
+          if (data.gta) setGtaGames(data.gta);
         }
       } catch (err) {
-        console.error("Erro ao carregar catálogo da home:", err);
+        console.error("Erro ao carregar catálogo consolidado da home:", err);
       } finally {
         setLoading(false);
       }

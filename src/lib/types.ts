@@ -503,6 +503,7 @@ export interface UserProfile {
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
   gamesCount?: number;
+  libraryUpdatedAt?: string;
   acquisition?: UserAcquisition;
   createdAt: string;
   updatedAt?: string;

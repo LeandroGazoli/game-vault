@@ -157,3 +157,41 @@ export async function withSharedCache<T>(
     return valor;
   });
 }
+
+/**
+ * Grava proativamente um valor no cache compartilhado (Cache API + KV),
+ * evitando ida à origem na próxima leitura.
+ */
+export async function setSharedCache<T>(
+  namespace: string,
+  key: string,
+  ttlSeconds: number,
+  value: T
+): Promise<void> {
+  if (value == null) return;
+  const kv = getIgdbKV();
+  const kvKey = `${namespace}:${key}`;
+
+  if (kv) {
+    try {
+      await kv.put(kvKey, JSON.stringify(value), { expirationTtl: ttlSeconds });
+    } catch {}
+  }
+
+  const cachePromise = getCache();
+  if (cachePromise) {
+    try {
+      const cache = await cachePromise;
+      const request = toRequest(namespace, key);
+      await cache.put(
+        request,
+        new Response(JSON.stringify(value), {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": `public, s-maxage=${ttlSeconds}`,
+          },
+        })
+      );
+    } catch {}
+  }
+}

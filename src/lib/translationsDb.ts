@@ -8,6 +8,7 @@
 import { getRestFirestore } from "./firestoreAdminRest";
 import { registerGameInSitemapIndex } from "./sitemapIndex";
 import { sanitizeTranslation } from "./translate";
+import { withSharedCache, setSharedCache } from "./edgeCache";
 
 const TRANSLATIONS_COLLECTION = "game_translations";
 
@@ -40,6 +41,8 @@ function setMemoryCache(key: string, data: GameTranslations) {
   memoryCache.set(key, data);
 }
 
+const TRANSLATIONS_CACHE_TTL = 14 * 24 * 3600; // 14 dias no cache de borda (KV + Cache API)
+
 /**
  * Busca todas as traduções salvas de um jogo (Sinopse e Enredo) no Firestore.
  */
@@ -50,47 +53,51 @@ export async function getStoredGameTranslations(
 
   const key = String(gameId);
 
-  // 1. Verifica cache rápido de memória
+  // 1. Verifica cache rápido de memória do isolate
   if (memoryCache.has(key)) {
     return memoryCache.get(key)!;
   }
 
-  try {
-    // Timeout de 1.5s para garantir que lentidão de rede nunca trave a página
-    const fetchPromise = getRestFirestore()
-      .collection(TRANSLATIONS_COLLECTION)
-      .doc(key)
-      .get();
-    const timeoutPromise = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), 1500)
-    );
+  // 2. Camada L1 (Cache API por datacenter) + L2 (Cloudflare KV global)
+  // Reduz drasticamente as leituras em game_translations no Firestore
+  const cached = await withSharedCache<GameTranslations>(
+    "gv-trans",
+    key,
+    TRANSLATIONS_CACHE_TTL,
+    async () => {
+      try {
+        // Timeout de 1.5s para garantir que lentidão de rede nunca trave a página
+        const fetchPromise = getRestFirestore()
+          .collection(TRANSLATIONS_COLLECTION)
+          .doc(key)
+          .get();
+        const timeoutPromise = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), 1500)
+        );
 
-    const docSnap = await Promise.race([fetchPromise, timeoutPromise]);
+        const docSnap = await Promise.race([fetchPromise, timeoutPromise]);
 
-    if (docSnap && docSnap.exists) {
-      const data = docSnap.data() as StoredTranslation;
-      const cleanDesc = sanitizeTranslation(data?.translatedText) || null;
-      const cleanStoryline = sanitizeTranslation(data?.translatedStoryline) || null;
+        if (docSnap && docSnap.exists) {
+          const data = docSnap.data() as StoredTranslation;
+          const cleanDesc = sanitizeTranslation(data?.translatedText) || null;
+          const cleanStoryline = sanitizeTranslation(data?.translatedStoryline) || null;
 
-      const result: GameTranslations = {
-        description: cleanDesc,
-        storyline: cleanStoryline,
-      };
+          return {
+            description: cleanDesc,
+            storyline: cleanStoryline,
+          };
+        }
+      } catch (err) {
+        console.warn(`Aviso ao buscar traduções do jogo ${key} no Firestore:`, err);
+      }
 
-      setMemoryCache(key, result);
-      return result;
+      return { description: null, storyline: null };
     }
-  } catch (err) {
-    console.warn(`Aviso ao buscar traduções do jogo ${key} no Firestore:`, err);
-    // Erro (ex.: 429) NÃO é cacheado: quando a cota voltar, queremos tentar de novo.
-    return { description: null, storyline: null };
-  }
+  );
 
-  // Cacheia a AUSÊNCIA de tradução. Sem isto, todo jogo sem tradução custava 1 leitura do
-  // Firestore por requisição, para sempre — e a maioria do catálogo não tem tradução.
-  const empty: GameTranslations = { description: null, storyline: null };
-  setMemoryCache(key, empty);
-  return empty;
+  const result = cached || { description: null, storyline: null };
+  setMemoryCache(key, result);
+  return result;
 }
 
 /**
@@ -127,12 +134,14 @@ export async function saveGameTranslations(
     ? sanitizeTranslation(params.translatedStoryline)
     : undefined;
 
-  // Atualiza cache de memória imediatamente
+  // Atualiza cache de memória e cache de borda imediatamente
   const currentCached = memoryCache.get(key) || { description: null, storyline: null };
-  setMemoryCache(key, {
+  const updatedTranslations: GameTranslations = {
     description: cleanDesc !== undefined ? cleanDesc : currentCached.description,
     storyline: cleanStoryline !== undefined ? cleanStoryline : currentCached.storyline,
-  });
+  };
+  setMemoryCache(key, updatedTranslations);
+  void setSharedCache("gv-trans", key, TRANSLATIONS_CACHE_TTL, updatedTranslations);
 
   const docData: any = {
     gameId: key,

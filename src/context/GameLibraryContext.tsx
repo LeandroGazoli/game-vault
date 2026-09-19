@@ -24,6 +24,7 @@ interface GameLibraryContextType {
 const GameLibraryContext = createContext<GameLibraryContextType | undefined>(undefined);
 
 const LIBRARY_CACHE_PREFIX = "mgl_cached_library_";
+const LIBRARY_SYNCED_PREFIX = "mgl_library_synced_at_";
 
 function getCachedLibrary(uid?: string): UserGame[] {
   if (typeof window === "undefined" || !uid) return [];
@@ -39,6 +40,22 @@ function setCachedLibrary(uid: string | undefined, games: UserGame[]) {
   if (typeof window === "undefined" || !uid) return;
   try {
     localStorage.setItem(`${LIBRARY_CACHE_PREFIX}${uid}`, JSON.stringify(games));
+  } catch {}
+}
+
+function getLibrarySyncedAt(uid?: string): string | null {
+  if (typeof window === "undefined" || !uid) return null;
+  try {
+    return localStorage.getItem(`${LIBRARY_SYNCED_PREFIX}${uid}`);
+  } catch {
+    return null;
+  }
+}
+
+function setLibrarySyncedAt(uid: string | undefined, timestamp: string) {
+  if (typeof window === "undefined" || !uid) return;
+  try {
+    localStorage.setItem(`${LIBRARY_SYNCED_PREFIX}${uid}`, timestamp);
   } catch {}
 }
 
@@ -63,20 +80,34 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         return;
       }
 
-      // Se já temos cache para este usuário, exibe imediatamente e busca novidades em segundo plano
       const cached = getCachedLibrary(user.uid);
-      if (cached.length > 0 && library.length === 0) {
+      const syncedAt = getLibrarySyncedAt(user.uid);
+
+      // Se temos cache local E o perfil do usuário informa que a biblioteca não foi alterada
+      // desde a última sincronização, usamos o cache local sem disparar nenhuma leitura ao Firestore!
+      if (cached.length > 0) {
         setLibrary(cached);
         setIsLoading(false);
-      } else if (library.length === 0) {
+
+        if (user.libraryUpdatedAt && syncedAt && user.libraryUpdatedAt <= syncedAt) {
+          // Biblioteca local 100% atualizada — economiza todas as leituras de users/{uid}/games!
+          return;
+        }
+      } else {
         setIsLoading(true);
       }
 
       try {
         const userGames = await getUserLibrary(user.uid);
         const finalList = userGames || [];
+        const now = new Date().toISOString();
         setLibrary(finalList);
         setCachedLibrary(user.uid, finalList);
+        setLibrarySyncedAt(user.uid, user.libraryUpdatedAt || now);
+        // Se o usuário ainda não tinha libraryUpdatedAt no doc, inicializa para futuras sessões
+        if (!user.libraryUpdatedAt) {
+          saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
+        }
       } catch (err) {
         console.error("Erro ao carregar biblioteca:", err);
       } finally {
@@ -85,7 +116,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     }
 
     load();
-  }, [user?.uid]);
+  }, [user?.uid, user?.libraryUpdatedAt]);
 
   const triggerZeradoConfetti = useCallback(() => {
     try {
@@ -175,7 +206,9 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         triggerZeradoConfetti();
       }
 
+      setLibrarySyncedAt(user.uid, now);
       await saveUserGame(user.uid, updatedGame);
+      saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
     },
     [user, triggerZeradoConfetti]
   );
@@ -252,7 +285,9 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
       if (user) {
         try {
+          setLibrarySyncedAt(user.uid, now);
           await batchSaveUserGames(user.uid, gamesToSave);
+          saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
         } catch (saveError) {
           console.error("Erro ao persistir lote de jogos no Firestore:", saveError);
           throw saveError;
@@ -267,8 +302,11 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   const deleteGame = useCallback(
     async (gameId: number | string) => {
       if (!user) return;
+      const now = new Date().toISOString();
+      setLibrarySyncedAt(user.uid, now);
       setLibrary((prev) => prev.filter((g) => String(g.gameId) !== String(gameId)));
       await removeUserGame(user.uid, gameId);
+      saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
     },
     [user]
   );

@@ -204,6 +204,8 @@ const nextConfig: NextConfig = {
       config.resolve.alias = {
         ...(config.resolve.alias || {}),
         ...firebaseBrowserAliases(),
+        sharp: false,
+        "@img/sharp-darwin-arm64": false,
       };
     }
     return config;

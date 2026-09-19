@@ -68,23 +68,11 @@ export default function GameDetailClient({ initialGame, id }: GameDetailClientPr
   const userGame = game ? getGameInLibrary(game.id) : undefined;
   const isAdult = isAdultGame(game);
 
-  // Auto-cura de tradução e carregamento sob demanda
+  // Carregamento inicial: respeita os dados SSR se fornecidos, evitando refetch desnecessário
   useEffect(() => {
     if (initialGame) {
       setGame(initialGame);
       setLoading(false);
-      if (isLikelyEnglish(initialGame.description_raw)) {
-        setIsTranslating(true);
-        fetch(`/api/games/${id}`)
-          .then((res) => (res.ok ? res.json() : null))
-          .then((freshGame: Game | null) => {
-            if (freshGame && freshGame.description_raw && !isLikelyEnglish(freshGame.description_raw)) {
-              setGame(freshGame);
-            }
-          })
-          .catch(() => {})
-          .finally(() => setIsTranslating(false));
-      }
       return;
     }
 
