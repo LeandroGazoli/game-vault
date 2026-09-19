@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Logo from "@/components/Logo";
 import PwaRegister from "@/components/PwaRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
+import PwaUpdatePrompt from "@/components/pwa/PwaUpdatePrompt";
 import CookieConsent from "@/components/CookieConsent";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import GoogleAdScript from "@/components/ads/GoogleAdScript";
@@ -243,8 +244,9 @@ export default function RootLayout({
             {/* Barra de Navegação Flutuante Mobile */}
             <MobileBottomNav />
 
-            {/* Modais Globais: Busca Spotlight, Instalação PWA & Consentimento de Cookies */}
+            {/* Modais Globais: Busca Spotlight, Instalação PWA, Atualizações PWA & Consentimento de Cookies */}
             <PwaInstallPrompt />
+            <PwaUpdatePrompt />
             <BannedUserModal />
             <MaintenanceOverlay />
             <CookieConsent />

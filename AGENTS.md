@@ -179,3 +179,18 @@ Sempre que um agente for criar ou alterar código no Game Vault, deve seguir rig
 5. **Homologação e Deploy:**
    - Mantenha o trabalho em branch de homologação (`homologacao/*`).
    - Gere e compartilhe o link de preview no Vercel para validação do usuário.
+
+---
+
+## 📦 10. Versionamento e Documentação no CHANGELOG.md
+
+- **Registro Obrigatório de Versões:** Toda nova funcionalidade (`feat`), correção de bugs (`fix`) ou melhoria de performance (`perf`) relevante deve obrigatoriamente ser documentada no arquivo [`CHANGELOG.md`](file:///Users/leandro/.gemini/antigravity/worktrees/game-vault/fix_pwa_white_screen/CHANGELOG.md) na raiz do repositório.
+- **Transparência para a Comunidade Gamer:** O objetivo do changelog é manter os usuários informados sobre o que está sendo desenvolvido e aprimorado na plataforma.
+- **Estrutura Obrigatória por Versão:** Cada lançamento deve conter:
+  - Número da versão semântica (ex: `[v4.3.0]`) e data no formato `AAAA-MM-DD`.
+  - Seções categorizadas: `🚀 Novidades`, `🛠️ Melhorias & Performance`, `🐛 Correções`.
+- **Proibição Absoluta de Dados Sensíveis:** Nunca mencione no changelog segredos, credenciais, chaves de API, variáveis de ambiente privadas, infraestrutura interna confidencial ou dados pessoais de usuários. A comunicação deve ser estritamente descritiva, pública e focada na experiência do usuário.
+- **Sincronização com o Código:** Ao lançar uma nova versão, mantenha sempre alinhados:
+  1. [`src/lib/version.ts`](file:///Users/leandro/.gemini/antigravity/worktrees/game-vault/fix_pwa_white_screen/src/lib/version.ts) (`APP_VERSION`)
+  2. [`public/sw.js`](file:///Users/leandro/.gemini/antigravity/worktrees/game-vault/fix_pwa_white_screen/public/sw.js) (`SW_VERSION`)
+  3. [`CHANGELOG.md`](file:///Users/leandro/.gemini/antigravity/worktrees/game-vault/fix_pwa_white_screen/CHANGELOG.md)

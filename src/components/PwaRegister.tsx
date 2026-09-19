@@ -29,23 +29,39 @@ export default function PwaRegister() {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js");
 
-        // Se já houver um worker em espera, ativa silenciosamente sem pop-ups
+        const notifyUpdate = (worker: ServiceWorker) => {
+          waitingWorkerRef.current = worker;
+          const isPwa =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            (window.navigator as any).standalone === true;
+
+          if (isPwa) {
+            // No PWA instalado, aciona o prompt visual com a versão para o usuário decidir
+            window.dispatchEvent(
+              new CustomEvent("pwa-update-available", {
+                detail: { registration: reg, worker },
+              })
+            );
+          } else {
+            // No navegador tradicional, atualiza silenciosamente em background
+            worker.postMessage({ type: "SKIP_WAITING" });
+            worker.postMessage("SKIP_WAITING");
+          }
+        };
+
+        // Se já houver um worker em espera
         if (reg.waiting && navigator.serviceWorker.controller) {
-          waitingWorkerRef.current = reg.waiting;
-          reg.waiting.postMessage({ type: "SKIP_WAITING" });
-          reg.waiting.postMessage("SKIP_WAITING");
+          notifyUpdate(reg.waiting);
         }
 
-        // Monitora novas versões encontradas e atualiza silenciosamente em segundo plano
+        // Monitora novas versões encontradas
         reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing;
           if (!newWorker) return;
 
           newWorker.addEventListener("statechange", () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              waitingWorkerRef.current = newWorker;
-              newWorker.postMessage({ type: "SKIP_WAITING" });
-              newWorker.postMessage("SKIP_WAITING");
+              notifyUpdate(newWorker);
             }
           });
         });
