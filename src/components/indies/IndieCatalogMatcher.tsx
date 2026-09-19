@@ -4,12 +4,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Link as LinkIcon, Check, X, Gamepad2 } from "lucide-react";
 import { Game } from "@/lib/types";
 import { getGameUrl } from "@/lib/routes";
+import { Download } from "lucide-react";
 
 interface IndieCatalogMatcherProps {
   linkedGameId?: number | string | null;
   linkedGameName?: string | null;
   linkedGameSlug?: string | null;
   onSelectGame: (game: { id: number | string; name: string; slug?: string } | null) => void;
+  onImportGameData?: (gameDetails: any) => void;
   defaultSearchTitle?: string;
 }
 
@@ -18,11 +20,13 @@ export default function IndieCatalogMatcher({
   linkedGameName,
   linkedGameSlug,
   onSelectGame,
+  onImportGameData,
   defaultSearchTitle = "",
 }: IndieCatalogMatcherProps) {
   const [searchTerm, setSearchTerm] = useState(defaultSearchTitle);
   const [searchResults, setSearchResults] = useState<Game[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,7 +43,7 @@ export default function IndieCatalogMatcher({
     try {
       const res = await fetch(`/api/games/search?q=${encodeURIComponent(query)}&limit=6`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { games?: Game[] };
         setSearchResults(data.games || []);
       } else {
         setSearchResults([]);
@@ -60,6 +64,25 @@ export default function IndieCatalogMatcher({
     }, 400);
   };
 
+  const handleImportDetails = async () => {
+    if (!linkedGameId || !onImportGameData) return;
+    setIsImporting(true);
+    try {
+      const res = await fetch(`/api/games/${linkedGameId}`);
+      if (res.ok) {
+        const fullGame = (await res.json()) as any;
+        onImportGameData(fullGame);
+      } else {
+        alert("Não foi possível carregar os detalhes do jogo na API.");
+      }
+    } catch (err) {
+      console.error("Erro ao importar detalhes do jogo IGDB:", err);
+      alert("Erro ao importar dados do IGDB.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-3 p-4 rounded-2xl bg-black/30 border border-white/10">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -74,7 +97,7 @@ export default function IndieCatalogMatcher({
 
       {/* Jogo Atualmente Vinculado */}
       {linkedGameId ? (
-        <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-3">
+        <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 shrink-0">
               <Gamepad2 className="w-4 h-4" />
@@ -90,6 +113,22 @@ export default function IndieCatalogMatcher({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {onImportGameData && (
+              <button
+                type="button"
+                onClick={handleImportDetails}
+                disabled={isImporting}
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Copiar dados do IGDB para a ficha (capa, sinopse, plataformas, gêneros)"
+              >
+                {isImporting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3" />
+                )}
+                <span>Copiar dados IGDB</span>
+              </button>
+            )}
             <a
               href={getGameUrl({ id: linkedGameId, name: linkedGameName, slug: linkedGameSlug })}
               target="_blank"
@@ -101,7 +140,7 @@ export default function IndieCatalogMatcher({
             <button
               type="button"
               onClick={() => onSelectGame(null)}
-              className="p-1 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+              className="p-1 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
               title="Remover vínculo"
             >
               <X className="w-3.5 h-3.5" />

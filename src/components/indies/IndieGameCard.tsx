@@ -1,14 +1,24 @@
 import React from "react";
 import Link from "next/link";
 import { IndieGame } from "@/lib/types/indie.types";
+import { getGameUrl } from "@/lib/routes";
 import IndieVoteButton from "./IndieVoteButton";
-import { Gamepad2, ArrowRight, ExternalLink } from "lucide-react";
+import { Gamepad2, ArrowRight, ExternalLink, Sparkles } from "lucide-react";
 
 interface IndieGameCardProps {
   game: IndieGame;
 }
 
 export default function IndieGameCard({ game }: IndieGameCardProps) {
+  const targetUrl =
+    game.isCatalogGame && game.linkedGameId
+      ? getGameUrl({
+          id: game.linkedGameId,
+          name: game.linkedGameName || game.title,
+          slug: game.linkedGameSlug,
+        })
+      : `/indies/${game.slug}`;
+
   return (
     <div className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#141822] hover:border-emerald-500/40 transition-all duration-300 shadow-xl hover:shadow-emerald-950/10 hover:-translate-y-1">
       <div>
@@ -19,9 +29,11 @@ export default function IndieGameCard({ game }: IndieGameCardProps) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#141822] via-transparent to-transparent" />
-          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 text-emerald-300 font-bold text-[10px] uppercase tracking-wider font-mono">
-            {game.platforms[0] || "Indie"}
-          </span>
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 text-emerald-300 font-bold text-[10px] uppercase tracking-wider font-mono">
+              {game.isCatalogGame ? "Destaque Acervo" : game.platforms[0] || "Indie"}
+            </span>
+          </div>
         </div>
 
         <div className="p-5 space-y-2.5">
@@ -60,10 +72,10 @@ export default function IndieGameCard({ game }: IndieGameCardProps) {
         />
 
         <Link
-          href={`/indies/${game.slug}`}
+          href={targetUrl}
           className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
         >
-          <span>Conhecer</span>
+          <span>{game.isCatalogGame ? "Ver no Acervo" : "Conhecer"}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

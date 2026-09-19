@@ -29,6 +29,7 @@ export interface IndieGame {
   linkedGameId?: number | string;
   linkedGameSlug?: string;
   linkedGameName?: string;
+  isCatalogGame?: boolean; // Indica se este destaque aponta diretamente para a ficha do catálogo principal IGDB
   // Notas e Atualizações do Desenvolvedor (Dev Notes / Devlog)
   devNotes?: string;
   devNotesMode?: "tiptap" | "html" | "markdown" | null;
@@ -98,6 +99,7 @@ export interface IndieSubmissionForm {
   linkedGameId?: number | string;
   linkedGameSlug?: string;
   linkedGameName?: string;
+  isCatalogGame?: boolean;
   // Notas e Atualizações do Desenvolvedor (Dev Notes / Devlog)
   devNotes?: string;
   devNotesMode?: "tiptap" | "html" | "markdown" | null;
