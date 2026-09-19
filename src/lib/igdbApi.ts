@@ -5,34 +5,57 @@ import { isAdultGame } from "./gameUtils";
 // `.trim()` não é zelo excessivo: secret gravado por pipe (`echo "..." | wrangler secret put`)
 // carrega um \n no fim, e o Twitch responde "invalid client secret" sem dizer por quê — a
 // credencial parece certa a olho nu e o erro sugere que ela está errada.
-const TWITCH_CLIENT_ID = (process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "").trim();
-const TWITCH_CLIENT_SECRET = (process.env.TWITCH_CLIENT_SECRET || "").trim();
+function getTwitchCredentials() {
+  const clientId = (process.env.TWITCH_CLIENT_ID || process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "").trim();
+  const clientSecret = (process.env.TWITCH_CLIENT_SECRET || "").trim();
+  return { clientId, clientSecret };
+}
+
 const IGDB_API_URL = "https://api.igdb.com/v4";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let hasLoggedMissingCredentials = false;
 
 export async function getTwitchAccessToken(): Promise<string | null> {
-  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
-    console.error("[Twitch/IGDB] TWITCH_CLIENT_ID ou TWITCH_CLIENT_SECRET não configurados nas variáveis de ambiente.");
+  const { clientId, clientSecret } = getTwitchCredentials();
+
+  if (!clientId || !clientSecret) {
+    if (!hasLoggedMissingCredentials) {
+      hasLoggedMissingCredentials = true;
+      const isBuildPhase =
+        process.env.NEXT_PHASE === "phase-production-build" ||
+        (process.env.NODE_ENV === "production" && !process.env.TWITCH_CLIENT_SECRET);
+
+      if (isBuildPhase) {
+        console.warn(
+          "[Twitch/IGDB] TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET não definidos no ambiente de build. Consultas externas à IGDB serão ignoradas durante a compilação estática."
+        );
+      } else {
+        console.error("[Twitch/IGDB] TWITCH_CLIENT_ID ou TWITCH_CLIENT_SECRET não configurados nas variáveis de ambiente.");
+      }
+    }
     return null;
   }
+
+  // Reseta o throttle de log se as credenciais estiverem presentes
+  hasLoggedMissingCredentials = false;
 
   // Diagnóstico sem vazar credencial: o TAMANHO já distingue os casos que confundem.
   // Twitch usa 30 caracteres nos dois. 31 quase sempre é \n de secret gravado por pipe;
   // "sujo" indica espaço ou quebra de linha que o trim acabou de remover.
-  const idSujo = (process.env.TWITCH_CLIENT_ID || "").length !== TWITCH_CLIENT_ID.length;
-  const secretSujo = (process.env.TWITCH_CLIENT_SECRET || "").length !== TWITCH_CLIENT_SECRET.length;
+  const idSujo = (process.env.TWITCH_CLIENT_ID || "").length !== clientId.length;
+  const secretSujo = (process.env.TWITCH_CLIENT_SECRET || "").length !== clientSecret.length;
   // Impressão digital em vez do valor: 8 hex de SHA-256 bastam para comparar QUAL segredo
   // chegou ao worker (o do painel ou o que o build embutiu do .env.local), sem expor nada.
   const digitais = await Promise.all(
-    [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET].map(async (v) => {
+    [clientId, clientSecret].map(async (v) => {
       const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
       return [...new Uint8Array(h)].slice(0, 4).map((b) => b.toString(16).padStart(2, "0")).join("");
     })
   );
   console.log(
-    `[Twitch/IGDB] credenciais: id=${TWITCH_CLIENT_ID.length}c/${digitais[0]}${idSujo ? " (limpo)" : ""}, ` +
-      `secret=${TWITCH_CLIENT_SECRET.length}c/${digitais[1]}${secretSujo ? " (limpo)" : ""}`
+    `[Twitch/IGDB] credenciais: id=${clientId.length}c/${digitais[0]}${idSujo ? " (limpo)" : ""}, ` +
+      `secret=${clientSecret.length}c/${digitais[1]}${secretSujo ? " (limpo)" : ""}`
   );
 
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60000) {
@@ -42,7 +65,7 @@ export async function getTwitchAccessToken(): Promise<string | null> {
   try {
     const res = await fetch(
       // `encodeURIComponent` para o caso de o segredo trazer algo que a URL interprete.
-      `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(TWITCH_CLIENT_ID)}&client_secret=${encodeURIComponent(TWITCH_CLIENT_SECRET)}&grant_type=client_credentials`,
+      `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`,
       { method: "POST" }
     );
 
@@ -527,10 +550,11 @@ async function fetchIGDBFromOrigin(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      const { clientId } = getTwitchCredentials();
       const res = await fetch(`${IGDB_API_URL}/${endpoint}`, {
         method: "POST",
         headers: {
-          "Client-ID": TWITCH_CLIENT_ID,
+          "Client-ID": clientId,
           "Authorization": `Bearer ${token}`,
           "Content-Type": "text/plain",
         },
@@ -1018,10 +1042,11 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
     const res = await igdbDispatcher.schedule(async () => {
       const token = await getTwitchAccessToken();
       if (!token) return { count: 0 };
+      const { clientId } = getTwitchCredentials();
       const response = await fetch(`${IGDB_API_URL}/games/count`, {
         method: "POST",
         headers: {
-          "Client-ID": TWITCH_CLIENT_ID,
+          "Client-ID": clientId,
           "Authorization": `Bearer ${token}`,
           "Content-Type": "text/plain",
         },

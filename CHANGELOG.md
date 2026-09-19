@@ -17,6 +17,7 @@ O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0
 - **Fim da Tela Branca na Inicialização:** Implementada estratégia *Stale-While-Revalidate* e entrega instantânea de cache para o App Shell do PWA (`/?source=pwa` e `/`), eliminando completamente o atraso de tela branca.
 - **Cores Críticas no Frame 0:** Canvas do navegador e WebView inicializam em fundo escuro (`#0e0f12`) desde o primeiro milissegundo, prevenindo qualquer lampejo de tela clara (FOUC).
 - **Desbloqueio de Renderização de Fontes:** Remoção do `@import` bloqueante no CSS, substituído por pré-conexão assíncrona de alta performance.
+- **Resiliência do Pipeline e Catálogo:** Otimizada a inicialização dos serviços de catálogo e compilação do servidor, prevenindo falhas de integração no deploy e garantindo renderização assíncrona contínua.
 
 ---
 
