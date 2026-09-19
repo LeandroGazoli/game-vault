@@ -6,6 +6,19 @@ O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0
 
 ---
 
+## [v4.5.0] — 2026-09-19
+
+### ⚡ Performance & Borda Cloudflare
+- **Request Coalescing (Single-Flight) no Edge:** Prevenção de picos de consultas concorrentes à origem (*thundering herd*) agrupando requisições idênticas na borda.
+- **Cache Global L2/L3 de Configurações e Planos:** As consultas de configurações do sistema (`settings`, `plans_config`) agora contam com cache em borda com invalidação automática sob mutações administrativas.
+- **Paginação e Cache com Tags em `/api/user/[username]/games.json`:** Distribuição na borda com cabeçalhos `stale-while-revalidate`, suporte a `page`/`limit` e invalidação em tempo zero baseada na versão `libraryUpdatedAt`.
+
+### 🛡️ Otimização & Redução Drástica de Leituras Firestore
+- **Gamification Sync Otimizado:** Eliminação da releitura integral da coleção `users/{uid}/games` a cada sincronização de XP/nível, reutilizando estatísticas agregadas (`libraryStats`) e cacheando definições estáticas de conquistas e missões.
+- **Persistência de Sumário da Biblioteca:** Armazenamento automático de `libraryStats` no documento de perfil, reduzindo consultas em cascata e leituras redundantes.
+
+---
+
 ## [v4.4.1] — 2026-09-19
 
 ### 🐛 Correções & Transição de Páginas

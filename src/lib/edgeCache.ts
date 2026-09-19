@@ -1,17 +1,7 @@
 /**
- * Camada L2 sobre a Cache API do Cloudflare Workers.
- *
- * Por que existe: o `Map` em nível de módulo (L1) só vale dentro de UM isolate, que o
- * workerd descarta em segundos de inatividade e existe às centenas em paralelo pelo mundo.
- * Na prática a taxa de acerto do L1 é baixa. A Cache API é por datacenter, sobrevive à morte
- * do isolate, é compartilhada entre todas as requisições daquele PoP — e é **gratuita, sem
- * binding e sem cota própria**, diferente de KV.
- *
- * Serve especialmente para chamadas que o Next NUNCA cacheia sozinho: o IGDB é `POST`, e a
- * memoização automática do Next só cobre `fetch` GET.
- *
- * Degrada em silêncio: fora do runtime do Worker (ex.: `next build`), `caches` não existe e
- * tudo vira passthrough.
+ * Camada L2 (Cache API Workers) + L3 (KV global) com Request Coalescing.
+ * Cache API sobrevive ao isolate por PoP (sem custo/binding). KV global cobre PoPs frios.
+ * Degrada em silêncio fora do Worker (ex.: next build).
  */
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -35,6 +25,28 @@ function toRequest(namespace: string, key: string): Request {
   return new Request(`${KEY_ORIGIN}/${namespace}/${encodeURIComponent(key)}`);
 }
 
+// Mapa de promessas em trânsito dentro do mesmo isolate (Single-Flight/Coalescing).
+// Se dezenas de conexões chegarem no mesmo milissegundo em cache miss, apenas 1 ida à origem é feita.
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+export async function withCoalescing<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inFlightRequests.get(key);
+  if (existing) {
+    return existing as Promise<T>;
+  }
+
+  const promise = (async () => {
+    try {
+      return await fn();
+    } finally {
+      inFlightRequests.delete(key);
+    }
+  })();
+
+  inFlightRequests.set(key, promise);
+  return promise;
+}
+
 /**
  * Lê do cache de borda; em caso de miss executa `produce`, guarda e devolve.
  *
@@ -47,13 +59,13 @@ export async function withEdgeCache<T>(
   produce: () => Promise<T>
 ): Promise<T> {
   const cachePromise = getCache();
-  if (!cachePromise) return produce();
+  if (!cachePromise) return withCoalescing(`${namespace}:${key}`, produce);
 
   let cache: Cache;
   try {
     cache = await cachePromise;
   } catch {
-    return produce();
+    return withCoalescing(`${namespace}:${key}`, produce);
   }
 
   const request = toRequest(namespace, key);
@@ -65,7 +77,7 @@ export async function withEdgeCache<T>(
     /* cache corrompido não deve derrubar a requisição */
   }
 
-  const value = await produce();
+  const value = await withCoalescing(`${namespace}:${key}`, produce);
 
   // Não guarda vazio: evita fixar um resultado ruim de uma falha transitória da origem.
   const isEmpty =
@@ -109,18 +121,8 @@ function getIgdbKV(): IgdbCacheKV | null {
 }
 
 /**
- * Como `withEdgeCache`, mas com o KV atrás da Cache API.
- *
- * POR QUE DUAS CAMADAS: a Cache API vive **por datacenter**. Com tráfego espalhado, cada
- * ponto de presença paga sua própria primeira visita a cada jogo — e o IGDB aceita só
- * 3 requisições por segundo. O KV é global: o jogo buscado uma vez em São Paulo já serve
- * qualquer outro colo. Assim o consumo do IGDB passa a depender de quantos jogos DISTINTOS
- * existem, não de quantas visitas o site recebe.
- *
- * Ordem de custo: Cache API (µs, local) → KV (ms, global) → origem (rede + cota).
- *
- * Igual à versão de uma camada, **resultado vazio nunca é gravado**: fixar um vazio vindo
- * de falha transitória é como um jogo válido vira "não encontrado" para sempre.
+ * Como `withEdgeCache`, mas com KV global atrás da Cache API local do PoP.
+ * Ordem de busca: Cache API local (µs) → KV global (ms) → produce() na origem.
  */
 export async function withSharedCache<T>(
   namespace: string,
@@ -194,4 +196,46 @@ export async function setSharedCache<T>(
       );
     } catch {}
   }
+}
+
+/**
+ * Invalida proativamente uma chave no cache compartilhado (Cache API + KV).
+ */
+export async function invalidateSharedCache(namespace: string, key: string): Promise<void> {
+  const kv = getIgdbKV();
+  const kvKey = `${namespace}:${key}`;
+
+  if (kv) {
+    try {
+      await kv.put(kvKey, "", { expirationTtl: 1 });
+    } catch {}
+  }
+
+  const cachePromise = getCache();
+  if (cachePromise) {
+    try {
+      const cache = await cachePromise;
+      const request = toRequest(namespace, key);
+      await cache.delete(request);
+    } catch {}
+  }
+}
+
+/**
+ * Retorna cabeçalhos padronizados de cache para borda Cloudflare (SWR + Cache-Tags).
+ */
+export function getEdgeCacheHeaders(options: {
+  sMaxAge?: number;
+  swr?: number;
+  tags?: string[];
+}): Record<string, string> {
+  const sMaxAge = options.sMaxAge ?? 300;
+  const swr = options.swr ?? 3600;
+  const headers: Record<string, string> = {
+    "Cache-Control": `public, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`,
+  };
+  if (options.tags && options.tags.length > 0) {
+    headers["Cache-Tag"] = options.tags.join(",");
+  }
+  return headers;
 }

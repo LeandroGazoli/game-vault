@@ -504,6 +504,8 @@ export interface UserProfile {
   dismissedNotificationIds?: string[];
   gamesCount?: number;
   libraryUpdatedAt?: string;
+  libraryStats?: LibraryStats;
+  gamificationSyncedAt?: string;
   acquisition?: UserAcquisition;
   createdAt: string;
   updatedAt?: string;

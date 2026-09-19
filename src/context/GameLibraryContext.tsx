@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { UserGame, GameStatus, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { computeLibraryStats } from "@/lib/gamificationCore";
 import { useAuth } from "./AuthContext";
 import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames, saveUserProfile } from "@/lib/firebase";
 import { auth } from "@/lib/firebase";
@@ -191,16 +192,15 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
             : true,
       };
 
-      setLibrary((prev) => {
-        const nextList = [...prev];
-        const idx = nextList.findIndex((g) => String(g.gameId) === String(gameData.gameId));
-        if (idx >= 0) {
-          nextList[idx] = updatedGame;
-        } else {
-          nextList.unshift(updatedGame);
-        }
-        return nextList;
-      });
+      const currentList = libraryRef.current;
+      const idx = currentList.findIndex((g) => String(g.gameId) === String(gameData.gameId));
+      const nextList = [...currentList];
+      if (idx >= 0) {
+        nextList[idx] = updatedGame;
+      } else {
+        nextList.unshift(updatedGame);
+      }
+      setLibrary(nextList);
 
       if (isNewBeaten) {
         triggerZeradoConfetti();
@@ -208,7 +208,10 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
       setLibrarySyncedAt(user.uid, now);
       await saveUserGame(user.uid, updatedGame);
-      saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
+      saveUserProfile(user.uid, {
+        libraryUpdatedAt: now,
+        libraryStats: computeLibraryStats(nextList),
+      }).catch(() => {});
     },
     [user, triggerZeradoConfetti]
   );
@@ -287,7 +290,10 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         try {
           setLibrarySyncedAt(user.uid, now);
           await batchSaveUserGames(user.uid, gamesToSave);
-          saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
+          saveUserProfile(user.uid, {
+            libraryUpdatedAt: now,
+            libraryStats: computeLibraryStats(currentLibrary),
+          }).catch(() => {});
         } catch (saveError) {
           console.error("Erro ao persistir lote de jogos no Firestore:", saveError);
           throw saveError;
@@ -303,10 +309,14 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     async (gameId: number | string) => {
       if (!user) return;
       const now = new Date().toISOString();
+      const remaining = libraryRef.current.filter((g) => String(g.gameId) !== String(gameId));
       setLibrarySyncedAt(user.uid, now);
-      setLibrary((prev) => prev.filter((g) => String(g.gameId) !== String(gameId)));
+      setLibrary(remaining);
       await removeUserGame(user.uid, gameId);
-      saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
+      saveUserProfile(user.uid, {
+        libraryUpdatedAt: now,
+        libraryStats: computeLibraryStats(remaining),
+      }).catch(() => {});
     },
     [user]
   );
@@ -406,13 +416,20 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   // Dispara o recálculo/persistência de XP e nível NO SERVIDOR (Admin SDK).
   // O cliente não grava mais gamerXp/gamerLevel/bonusXp — as Security Rules bloqueiam.
   // O resultado volta para a UI automaticamente via onSnapshot do doc do usuário (AuthContext).
-  const syncGamificationServer = useCallback(async () => {
+  const syncGamificationServer = useCallback(async (currentStats: LibraryStats, libUpdatedAt?: string) => {
     if (!auth?.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
       await fetch("/api/gamification/sync", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          stats: currentStats,
+          libraryUpdatedAt: libUpdatedAt,
+        }),
       });
     } catch (err) {
       console.warn("Erro ao sincronizar gamificação no servidor:", err);
@@ -440,7 +457,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     if (lastSyncSigRef.current !== statsSig) {
       lastSyncSigRef.current = statsSig;
       // Recalcula e concede XP no servidor sempre que as estatísticas mudarem
-      void syncGamificationServer();
+      void syncGamificationServer(stats, user.libraryUpdatedAt);
     }
 
     // 1. Fase de Hidratação Inicial: NUNCA dispara comemoração no carregamento/F5/login.

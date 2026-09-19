@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserGamesServer, resolveUserServer } from "@/lib/serverData";
+import { withSharedCache, getEdgeCacheHeaders } from "@/lib/edgeCache";
 import { UserGame, UserProfile } from "@/lib/types";
 
 export async function GET(
@@ -12,7 +13,8 @@ export async function GET(
   const statusFilter = searchParams.get("status");
   const favoritesOnly = searchParams.get("favorite") === "true" || searchParams.get("favorites") === "true";
   const platformFilter = searchParams.get("platform");
-  const limitParam = parseInt(searchParams.get("limit") || "1000", 10);
+  const limitParamRaw = searchParams.get("limit");
+  const pageParamRaw = searchParams.get("page");
 
   if (!username) {
     return NextResponse.json({ error: "Nome de usuário não informado" }, { status: 400 });
@@ -56,8 +58,17 @@ export async function GET(
       );
     }
 
-    // 2. Busca todos os jogos da biblioteca do usuário
-    const games: UserGame[] = await getUserGamesServer(targetUserId);
+    // 2. Busca jogos com cache de borda (L2 Cache API + L3 KV global).
+    // A chave inclui a versão (libraryUpdatedAt), invalidando instantaneamente quando o usuário edita a biblioteca.
+    const versionKey = targetProfile.libraryUpdatedAt || targetProfile.updatedAt || "v1";
+    const cacheKey = `user-games:${targetUserId}:${versionKey}`;
+
+    const games: UserGame[] = await withSharedCache<UserGame[]>(
+      "user-library",
+      cacheKey,
+      1800,
+      () => getUserGamesServer(targetUserId)
+    );
 
     // 3. Aplica filtros da URL
     let filteredGames = games;
@@ -79,11 +90,25 @@ export async function GET(
       });
     }
 
-    if (limitParam > 0) {
-      filteredGames = filteredGames.slice(0, limitParam);
+    // 4. Paginação controlada
+    const isAll = limitParamRaw === "all" || limitParamRaw === "1000";
+    const totalFiltered = filteredGames.length;
+    let paginatedGames = filteredGames;
+    let page = 1;
+    let limit = totalFiltered;
+    let totalPages = 1;
+    let hasMore = false;
+
+    if (!isAll) {
+      page = Math.max(1, parseInt(pageParamRaw || "1", 10) || 1);
+      limit = Math.min(Math.max(1, parseInt(limitParamRaw || "50", 10) || 50), 250);
+      totalPages = Math.max(1, Math.ceil(totalFiltered / limit));
+      const offset = (page - 1) * limit;
+      paginatedGames = filteredGames.slice(offset, offset + limit);
+      hasMore = offset + limit < totalFiltered;
     }
 
-    // 4. Payload com estatísticas resumidas
+    // 5. Payload com metadados de paginação e estatísticas
     const payload = {
       user: {
         username: targetProfile?.username || username,
@@ -105,29 +130,42 @@ export async function GET(
         visibility: targetProfile?.visibility || null,
       },
       stats: {
-        total: filteredGames.length,
-        completed: filteredGames.filter((g) => g.status === "completed").length,
-        playing: filteredGames.filter((g) => g.status === "playing").length,
-        library: filteredGames.filter((g) => g.status === "library").length,
-        backlog: filteredGames.filter((g) => g.status === "backlog").length,
-        favorites: filteredGames.filter((g) => g.isFavorite).length,
+        total: games.length,
+        completed: games.filter((g) => g.status === "completed").length,
+        playing: games.filter((g) => g.status === "playing").length,
+        library: games.filter((g) => g.status === "library").length,
+        backlog: games.filter((g) => g.status === "backlog").length,
+        favorites: games.filter((g) => g.isFavorite).length,
+      },
+      pagination: {
+        page,
+        limit,
+        total: totalFiltered,
+        totalPages,
+        hasMore,
       },
       filtersApplied: {
         status: statusFilter || "all",
         favorite: favoritesOnly,
         platform: platformFilter || "all",
-        limit: limitParam,
+        limit: isAll ? "all" : limit,
       },
       exportedAt: new Date().toISOString(),
-      games: filteredGames,
+      games: paginatedGames,
     };
 
-    // 5. Retorna com cabeçalhos de cache dinâmico e CORS aberto
+    // 6. Retorna com cabeçalhos de borda Cloudflare (SWR + Cache-Tags)
+    const edgeHeaders = getEdgeCacheHeaders({
+      sMaxAge: 300,
+      swr: 3600,
+      tags: ["user-library", `user-${targetUserId}`],
+    });
+
     return new NextResponse(JSON.stringify(payload, null, 2), {
       status: 200,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        ...edgeHeaders,
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
       },

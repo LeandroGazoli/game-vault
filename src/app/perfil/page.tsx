@@ -57,7 +57,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   useEffect(() => {
     if (isViewingPublic && routeUsername) {
       setPublicLoading(true);
-      fetch(`/api/user/${encodeURIComponent(routeUsername)}/games.json`)
+      fetch(`/api/user/${encodeURIComponent(routeUsername)}/games.json?limit=all`)
         .then(async (res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.user) setPublicData(data);

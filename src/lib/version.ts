@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.4.1";
+export const APP_VERSION = "v4.5.0";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.5.0",
+    date: "19/09/2026",
+    title: "Edge Coalescing & Blindagem Firestore",
+    highlights: [
+      "Request Coalescing (Single-Flight) no Cloudflare Edge: previne picos de consultas concorrentes à origem.",
+      "Otimização extrema no sync de gamificação: eliminação de releitura de coleções inteiras de jogos via stats agregadas.",
+      "Cache global de 1h para definições do sistema (achievements, missões e planos) no Edge Cache L2/L3.",
+      "Paginação e cache inteligente com tags na rota pública de jogos (/api/user/[username]/games.json).",
+    ],
+  },
   {
     version: "v4.4.1",
     date: "19/09/2026",

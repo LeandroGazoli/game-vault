@@ -7,12 +7,14 @@ import {
   getDailyMissions,
   getDateKey,
 } from "@/lib/gamificationCore";
+import { withSharedCache } from "@/lib/edgeCache";
 import {
   calculateGamerLevel,
   DEFAULT_GAMIFICATION_CONFIG,
   setRankTiers,
   type UserGame,
   type UserPlan,
+  type LibraryStats,
   type GamificationAchievementDef,
   type GamificationMissionDef,
   type GamificationConfig,
@@ -22,10 +24,39 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
+ * Cache de 1h para as definições de gamificação do sistema (achievements, missions, config).
+ * Evita 3 leituras no Firestore a cada sync de qualquer usuário.
+ */
+async function getSystemGamificationDefs() {
+  return withSharedCache<{
+    achievements: GamificationAchievementDef[];
+    missions: GamificationMissionDef[];
+    config: GamificationConfig;
+  }>("gamification", "system-defs", 3600, async () => {
+    const db = getAdminDb();
+    const [achSnap, misSnap, cfgSnap] = await Promise.all([
+      db.collection("system").doc("gamification").collection("achievements").get(),
+      db.collection("system").doc("gamification").collection("missions").get(),
+      db.collection("system").doc("gamification").get(),
+    ]);
+
+    const achievements: GamificationAchievementDef[] = achSnap.docs
+      .map((d) => ({ ...(d.data() as GamificationAchievementDef), id: d.id }))
+      .filter((a) => a.isActive !== false);
+    const missions: GamificationMissionDef[] = misSnap.docs
+      .map((d) => ({ ...(d.data() as GamificationMissionDef), id: d.id }))
+      .filter((m) => m.isActive !== false);
+    const config: GamificationConfig = {
+      ...DEFAULT_GAMIFICATION_CONFIG,
+      ...((cfgSnap.data() as GamificationConfig) || {}),
+    };
+
+    return { achievements, missions, config };
+  });
+}
+
+/**
  * GET /api/gamification/sync — health check (sem auth, sem tocar no Firestore).
- * Serve para verificar, ANTES de publicar as Security Rules, se a service account
- * (FIREBASE_SERVICE_ACCOUNT_KEY) está configurada e o Admin SDK inicializa.
- * { ok: true } => pronto para publicar as rules. { ok: false } => corrigir o env antes.
  */
 export async function GET() {
   try {
@@ -42,12 +73,9 @@ export async function GET() {
 /**
  * POST /api/gamification/sync
  *
- * Fonte de verdade do XP/nível. Autentica o usuário, RECALCULA as estatísticas a partir da
- * subcoleção users/{uid}/games no servidor (à prova de forja), concede XP das conquistas/
- * missões efetivamente desbloqueadas (idempotente via claimedRewards) e persiste
- * gamerXp / gamerLevel / bonusXp / claimedRewards via Admin SDK (ignora as Security Rules).
- *
- * O cliente nunca escreve esses campos — as regras os bloqueiam.
+ * Concede XP de conquistas e missões dinâmicas de forma idempotente.
+ * Otimizado: reutiliza stats agregadas (cliente ou doc do usuário) e cache de sistema,
+ * eliminando a varredura da subcoleção users/{uid}/games na esmagadora maioria dos casos.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -69,16 +97,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sessão inválida ou expirada." }, { status: 401 });
     }
 
-    const db = getAdminDb();
+    // Lê payload opcional com stats pré-calculadas e timestamp da biblioteca
+    let body: { stats?: LibraryStats; libraryUpdatedAt?: string } = {};
+    try {
+      body = await request.json();
+    } catch {}
 
-    // 2. Lê perfil + jogos + definições de gamificação
+    const db = getAdminDb();
     const userRef = db.collection("users").doc(uid);
-    const [userSnap, gamesSnap, achSnap, misSnap, cfgSnap] = await Promise.all([
+
+    // 2. Lê perfil do usuário e definições globais em paralelo (definições vêm do Edge Cache)
+    const [userSnap, sysDefs] = await Promise.all([
       userRef.get(),
-      userRef.collection("games").get(),
-      db.collection("system").doc("gamification").collection("achievements").get(),
-      db.collection("system").doc("gamification").collection("missions").get(),
-      db.collection("system").doc("gamification").get(),
+      getSystemGamificationDefs(),
     ]);
 
     if (!userSnap.exists) {
@@ -92,34 +123,56 @@ export async function POST(request: NextRequest) {
       Array.isArray(userData.claimedRewards) ? userData.claimedRewards : []
     );
 
-    // 3. Recalcula as estatísticas a partir dos jogos reais
-    const games: UserGame[] = gamesSnap.docs.map((d) => d.data() as UserGame);
-    const stats = computeLibraryStats(games);
+    const now = new Date();
+    const todayKey = getDateKey(now);
+
+    // Verificação de curto-circuito: se biblioteca não mudou e missões diárias já rodaram hoje
+    const libUpdated = body.libraryUpdatedAt || userData.libraryUpdatedAt;
+    const lastSync = userData.gamificationSyncedAt;
+    const lastMissionKey = userData.lastMissionDateKey;
+
+    if (
+      libUpdated &&
+      lastSync &&
+      libUpdated <= lastSync &&
+      lastMissionKey === todayKey &&
+      userData.gamerXp !== undefined
+    ) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        gamerXp: userData.gamerXp,
+        gamerLevel: userData.gamerLevel ?? 1,
+        bonusXp: existingBonusXp,
+        newlyUnlocked: [],
+      });
+    }
+
+    // 3. Resolve as estatísticas sem varrer subcoleção quando possível
+    let stats: LibraryStats;
+    if (body.stats && typeof body.stats.totalGames === "number") {
+      stats = body.stats;
+    } else if (userData.libraryStats && typeof userData.libraryStats.totalGames === "number") {
+      stats = userData.libraryStats as LibraryStats;
+    } else {
+      // Fallback único para usuários legados sem sumário
+      const gamesSnap = await userRef.collection("games").get();
+      const games: UserGame[] = gamesSnap.docs.map((d) => d.data() as UserGame);
+      stats = computeLibraryStats(games);
+    }
 
     // Nível ANTES de novas concessões (usado para avaliar métrica "level")
     const levelBefore = calculateGamerLevel(stats, undefined, plan, existingBonusXp).level;
 
-    // 4. Coleta definições ativas
-    const achievements: GamificationAchievementDef[] = achSnap.docs
-      .map((d) => ({ ...(d.data() as GamificationAchievementDef), id: d.id }))
-      .filter((a) => a.isActive !== false);
-    const missions: GamificationMissionDef[] = misSnap.docs
-      .map((d) => ({ ...(d.data() as GamificationMissionDef), id: d.id }))
-      .filter((m) => m.isActive !== false);
-
-    const config: GamificationConfig = {
-      ...DEFAULT_GAMIFICATION_CONFIG,
-      ...((cfgSnap.data() as GamificationConfig) || {}),
-    };
-    // Escada de títulos cadastrada pelo admin (config global, não por usuário).
+    // 4. Definições ativas
+    const { achievements, missions, config } = sysDefs;
     setRankTiers(config.rankTiers);
 
-    const now = new Date();
     const seasonMissions = getActiveSeasonMissions(missions, now);
     const dailyMissions = getDailyMissions(
       missions,
       config.dailyRotationCount ?? 3,
-      getDateKey(now)
+      todayKey
     );
 
     // 5. Concede XP das definições desbloqueadas ainda não pagas (idempotente)
@@ -160,7 +213,10 @@ export async function POST(request: NextRequest) {
         gamerLevel: finalInfo.level,
         bonusXp,
         claimedRewards: Array.from(claimed),
-        updatedAt: new Date().toISOString(),
+        libraryStats: stats,
+        gamificationSyncedAt: now.toISOString(),
+        lastMissionDateKey: todayKey,
+        updatedAt: now.toISOString(),
       },
       { merge: true }
     );

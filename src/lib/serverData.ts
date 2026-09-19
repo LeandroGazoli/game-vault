@@ -25,6 +25,7 @@ import type { IndieGame } from "./types/indie.types";
 import { DEFAULT_SYSTEM_SETTINGS } from "./types";
 import type { AuditLogEntry, SystemSettings, UserGame, UserProfile } from "./types";
 import { DEFAULT_PLANS_CONFIG, type PlansConfig } from "./plans.types";
+import { withSharedCache, invalidateSharedCache } from "./edgeCache";
 
 const INDIES_COLLECTION = "indie_games";
 
@@ -108,20 +109,22 @@ async function getUserProfileByUsernameServer_uncached(
 /*  Configurações do sistema                                                   */
 /* -------------------------------------------------------------------------- */
 
-/** Espelha `getSystemSettings` de firebase.ts. */
+/** Espelha `getSystemSettings` de firebase.ts com cache de borda (TTL 1h). */
 export async function getSystemSettingsServer(): Promise<SystemSettings> {
-  try {
-    const snap = await getRestFirestore().collection("system").doc("settings").get();
-    if (snap.exists) {
-      return { ...DEFAULT_SYSTEM_SETTINGS, ...snap.data() } as SystemSettings;
+  return withSharedCache<SystemSettings>("system", "settings", 3600, async () => {
+    try {
+      const snap = await getRestFirestore().collection("system").doc("settings").get();
+      if (snap.exists) {
+        return { ...DEFAULT_SYSTEM_SETTINGS, ...snap.data() } as SystemSettings;
+      }
+    } catch (e) {
+      console.error("Erro ao obter configurações do sistema:", e);
     }
-  } catch (e) {
-    console.error("Erro ao obter configurações do sistema:", e);
-  }
-  return DEFAULT_SYSTEM_SETTINGS;
+    return DEFAULT_SYSTEM_SETTINGS;
+  });
 }
 
-/** Espelha `updateSystemSettings` de firebase.ts — propaga o erro, como o original. */
+/** Espelha `updateSystemSettings` de firebase.ts — propaga o erro e invalida o cache de borda. */
 export async function updateSystemSettingsServer(
   settings: Partial<SystemSettings>,
   adminEmail: string
@@ -134,6 +137,7 @@ export async function updateSystemSettingsServer(
         { ...settings, updatedAt: new Date().toISOString(), updatedBy: adminEmail },
         { merge: true }
       );
+    await invalidateSharedCache("system", "settings");
   } catch (e) {
     console.error("Erro ao atualizar configurações do sistema:", e);
     throw e;
@@ -271,33 +275,36 @@ export async function getUserGamesServer(userId: string): Promise<UserGame[]> {
 
 const PLANS_DOC_REF = "plans_config";
 
-/** Espelha `getPlansConfig` de plans.ts. */
+/** Espelha `getPlansConfig` de plans.ts com cache de borda (TTL 1h). */
 export async function getPlansConfigServer(): Promise<PlansConfig> {
-  try {
-    const snap = await getRestFirestore().collection("system").doc(PLANS_DOC_REF).get();
-    if (snap.exists) {
-      const data = (snap.data() || {}) as Partial<PlansConfig>;
-      return {
-        pro_monthly: { ...DEFAULT_PLANS_CONFIG.pro_monthly, ...data.pro_monthly },
-        pro_single_month: { ...DEFAULT_PLANS_CONFIG.pro_single_month, ...data.pro_single_month },
-        pro_annual: { ...DEFAULT_PLANS_CONFIG.pro_annual, ...data.pro_annual },
-        vip_lifetime: { ...DEFAULT_PLANS_CONFIG.vip_lifetime, ...data.vip_lifetime },
-        updatedAt: data.updatedAt,
-      };
+  return withSharedCache<PlansConfig>("system", "plans_config", 3600, async () => {
+    try {
+      const snap = await getRestFirestore().collection("system").doc(PLANS_DOC_REF).get();
+      if (snap.exists) {
+        const data = (snap.data() || {}) as Partial<PlansConfig>;
+        return {
+          pro_monthly: { ...DEFAULT_PLANS_CONFIG.pro_monthly, ...data.pro_monthly },
+          pro_single_month: { ...DEFAULT_PLANS_CONFIG.pro_single_month, ...data.pro_single_month },
+          pro_annual: { ...DEFAULT_PLANS_CONFIG.pro_annual, ...data.pro_annual },
+          vip_lifetime: { ...DEFAULT_PLANS_CONFIG.vip_lifetime, ...data.vip_lifetime },
+          updatedAt: data.updatedAt,
+        };
+      }
+    } catch (error) {
+      console.error("Erro ao buscar configurações de planos no Firestore:", error);
     }
-  } catch (error) {
-    console.error("Erro ao buscar configurações de planos no Firestore:", error);
-  }
-  return DEFAULT_PLANS_CONFIG;
+    return DEFAULT_PLANS_CONFIG;
+  });
 }
 
-/** Espelha `savePlansConfig` — propaga o erro, como o original. */
+/** Espelha `savePlansConfig` — propaga o erro e invalida o cache de borda. */
 export async function savePlansConfigServer(config: PlansConfig): Promise<boolean> {
   try {
     await getRestFirestore()
       .collection("system")
       .doc(PLANS_DOC_REF)
       .set({ ...config, updatedAt: new Date().toISOString() });
+    await invalidateSharedCache("system", "plans_config");
     return true;
   } catch (error) {
     console.error("Erro ao salvar configurações de planos no Firestore:", error);
