@@ -85,8 +85,9 @@ export default function AdminPromoteCatalogModal({
       if (res.ok) {
         const details = (await res.json()) as Game;
         setSelectedGame(details);
+        const desc = details.description_raw || (details as any).summary || "";
         setCustomTagline(
-          details.summary ? details.summary.slice(0, 110) + "..." : "Indie em destaque no acervo!"
+          desc ? desc.slice(0, 110) + "..." : "Indie em destaque no acervo!"
         );
       } else {
         setCustomTagline("Indie em destaque no acervo!");

@@ -166,7 +166,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         {/* react-scan: destaca re-renders em desenvolvimento. Não vai para produção. */}
         {process.env.NODE_ENV === "development" && (
