@@ -6,6 +6,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Game, SystemSettings } from "@/lib/types";
 import GameCard from "@/components/GameCard";
+import GameCardPlanPromo from "@/components/ads/GameCardPlanPromo";
 import {
   Search,
   Filter,
@@ -1364,15 +1365,21 @@ function SearchContent() {
         ) : games.length > 0 ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {games.map((game) => (
-                <div
-                  key={game.id}
-                  id={`game-card-${game.id}`}
-                  onClickCapture={() => handleCardClick(game.id)}
-                  className="h-full"
-                >
-                  <GameCard game={game} isAiRecommended={game.isAiRecommended} />
-                </div>
+              {games.map((game, index) => (
+                <React.Fragment key={game.id}>
+                  {(index === 6 || index === 18) && (
+                    <div className="h-full">
+                      <GameCardPlanPromo variantIndex={index === 6 ? 0 : 1} />
+                    </div>
+                  )}
+                  <div
+                    id={`game-card-${game.id}`}
+                    onClickCapture={() => handleCardClick(game.id)}
+                    className="h-full"
+                  >
+                    <GameCard game={game} isAiRecommended={game.isAiRecommended} />
+                  </div>
+                </React.Fragment>
               ))}
             </div>
 

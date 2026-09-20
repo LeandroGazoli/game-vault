@@ -74,7 +74,7 @@ export default function Navbar() {
             {!isPremium && (
               <Link
                 href="/planos"
-                className="hidden xl:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-semibold shadow-sm shrink-0"
+                className="hidden md:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-emerald-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold shadow-sm shrink-0"
               >
                 <Crown className="w-3.5 h-3.5 text-amber-400" />
                 <span>PRO</span>

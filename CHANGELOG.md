@@ -4,13 +4,29 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.7.0] — 2026-09-19
+
+### 🚀 Novidades: Nova Página de Planos & Assinaturas
+- **Modo Gratuito (Free) em Destaque:** Apresentação clara do plano básico gratuito (R$ 0 para sempre) lado a lado com os planos pagos, destacando acesso ilimitado ao catálogo de 150.000+ jogos, marcação de status, notas e sincronização na nuvem.
+- **Seletor de Faturamento Flexível:** Opção de Assinatura Anual (com desconto de 33%, equivalente a R$ 6,65/mês), Assinatura Mensal (R$ 9,90/mês) e Mês Avulso (sem renovação automática).
+- **Matriz Comparativa "O Que Tem e O Que Não Tem":** Tabela completa e responsiva detalhando recursos, multiplicadores de XP (1.0x vs 1.5x vs 2.0x), selos de perfil (Neon vs Fundador Ouro), limites de insígnias customizadas e exportações em Excel/CSV/JSON.
+- **Destaques de Benefícios & FAQ Interativo:** Cards visuais de diferenciais e acordeão retrátil de perguntas frequentes sanando dúvidas sobre formas de pagamento com Stripe, cancelamento a 1 clique e ativação instantânea.
+
+### 📢 Cards Promocionais Nativos Entre Jogos (Estilo Google AdSense)
+- **Componente `GameCardPlanPromo`:** Cards promocionais estilizados no padrão de anúncios patrocinados in-feed, mantendo a proporção `aspect-[3/4]` e raio dos cards de jogos.
+- **Inserção Estratégica In-Feed:** Integrado aos carrosséis de catálogo da Home (`CatalogRow`), grade de busca (`SearchClient`), categorias e coleções.
+- **4 Criativos Dinâmicos:** Rotação de temas com foco em "100% Sem Anúncios", "Boost de +50% no Ganho de XP", "Selo PRO Neon & Temas de Perfil" e "Membro VIP Fundador".
+- **Respeito aos Assinantes:** Cards promocionais são 100% invisíveis para usuários PRO e VIP (`isPremium`).
+- **Navegação Acessível:** Link destacado com badge "PRO" adicionado ao menu lateral móvel (`NavDrawer`) e na barra superior (`Navbar`).
+
+---
+
 ## [v4.6.1] — 2026-09-19
  
 ### 🛡️ Otimização & Proteção de Cotas Firestore
 - **Blindagem Definitiva do Sitemap:** Removido o caminho de fallback que executava a varredura completa (`firestoreRestQuery`) da coleção `game_translations` com limite de 45.000 itens quando o índice agregado falhava ou estava inacessível.
 - **Previsibilidade e Economia Extrema em Builds:** O sitemap agora consulta estritamente os documentos particionados de `system/sitemap_index` (~9 leituras para dezenas de milhares de jogos). Em caso de índice ausente ou inacessível, retorna lista vazia segura sem disparar leituras não controladas.
 - **Proteção Contra Picos de Cota:** Eliminação da causa raiz que gerava picos de dezenas de milhares de leituras acidentais durante deploys e builds de produção.
- 
 ---
 
 ## [v4.6.0] — 2026-09-19

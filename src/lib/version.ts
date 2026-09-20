@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.6.1";
+export const APP_VERSION = "v4.7.0";
 export const APP_RELEASE_DATE = "2026-09-19";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.7.0",
+    date: "19/09/2026",
+    title: "Nova Página de Planos & Anúncios Promocionais In-Feed",
+    highlights: [
+      "Página completa de Planos & Assinaturas com Modo Gratuito, PRO (mensal, anual com -33% e avulso) e VIP Fundador.",
+      "Matriz comparativa detalhada 'O que tem e o que não tem' categorizada por recursos, gamificação e dados.",
+      "Cards promocionais nativos estilo Google AdSense (GameCardPlanPromo) intercalados entre os cards de jogos nas grades e carrosséis.",
+      "Acesso rápido e destacado a Planos & Assinaturas no menu lateral móvel e na barra de navegação.",
+    ],
+  },
   {
     version: "v4.6.1",
     date: "19/09/2026",

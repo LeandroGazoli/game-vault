@@ -10,6 +10,7 @@ import { useGameLibrary } from "@/context/GameLibraryContext";
 import { formatGameDuration } from "@/lib/gameUtils";
 import StreamingCarousel from "@/components/common/StreamingCarousel";
 import ViewAllCard from "@/components/common/ViewAllCard";
+import GameCardPlanPromo from "@/components/ads/GameCardPlanPromo";
 
 interface CatalogRowProps {
   title: string;
@@ -95,12 +96,18 @@ export default function CatalogRow({
             const duration = formatGameDuration(game, userGame?.userPlaytimeHours);
 
             return (
-              <div
-                key={game.id}
-                id={`game-card-${game.id}`}
-                data-game-id={game.id}
-                className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/10 hover:border-emerald-500/50 transition-[border-color,transform,box-shadow] duration-200 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/60 hover:z-20 cursor-pointer select-none"
-              >
+              <React.Fragment key={game.id}>
+                {index === 4 && (
+                  <GameCardPlanPromo
+                    isCarousel
+                    variantIndex={title.length % 4}
+                  />
+                )}
+                <div
+                  id={`game-card-${game.id}`}
+                  data-game-id={game.id}
+                  className="group relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden bg-[#141822] border border-white/10 hover:border-emerald-500/50 transition-[border-color,transform,box-shadow] duration-200 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/60 hover:z-20 cursor-pointer select-none"
+                >
                 <Link
                   href={getGameUrl(game)}
       prefetch={false}
@@ -185,6 +192,7 @@ export default function CatalogRow({
                   {userGame ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                 </button>
               </div>
+              </React.Fragment>
             );
           })}
 

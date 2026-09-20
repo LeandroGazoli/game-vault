@@ -24,6 +24,7 @@ import {
   LogOut,
   Smartphone,
   ChevronRight,
+  Crown,
 } from "lucide-react";
 
 interface NavDrawerProps {
@@ -158,6 +159,30 @@ export default function NavDrawer({ isOpen, onClose, onOpenAuth }: NavDrawerProp
               <span>Entrar ou Cadastrar Conta</span>
             </button>
           )}
+
+          {/* Link Destacado de Planos & Assinaturas PRO */}
+          <Link
+            href="/planos"
+            onClick={onClose}
+            className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-[0.98] border shadow-md ${
+              pathname === "/planos"
+                ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/15 to-[#141822] border-emerald-500/50 text-emerald-300"
+                : "bg-gradient-to-r from-emerald-950/40 via-[#141822] to-[#10131c] border-emerald-500/30 hover:border-emerald-500/60 text-white"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+              </div>
+              <div>
+                <span className="block text-white font-bold leading-tight">Planos &amp; Assinaturas</span>
+                <span className="block text-[10px] text-neutral-400 font-normal">Zero anúncios e Boost de XP</span>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-black bg-gradient-to-r from-emerald-400 to-teal-400 text-black shadow-sm">
+              PRO
+            </span>
+          </Link>
 
           {/* Links Principais do Catálogo */}
           <div className="space-y-0.5">

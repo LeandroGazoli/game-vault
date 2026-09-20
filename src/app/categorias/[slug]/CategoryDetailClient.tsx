@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Game } from "@/lib/types";
 import GameCard from "@/components/GameCard";
+import GameCardPlanPromo from "@/components/ads/GameCardPlanPromo";
 import AuthModal from "@/components/AuthModal";
 import { getCategoryBySlug } from "@/lib/categoriesData";
 import {
@@ -221,12 +222,18 @@ export default function CategoryDetailClient({ slug }: CategoryDetailClientProps
       ) : games.length > 0 ? (
         <div className="space-y-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {games.map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                onOpenAuthModal={() => setIsAuthOpen(true)}
-              />
+            {games.map((game, index) => (
+              <React.Fragment key={game.id}>
+                {index === 7 && (
+                  <div className="h-full">
+                    <GameCardPlanPromo variantIndex={2} />
+                  </div>
+                )}
+                <GameCard
+                  game={game}
+                  onOpenAuthModal={() => setIsAuthOpen(true)}
+                />
+              </React.Fragment>
             ))}
           </div>
 
