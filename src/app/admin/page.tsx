@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -12,13 +12,10 @@ import {
   ArrowUpRight,
   TrendingUp,
   RefreshCw,
-  ShieldCheck,
-  Zap,
-  Bell,
-  CheckCircle2,
 } from "lucide-react";
 import { UserProfile } from "@/lib/types";
 import { getAllUsersForAdmin, getAuditLogs, auth } from "@/lib/firebase";
+import AdminAnalyticsCharts from "@/components/admin/AdminAnalyticsCharts";
 
 interface StripeRevenue {
   mrr: number;
@@ -27,9 +24,6 @@ interface StripeRevenue {
   currency: string;
   approxCharges: boolean;
 }
-import PlanBadge from "@/components/PlanBadge";
-import UserAvatar from "@/components/UserAvatar";
-import AdminAnalyticsCharts from "@/components/admin/AdminAnalyticsCharts";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -85,7 +79,8 @@ export default function AdminDashboardPage() {
             Dashboard Executivo
           </h2>
           <p className="text-xs text-gray-400">
-            Visão consolidada de métricas, atividade recente e links de infraestrutura.
+            Visão consolidada de métricas, atividade recente e links de
+            infraestrutura.
           </p>
         </div>
         <button
@@ -93,7 +88,9 @@ export default function AdminDashboardPage() {
           disabled={isLoading}
           className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold text-gray-200 transition-colors min-h-[44px]"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
+          />
           <span>Sincronizar</span>
         </button>
       </div>
@@ -124,7 +121,9 @@ export default function AdminDashboardPage() {
           className="group rounded-3xl bg-[#14161d] border border-cyan-500/30 p-5 space-y-2 shadow-xl bg-gradient-to-b from-cyan-950/20 to-transparent hover:border-cyan-400/50 transition-all"
         >
           <div className="flex items-center justify-between text-gray-400">
-            <span className="text-xs font-medium text-cyan-300">Assinantes PRO</span>
+            <span className="text-xs font-medium text-cyan-300">
+              Assinantes PRO
+            </span>
             <Sparkles className="w-4 h-4 text-[#00E5FF] group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-3xl font-black text-[#00E5FF]">{proUsers}</div>
@@ -142,11 +141,15 @@ export default function AdminDashboardPage() {
           className="group rounded-3xl bg-[#14161d] border border-amber-500/30 p-5 space-y-2 shadow-xl bg-gradient-to-b from-amber-950/20 to-transparent hover:border-amber-400/50 transition-all"
         >
           <div className="flex items-center justify-between text-gray-400">
-            <span className="text-xs font-medium text-amber-300">Membros VIP</span>
+            <span className="text-xs font-medium text-amber-300">
+              Membros VIP
+            </span>
             <Crown className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-3xl font-black text-amber-400">{vipUsers}</div>
-          <div className="text-[11px] text-gray-400">Fundadores &amp; Vitalícios</div>
+          <div className="text-[11px] text-gray-400">
+            Fundadores &amp; Vitalícios
+          </div>
         </Link>
 
         {/* MRR real do Stripe (com fallback à estimativa) */}
@@ -158,9 +161,10 @@ export default function AdminDashboardPage() {
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-3xl font-black text-emerald-400">
-            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-              revenue ? revenue.mrr : estimatedMRR
-            )}
+            {new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(revenue ? revenue.mrr : estimatedMRR)}
           </div>
           <div className="text-[11px] text-gray-400">
             {revenue
@@ -181,7 +185,9 @@ export default function AdminDashboardPage() {
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300 font-mono">
               Ferramentas de Produção
             </h3>
-            <span className="text-[10px] text-gray-500 font-mono">Status Operacional</span>
+            <span className="text-[10px] text-gray-500 font-mono">
+              Status Operacional
+            </span>
           </div>
 
           <div className="space-y-3">
@@ -199,7 +205,9 @@ export default function AdminDashboardPage() {
                   <h4 className="text-xs font-bold text-white group-hover:text-indigo-300">
                     Stripe Dashboard
                   </h4>
-                  <p className="text-[11px] text-gray-400">Cobranças, Vendas e Webhooks</p>
+                  <p className="text-[11px] text-gray-400">
+                    Cobranças, Vendas e Webhooks
+                  </p>
                 </div>
               </div>
               <ArrowUpRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
@@ -219,7 +227,9 @@ export default function AdminDashboardPage() {
                   <h4 className="text-xs font-bold text-white group-hover:text-amber-300">
                     Google AdSense
                   </h4>
-                  <p className="text-[11px] text-gray-400">Monetização e RPM de Anúncios</p>
+                  <p className="text-[11px] text-gray-400">
+                    Monetização e RPM de Anúncios
+                  </p>
                 </div>
               </div>
               <ArrowUpRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
@@ -239,7 +249,9 @@ export default function AdminDashboardPage() {
                   <h4 className="text-xs font-bold text-white group-hover:text-orange-300">
                     Firebase Console
                   </h4>
-                  <p className="text-[11px] text-gray-400">Firestore, Auth e Regras de Segurança</p>
+                  <p className="text-[11px] text-gray-400">
+                    Firestore, Auth e Regras de Segurança
+                  </p>
                 </div>
               </div>
               <ArrowUpRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
@@ -274,13 +286,20 @@ export default function AdminDashboardPage() {
                     className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs"
                   >
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-white">{log.action}</div>
+                      <div className="font-semibold text-white">
+                        {log.action}
+                      </div>
                       <div className="text-[10px] text-gray-400 font-mono">
                         Alvo: {log.targetName || log.targetId || "Sistema"}
                       </div>
                     </div>
                     <div className="text-[10px] text-gray-500 font-mono">
-                      {log.createdAt ? new Date(log.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                      {log.createdAt
+                        ? new Date(log.createdAt).toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
                     </div>
                   </div>
                 ))}
