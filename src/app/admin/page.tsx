@@ -16,20 +16,13 @@ import {
 import { UserProfile } from "@/lib/types";
 import { getAllUsersForAdmin, getAuditLogs, auth } from "@/lib/firebase";
 import AdminAnalyticsCharts from "@/components/admin/AdminAnalyticsCharts";
-
-interface StripeRevenue {
-  mrr: number;
-  grossTotal: number;
-  activeSubscriptions: number;
-  currency: string;
-  approxCharges: boolean;
-}
+import AdminRevenueBreakdown, { RevenueSnapshot } from "@/components/admin/AdminRevenueBreakdown";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [revenue, setRevenue] = useState<StripeRevenue | null>(null);
+  const [revenue, setRevenue] = useState<RevenueSnapshot | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -68,7 +61,6 @@ export default function AdminDashboardPage() {
   const proUsers = users.filter((u) => u.plan === "pro").length;
   const vipUsers = users.filter((u) => u.plan === "vip").length;
   const freeUsers = users.filter((u) => !u.plan || u.plan === "free").length;
-  const estimatedMRR = proUsers * 9.9;
 
   return (
     <div className="space-y-6 pb-12">
@@ -152,27 +144,36 @@ export default function AdminDashboardPage() {
           </div>
         </Link>
 
-        {/* MRR real do Stripe (com fallback à estimativa) */}
+        {/* MRR real do Stripe */}
         <div className="rounded-3xl bg-[#14161d] border border-emerald-500/30 p-5 space-y-2 shadow-xl bg-gradient-to-b from-emerald-950/20 to-transparent">
           <div className="flex items-center justify-between text-gray-400">
             <span className="text-xs font-medium text-emerald-300">
-              {revenue ? "MRR Real (Stripe)" : "MRR Estimado"}
+              MRR Ativo (Stripe)
             </span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-3xl font-black text-emerald-400">
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(revenue ? revenue.mrr : estimatedMRR)}
+            {revenue
+              ? new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(revenue.mrr)
+              : isLoading
+              ? "..."
+              : "R$ 0,00"}
           </div>
           <div className="text-[11px] text-gray-400">
             {revenue
-              ? `${revenue.activeSubscriptions} assinatura(s) ativa(s) • Bruto: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(revenue.grossTotal)}${revenue.approxCharges ? "+" : ""}`
-              : "Estimativa (Stripe indisponível)"}
+              ? `${revenue.activeSubscriptions} assinatura(s) recorrente(s)`
+              : isLoading
+              ? "Sincronizando com Stripe..."
+              : "Nenhuma assinatura ativa"}
           </div>
         </div>
       </div>
+
+      {/* Detalhamento Financeiro do Mês (Receita Bruta, Taxas Stripe e Lucro Líquido) */}
+      <AdminRevenueBreakdown revenue={revenue} isLoading={isLoading} />
 
       {/* Gráficos Visuais de Adesão e Distribuição de Níveis */}
       <AdminAnalyticsCharts users={users} />

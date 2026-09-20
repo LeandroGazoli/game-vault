@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.7.1";
+export const APP_VERSION = "v4.7.2";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.7.2",
+    date: "20/09/2026",
+    title: "MRR Real do Stripe & Detalhamento Financeiro Mensal",
+    highlights: [
+      "Substituição de estimativas artificiais por dados reais sincronizados diretamente com o Stripe",
+      "Novo demonstrativo mensal com receita bruta, taxas da Stripe, lucro líquido e margem",
+      "Extrato de transações recentes com detalhamento de taxas retidas",
+    ],
+  },
   {
     version: "v4.7.1",
     date: "20/09/2026",

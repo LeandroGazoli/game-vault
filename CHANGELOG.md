@@ -4,14 +4,16 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
-## [v4.7.1] — 2026-09-20
+## [v4.7.2] — 2026-09-20
  
-### 🛠️ Melhorias & Design System (Navbar Padronizada)
-- **Padronização de Alturas com shadcn/ui:** Todos os elementos interativos da barra de navegação (Links Início/Catálogo, Campo de Busca Instantânea, Botão Seja PRO, Sininho de Notificações, Menu de Usuário/Login e Menu Drawer) agora possuem altura consistente de 36px (`h-9`) no desktop e 44px (`h-11`) no mobile para toques ergonômicos e acessíveis.
-- **Componentização Shadcn First:** Adoção dos componentes oficiais `Button` de `@/components/ui/button` nos links e botões da barra.
-- **Correção Visual no Campo de Busca:** Removida a duplicidade do atalho de teclado `⌘K` que aparecia em duplicidade fora do campo, mantendo o badge limpo e integrado.
+### 🐛 Correções & Painel Administrativo
+- **Cálculo Real de MRR via Stripe:** Removida a estimativa sintética baseada em usuários do banco de dados (`proUsers * 9.9`), garantindo que o card de MRR reflita exclusivamente as assinaturas ativas na API do Stripe.
+- **Detalhamento Financeiro do Mês Vigente:** Novo painel financeiro exibindo Receita Bruta, Taxas Operacionais da Stripe, Lucro Líquido Real e Margem Líquida (%) calculados via `balanceTransactions`.
+- **Extrato Recente do Stripe & Indicador de Ambiente:** Visualização retrátil das últimas transações do Stripe com valores brutos e taxas discriminadas, além de identificador de ambiente (Modo Teste ou Ao Vivo).
 
 ---
+
+## [v4.7.1] — 2026-09-20
 
 ## [v4.7.0] — 2026-09-19
 
