@@ -4,6 +4,20 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.8.0] — 2026-09-20
+ 
+### 🚀 Novidades: Sistema Completo de Anúncios de Planos Aleatórios & Painel Administrativo
+- **Lógica de Exibição com Probabilidade & Posições Aleatórias:** Anúncios de planos agora surgem intercalados aleatoriamente nos feeds (Busca, Categorias, Coleções e Carrosséis da Home) com base em probabilidade configurável (0% a 100%), sem afetar ou prejudicar a integridade dos itens originais.
+- **Painel Administrativo Completo com Live Preview (`/admin/plans`):** Seção dedicada no painel de administração permitindo ativar/desativar anúncios, controlar probabilidade de exibição, limitar densidade máxima por listagem, editar textos dos criativos e visualizar em tempo real (`Live Preview`) como o anúncio será renderizado para os usuários.
+- **Sincronização Dinâmica de Preços em Tempo Real:** O valor exibido no anúncio (ex: "A partir de R$ 6,66/mês" ou plano VIP) é sincronizado automaticamente com as configurações e planos reais do Stripe/Firestore, prevenindo qualquer desincronização de valores.
+
+### 🛠️ Melhorias & UI/UX
+- **Card 100% Clicável:** Toda a área do card promocional agora é interativa e clicável com redirecionamento direto para a página `/planos`, eliminando restrição de clique apenas no botão.
+- **Correção de Cortes e Estouro Visual:** Otimização da hierarquia tipográfica, paddings internos (`p-3 sm:p-3.5`) e flexibilização dos limites de texto, garantindo apresentação impecável sem cortes de botões ou sobreposição em smartphones compactos e monitores desktop.
+- **Testes Automatizados:** Suíte completa de testes cobrindo probabilidade matemática, inserção segura de slots, preservação da lista e sincronização de moedas/preços.
+
+---
+
 ## [v4.7.1] — 2026-09-20
  
 ### 🛠️ Melhorias & Design System (Navbar Padronizada)

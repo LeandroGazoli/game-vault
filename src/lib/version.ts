@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.7.1";
+export const APP_VERSION = "v4.8.0";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.8.0",
+    date: "20/09/2026",
+    title: "Sistema de Anúncios de Planos Aleatórios com Painel Admin & Sincronização de Preços",
+    highlights: [
+      "Lógica de probabilidade configurável (0-100%) e posicionamento randômico de anúncios entre os jogos",
+      "Painel administrativo em /admin/plans com controle mestre, editor de criativos e Live Preview em tempo real",
+      "Sincronização automática e dinâmica dos valores exibidos com os planos oficiais do Stripe/Firestore",
+      "Cards de anúncios 100% clicáveis com correção de corte visual e tipografia compacta mobile-first",
+    ],
+  },
   {
     version: "v4.7.1",
     date: "20/09/2026",
