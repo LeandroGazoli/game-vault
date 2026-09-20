@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.8.0";
+export const APP_VERSION = "v4.8.1";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.8.1",
+    date: "20/09/2026",
+    title: "Central de Contato, Leads e Cloudflare Email Routing Exclusivo no Admin",
+    highlights: [
+      "Recepção de e-mails em contato@ e parcerias@ via Cloudflare Email Worker",
+      "Persistência automática no Firestore sem sobrecarregar caixa postal particular",
+      "Nova central de Mensagens & Leads no Painel Administrativo (/admin/contatos)",
+      "Envio de respostas oficiais com 1 clique por e-mail pelo Admin via Resend",
+    ],
+  },
   {
     version: "v4.8.0",
     date: "20/09/2026",

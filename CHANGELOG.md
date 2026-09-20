@@ -4,6 +4,16 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.8.1] — 2026-09-20
+ 
+### 🚀 Novidades: Central de Contato, Leads e Cloudflare Email Routing
+- **Central Exclusiva no Painel Administrativo:** Todas as mensagens recebidas via formulário do site e e-mails enviados para `contato@mygameslist.com.br` e `parcerias@mygameslist.com.br` agora vão exclusivamente para o Painel Admin (`/admin/contatos`), sem sobrecarregar sua caixa de entrada pessoal.
+- **Cloudflare Email Worker (`mygamelist-email-inbound`):** Implantado Worker que intercepta em tempo real qualquer e-mail enviado diretamente aos domínios institucionais e persiste na coleção `contact_messages` via webhook seguro.
+- **Distinção de Origem e Canal:** A interface administrativa agora identifica visualmente a origem de cada lead (se veio pelo formulário do site ou se foi um e-mail direto para `contato@` ou `parcerias@`).
+- **Resposta Oficial com 1 Clique via Resend:** Modal de resposta embutido que dispara e-mails oficiais assinados pelo MyGameList de volta ao usuário através do Resend, marcando a mensagem como "respondido" e registrando o histórico de atendimento.
+
+---
+
 ## [v4.8.0] — 2026-09-20
  
 ### 🚀 Novidades: Sistema Completo de Anúncios de Planos Aleatórios & Painel Administrativo
