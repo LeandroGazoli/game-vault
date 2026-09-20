@@ -434,103 +434,107 @@ export default function LiveSearchInput({
                     return (
                       <div
                         key={game.id}
-                        className={`group relative flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all cursor-pointer ${
-                          game.isAiRecommended
-                            ? "ai-card-wrapper bg-[#120e24]/90 border border-purple-500/40 hover:border-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.15)] mb-1"
-                            : "hover:bg-white/10"
-                        }`}
-                        onClick={() => {
-                          setIsOpen(false);
-                          router.push(getGameUrl(game));
-                        }}
-                        title={`Abrir página de ${game.name}`}
+                        className={game.isAiRecommended ? "ai-card-wrapper mb-1.5" : ""}
                       >
                         {game.isAiRecommended && (
                           <div className="ai-card-border-beam rounded-xl" />
                         )}
 
-                        {/* Capa + Informações */}
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-10 h-13 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-cyan-500/50 flex-shrink-0 transition-colors shadow-sm">
-                            {game.background_image ? (
-                              <img
-                                src={game.background_image}
-                                alt={game.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[9px] text-gray-500">
-                                --
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className={`text-xs sm:text-sm font-bold truncate transition-colors ${
-                                game.isAiRecommended
-                                  ? "text-purple-200 group-hover:text-purple-100"
-                                  : "text-white group-hover:text-[#00E5FF]"
-                              }`}>
-                                {game.name}
-                              </h4>
-                              {game.isAiRecommended && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/40 shrink-0">
-                                  <Sparkles className="w-2.5 h-2.5 text-purple-400" />
-                                  Curadoria IA
-                                </span>
+                        <div
+                          className={`group relative flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all cursor-pointer ${
+                            game.isAiRecommended
+                              ? "bg-[#141226] border border-purple-500/30 hover:border-purple-400/70"
+                              : "hover:bg-white/10"
+                          }`}
+                          onClick={() => {
+                            setIsOpen(false);
+                            router.push(getGameUrl(game));
+                          }}
+                          title={`Abrir página de ${game.name}`}
+                        >
+                          {/* Capa + Informações */}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-13 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-cyan-500/50 flex-shrink-0 transition-colors shadow-sm">
+                              {game.background_image ? (
+                                <img
+                                  src={game.background_image}
+                                  alt={game.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[9px] text-gray-500">
+                                  --
+                                </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-mono mt-0.5 flex-wrap">
-                              {releaseYear && <span>{releaseYear}</span>}
-                              {game.platforms && game.platforms.length > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-cyan-300 font-medium">
-                                    {game.platforms.slice(0, 2).map((p) => formatPlatformShort(p.platform.name)).join(", ")}
-                                    {game.platforms.length > 2 ? ` +${game.platforms.length - 2}` : ""}
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className={`text-xs sm:text-sm font-bold truncate transition-colors ${
+                                  game.isAiRecommended
+                                    ? "text-purple-200 group-hover:text-purple-100"
+                                    : "text-white group-hover:text-[#00E5FF]"
+                                }`}>
+                                  {game.name}
+                                </h4>
+                                {game.isAiRecommended && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/40 shrink-0">
+                                    <Sparkles className="w-2.5 h-2.5 text-purple-400" />
+                                    Curadoria IA
                                   </span>
-                                </>
-                              )}
-                              {game.genres && game.genres[0] && (
-                                <>
-                                  <span>•</span>
-                                  <span className="truncate text-gray-400">{game.genres[0].name}</span>
-                                </>
-                              )}
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-mono mt-0.5 flex-wrap">
+                                {releaseYear && <span>{releaseYear}</span>}
+                                {game.platforms && game.platforms.length > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-cyan-300 font-medium">
+                                      {game.platforms.slice(0, 2).map((p) => formatPlatformShort(p.platform.name)).join(", ")}
+                                      {game.platforms.length > 2 ? ` +${game.platforms.length - 2}` : ""}
+                                    </span>
+                                  </>
+                                )}
+                                {game.genres && game.genres[0] && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="truncate text-gray-400">{game.genres[0].name}</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Badges e Ação Rápida */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {game.metacritic && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              {game.metacritic}%
-                            </span>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSelectedGame(game);
-                              setIsOpen(false);
-                            }}
-                            className={`p-1.5 rounded-full transition-all ${
-                              userGame
-                                ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                                : "bg-white/10 hover:bg-[#00E5FF]/20 text-gray-300 hover:text-[#00E5FF]"
-                            }`}
-                            title={userGame ? "Na sua biblioteca (clique para gerenciar)" : "Adicionar à biblioteca rápido"}
-                          >
-                            {userGame ? (
-                              <Check className="w-3.5 h-3.5" />
-                            ) : (
-                              <Plus className="w-3.5 h-3.5" />
+                          {/* Badges e Ação Rápida */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {game.metacritic && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                {game.metacritic}%
+                              </span>
                             )}
-                          </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedGame(game);
+                                setIsOpen(false);
+                              }}
+                              className={`p-1.5 rounded-full transition-all ${
+                                userGame
+                                  ? "bg-[#00E5FF]/20 text-[#00E5FF]"
+                                  : "bg-white/10 hover:bg-[#00E5FF]/20 text-gray-300 hover:text-[#00E5FF]"
+                              }`}
+                              title={userGame ? "Na sua biblioteca (clique para gerenciar)" : "Adicionar à biblioteca rápido"}
+                            >
+                              {userGame ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <Plus className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

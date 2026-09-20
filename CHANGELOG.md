@@ -4,6 +4,13 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.7.3] — 2026-09-20
+ 
+### 🐛 Correções & Interface
+- **Animação de Curadoria IA na Busca:** Correção no empilhamento e delimitação da camada de animação (`ai-card-border-beam`) nos itens recomendados por IA no dropdown de autocomplete da busca (`LiveSearchInput`). O gradiente cônico agora contorna a borda do card como feixe neon sem cobrir capa, título, gênero ou plataforma do jogo.
+
+---
+
 ## [v4.7.2] — 2026-09-20
  
 ### 🐛 Correções & Painel Administrativo

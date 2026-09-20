@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.7.2";
+export const APP_VERSION = "v4.7.3";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.7.3",
+    date: "20/09/2026",
+    title: "Correção na Animação de Curadoria IA na Busca",
+    highlights: [
+      "Isolamento do feixe cônico animado (ai-card-border-beam) em container delimitador",
+      "Eliminação do vazamento de gradiente sobre as informações de títulos e badges no dropdown",
+      "Preservação do efeito neon rotativo contornando a borda dos cards de recomendação",
+    ],
+  },
   {
     version: "v4.7.2",
     date: "20/09/2026",
