@@ -65,10 +65,6 @@ export default function NavSearchBar({ className = "" }: NavSearchBarProps) {
       <div className="hidden md:block w-full" data-nav-search>
         <LiveSearchInput variant="navbar" placeholder="Buscar jogos, plataformas..." />
       </div>
-
-      <kbd className="hidden lg:inline-flex items-center gap-0.5 ml-2 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-500 shrink-0">
-        {isMac ? "⌘K" : "Ctrl+K"}
-      </kbd>
     </div>
   );
 }

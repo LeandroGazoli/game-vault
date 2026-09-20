@@ -4,6 +4,15 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.7.1] — 2026-09-20
+ 
+### 🛠️ Melhorias & Design System (Navbar Padronizada)
+- **Padronização de Alturas com shadcn/ui:** Todos os elementos interativos da barra de navegação (Links Início/Catálogo, Campo de Busca Instantânea, Botão Seja PRO, Sininho de Notificações, Menu de Usuário/Login e Menu Drawer) agora possuem altura consistente de 36px (`h-9`) no desktop e 44px (`h-11`) no mobile para toques ergonômicos e acessíveis.
+- **Componentização Shadcn First:** Adoção dos componentes oficiais `Button` de `@/components/ui/button` nos links e botões da barra.
+- **Correção Visual no Campo de Busca:** Removida a duplicidade do atalho de teclado `⌘K` que aparecia em duplicidade fora do campo, mantendo o badge limpo e integrado.
+
+---
+
 ## [v4.7.0] — 2026-09-19
 
 ### 🚀 Novidades: Nova Página de Planos & Assinaturas

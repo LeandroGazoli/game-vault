@@ -25,6 +25,7 @@ import { triggerSelectionHaptic, triggerHaptic } from "@/lib/capacitor";
 import NotificationDrawer from "./NotificationDrawer";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export default function NotificationBell() {
   const { user } = useAuth();
@@ -200,22 +201,24 @@ export default function NotificationBell() {
   return (
     <>
       {/* Botão de Sino no Navbar */}
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => setIsDrawerOpen(true)}
-        className="relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-neutral-300 hover:text-white transition-[border-color,color] duration-200 active:scale-95 cursor-pointer shrink-0"
+        className="relative rounded-xl bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 text-neutral-300 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0"
         title="Notificações & Novidades"
         aria-label="Notificações"
       >
-        <Bell className="w-4 h-4 text-neutral-300 hover:text-[#00E5FF] transition-colors" />
+        <Bell className="w-4 h-4 text-neutral-300 group-hover:text-[#00E5FF] transition-colors" />
 
         {/* Badge Pulsante de Não Lidas */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#00E5FF] text-black text-[10px] font-black font-mono flex items-center justify-center shadow-lg shadow-cyan-500/40 animate-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#00E5FF] text-black text-[10px] font-black font-mono flex items-center justify-center shadow-lg shadow-cyan-500/40 animate-pulse pointer-events-none">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-      </button>
+      </Button>
 
       {/* Drawer com Histórico de Cards */}
       <NotificationDrawer

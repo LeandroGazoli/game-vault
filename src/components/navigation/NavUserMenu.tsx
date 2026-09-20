@@ -21,6 +21,7 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function openGameImporter() {
   if (typeof window !== "undefined") {
@@ -66,7 +67,7 @@ export default function NavUserMenu({ onOpenAuth }: NavUserMenuProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/5 border border-white/10 shrink-0 animate-pulse">
+      <div className="flex items-center gap-1.5 h-11 sm:h-9 px-2 rounded-full bg-white/5 border border-white/10 shrink-0 animate-pulse">
         <div className="w-7 h-7 rounded-full bg-white/15 shrink-0" />
         <div className="w-16 h-3 rounded-full bg-white/15 hidden md:block" />
       </div>
@@ -75,18 +76,19 @@ export default function NavUserMenu({ onOpenAuth }: NavUserMenuProps) {
 
   if (!user) {
     return (
-      <button
+      <Button
         type="button"
+        size="sm"
         onClick={() => {
           trackSignUpClick("navbar_header_cta");
           onOpenAuth();
         }}
-        className="flex h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold items-center justify-center gap-1.5 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 shrink-0 cursor-pointer"
+        className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 shrink-0 cursor-pointer"
         title="Entrar ou cadastrar-se"
       >
         <User className="w-3.5 h-3.5 text-black" />
         <span className="hidden sm:inline">Entrar</span>
-      </button>
+      </Button>
     );
   }
 
@@ -102,7 +104,7 @@ export default function NavUserMenu({ onOpenAuth }: NavUserMenuProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 p-1 pr-2 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/40 hover:bg-white/10 transition-all cursor-pointer"
+        className="flex items-center gap-1.5 h-11 sm:h-9 px-2 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/40 hover:bg-white/10 transition-all cursor-pointer"
         title={`Menu de ${user.displayName}`}
         aria-expanded={isOpen}
       >

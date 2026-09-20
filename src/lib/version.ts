@@ -2,8 +2,8 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.7.0";
-export const APP_RELEASE_DATE = "2026-09-19";
+export const APP_VERSION = "v4.7.1";
+export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.7.1",
+    date: "20/09/2026",
+    title: "Padronização de Altura e Design System com shadcn/ui na Navbar",
+    highlights: [
+      "Altura padronizada de 36px (desktop) e 44px (mobile touch-friendly) em todos os elementos da barra",
+      "Adoção dos componentes shadcn Button para links de navegação, botão PRO, notificações e menu",
+      "Eliminação do atalho ⌘K duplicado no campo de busca",
+    ],
+  },
   {
     version: "v4.7.0",
     date: "19/09/2026",

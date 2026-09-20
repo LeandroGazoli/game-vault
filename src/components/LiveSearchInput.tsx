@@ -310,14 +310,14 @@ export default function LiveSearchInput({
             className={`w-full text-white placeholder-gray-400 focus:outline-none transition-all ${
               isHero
                 ? "pl-12 pr-32 py-3.5 rounded-full bg-[#12141a]/95 border-2 border-cyan-500/35 focus:border-[#00E5FF] focus:ring-4 focus:ring-[#00E5FF]/20 shadow-2xl text-base sm:text-sm font-medium"
-                : "pl-10 pr-14 py-2 rounded-full bg-[#14161f]/90 border border-cyan-500/30 hover:border-cyan-400/60 focus:border-[#00E5FF] focus:bg-[#181a26] focus:ring-2 focus:ring-[#00E5FF]/20 focus:shadow-[0_0_20px_rgba(0,229,255,0.2)] text-base sm:text-sm font-medium shadow-inner"
+                : "h-11 sm:h-9 pl-9 pr-12 py-1.5 rounded-full bg-[#14161f]/90 border border-white/10 hover:border-cyan-500/40 focus:border-[#00E5FF] focus:bg-[#181a26] focus:ring-1 focus:ring-[#00E5FF]/30 text-sm font-medium shadow-inner"
             }`}
           />
 
           {/* Atalho de Teclado, Curadoria IA, Botão de Limpar ou Loading Spinner */}
-          <div className="absolute right-3 flex items-center gap-1.5">
+          <div className="absolute right-2.5 flex items-center gap-1.5">
             {!query && !loading && !isHero && (
-              <div className="hidden xl:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-gray-400 pointer-events-none">
+              <div className="hidden lg:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-400 pointer-events-none">
                 <span className="text-[9px]">⌘</span>K
               </div>
             )}

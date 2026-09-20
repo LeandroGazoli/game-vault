@@ -16,6 +16,7 @@ import {
   Menu,
   Crown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -40,29 +41,37 @@ export default function Navbar() {
             </Link>
 
             {/* Links Rápidos Essenciais (Desktop) */}
-            <nav className="hidden lg:flex items-center gap-1 ml-2 text-xs font-semibold">
-              <Link
-                href="/"
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+            <nav className="hidden lg:flex items-center gap-1.5 ml-2">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className={`transition-all font-semibold ${
                   pathname === "/"
                     ? "bg-white/10 text-white border border-white/15"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                <span>Início</span>
-              </Link>
-              <Link
-                href="/search"
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                <Link href="/">
+                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Início</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className={`transition-all font-semibold ${
                   pathname === "/search"
                     ? "bg-white/10 text-white border border-white/15"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Catálogo</span>
-              </Link>
+                <Link href="/search">
+                  <Gamepad2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Catálogo</span>
+                </Link>
+              </Button>
             </nav>
           </div>
 
@@ -72,13 +81,16 @@ export default function Navbar() {
           {/* 3. Lado Direito: Notificações, PRO, Perfil e Botão Menu Drawer */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {!isPremium && (
-              <Link
-                href="/planos"
-                className="hidden md:flex text-amber-300 hover:text-amber-200 transition-all items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-emerald-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold shadow-sm shrink-0"
+              <Button
+                asChild
+                size="sm"
+                className="hidden md:inline-flex text-amber-300 hover:text-amber-200 transition-all rounded-full bg-gradient-to-r from-amber-500/15 to-emerald-500/10 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold shadow-sm shrink-0"
               >
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span>PRO</span>
-              </Link>
+                <Link href="/planos">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>PRO</span>
+                </Link>
+              </Button>
             )}
 
             {/* Sininho de Notificações */}
@@ -90,16 +102,18 @@ export default function Navbar() {
             </div>
 
             {/* Botão Hambúrguer para abrir o Drawer de Navegação */}
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="rounded-xl bg-white/5 hover:bg-white/10 border-white/10 text-gray-300 hover:text-white active:scale-95 transition-all cursor-pointer shrink-0 max-sm:h-11 max-sm:w-11 max-sm:p-0"
               title="Abrir menu de navegação"
               aria-label="Abrir menu de navegação"
             >
-              <Menu className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400" />
+              <Menu className="w-4 h-4 text-emerald-400" />
               <span className="hidden lg:inline text-xs font-semibold text-neutral-300">Menu</span>
-            </button>
+            </Button>
           </div>
 
         </div>
