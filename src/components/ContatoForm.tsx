@@ -9,25 +9,52 @@ export default function ContatoForm() {
   const [email, setEmail] = useState("");
   const [assunto, setAssunto] = useState("duvida");
   const [mensagem, setMensagem] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim() || !email.trim() || !mensagem.trim()) {
       setStatus("error");
+      setErrorMessage("Por favor, preencha todos os campos obrigatórios antes de enviar.");
       triggerWarningHaptic();
       return;
     }
 
     setStatus("loading");
-    // Simula envio com fallback para mailto se desejado
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/contato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          email: email.trim(),
+          assunto,
+          mensagem: mensagem.trim(),
+          honeypot,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Não foi possível enviar sua mensagem. Tente novamente.");
+      }
+
       setStatus("success");
       triggerSuccessHaptic();
       setNome("");
       setEmail("");
       setMensagem("");
-    }, 800);
+    } catch (err: any) {
+      console.error("Erro no envio do contato:", err);
+      setStatus("error");
+      setErrorMessage(err?.message || "Ocorreu um erro ao enviar. Tente novamente mais tarde.");
+      triggerWarningHaptic();
+    }
   };
 
   return (
@@ -52,9 +79,21 @@ export default function ContatoForm() {
       {status === "error" && (
         <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-3">
           <AlertCircle className="w-5 h-5 shrink-0" />
-          <span>Por favor, preencha todos os campos obrigatórios antes de enviar.</span>
+          <span>{errorMessage || "Por favor, preencha todos os campos obrigatórios antes de enviar."}</span>
         </div>
       )}
+
+      {/* Honeypot invisível para bots */}
+      <div className="hidden" aria-hidden="true">
+        <input
+          type="text"
+          name="website_field"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">

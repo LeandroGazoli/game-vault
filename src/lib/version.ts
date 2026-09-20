@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.7.3";
+export const APP_VERSION = "v4.7.4";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.7.4",
+    date: "20/09/2026",
+    title: "Central de Contato, Leads e Resposta de E-mail via Resend",
+    highlights: [
+      "Integração do formulário de contato com Firestore e alerta imediato via Resend",
+      "Nova central de Mensagens & Leads no Painel Administrativo (/admin/contatos)",
+      "Envio de respostas oficiais com 1 clique por e-mail pelo Admin",
+      "Configuração de Cloudflare Email Routing para contato@ e parcerias@",
+    ],
+  },
   {
     version: "v4.7.3",
     date: "20/09/2026",

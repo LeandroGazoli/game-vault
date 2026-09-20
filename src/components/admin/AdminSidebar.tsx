@@ -18,6 +18,7 @@ import {
   Mail,
   BookOpen,
   Gamepad2,
+  Inbox,
 } from "lucide-react";
 
 export const ADMIN_NAV_ITEMS = [
@@ -69,6 +70,12 @@ export const ADMIN_NAV_ITEMS = [
     label: "Notificações",
     icon: Bell,
     badge: "PUSH",
+  },
+  {
+    href: "/admin/contatos",
+    label: "Mensagens & Leads",
+    icon: Inbox,
+    badge: "INBOX",
   },
   {
     href: "/admin/emails",

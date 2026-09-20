@@ -1518,3 +1518,4 @@ export interface ImportGameDraft {
   alreadyInLibrary?: boolean;
 }
 export * from "./types/profile.types";
+export * from "./types/contact.types";
