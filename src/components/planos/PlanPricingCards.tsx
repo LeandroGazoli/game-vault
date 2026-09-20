@@ -104,9 +104,9 @@ export default function PlanPricingCards({
                 Plano Básico
               </span>
               <h3 className="text-xl font-bold text-white tracking-tight">Modo Gratuito</h3>
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-white">R$ 0</span>
-                <span className="text-xs text-neutral-400 font-mono">/ para sempre</span>
+              <div className="flex items-baseline flex-wrap gap-1.5 pt-1">
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight whitespace-nowrap">R$ 0</span>
+                <span className="text-xs text-neutral-400 font-mono whitespace-nowrap">/ para sempre</span>
               </div>
               <p className="text-xs text-neutral-400 leading-relaxed">
                 Tudo o que você precisa para registrar seus jogos e acompanhar notas da comunidade.
@@ -176,8 +176,8 @@ export default function PlanPricingCards({
 
         {/* 2. PLANO PRO (DESTAQUE PRINCIPAL) */}
         <div className="relative rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-[#16222f] via-[#121622] to-[#0d0f15] border-2 border-emerald-400 flex flex-col justify-between space-y-6 shadow-2xl shadow-emerald-500/15 lg:-translate-y-2 z-10">
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 text-black font-black text-[11px] uppercase tracking-wider shadow-lg flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5 fill-black" />
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 text-black font-black text-[11px] uppercase tracking-wider shadow-lg flex items-center gap-1.5 whitespace-nowrap z-20 pointer-events-none select-none">
+            <Star className="w-3.5 h-3.5 fill-black shrink-0" />
             <span>Mais Escolhido • Economize 33%</span>
           </div>
 
@@ -187,14 +187,14 @@ export default function PlanPricingCards({
                 {billingCycle === "annual" ? "Assinatura Anual" : billingCycle === "monthly" ? "Assinatura Mensal" : "Mês Avulso"}
               </span>
               <h3 className="text-xl font-extrabold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" />
+                <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
                 <span>MyGameList PRO</span>
               </h3>
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-emerald-400">
+              <div className="flex items-baseline flex-wrap gap-1.5 pt-1">
+                <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight whitespace-nowrap">
                   {currentProConfig.formattedPrice}
                 </span>
-                <span className="text-xs text-neutral-400 font-mono">
+                <span className="text-xs text-neutral-400 font-mono whitespace-nowrap">
                   {billingCycle === "annual" ? "/ano" : billingCycle === "monthly" ? "/mês" : " único"}
                 </span>
               </div>
@@ -267,14 +267,14 @@ export default function PlanPricingCards({
                 Acesso Vitalício Eterno
               </span>
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Crown className="w-5 h-5 text-amber-400" />
+                <Crown className="w-5 h-5 text-amber-400 shrink-0" />
                 <span>VIP Fundador</span>
               </h3>
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-amber-400">
+              <div className="flex items-baseline flex-wrap gap-1.5 pt-1">
+                <span className="text-3xl sm:text-4xl font-black text-amber-400 tracking-tight whitespace-nowrap">
                   {plansConfig.vip_lifetime.formattedPrice}
                 </span>
-                <span className="text-xs text-neutral-400 font-mono">/ pagamento único</span>
+                <span className="text-xs text-neutral-400 font-mono whitespace-nowrap">/ pagamento único</span>
               </div>
               <p className="text-xs text-neutral-400 leading-relaxed">
                 Pague uma única vez e torne-se apoiador VIP permanente do Game Vault.
