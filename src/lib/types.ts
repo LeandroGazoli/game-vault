@@ -1,3 +1,6 @@
+import { DEFAULT_PLAN_ADS_CONFIG, PlanAdsConfig } from "./ads/planAds.types";
+export * from "./ads/planAds.types";
+
 export type GameStatus = "completed" | "playing" | "paused" | "dropped" | "backlog" | "library";
 
 export type CompletionType = "main_story" | "main_extra" | "completionist" | "platinum" | "custom";
@@ -731,6 +734,7 @@ export interface SystemSettings {
     vipWelcome?: EmailTemplateConfig;
     proWelcome?: EmailTemplateConfig;
   };
+  planAds?: import("./ads/planAds.types").PlanAdsConfig;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -1272,6 +1276,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
       ],
     },
   },
+  planAds: DEFAULT_PLAN_ADS_CONFIG,
 };
 
 export interface SystemNotification {

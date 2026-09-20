@@ -4,9 +4,11 @@ import React, { useState, useEffect, Suspense, useCallback, useRef } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Game, SystemSettings } from "@/lib/types";
+import { Game, SystemSettings, PlanAdsConfig } from "@/lib/types";
 import GameCard from "@/components/GameCard";
 import GameCardPlanPromo from "@/components/ads/GameCardPlanPromo";
+import { useRandomPlanAdSlots } from "@/lib/ads/useRandomPlanAdSlot";
+import { PlansConfig, DEFAULT_PLANS_CONFIG } from "@/lib/plans.types";
 import {
   Search,
   Filter,
@@ -122,17 +124,44 @@ function SearchContent() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiQueriedText, setAiQueriedText] = useState<string>("");
   const [isAiEnabled, setIsAiEnabled] = useState(true);
+  const [planAdsConfig, setPlanAdsConfig] = useState<PlanAdsConfig | undefined>(undefined);
+  const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS_CONFIG);
 
-  // Monitora a feature flag em tempo real do Admin
+  // Monitora a feature flag e configurações de anúncios
   useEffect(() => {
-    if (!db) return;
-    // Flag por rota cacheada: um listener por visitante custava leitura do Firestore, e
-    // leitura feita do navegador não aparece em nenhum log de servidor.
     fetch("/api/system/features")
       .then((r) => (r.ok ? (r.json() as Promise<{ features?: { aiRecommendations?: boolean } }>) : null))
       .then((res) => setIsAiEnabled(Boolean(res?.features?.aiRecommendations ?? true)))
       .catch(() => {});
+
+    fetch("/api/system/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.settings?.planAds) {
+          setPlanAdsConfig(data.settings.planAds);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/plans")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setPlansConfig((prev) => ({ ...prev, ...data }));
+      })
+      .catch(() => {});
   }, []);
+
+  // Calcula slots randômicos com base na probabilidade e total de itens
+  const adSlots = useRandomPlanAdSlots(
+    games.length,
+    planAdsConfig,
+    `${query}-${selectedGenre}-${selectedPlatform}-${selectedSort}`
+  );
+  const adSlotMap = useMemo(() => {
+    const map = new Map<number, number>();
+    adSlots.forEach((s) => map.set(s.index, s.variantIndex));
+    return map;
+  }, [adSlots]);
 
   // Estados de UI expansível e utilitários
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -1367,9 +1396,13 @@ function SearchContent() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {games.map((game, index) => (
                 <React.Fragment key={game.id}>
-                  {(index === 6 || index === 18) && (
+                  {adSlotMap.has(index) && (
                     <div className="h-full">
-                      <GameCardPlanPromo variantIndex={index === 6 ? 0 : 1} />
+                      <GameCardPlanPromo
+                        variantIndex={adSlotMap.get(index)}
+                        customCreatives={planAdsConfig?.creatives}
+                        plansConfig={plansConfig}
+                      />
                     </div>
                   )}
                   <div

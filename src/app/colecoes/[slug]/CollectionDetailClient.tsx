@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 
 import Link from "next/link";
-import { Game } from "@/lib/types";
+import { Game, PlanAdsConfig } from "@/lib/types";
 import GameCard from "@/components/GameCard";
 import GameCardPlanPromo from "@/components/ads/GameCardPlanPromo";
+import { useRandomPlanAdSlots } from "@/lib/ads/useRandomPlanAdSlot";
+import { PlansConfig, DEFAULT_PLANS_CONFIG } from "@/lib/plans.types";
 import AuthModal from "@/components/AuthModal";
 import { getCollectionBySlug } from "@/lib/collectionsData";
 import {
@@ -27,6 +29,33 @@ export default function CollectionDetailClient({ slug }: CollectionDetailClientP
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [planAdsConfig, setPlanAdsConfig] = useState<PlanAdsConfig | undefined>(undefined);
+  const [plansConfig, setPlansConfig] = useState<PlansConfig>(DEFAULT_PLANS_CONFIG);
+
+  useEffect(() => {
+    fetch("/api/system/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.settings?.planAds) {
+          setPlanAdsConfig(data.settings.planAds);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/plans")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setPlansConfig((prev) => ({ ...prev, ...data }));
+      })
+      .catch(() => {});
+  }, []);
+
+  const adSlots = useRandomPlanAdSlots(games.length, planAdsConfig, slug);
+  const adSlotMap = React.useMemo(() => {
+    const map = new Map<number, number>();
+    adSlots.forEach((s) => map.set(s.index, s.variantIndex));
+    return map;
+  }, [adSlots]);
 
   useEffect(() => {
     async function loadCollectionGames() {
@@ -149,9 +178,13 @@ export default function CollectionDetailClient({ slug }: CollectionDetailClientP
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
           {games.map((game, index) => (
             <React.Fragment key={game.id}>
-              {index === 7 && (
+              {adSlotMap.has(index) && (
                 <div className="h-full">
-                  <GameCardPlanPromo variantIndex={1} />
+                  <GameCardPlanPromo
+                    variantIndex={adSlotMap.get(index)}
+                    customCreatives={planAdsConfig?.creatives}
+                    plansConfig={plansConfig}
+                  />
                 </div>
               )}
               <GameCard
