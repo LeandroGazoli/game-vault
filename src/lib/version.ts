@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.8.1";
+export const APP_VERSION = "v4.9.0";
 export const APP_RELEASE_DATE = "2026-09-20";
 
 export interface ChangelogEntry {
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.9.0",
+    date: "20/09/2026",
+    title: "Customização Total de Perfil e Site para Assinantes VIP & PRO",
+    highlights: [
+      "Suporte a estilização CSS Scoped no perfil com editor ao vivo e sanitização de segurança",
+      "Novos temas de cores ultra-vibrantes (Gold Royale, Neon Sunset, Ametista Mística)",
+      "Novos wallpapers de games épicos (Gold Obsidian, Dark Fantasy, Nebula Odyssey, Retro Synthwave)",
+      "3 novas cores OLED puras para perfil (Gold Dark, Amethyst Noir, Cyber Slate)",
+      "Badges visuais exclusivos, novos títulos de honra e tabela comparativa atualizada em /planos",
+    ],
+  },
   {
     version: "v4.8.1",
     date: "20/09/2026",

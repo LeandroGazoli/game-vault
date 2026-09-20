@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Palette, ChevronDown, Sparkles } from "lucide-react";
+import { Palette, ChevronDown, Sparkles, Code, Crown, Wand2 } from "lucide-react";
 import { ProfileTheme, ProfileLayout, PRESET_BANNERS } from "@/lib/types";
 import { BackgroundConfig } from "@/lib/types/background.types";
 import VipBackgroundSelector from "@/components/profile/VipBackgroundSelector";
@@ -194,6 +194,79 @@ export default function VisualThemeAccordion({
                 );
               })}
             </div>
+          </div>
+
+          {/* 5. Suporte a Estilização CSS Scoped (Exclusivo VIP/PRO) */}
+          <div className="space-y-2.5 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="space-y-0.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-1.5">
+                  <Code className="w-3.5 h-3.5 text-cyan-400" /> Estilização CSS Customizada (Scoped)
+                </label>
+                <p className="text-[11px] text-gray-400">
+                  Adicione regras CSS personalizadas aplicadas exclusivamente ao container do seu perfil (#profile).
+                </p>
+              </div>
+
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 flex items-center gap-1">
+                <Crown className="w-3 h-3 text-amber-400" /> VIP &amp; PRO
+              </span>
+            </div>
+
+            {/* Snippets Rápidos de CSS */}
+            {isPremium && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
+                  <Wand2 className="w-3 h-3 text-cyan-400" /> Snippets:
+                </span>
+                {CSS_SNIPPETS.map((snip) => (
+                  <button
+                    key={snip.label}
+                    type="button"
+                    onClick={() => {
+                      if (setCustomCss) {
+                        setCustomCss(customCss ? `${customCss}\n\n${snip.code}` : snip.code);
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/10 text-gray-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 text-[10px] font-mono transition-all shrink-0 cursor-pointer active:scale-95"
+                  >
+                    {snip.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="relative">
+              <textarea
+                rows={4}
+                disabled={!isPremium}
+                value={customCss || ""}
+                onChange={(e) => setCustomCss?.(e.target.value)}
+                placeholder={
+                  isPremium
+                    ? "/* Digite seu CSS aqui (escopado automaticamente em #profile) */\n#profile .profile-hero {\n  border: 1px solid #00e5ff;\n}"
+                    : "🔒 Recurso exclusivo para membros VIP e PRO. Faça upgrade para desbloquear estilização livre via CSS."
+                }
+                className="w-full bg-[#090b10] rounded-xl p-3 font-mono text-xs text-cyan-300 border border-white/10 focus:outline-none focus:border-[#00E5FF] leading-relaxed resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <div className="flex justify-between items-center text-[10px] text-gray-500 px-1 pt-0.5">
+                <span>Blindagem de escopo com #profile ativa</span>
+                <span>{(customCss || "").length} caracteres</span>
+              </div>
+            </div>
+
+            {!isPremium && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 flex items-center justify-between gap-2">
+                <span>Personalize o design do seu perfil com CSS customizado e cores exclusivas.</span>
+                <button
+                  type="button"
+                  onClick={onOpenUpgrade}
+                  className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-[10px] shrink-0 transition-colors cursor-pointer"
+                >
+                  Ver Planos
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

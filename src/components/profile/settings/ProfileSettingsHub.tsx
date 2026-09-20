@@ -99,6 +99,8 @@ export default function ProfileSettingsHub({
             username={settings.user?.username || "jogador"}
             equippedTitles={settings.equippedTitles}
             layout={settings.layout}
+            theme={settings.theme}
+            customCss={settings.customCss}
           />
 
           {/* Desktop-only Quick Drawer Shortcuts & Action Card */}
@@ -198,6 +200,8 @@ export default function ProfileSettingsHub({
               setLayout={settings.setLayout}
               customBgConfig={settings.customBgConfig}
               setCustomBgConfig={settings.setCustomBgConfig}
+              customCss={settings.customCss}
+              setCustomCss={settings.setCustomCss}
               isPremium={settings.isPremium}
               onOpenUpgrade={onOpenUpgrade}
             />

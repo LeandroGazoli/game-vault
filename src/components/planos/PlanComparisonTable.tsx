@@ -79,20 +79,41 @@ const COMPARISON_DATA: FeatureRow[] = [
     pro: true,
     vip: true,
   },
-  // Categoria: Personalização do Perfil
+  // Categoria: Personalização do Perfil & do Site
   {
-    name: "Temas Visuais de Perfil",
+    name: "Temas Visuais de Perfil & Destaques",
     category: "Personalização",
     free: "Tema Padrão",
-    pro: "Temas Neon & Cores",
+    pro: "8 Temas Neon & Acabamentos",
     vip: "Todos + Obsidian Gold VIP",
   },
   {
     name: "Capa Personalizada e Banner de Perfil",
     category: "Personalização",
     free: "Padrão",
+    pro: "Todos os Presets + URL Própria",
+    vip: "Capa VIP Obsidian + URL Própria",
+  },
+  {
+    name: "Papel de Parede do Site & Background Gamer",
+    category: "Personalização",
+    free: false,
+    pro: "Wallpapers Oficiais + Cores OLED",
+    vip: "Todos + Parallax 3D & Efeitos VIP",
+  },
+  {
+    name: "Suporte a Estilização CSS Customizada (Scoped)",
+    category: "Personalização",
+    free: false,
     pro: true,
-    vip: "Capa VIP Obsidian",
+    vip: true,
+  },
+  {
+    name: "Bio Estilizada com Suporte a HTML5 & CSS",
+    category: "Personalização",
+    free: "Markdown Básico",
+    pro: "Markdown + HTML & CSS",
+    vip: "Markdown + HTML & CSS",
   },
   // Categoria: Dados & Exportação
   {

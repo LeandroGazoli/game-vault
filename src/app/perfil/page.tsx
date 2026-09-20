@@ -24,6 +24,7 @@ import UserAvatar from "@/components/UserAvatar";
 import ProfileModalsContainer from "@/components/profile/ProfileModalsContainer";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
+import { scopeProfileCss } from "@/lib/sanitizeCss";
 
 export interface ProfilePageProps {
   targetUsername?: string;
@@ -188,6 +189,11 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
   return (
     <div id="profile" className="profile profile-root space-y-4 pb-12">
+      {/* Estilização Customizada Scoped do Usuário VIP/PRO */}
+      {activeUser.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: scopeProfileCss(activeUser.customCss, "#profile") }} />
+      )}
+
       {celebrationBanner && (
         <div className="rounded-2xl bg-emerald-950/80 border border-emerald-500/50 p-4 flex items-center justify-between text-xs text-emerald-200">
           <span>{celebrationBanner}</span>

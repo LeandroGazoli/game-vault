@@ -2,8 +2,9 @@
 
 import React from "react";
 import Image from "next/image";
-import { CheckCircle2 } from "lucide-react";
-import { ProfileLayout } from "@/lib/types";
+import { CheckCircle2, Sparkles } from "lucide-react";
+import { ProfileLayout, ProfileTheme } from "@/lib/types";
+import { getThemeStyles } from "@/lib/themeStyles";
 
 interface ProfilePreviewCardProps {
   bannerURL: string;
@@ -12,6 +13,8 @@ interface ProfilePreviewCardProps {
   username: string;
   equippedTitles: string[];
   layout: ProfileLayout;
+  theme?: ProfileTheme;
+  customCss?: string;
 }
 
 const LAYOUT_NAMES: Record<ProfileLayout, string> = {
@@ -28,11 +31,14 @@ export default function ProfilePreviewCard({
   username,
   equippedTitles,
   layout,
+  theme = "cyan",
+  customCss,
 }: ProfilePreviewCardProps) {
   const fallbackAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+  const themeStyles = getThemeStyles(theme);
 
   return (
-    <section className="relative w-full rounded-2xl overflow-hidden bg-[#141822] border border-white/10 shadow-2xl transition-all">
+    <section className={`relative w-full rounded-2xl overflow-hidden bg-[#141822] border border-white/10 shadow-2xl transition-all ${themeStyles.cardGlow}`}>
       {/* Dynamic Banner */}
       <div
         className="relative h-28 w-full bg-cover bg-center transition-all duration-500"
@@ -52,7 +58,7 @@ export default function ProfilePreviewCard({
         {/* Avatar & Badges */}
         <div className="flex items-end justify-between -mt-9 mb-1.5">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-[#1a2130] overflow-hidden ring-4 ring-[#141822] shadow-xl relative">
+            <div className={`w-16 h-16 rounded-2xl bg-[#1a2130] overflow-hidden ring-4 ring-[#141822] shadow-xl relative border-2 ${themeStyles.avatarBorder}`}>
               <img
                 src={photoURL || fallbackAvatar}
                 alt={displayName || "Avatar"}
@@ -63,7 +69,7 @@ export default function ProfilePreviewCard({
               />
             </div>
             <span
-              className="absolute top-0 right-0 w-3 h-3 rounded-full bg-[#4edea3] ring-2 ring-[#141822]"
+              className={`absolute top-0 right-0 w-3 h-3 rounded-full ring-2 ring-[#141822] ${themeStyles.bgAccent}`}
               title="Online"
             />
           </div>
@@ -92,16 +98,16 @@ export default function ProfilePreviewCard({
               <h2 className="font-bold text-[16px] text-white tracking-tight truncate">
                 {displayName || "Jogador"}
               </h2>
-              <CheckCircle2 className="w-4 h-4 text-[#4edea3] shrink-0" />
+              <CheckCircle2 className={`w-4 h-4 shrink-0 ${themeStyles.textAccent}`} />
             </div>
-            <p className="font-mono text-xs text-[#00E5FF] font-medium truncate">
+            <p className={`font-mono text-xs font-medium truncate ${themeStyles.textAccent}`}>
               @{username || "jogador"}
             </p>
           </div>
 
           <div className="text-right shrink-0">
             <span className="text-[10px] text-gray-400 block font-medium">Layout Selecionado</span>
-            <span className="font-bold text-[11px] text-[#4edea3] font-mono">
+            <span className={`font-bold text-[11px] font-mono ${themeStyles.textAccent}`}>
               {LAYOUT_NAMES[layout] || "Cyber Vault"}
             </span>
           </div>

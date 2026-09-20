@@ -121,6 +121,8 @@ export async function GET(
         customTitles: targetProfile?.customTitles || (targetProfile?.customTitle ? [targetProfile.customTitle] : []),
         theme: targetProfile?.theme || "cyan",
         profileLayout: targetProfile?.profileLayout || "default",
+        customBackground: targetProfile?.customBackground || null,
+        customCss: targetProfile?.customCss || null,
         customMarkdown: targetProfile?.customMarkdown || null,
         customHtml: targetProfile?.customHtml || null,
         customBioMode: targetProfile?.customBioMode || null,

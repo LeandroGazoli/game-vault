@@ -4,6 +4,18 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.9.0] — 2026-09-20
+ 
+### 🚀 Novidades: Customização Total de Perfil e Site para Assinantes VIP & PRO
+- **Estilização com CSS Scoped Personalizado:** Assinantes VIP e PRO agora contam com um editor de CSS customizado no perfil (`VisualThemeAccordion`). Com proteção por escopo estrito (`#profile`) e sanitização em tempo real contra injeções ou quebra de layout global, os usuários podem aplicar glows, gradientes e bordas personalizadas sem afetar o resto da plataforma.
+- **Snippets de Estilização Prontos com 1 Toque:** Inclusão de templates rápidos de CSS no editor (+ Neon Glow, + Gold Royale, + Glass Backdrop) permitindo customização instantânea mesmo para quem não domina CSS.
+- **Novos Wallpapers Épicos Exclusivos:** Quatro novos fundos temáticos em alta definição adicionados ao catálogo (`Gold Obsidian VIP`, `Dark Fantasy Castle`, `Nebula Odyssey` e `Retro Synthwave Highway`), com visualização em modal e badges exclusivos.
+- **Novos Temas e Cores OLED:** Introdução de 3 novos temas de cores (`Gold Royale`, `Neon Sunset`, `Ametista Mística`) e 3 cores sólidas OLED para fundo (`Gold Dark`, `Amethyst Noir`, `Cyber Slate`).
+- **Novos Títulos de Honra Gamer:** Novos títulos desbloqueáveis para exibição no perfil: `👑 Membro VIP Vitalício` e `⚡ Assinante PRO Oficial`.
+- **Transparência em `/planos`:** Tabela comparativa e matriz de benefícios totalmente atualizadas detalhando os novos recursos de identidade visual, wallpapers exclusivos, temas premium e suporte a CSS/HTML.
+
+---
+
 ## [v4.8.1] — 2026-09-20
  
 ### 🚀 Novidades: Central de Contato, Leads e Cloudflare Email Routing

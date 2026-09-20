@@ -31,8 +31,8 @@ const BENEFITS: BenefitItem[] = [
   },
   {
     icon: Sparkles,
-    title: "Identidade & Selos Exclusivos",
-    description: "Selo PRO Neon ou Selo Ouro Fundador no seu perfil, temas de capa customizados e até 10 insígnias únicas.",
+    title: "Identidade & Customização Total",
+    description: "Selo oficial, wallpapers de games, cores OLED de fundo, estilização CSS e até 10 insígnias customizadas.",
     badge: "Personalização",
     gradient: "from-purple-500/15 via-purple-500/5 to-transparent border-purple-500/20",
     iconColor: "text-purple-400",
