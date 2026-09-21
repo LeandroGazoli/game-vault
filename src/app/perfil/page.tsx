@@ -22,6 +22,12 @@ import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
 
 import ProfileModalsContainer from "@/components/profile/ProfileModalsContainer";
+import FranchiseBadgesSection from "@/components/profile/FranchiseBadgesSection";
+import ShowcaseTrophiesSection from "@/components/profile/ShowcaseTrophiesSection";
+import GamerGallerySection from "@/components/profile/GamerGallerySection";
+import ActivityHeatmapSection from "@/components/profile/ActivityHeatmapSection";
+import FavoriteCharactersSection from "@/components/profile/FavoriteCharactersSection";
+import SetupShowcaseSection from "@/components/profile/SetupShowcaseSection";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
 import { scopeProfileCss } from "@/lib/sanitizeCss";
@@ -141,6 +147,18 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onEdit={isOwnProfile ? () => router.push("/perfil/editar?tab=markdown") : undefined}
           />
         ) : null;
+      case "showcase_trophies":
+        return <ShowcaseTrophiesSection isOwner={isOwnProfile} />;
+      case "gamer_gallery":
+        return <GamerGallerySection isOwner={isOwnProfile} />;
+      case "franchise_badges":
+        return <FranchiseBadgesSection games={activeLibrary} isOwner={isOwnProfile} />;
+      case "activity_heatmap":
+        return <ActivityHeatmapSection games={activeLibrary} />;
+      case "favorite_characters":
+        return <FavoriteCharactersSection isOwner={isOwnProfile} />;
+      case "setup_showcase":
+        return <SetupShowcaseSection isOwner={isOwnProfile} />;
       case "showcase":
         return activeUser.showcaseGameId ? (
           <ShowcaseGameCard game={activeLibrary.find((g) => g.gameId === activeUser.showcaseGameId)} />

@@ -4,6 +4,26 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.11.0] — 2026-09-21
+ 
+### 🚀 Novidades: Upload Direto de Imagens, Vitrine de Troféus Importados & Gamificação de Franquias
+- **Upload Direto de Arquivos de Imagem:**
+  - Usuários não dependem mais de URLs externas de imagens ou links de terceiros.
+  - Suporte completo a seleção de arquivos do smartphone/computador para fotos de avatar, banners de capa e screenshots da galeria via FileReader.
+- **Vitrine de Troféus & Platinas Importadas:**
+  - Componente dedicado para exibição das conquistas e platinas mais raras importadas diretamente da Steam, PlayStation Network e Xbox.
+  - Indicadores de raridade global, insígnia de platina e modal com descrição completa do feito alcançado.
+- **Galeria de Screenshots Gamer:**
+  - Espaço dinâmico com suporte a envio direto de fotos de gameplay, contador de curtidas com feedback tátil e legendas personalizadas.
+- **Insígnias de Franquias Lendárias (Franchise Badges):**
+  - Mapeamento oficial de sagas consagradas (*Dark Souls*, *Resident Evil*, *Persona*, *God of War*, *Zelda*).
+  - Cada jogo zerado ou concluído na biblioteca adiciona progresso e estrelas para desbloquear os tiers de Bronze, Prata, Ouro e Platina (100% da saga).
+- **Métricas Visuais e Identidade Gamer:**
+  - Mapa de calor de atividade gamer dos últimos 90 dias estilo GitHub.
+  - Vitrines de Top 5 Personagens Favoritos e Ficha Técnica de Hardware/Setup Gamer.
+
+---
+
 ## [v4.10.1] — 2026-09-21
 
 ### 🚀 Novidades: Suporte Oficial a Markdown para Agentes de IA (Content Negotiation)

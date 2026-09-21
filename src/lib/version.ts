@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.10.1";
+export const APP_VERSION = "v4.11.0";
 export const APP_RELEASE_DATE = "2026-09-21";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.11.0",
+    date: "21/09/2026",
+    title: "Upload Direto de Imagens, Vitrine de Troféus & Insígnias de Franquias",
+    highlights: [
+      "Upload direto de fotos e screenshots do dispositivo para capa e galeria gamer.",
+      "Vitrine de troféus e platinas importadas da Steam, PSN e Xbox.",
+      "Insígnias de Franquias com progresso por jogo (Dark Souls, Resident Evil, Persona, etc.).",
+      "Mapa de Calor de Atividade Gamer estilo GitHub e Vitrines de Setup e Personagens.",
+    ],
+  },
   {
     version: "v4.10.1",
     date: "21/09/2026",
