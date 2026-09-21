@@ -59,6 +59,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: article.excerpt,
     alternates: {
       canonical: canonicalUrl,
+      types: {
+        "text/markdown": canonicalUrl,
+      },
     },
     openGraph: {
       title: article.title,

@@ -31,6 +31,9 @@ echo "→ Build"
 rm -rf .next .open-next
 NODE_OPTIONS="--max-old-space-size=8192" npx opennextjs-cloudflare build
 
+echo "→ Patch do Worker para negociação de conteúdo Markdown"
+node scripts/patch-worker.mjs
+
 BUILD_ID="$(cat .next/BUILD_ID)"
 echo "→ Build ID: $BUILD_ID"
 

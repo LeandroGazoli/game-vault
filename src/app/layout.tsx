@@ -72,6 +72,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "./",
+    types: {
+      "text/markdown": "./",
+    },
   },
   robots: {
     index: true,

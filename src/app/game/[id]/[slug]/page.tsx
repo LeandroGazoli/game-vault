@@ -48,6 +48,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: cleanDescription,
     alternates: {
       canonical: canonicalUrl,
+      types: {
+        "text/markdown": canonicalUrl,
+      },
     },
     openGraph: {
       title: `${title} | MyGameList`,

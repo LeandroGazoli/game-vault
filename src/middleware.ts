@@ -65,7 +65,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Para requisições de páginas HTML navegadas pelo usuário:
+
+
+  // 3. Para requisições de páginas HTML navegadas pelo usuário:
   // Garante que o cookie seguro __gv_app_token esteja sempre presente e válido
   const response = NextResponse.next();
   const existingCookieToken = request.cookies.get("__gv_app_token")?.value;

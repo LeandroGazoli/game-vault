@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.10.0";
+export const APP_VERSION = "v4.10.1";
 export const APP_RELEASE_DATE = "2026-09-21";
 
 export interface ChangelogEntry {
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.10.1",
+    date: "21/09/2026",
+    title: "Suporte Oficial a Markdown para Agentes de IA (Content Negotiation)",
+    highlights: [
+      "Suporte a 'Accept: text/markdown' entregando texto semântico, rápido e limpo para agentes e LLMs",
+      "Frontmatter YAML com metadados estruturados (title, description, image, canonical url)",
+      "Preservação de blocos JSON-LD estruturados ao final do documento",
+      "Cabeçalhos oficiais de contagem de tokens (x-markdown-tokens, x-original-tokens) e Content-Signal",
+      "Link de descoberta automática em metadados HTML (alternates.types text/markdown)",
+    ],
+  },
   {
     version: "v4.10.0",
     date: "21/09/2026",

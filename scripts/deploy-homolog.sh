@@ -43,6 +43,9 @@ NEXT_PUBLIC_SITE_URL="https://homolog.mygameslist.com.br" \
 NODE_OPTIONS="--max-old-space-size=8192" \
   npx opennextjs-cloudflare build
 
+echo "→ Patch do Worker para negociação de conteúdo Markdown"
+node scripts/patch-worker.mjs
+
 echo "→ Deploy em homologação"
 npx wrangler deploy --env homolog
 

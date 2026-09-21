@@ -40,6 +40,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: {
       canonical: canonicalUrl,
+      types: {
+        "text/markdown": canonicalUrl,
+      },
     },
     openGraph: {
       title,

@@ -4,6 +4,16 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.10.1] — 2026-09-21
+
+### 🚀 Novidades: Suporte Oficial a Markdown para Agentes de IA (Content Negotiation)
+- **Negociação de Conteúdo com `Accept: text/markdown`:** Agentes autônomos, assistentes de IA e LLMs agora podem solicitar qualquer página do site enviando o cabeçalho `Accept: text/markdown`, recebendo uma representação textual limpa, rápida e desprovida de layouts HTML pesados.
+- **Estrutura com Frontmatter YAML & JSON-LD Preservado:** As respostas em Markdown incluem Frontmatter padronizado no topo (`title`, `description`, `image`, `url`) e anexam todos os dados estruturados de Schema.org (`JSON-LD`) em blocos de código formatados ao final do documento.
+- **Métricas de Tokens e Content Signals:** Emissão automática de cabeçalhos de auditoria de IA (`x-markdown-tokens`, `x-original-tokens`) e diretivas oficiais de uso de conteúdo (`Content-Signal: ai-train=yes, search=yes, ai-input=yes`).
+- **Descoberta Nativa nos Metadados:** Integração de tags `<link rel="alternate" type="text/markdown" href="...">` no cabeçalho das páginas para descoberta transparente por crawlers.
+
+---
+
 ## [v4.10.0] — 2026-09-21
  
 ### 🚀 Novidades: Importador de Bibliotecas Xbox Live & Nintendo Switch
