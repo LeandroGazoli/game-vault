@@ -4,6 +4,26 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.10.0] — 2026-09-21
+ 
+### 🚀 Novidades: Importador de Bibliotecas Xbox Live & Nintendo Switch
+- **Sincronização Oficial Xbox Live:**
+  - Importação de títulos do Xbox Series X|S, Xbox One, Xbox 360 e PC Game Pass com enriquecimento de capas e metadados no IGDB.
+  - Suporte ao modelo híbrido de API Key: cota global do servidor via Cloudflare Workers (`XBL_API_KEY`) ou chave pessoal do usuário.
+  - **Segurança Reforçada:** A chave OpenXBL pessoal do usuário é persistida com proteção estrita de acesso na subcoleção privada (`users/{uid}/private/data`), evitando qualquer exposição em endpoints públicos.
+  - Sincronização automática da Gamertag (`socials.xbox`) no perfil do jogador.
+- **Importação Completa Nintendo Switch (3 Cenários):**
+  - Aviso transparente em conformidade com as diretrizes e regras de autenticação da Nintendo.
+  - **Cenário 1 (Lista Rápida):** Usuário cola os títulos do Switch, com busca inteligente de capas no IGDB e plataforma pré-selecionada.
+  - **Cenário 2 (Exportação CSV/Backup):** Suporte nativo para arquivos CSV exportados do Deku Deals, Backloggd, SwitchBackup e Tinfoil/DBI com parsing resiliente de horas e status.
+  - **Cenário 3 (Vínculo de Friend Code):** Formatação automática `SW-XXXX-XXXX-XXXX` e salvamento com 1 clique no perfil (`socials.switch`) com badge de destaque.
+
+### 🛠️ Melhorias & Arquitetura
+- **Modularização do Importador:** `GameImporterModal.tsx` decomposto de mais de 1.300 linhas para subcomponentes leves e atômicos (`SteamImportTab`, `XboxImportTab`, `NintendoImportTab`, `PlaystationImportTab`, `QuickTextImportTab`, `FileImportTab`, `ImportReviewStep`), respeitando os budgets de complexidade do `AGENTS.md`.
+- **Governança Cloudflare Pages & Workers:** Documentação atualizada do projeto para a esteira e bindings do Cloudflare.
+
+---
+
 ## [v4.9.0] — 2026-09-20
  
 ### 🚀 Novidades: Customização Total de Perfil e Site para Assinantes VIP & PRO

@@ -178,7 +178,8 @@ Sempre que um agente for criar ou alterar código no Game Vault, deve seguir rig
    - `style(...)`: Ajustes puramente visuais e Tailwind.
 5. **Homologação e Deploy:**
    - Mantenha o trabalho em branch de homologação (`homologacao/*`).
-   - Gere e compartilhe o link de preview no Vercel para validação do usuário.
+   - **Infraestrutura Cloudflare:** O projeto agora utiliza **Cloudflare (Pages & Workers)** com OpenNext (`opennextjs-cloudflare`) em vez dos serviços da Vercel. Segredos e variáveis de ambiente (como `XBL_API_KEY`) devem ser gerenciados no Cloudflare Dashboard (Runtime variables and secrets / Variáveis e segredos) e sincronizados via `npm run secrets:homolog` ou scripts de deploy.
+   - Gere e compartilhe o link de preview/homologação para validação do usuário.
 
 ---
 

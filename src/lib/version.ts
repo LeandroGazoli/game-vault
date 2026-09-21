@@ -2,8 +2,8 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.9.0";
-export const APP_RELEASE_DATE = "2026-09-20";
+export const APP_VERSION = "v4.10.0";
+export const APP_RELEASE_DATE = "2026-09-21";
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.10.0",
+    date: "21/09/2026",
+    title: "Importador de Bibliotecas Xbox Live & Nintendo Switch",
+    highlights: [
+      "Sincronização de biblioteca do Xbox Live com suporte a cota Cloudflare e chave privada do usuário",
+      "Novo importador dedicado do Nintendo Switch com 3 métodos: Lista Rápida, CSV Deku Deals e Friend Code",
+      "Persistência isolada e segura de credenciais e Friend Code no perfil gamer",
+      "Refatoração modular do importador com componentes atômicos shadcn/ui",
+    ],
+  },
   {
     version: "v4.9.0",
     date: "20/09/2026",

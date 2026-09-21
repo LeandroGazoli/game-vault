@@ -16,11 +16,15 @@ import { db } from "./firebase";
 
 export interface UserPrivateData {
   /**
-   * Só `birthDate` mora aqui. `email` NÃO é guardado no Firestore: a fonte autoritativa é o
-   * Firebase Auth, que o cliente já tem via `fbUser.email` e o servidor lê pelo Identity
-   * Toolkit — sem consumir cota do Firestore e sem risco de cópia defasada.
+   * Só `birthDate` e dados sensíveis de credenciais moram aqui.
+   * `email` NÃO é guardado no Firestore: a fonte autoritativa é o Firebase Auth.
    */
   birthDate?: string | null;
+  /**
+   * Chave privada da API OpenXBL (xbl.io) do usuário para sincronização do Xbox Live.
+   * Isolada do perfil público para segurança.
+   */
+  xboxApiKey?: string | null;
 }
 
 const PRIVATE_DOC = "data";

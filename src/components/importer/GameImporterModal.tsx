@@ -1,30 +1,19 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { UserGame, GameStatus, StorePlatform, ImportGameDraft } from "@/lib/types";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { useAuth } from "@/context/AuthContext";
-import {
-  X,
-  Download,
-  Upload,
-  Sparkles,
-  Gamepad2,
-  FileSpreadsheet,
-  FileCode,
-  FileText,
-  Check,
-  AlertCircle,
-  RefreshCw,
-  Search,
-  CheckSquare,
-  Square,
-  ArrowRight,
-  ExternalLink,
-  Layers,
-  ChevronDown,
-} from "lucide-react";
+import { X, Upload, AlertCircle, RefreshCw, FileSpreadsheet, FileText } from "lucide-react";
 import AdaptiveModal from "../ui/AdaptiveModal";
+
+// Subcomponentes Modulares (Regra Shadcn & Budget < 300 linhas)
+import SteamImportTab from "./SteamImportTab";
+import XboxImportTab from "./XboxImportTab";
+import PlaystationImportTab from "./PlaystationImportTab";
+import NintendoImportTab from "./NintendoImportTab";
+import QuickTextImportTab from "./QuickTextImportTab";
+import FileImportTab from "./FileImportTab";
+import ImportReviewStep from "./ImportReviewStep";
 
 interface GameImporterModalProps {
   isOpen: boolean;
@@ -32,7 +21,7 @@ interface GameImporterModalProps {
   existingGames?: UserGame[];
 }
 
-type ImportSourceTab = "steam" | "xbox" | "playstation" | "text" | "file";
+type ImportSourceTab = "steam" | "xbox" | "nintendo" | "playstation" | "text" | "file";
 
 const POPULAR_STORE_PLATFORMS: StorePlatform[] = [
   "Epic Games",
@@ -53,60 +42,16 @@ export default function GameImporterModal({
   existingGames = [],
 }: GameImporterModalProps) {
   const { batchAddGames, library } = useGameLibrary();
-  const { user } = useAuth();
-
   const currentLibrary = existingGames.length > 0 ? existingGames : library;
 
   const [activeTab, setActiveTab] = useState<ImportSourceTab>("steam");
-
-  // Steam Tab State
-  const [steamInput, setSteamInput] = useState(user?.socialLinks?.steam || "");
-  const [steamApiKey, setSteamApiKey] = useState("");
-  const [isSteamLoading, setIsSteamLoading] = useState(false);
-  const [steamError, setSteamError] = useState<string | null>(null);
-
-  // Xbox Tab State
-  const [xboxInput, setXboxInput] = useState(user?.socialLinks?.xbox || "");
-  const [xboxApiKey, setXboxApiKey] = useState("");
-  const [xboxTextList, setXboxTextList] = useState("");
-  const [isXboxLoading, setIsXboxLoading] = useState(false);
-  const [xboxError, setXboxError] = useState<string | null>(null);
-
-  // Carregar chaves salvas localmente
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedSteam = localStorage.getItem("gamevault_steam_api_key");
-      if (savedSteam && !steamApiKey) setSteamApiKey(savedSteam);
-
-      const savedXbox = localStorage.getItem("gamevault_xbox_api_key");
-      if (savedXbox && !xboxApiKey) setXboxApiKey(savedXbox);
-    }
-  }, []);
-
-  // PlayStation Tab State
-  const [psnInput, setPsnInput] = useState(user?.socialLinks?.psn || "");
-  const [psnNpsso, setPsnNpsso] = useState("");
-  const [psnTextList, setPsnTextList] = useState("");
-  const [isPsnLoading, setIsPsnLoading] = useState(false);
-  const [psnError, setPsnError] = useState<string | null>(null);
-
-  // File Tab State
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
-
-  // Text Tab State
-  const [textInput, setTextInput] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState<StorePlatform>("Epic Games");
-  const [defaultStatus, setDefaultStatus] = useState<GameStatus>("library");
-
-  // Step State: 'input' | 'review' | 'importing' | 'completed'
   const [step, setStep] = useState<"input" | "review" | "importing" | "completed">("input");
   const [draftGames, setDraftGames] = useState<ImportGameDraft[]>([]);
   const [reviewSearch, setReviewSearch] = useState("");
   const [importProgress, setImportProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Hook unconditional no topo do componente (evita Minified React error #310)
   const filteredReviewGames = useMemo(() => {
     if (!reviewSearch.trim()) return draftGames;
     const q = reviewSearch.toLowerCase();
@@ -117,423 +62,21 @@ export default function GameImporterModal({
     );
   }, [draftGames, reviewSearch]);
 
-  // Fecha e reinicia estado
   const handleClose = () => {
     onClose();
     setTimeout(() => {
       setStep("input");
       setDraftGames([]);
-      setFileError(null);
-      setSteamError(null);
-      setXboxError(null);
-      setPsnError(null);
+      setErrorMessage(null);
       setImportProgress(0);
     }, 200);
   };
 
-  // =========================================================================
-  // 1. CARREGAMENTO VIA STEAM
-  // =========================================================================
-  const handleLoadSteam = async () => {
-    if (!steamInput.trim()) {
-      setSteamError("Por favor, informe seu SteamID64 ou link de perfil da Steam.");
-      return;
-    }
-
-    setIsSteamLoading(true);
-    setSteamError(null);
-
-    try {
-      // 1. Pré-validação em tempo real (Fase 9)
-      const validateRes = await fetch("/api/steam/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ steamInput: steamInput.trim() }),
-      });
-      const validateData = await validateRes.json();
-
-      if (!validateData.valid) {
-        setSteamError(validateData.error || "Perfil Steam não encontrado. Verifique o link ou username informado.");
-        return;
-      }
-
-      if (validateData.isPrivate) {
-        setSteamError(
-          `Perfil Steam localizado (${validateData.profile?.personaname || "Gamer"}), porém seus Detalhes dos Jogos estão definidos como PRIVADOS na Steam. Acesse Perfil > Editar Perfil > Configurações de Privacidade > Detalhes dos Jogos: "Público" para importar.`
-        );
-        return;
-      }
-
-      const effectiveSteamId = validateData.steamId64 || steamInput.trim();
-      const params = new URLSearchParams();
-      params.set("steamId", effectiveSteamId);
-      if (steamApiKey.trim()) params.set("apiKey", steamApiKey.trim());
-
-      const res = await fetch(`/api/steam/games?${params.toString()}`);
-      const data = await res.json();
-
-      if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {
-        setSteamError(data.error || "Nenhum jogo encontrado ou a lista de jogos do perfil está privada.");
-        return;
-      }
-
-      // Converte jogos retornados da Steam em rascunhos para revisão
-      const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
-        const hours = g.playtimeForeverHours || 0;
-        let initialStatus: GameStatus = "library";
-        if (hours > 20) initialStatus = "completed";
-        else if (hours > 1) initialStatus = "playing";
-        else initialStatus = "library"; // 1h ou menos de gameplay vai para Biblioteca
-
-        const already = currentLibrary.some(
-          (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
-        );
-
-        return {
-          id: `steam_${g.appId}_${idx}`,
-          originalTitle: g.name,
-          matchedTitle: g.name,
-          matchedCover: g.logoUrl || g.iconUrl || null,
-          platform: "Steam",
-          status: initialStatus,
-          userPlaytimeHours: hours > 0 ? hours : undefined,
-          selected: true, // Importado por padrão
-          alreadyInLibrary: already,
-        };
-      });
-
-      await enrichDraftsWithIGDB(rawDrafts);
-    } catch (e) {
-      console.error("Erro ao carregar jogos da Steam:", e);
-      setSteamError("Erro de comunicação com o servidor.");
-    } finally {
-      setIsSteamLoading(false);
-    }
-  };
-
-  // =========================================================================
-  // 1.1 CARREGAMENTO VIA XBOX (OPENXBL / NUVEM OU LISTA)
-  // =========================================================================
-  const handleLoadXbox = async () => {
-    // Se preencheu lista rápida de títulos do Xbox por texto
-    if (xboxTextList.trim()) {
-      const lines = xboxTextList.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        const rawDrafts: ImportGameDraft[] = lines.map((line, idx) => {
-          const already = currentLibrary.some(
-            (libG) => libG.gameTitle.toLowerCase() === line.toLowerCase()
-          );
-          return {
-            id: `xbox_text_${idx}`,
-            originalTitle: line,
-            matchedTitle: line,
-            platform: "Xbox Series" as StorePlatform,
-            status: "library" as GameStatus,
-            selected: true,
-            alreadyInLibrary: already,
-          };
-        });
-        await enrichDraftsWithIGDB(rawDrafts);
-        return;
-      }
-    }
-
-    if (!xboxInput.trim()) {
-      setXboxError("Por favor, informe sua Xbox Gamertag ou cole sua lista de jogos abaixo.");
-      return;
-    }
-
-    setIsXboxLoading(true);
-    setXboxError(null);
-
-    try {
-      if (typeof window !== "undefined" && xboxApiKey.trim()) {
-        localStorage.setItem("gamevault_xbox_api_key", xboxApiKey.trim());
-      }
-
-      const params = new URLSearchParams();
-      params.set("gamertag", xboxInput.trim());
-      if (xboxApiKey.trim()) params.set("apiKey", xboxApiKey.trim());
-
-      const res = await fetch(`/api/importer/xbox?${params.toString()}`);
-      const data = await res.json();
-
-      if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {
-        setXboxError(data.error || "Nenhum jogo encontrado para este Gamertag.");
-        return;
-      }
-
-      const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
-        const already = currentLibrary.some(
-          (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
-        );
-
-        const hours = g.playtimeForeverHours || 0;
-        let initialStatus: GameStatus = "library";
-        if (g.progressPercentage === 100) initialStatus = "completed";
-        else if (hours > 20) initialStatus = "completed";
-        else if (hours > 1 || (g.currentGamerscore && g.currentGamerscore > 500)) initialStatus = "playing";
-        else initialStatus = "library"; // 1h ou menos
-
-        return {
-          id: `xbox_${g.titleId || idx}_${idx}`,
-          originalTitle: g.name,
-          matchedTitle: g.name,
-          matchedCover: g.logoUrl || null,
-          platform: (g.platform || "Xbox Series") as StorePlatform,
-          status: initialStatus,
-          userPlaytimeHours: hours > 0 ? hours : undefined,
-          selected: true,
-          alreadyInLibrary: already,
-        };
-      });
-
-      await enrichDraftsWithIGDB(rawDrafts);
-    } catch (e) {
-      console.error("Erro ao carregar jogos do Xbox:", e);
-      setXboxError("Erro de comunicação com o servidor.");
-    } finally {
-      setIsXboxLoading(false);
-    }
-  };
-
-  // =========================================================================
-  // 1.2 CARREGAMENTO VIA PLAYSTATION (PSN ID / LISTA)
-  // =========================================================================
-  const handleLoadPlaystation = async () => {
-    // Se preencheu lista rápida de títulos PlayStation
-    if (psnTextList.trim()) {
-      const lines = psnTextList.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        const rawDrafts: ImportGameDraft[] = lines.map((line, idx) => {
-          const already = currentLibrary.some(
-            (libG) => libG.gameTitle.toLowerCase() === line.toLowerCase()
-          );
-          return {
-            id: `psn_${idx}`,
-            originalTitle: line,
-            matchedTitle: line,
-            platform: "PlayStation 5" as StorePlatform,
-            status: "library" as GameStatus,
-            selected: true,
-            alreadyInLibrary: already,
-          };
-        });
-        await enrichDraftsWithIGDB(rawDrafts);
-        return;
-      }
-    }
-
-    if (!psnInput.trim()) {
-      setPsnError("Por favor, informe sua PSN Online ID ou cole sua lista de jogos abaixo.");
-      return;
-    }
-
-    setIsPsnLoading(true);
-    setPsnError(null);
-
-    try {
-      const params = new URLSearchParams();
-      params.set("psnId", psnInput.trim());
-      if (psnNpsso.trim()) params.set("npsso", psnNpsso.trim());
-
-      const res = await fetch(`/api/importer/playstation?${params.toString()}`);
-      const data = await res.json();
-
-      if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {
-        setPsnError(data.error || "A PlayStation Network exige exportação ou chave NPSSO. Utilize a lista rápida ou CSV.");
-        return;
-      }
-
-      const rawDrafts: ImportGameDraft[] = data.games.map((g: any, idx: number) => {
-        const already = currentLibrary.some(
-          (libG) => libG.gameTitle.toLowerCase() === g.name.toLowerCase()
-        );
-        return {
-          id: `psn_${idx}`,
-          originalTitle: g.name,
-          matchedTitle: g.name,
-          platform: "PlayStation 5" as StorePlatform,
-          status: "library" as GameStatus,
-          selected: true,
-          alreadyInLibrary: already,
-        };
-      });
-
-      await enrichDraftsWithIGDB(rawDrafts);
-    } catch (e) {
-      console.error("Erro ao carregar jogos da PSN:", e);
-      setPsnError("Erro de comunicação com o servidor.");
-    } finally {
-      setIsPsnLoading(false);
-    }
-  };
-
-  // =========================================================================
-  // 2. CARREGAMENTO VIA ARQUIVO (CSV / JSON)
-  // =========================================================================
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    setFileError(null);
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const content = event.target?.result as string;
-        if (!content) return;
-
-        let parsedDrafts: ImportGameDraft[] = [];
-
-        if (file.name.endsWith(".json")) {
-          const json = JSON.parse(content);
-          const list = Array.isArray(json) ? json : json.games || [];
-
-          parsedDrafts = list.map((item: any, idx: number) => {
-            const title = item.gameTitle || item.title || item.name || `Jogo ${idx + 1}`;
-            const already = currentLibrary.some(
-              (libG) => libG.gameTitle.toLowerCase() === title.toLowerCase()
-            );
-
-            const hours = item.userPlaytimeHours || item.playtime || undefined;
-            let status: GameStatus = "library";
-            if (item.status) {
-              const s = String(item.status).toLowerCase();
-              if (s.includes("completed") || s.includes("zerado")) status = "completed";
-              else if (s.includes("playing") || s.includes("jogando")) status = "playing";
-              else if (s.includes("dropped") || s.includes("dropado")) status = "dropped";
-              else if (s.includes("backlog") || s.includes("quero jogar")) status = "backlog";
-              else status = "library";
-            } else if (hours !== undefined && hours > 20) {
-              status = "completed";
-            } else if (hours !== undefined && hours > 1) {
-              status = "playing";
-            } else {
-              status = "library";
-            }
-
-            return {
-              id: `json_${idx}`,
-              originalTitle: title,
-              matchedTitle: title,
-              matchedCover: item.gameCover || item.cover || null,
-              platform: item.platformPlayed || item.platform || "PC",
-              status,
-              userPlaytimeHours: hours,
-              userRating: item.userRating || item.rating || undefined,
-              selected: true, // Importado por padrão
-              alreadyInLibrary: already,
-            };
-          });
-        } else {
-          // Processa CSV
-          const lines = content.split(/\r?\n/).filter((l) => l.trim() !== "");
-          if (lines.length < 2) {
-            setFileError("Arquivo CSV vazio ou sem dados.");
-            return;
-          }
-
-          const header = lines[0].toLowerCase().split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-          const titleIdx = header.findIndex((h) => h.includes("title") || h.includes("name") || h.includes("jogo") || h.includes("nome"));
-          const platformIdx = header.findIndex((h) => h.includes("platform") || h.includes("plataforma"));
-          const statusIdx = header.findIndex((h) => h.includes("status") || h.includes("completion"));
-          const hoursIdx = header.findIndex((h) => h.includes("time") || h.includes("hours") || h.includes("horas"));
-
-          for (let i = 1; i < lines.length; i++) {
-            // Separa por vírgula respeitando aspas
-            const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(",");
-            const cleanRow = row.map((c) => c.trim().replace(/^"|"$/g, ""));
-            const title = cleanRow[titleIdx >= 0 ? titleIdx : 0];
-            if (!title) continue;
-
-            const platform = platformIdx >= 0 && cleanRow[platformIdx] ? cleanRow[platformIdx] : "PC";
-            const rawStatus = statusIdx >= 0 && cleanRow[statusIdx] ? cleanRow[statusIdx].toLowerCase() : "";
-            const hours = hoursIdx >= 0 && !isNaN(parseFloat(cleanRow[hoursIdx])) ? parseFloat(cleanRow[hoursIdx]) : undefined;
-
-            let status: GameStatus = "library";
-            if (rawStatus.includes("completed") || rawStatus.includes("zerado") || rawStatus.includes("beaten")) {
-              status = "completed";
-            } else if (rawStatus.includes("playing") || rawStatus.includes("jogando")) {
-              status = "playing";
-            } else if (rawStatus.includes("dropped") || rawStatus.includes("dropado")) {
-              status = "dropped";
-            } else if (rawStatus.includes("backlog") || rawStatus.includes("quero jogar")) {
-              status = "backlog";
-            } else if (rawStatus.includes("library") || rawStatus.includes("biblioteca")) {
-              status = "library";
-            } else if (hours !== undefined && hours > 20) {
-              status = "completed";
-            } else if (hours !== undefined && hours > 1) {
-              status = "playing";
-            } else {
-              status = "library";
-            }
-
-            const already = currentLibrary.some(
-              (libG) => libG.gameTitle.toLowerCase() === title.toLowerCase()
-            );
-
-            parsedDrafts.push({
-              id: `csv_${i}`,
-              originalTitle: title,
-              matchedTitle: title,
-              platform,
-              status,
-              userPlaytimeHours: hours,
-              selected: true, // Importado por padrão
-              alreadyInLibrary: already,
-            });
-          }
-        }
-
-        if (parsedDrafts.length === 0) {
-          setFileError("Nenhum jogo identificado no arquivo. Verifique o formato.");
-          return;
-        }
-
-        await enrichDraftsWithIGDB(parsedDrafts);
-      } catch (err) {
-        console.error("Erro ao ler arquivo:", err);
-        setFileError("Erro ao processar o arquivo. Verifique se é um CSV ou JSON válido.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // =========================================================================
-  // 3. CARREGAMENTO VIA LISTA DE TEXTO
-  // =========================================================================
-  const handleLoadText = async () => {
-    const rawLines = textInput.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (rawLines.length === 0) return;
-
-    const rawDrafts: ImportGameDraft[] = rawLines.map((line, idx) => {
-      const already = currentLibrary.some(
-        (libG) => libG.gameTitle.toLowerCase() === line.toLowerCase()
-      );
-
-      return {
-        id: `text_${idx}`,
-        originalTitle: line,
-        matchedTitle: line,
-        platform: selectedPlatform,
-        status: defaultStatus || "library",
-        selected: true, // Importado por padrão
-        alreadyInLibrary: already,
-      };
-    });
-
-    await enrichDraftsWithIGDB(rawDrafts);
-  };
-
-  // =========================================================================
-  // ENRIQUECE RASCUNHOS COM CAPAS E METADADOS DO IGDB
-  // =========================================================================
-  const enrichDraftsWithIGDB = async (drafts: ImportGameDraft[]) => {
+  // Enriquecimento com IGDB
+  const handleDraftsReady = async (drafts: ImportGameDraft[]) => {
     setDraftGames(drafts);
     setStep("review");
+    setErrorMessage(null);
 
     try {
       const titlesToMatch = drafts.map((d) => d.originalTitle);
@@ -544,7 +87,7 @@ export default function GameImporterModal({
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data: any = await res.json();
         const matches = data.matches || {};
 
         setDraftGames((prev) =>
@@ -571,18 +114,15 @@ export default function GameImporterModal({
     }
   };
 
-  // =========================================================================
-  // EXECUTA A IMPORTAÇÃO EM LOTE
-  // =========================================================================
+  // Executa a importação em lote
   const handleExecuteImport = async () => {
     const selectedGames = draftGames.filter((d) => d.selected);
     if (selectedGames.length === 0) return;
 
     setStep("importing");
-    setImportProgress(10);
+    setImportProgress(15);
 
     const formattedGames = selectedGames.map((d, index) => {
-      // Gera ID numérico único estável se não foi encontrado no IGDB
       const hash = Math.abs(
         d.originalTitle.split("").reduce((acc, char) => ((acc << 5) - acc + char.charCodeAt(0)) | 0, 0)
       );
@@ -592,7 +132,10 @@ export default function GameImporterModal({
 
       return {
         gameId: finalGameId,
-        gameSlug: d.matchedSlug || d.originalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || String(finalGameId),
+        gameSlug:
+          d.matchedSlug ||
+          d.originalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
+          String(finalGameId),
         gameTitle: d.matchedTitle || d.originalTitle,
         gameCover: d.matchedCover || null,
         status: d.status,
@@ -607,7 +150,7 @@ export default function GameImporterModal({
     });
 
     try {
-      setImportProgress(45);
+      setImportProgress(50);
       const count = await batchAddGames(formattedGames);
       setImportProgress(100);
       setImportedCount(count);
@@ -619,41 +162,13 @@ export default function GameImporterModal({
     }
   };
 
-  // Controles de seleção na revisão
-  const toggleSelectAll = (select: boolean) => {
-    setDraftGames((prev) => prev.map((d) => ({ ...d, selected: select })));
-  };
-
-  const toggleSelectGame = (id: string) => {
-    setDraftGames((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, selected: !d.selected } : d))
-    );
-  };
-
-  const updateGameStatus = (id: string, status: GameStatus) => {
-    setDraftGames((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status } : d))
-    );
-  };
-
-  const updateGamePlatform = (id: string, platform: StorePlatform) => {
-    setDraftGames((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, platform } : d))
-    );
-  };
-
   const selectedCount = draftGames.filter((d) => d.selected).length;
 
   if (!isOpen) return null;
 
   return (
-    <AdaptiveModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      maxWidth="max-w-2xl"
-    >
-      <div className="space-y-5">
-
+    <AdaptiveModal isOpen={isOpen} onClose={handleClose} maxWidth="max-w-2xl">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3 flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -665,11 +180,10 @@ export default function GameImporterModal({
                 Importador de Jogos Multi-Lojas
               </h3>
               <p className="text-xs text-gray-400">
-                Alimente sua biblioteca da Steam, Epic Games, GOG e consoles
+                Alimente sua biblioteca da Steam, Xbox, Nintendo Switch, PlayStation ou Arquivo
               </p>
             </div>
           </div>
-
           <button
             onClick={handleClose}
             className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
@@ -678,20 +192,18 @@ export default function GameImporterModal({
           </button>
         </div>
 
-        {/* ========================================================================= */}
-        {/* ETAPA 1: ESCOLHA DA FONTE (STEAM, ARQUIVO OU LISTA DE TEXTO) */}
-        {/* ========================================================================= */}
+        {/* ETAPA 1: ESCOLHA DA FONTE E ENTRADA */}
         {step === "input" && (
-          <div className="space-y-5 overflow-y-auto pr-1">
-            {/* Abas Seletoras de Fonte */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-2xl bg-[#14161a] border border-white/10">
+          <div className="space-y-4">
+            {/* Abas Superiores Compactas */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 rounded-2xl bg-[#14161a] border border-white/10">
               <button
                 type="button"
-                onClick={() => setActiveTab("steam")}
-                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                onClick={() => { setActiveTab("steam"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "steam"
                     ? "bg-cyan-950/60 text-[#00E5FF] border border-[#00E5FF]/50 shadow-sm"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 <span>🎮</span>
@@ -700,11 +212,11 @@ export default function GameImporterModal({
 
               <button
                 type="button"
-                onClick={() => setActiveTab("xbox")}
-                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                onClick={() => { setActiveTab("xbox"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "xbox"
                     ? "bg-emerald-950/60 text-emerald-300 border border-emerald-500/50 shadow-sm"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 <span>🟢</span>
@@ -713,585 +225,112 @@ export default function GameImporterModal({
 
               <button
                 type="button"
-                onClick={() => setActiveTab("playstation")}
-                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                onClick={() => { setActiveTab("nintendo"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "nintendo"
+                    ? "bg-rose-950/60 text-rose-300 border border-rose-500/50 shadow-sm"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <span>🔴</span>
+                <span>Switch</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setActiveTab("playstation"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "playstation"
                     ? "bg-blue-950/60 text-blue-300 border border-blue-500/50 shadow-sm"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 <span>🔵</span>
-                <span>PlayStation</span>
+                <span>PSN</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setActiveTab("text")}
-                className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                onClick={() => { setActiveTab("text"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "text"
                     ? "bg-purple-950/60 text-purple-300 border border-purple-500/50 shadow-sm"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Lista Rápida</span>
+                <span>Texto</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setActiveTab("file")}
-                className={`col-span-2 sm:col-span-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                onClick={() => { setActiveTab("file"); setErrorMessage(null); }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "file"
                     ? "bg-amber-950/60 text-amber-300 border border-amber-500/50 shadow-sm"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>CSV / JSON</span>
+                <span>CSV</span>
               </button>
             </div>
 
-            {/* ABA 1: STEAM */}
+            {/* Conteúdo da Aba Ativa */}
             {activeTab === "steam" && (
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-blue-950/20 border border-blue-500/30 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                    <span className="font-mono text-[10px] bg-blue-500/30 px-1.5 py-0.5 rounded text-blue-200">STEAM SYNC</span>
-                    <span>Importação direta da Biblioteca Steam</span>
-                  </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    Insira seu <strong>SteamID64</strong> ou <strong>URL do perfil</strong>. Importamos automaticamente os títulos de jogos e suas horas jogadas!
-                  </p>
-
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Ex: 76561198000000000 ou https://steamcommunity.com/id/usuario"
-                      value={steamInput}
-                      onChange={(e) => setSteamInput(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF]"
-                    />
-
-                    {/* Opcional: Steam API Key */}
-                    <div className="space-y-1 pt-1">
-                      <details className="text-[11px] text-gray-400 cursor-pointer">
-                        <summary className="hover:text-white">
-                          Opções Avançadas: Chave de API da Steam (Opcional)
-                        </summary>
-                        <div className="pt-2">
-                          <input
-                            type="password"
-                            placeholder="Sua Steam Web API Key..."
-                            value={steamApiKey}
-                            onChange={(e) => {
-                              setSteamApiKey(e.target.value);
-                              if (typeof window !== "undefined") {
-                                localStorage.setItem("gamevault_steam_api_key", e.target.value.trim());
-                              }
-                            }}
-                            className="w-full h-10 px-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF]"
-                          />
-                          <p className="text-[10px] text-gray-500 mt-1">
-                            Disponível gratuitamente em <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">steamcommunity.com/dev/apikey</a>
-                          </p>
-                        </div>
-                      </details>
-                    </div>
-                  </div>
-                </div>
-
-                {steamError && (
-                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 space-y-1">
-                    <span className="font-bold flex items-center gap-1.5 text-red-300">
-                      <AlertCircle className="w-3.5 h-3.5" /> Atenção:
-                    </span>
-                    <p>{steamError}</p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleLoadSteam()}
-                    disabled={isSteamLoading || !steamInput.trim()}
-                    className="w-full min-h-[46px] rounded-2xl bg-[#00E5FF] hover:bg-[#00c8e0] text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    {isSteamLoading ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
-                    ) : (
-                      <Download className="w-4 h-4 text-black" />
-                    )}
-                    <span>Carregar Jogos da Steam</span>
-                  </button>
-                </div>
-              </div>
+              <SteamImportTab currentLibrary={currentLibrary} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
             )}
-
-            {/* ABA 2: XBOX */}
             {activeTab === "xbox" && (
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
-                    <span className="font-mono text-[10px] bg-emerald-500/30 px-1.5 py-0.5 rounded text-emerald-200">XBOX CLOUD SYNC</span>
-                    <span>Sincronização via Gamertag / Xbox Live</span>
-                  </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    Insira sua <strong>Xbox Gamertag</strong>. Buscamos seus títulos jogados no Xbox Series X|S, Xbox One, Xbox 360 e PC Game Pass com capas e conquistas!
-                  </p>
-
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Ex: MajorNelson ou sua Gamertag"
-                      value={xboxInput}
-                      onChange={(e) => setXboxInput(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
-                    />
-
-                    {/* Opcional: OpenXBL API Key */}
-                    <div className="space-y-1 pt-1">
-                      <details className="text-[11px] text-gray-400 cursor-pointer" open={Boolean(xboxApiKey)}>
-                        <summary className="hover:text-white">
-                          Opções Avançadas: Chave OpenXBL (xbl.io)
-                        </summary>
-                        <div className="pt-2 space-y-1.5">
-                          <input
-                            type="password"
-                            placeholder="Sua chave da API do OpenXBL (xbl.io)..."
-                            value={xboxApiKey}
-                            onChange={(e) => {
-                              setXboxApiKey(e.target.value);
-                              if (typeof window !== "undefined") {
-                                localStorage.setItem("gamevault_xbox_api_key", e.target.value.trim());
-                              }
-                            }}
-                            className="w-full h-10 px-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
-                          />
-                          <p className="text-[10px] text-gray-500">
-                            Obtenha gratuitamente em <a href="https://xbl.io/dashboard" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">xbl.io/dashboard</a> para conectar sua conta Xbox diretamente.
-                          </p>
-                        </div>
-                      </details>
-                    </div>
-
-                    {/* Opção alternativa: Lista rápida colada */}
-                    <div className="pt-2 border-t border-white/10 space-y-1.5">
-                      <label className="text-[11px] text-gray-400 block font-medium">
-                        Ou cole sua lista de jogos do Xbox (um por linha):
-                      </label>
-                      <textarea
-                        rows={3}
-                        placeholder={"Halo Infinite\nForza Horizon 5\nGears 5\nStarfield\nHi-Fi RUSH"}
-                        value={xboxTextList}
-                        onChange={(e) => setXboxTextList(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-[#14161a] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 font-mono resize-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {xboxError && (
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
-                    <span className="font-bold flex items-center gap-1.5 text-amber-300">
-                      <AlertCircle className="w-3.5 h-3.5" /> Atenção:
-                    </span>
-                    <p>{xboxError}</p>
-                    <p className="text-[11px] text-gray-400 pt-1">
-                      💡 <strong>Dica:</strong> Se seu perfil Xbox não for público ou não tiver chave da API, você pode colar os nomes dos jogos acima no campo de texto e importá-los com 1 clique!
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleLoadXbox()}
-                    disabled={isXboxLoading || (!xboxInput.trim() && !xboxTextList.trim())}
-                    className="w-full min-h-[46px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    {isXboxLoading ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
-                    ) : (
-                      <Download className="w-4 h-4 text-black" />
-                    )}
-                    <span>
-                      {xboxTextList.trim()
-                        ? "Carregar Lista de Jogos do Xbox"
-                        : "Carregar Jogos da Nuvem Xbox"}
-                    </span>
-                  </button>
-                </div>
-              </div>
+              <XboxImportTab currentLibrary={currentLibrary} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
             )}
-
-            {/* ABA 3: PLAYSTATION */}
+            {activeTab === "nintendo" && (
+              <NintendoImportTab currentLibrary={currentLibrary} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
+            )}
             {activeTab === "playstation" && (
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-blue-950/20 border border-blue-500/30 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                    <span className="font-mono text-[10px] bg-blue-500/30 px-1.5 py-0.5 rounded text-blue-200">PLAYSTATION SYNC</span>
-                    <span>Importação de jogos do PS4 e PS5</span>
-                  </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    Insira sua <strong>PSN Online ID</strong> ou cole a lista dos seus jogos do PlayStation. Enriquecemos os títulos com capas oficiais e notas do Metacritic!
-                  </p>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] text-gray-400 block mb-1">
-                        Sua PSN Online ID:
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: PlayStationBrasil ou sua PSN ID"
-                        value={psnInput}
-                        onChange={(e) => setPsnInput(e.target.value)}
-                        className="w-full h-11 px-3.5 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] text-gray-400">
-                          Ou cole os títulos dos seus jogos do PlayStation (1 por linha):
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPsnTextList(
-                              "God of War Ragnarök\nMarvel's Spider-Man 2\nBloodborne\nThe Last of Us Part I\nGhost of Tsushima\nHorizon Forbidden West\nDemon's Souls\nReturnal"
-                            )
-                          }
-                          className="text-[10px] text-blue-300 hover:text-blue-200 underline"
-                        >
-                          Exemplo PS5
-                        </button>
-                      </div>
-                      <textarea
-                        rows={4}
-                        placeholder="Ex:&#10;God of War Ragnarök&#10;Spider-Man 2&#10;The Last of Us Part I"
-                        value={psnTextList}
-                        onChange={(e) => setPsnTextList(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-[#14161a] border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 resize-none font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {psnError && (
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
-                    <span className="font-bold flex items-center gap-1.5 text-amber-300">
-                      <AlertCircle className="w-3.5 h-3.5" /> Dica:
-                    </span>
-                    <p>{psnError}</p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleLoadPlaystation()}
-                    disabled={isPsnLoading || (!psnInput.trim() && !psnTextList.trim())}
-                    className="w-full min-h-[46px] rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-blue-600/20"
-                  >
-                    {isPsnLoading ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    ) : (
-                      <Download className="w-4 h-4 text-white" />
-                    )}
-                    <span>Importar Jogos da PlayStation</span>
-                  </button>
-                </div>
-              </div>
+              <PlaystationImportTab currentLibrary={currentLibrary} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
             )}
-
-            {/* ABA 2: LISTA RÁPIDA (TEXTO / COPIAR E COLAR) */}
             {activeTab === "text" && (
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-gray-300">
-                      Cole a lista de jogos (um título por linha):
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTextInput(
-                          "The Witcher 3: Wild Hunt\nCyberpunk 2077\nHades\nGrand Theft Auto V\nDeath Stranding\nControl\nCeleste\nAlan Wake 2"
-                        )
-                      }
-                      className="text-[11px] text-cyan-400 hover:text-cyan-300 underline self-start sm:self-auto"
-                    >
-                      Preencher Exemplo Epic Games
-                    </button>
-                  </div>
-
-                  <textarea
-                    rows={6}
-                    placeholder="Grand Theft Auto V&#10;The Witcher 3&#10;Cyberpunk 2077&#10;Hades&#10;Death Stranding..."
-                    value={textInput}
-                    onChange={(e) => setTextInput(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF] font-mono"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Seletor de Loja / Plataforma */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400">Loja / Plataforma:</label>
-                    <select
-                      value={selectedPlatform}
-                      onChange={(e) => setSelectedPlatform(e.target.value as StorePlatform)}
-                      className="w-full h-11 px-3 rounded-xl bg-[#18191c] border border-white/10 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
-                    >
-                      {POPULAR_STORE_PLATFORMS.map((plat) => (
-                        <option key={plat} value={plat}>
-                          {plat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Seletor de Status Inicial */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400">Status Inicial dos Jogos:</label>
-                    <select
-                      value={defaultStatus}
-                      onChange={(e) => setDefaultStatus(e.target.value as GameStatus)}
-                      className="w-full h-11 px-3 rounded-xl bg-[#18191c] border border-white/10 text-xs text-white focus:outline-none focus:border-[#00E5FF]"
-                    >
-                      <option value="library">📚 Biblioteca (Na Estante)</option>
-                      <option value="backlog">⏳ Quero Jogar (Backlog)</option>
-                      <option value="playing">🎮 Jogando</option>
-                      <option value="completed">🏆 Zerado</option>
-                      <option value="dropped">🛑 Dropado</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLoadText}
-                  disabled={!textInput.trim()}
-                  className="w-full min-h-[46px] rounded-2xl bg-[#00E5FF] hover:bg-[#00c8e0] text-black font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <Search className="w-4 h-4 text-black" />
-                  <span>Analisar e Buscar Capas ({textInput.split(/\r?\n/).filter(Boolean).length} jogos)</span>
-                </button>
-              </div>
+              <QuickTextImportTab currentLibrary={currentLibrary} platforms={POPULAR_STORE_PLATFORMS} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
             )}
-
-            {/* ABA 3: ARQUIVO CSV / JSON */}
             {activeTab === "file" && (
-              <div className="space-y-4">
-                <div className="p-6 rounded-2xl bg-[#18191c] border-2 border-dashed border-white/15 hover:border-white/30 text-center space-y-3 transition-colors cursor-pointer relative">
-                  <input
-                    type="file"
-                    accept=".csv,.json,.txt"
-                    onChange={handleFileUpload}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  />
-                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto">
-                    <Upload className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-xs sm:text-sm font-bold text-white block">
-                      {fileName ? `Arquivo: ${fileName}` : "Clique para selecionar ou arraste seu arquivo"}
-                    </span>
-                    <span className="text-[11px] text-gray-400 block mt-1">
-                      Suporta exportações do Playnite, GOG Galaxy, Backloggd, SteamDB ou CSV/JSON padrão
-                    </span>
-                  </div>
-                </div>
+              <FileImportTab currentLibrary={currentLibrary} onDraftsReady={handleDraftsReady} onError={setErrorMessage} />
+            )}
 
-                {fileError && (
-                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200">
-                    {fileError}
-                  </div>
-                )}
-
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs text-gray-400">
-                  <span>Deseja um formato de exemplo?</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sampleCsv = `Title,Platform,Status,Hours\nThe Witcher 3,GOG,completed,120\nCyberpunk 2077,Epic Games,playing,45\nGrand Theft Auto V,PlayStation 5,completed,80`;
-                      const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8;" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "exemplo-importador-gamevault.csv";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="text-cyan-400 hover:text-cyan-300 font-bold underline flex items-center gap-1"
-                  >
-                    <Download className="w-3 h-3" /> Baixar Modelo CSV
-                  </button>
-                </div>
+            {/* Alertas de Erro */}
+            {errorMessage && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p>{errorMessage}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* ETAPA 2: REVISÃO DOS JOGOS (REVIEW & MATCH) */}
-        {/* ========================================================================= */}
+        {/* ETAPA 2: REVISÃO DOS JOGOS */}
         {step === "review" && (
-          <div className="space-y-4 overflow-hidden flex flex-col flex-1">
-            {/* Topo da Revisão */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">
-                  {selectedCount} de {draftGames.length} selecionados
-                </span>
-                <div className="flex items-center gap-1.5 ml-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleSelectAll(true)}
-                    className="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold"
-                  >
-                    Marcar Todos
-                  </button>
-                  <span className="text-gray-600">•</span>
-                  <button
-                    type="button"
-                    onClick={() => toggleSelectAll(false)}
-                    className="text-[11px] text-gray-400 hover:text-white"
-                  >
-                    Desmarcar
-                  </button>
-                </div>
-              </div>
-
-              {/* Busca rápida na lista de revisão */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Filtrar títulos..."
-                  value={reviewSearch}
-                  onChange={(e) => setReviewSearch(e.target.value)}
-                  className="w-full sm:w-48 h-8 pl-8 pr-3 rounded-xl bg-[#18191c] border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#00E5FF]"
-                />
-              </div>
-            </div>
-
-            {/* Lista com Rolagem */}
-            <div className="overflow-y-auto space-y-2 pr-1 flex-1 max-h-[50vh]">
-              {filteredReviewGames.map((draft) => (
-                <div
-                  key={draft.id}
-                  className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                    draft.selected
-                      ? "bg-white/5 border-white/15"
-                      : "bg-[#18191c]/50 border-transparent opacity-60"
-                  }`}
-                >
-                  {/* Checkbox e Capa */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => toggleSelectGame(draft.id)}
-                      className="text-cyan-400 hover:text-cyan-300 shrink-0"
-                    >
-                      {draft.selected ? (
-                        <CheckSquare className="w-5 h-5 text-[#00E5FF]" />
-                      ) : (
-                        <Square className="w-5 h-5 text-gray-500" />
-                      )}
-                    </button>
-
-                    <div className="w-10 h-14 rounded-lg bg-neutral-800 overflow-hidden shrink-0 border border-white/10">
-                      {draft.matchedCover ? (
-                        <img
-                          src={draft.matchedCover}
-                          alt={draft.matchedTitle || draft.originalTitle}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">
-                          🎮
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 space-y-0.5">
-                      <h4 className="text-xs font-bold text-white truncate" title={draft.matchedTitle || draft.originalTitle}>
-                        {draft.matchedTitle || draft.originalTitle}
-                      </h4>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300">
-                          {draft.platform}
-                        </span>
-                        {draft.userPlaytimeHours ? (
-                          <span className="text-[10px] text-gray-400 font-mono">
-                            {draft.userPlaytimeHours}h jogadas
-                          </span>
-                        ) : null}
-                        {draft.alreadyInLibrary && (
-                          <span className="text-[10px] text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.2 rounded">
-                            Já no Vault
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Seletor de Status Individual */}
-                  <div className="shrink-0 flex items-center gap-1.5">
-                    <select
-                      value={draft.status}
-                      onChange={(e) => updateGameStatus(draft.id, e.target.value as GameStatus)}
-                      className="h-8 px-2 rounded-xl bg-[#18191c] border border-white/10 text-[11px] text-white focus:outline-none focus:border-[#00E5FF]"
-                    >
-                      <option value="library">Biblioteca</option>
-                      <option value="backlog">Quero Jogar</option>
-                      <option value="playing">Jogando</option>
-                      <option value="completed">Zerado</option>
-                      <option value="dropped">Dropado</option>
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Ações da Revisão */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setStep("input")}
-                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-colors"
-              >
-                Voltar
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExecuteImport}
-                disabled={selectedCount === 0}
-                className="px-6 py-2.5 rounded-2xl bg-[#00E5FF] hover:bg-[#00c8e0] text-black font-bold text-xs flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-cyan-500/20"
-              >
-                <Sparkles className="w-4 h-4 text-black" />
-                <span>Confirmar Importação ({selectedCount} jogos)</span>
-              </button>
-            </div>
-          </div>
+          <ImportReviewStep
+            draftGames={draftGames}
+            filteredReviewGames={filteredReviewGames}
+            reviewSearch={reviewSearch}
+            setReviewSearch={setReviewSearch}
+            selectedCount={selectedCount}
+            toggleSelectAll={(sel) => setDraftGames((prev) => prev.map((d) => ({ ...d, selected: sel })))}
+            toggleSelectGame={(id) => setDraftGames((prev) => prev.map((d) => (d.id === id ? { ...d, selected: !d.selected } : d)))}
+            updateGameStatus={(id, st) => setDraftGames((prev) => prev.map((d) => (d.id === id ? { ...d, status: st } : d)))}
+            updateGamePlatform={(id, pl) => setDraftGames((prev) => prev.map((d) => (d.id === id ? { ...d, platform: pl } : d)))}
+            onBack={() => setStep("input")}
+            onConfirm={handleExecuteImport}
+          />
         )}
 
-        {/* ========================================================================= */}
-        {/* ETAPA 3: IMPORTANDO (PROGRESS BAR) */}
-        {/* ========================================================================= */}
+        {/* ETAPA 3: PROGRESS BAR */}
         {step === "importing" && (
           <div className="py-12 text-center space-y-4">
             <RefreshCw className="w-10 h-10 text-[#00E5FF] animate-spin mx-auto" />
             <div>
               <h3 className="text-base font-bold text-white">Importando jogos para o seu Vault...</h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Gravando na biblioteca e atualizando estatísticas de jogo
-              </p>
+              <p className="text-xs text-gray-400 mt-1">Gravando na biblioteca e atualizando estatísticas de jogo</p>
             </div>
-
             <div className="w-full max-w-md mx-auto bg-white/10 rounded-full h-3 overflow-hidden">
               <div
                 className="bg-gradient-to-r from-cyan-400 to-[#00E5FF] h-full transition-all duration-300 rounded-full"
@@ -1301,22 +340,18 @@ export default function GameImporterModal({
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* ETAPA 4: CONCLUÍDO (SUCESSO) */}
-        {/* ========================================================================= */}
+        {/* ETAPA 4: CONCLUÍDO */}
         {step === "completed" && (
           <div className="py-8 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-lg shadow-emerald-500/20">
               🎉
             </div>
-
             <div className="space-y-1">
               <h3 className="text-lg font-black text-white">Importação Concluída com Sucesso!</h3>
               <p className="text-xs text-gray-300">
                 <strong>{importedCount} jogos</strong> foram adicionados e atualizados no seu perfil.
               </p>
             </div>
-
             <div className="pt-4">
               <button
                 type="button"

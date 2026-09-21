@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
         success: false,
         requiresApiKey: true,
         error:
-          "Chave OpenXBL necessária para sincronizar automaticamente da nuvem. Insira sua chave no campo 'Opções Avançadas' (obtenha gratuitamente em xbl.io) ou configure XBL_API_KEY no painel da Vercel.",
+          "Chave OpenXBL necessária para sincronizar automaticamente da nuvem. Insira sua chave no campo 'Opções Avançadas' (obtenha gratuitamente em xbl.io) ou configure XBL_API_KEY no painel do Cloudflare.",
       });
     }
 
