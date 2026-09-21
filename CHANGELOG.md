@@ -4,6 +4,30 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.12.0] — 2026-09-21
+ 
+### 🚀 Novidades: Identidade Gamer, Sincronização Explicada, Favoritos & Twitch Live
+- **Onboarding e Cadastro Enriquecido:**
+  - Escolha livre de `@username` único com gerador aleatório temático gamer (ex: `cyber_hunter_42`).
+  - Coleta de data de nascimento para conformidade com ECA/COPPA e proteção a menores de idade.
+  - Campo opcional de indicação por amigo (`@username`).
+  - Edição do `@username` permitida uma única vez nas configurações do perfil, bloqueando alterações subsequentes abusivas.
+- **Guia 'Como a Sincronização Funciona':**
+  - Modal explicativo passo a passo sobre perfis públicos, sincronização manual sob demanda e processamento em segundo plano.
+- **Sistema de Favoritar Usuários (Estrela ⭐):**
+  - Botão de favoritar ao lado do botão Seguir com popover de 4 toggles independentes: Notificações de Reviews, 100% Zerados, Guias/Artigos e Lives.
+- **Integração Twitch em Tempo Real:**
+  - Anel e selo "LIVE" pulsante e respirando ao redor do avatar do jogador no perfil.
+  - Player embutido da Twitch retrátil no topo do perfil exibindo o jogo atual e link direto.
+- **Rail 'Jogando Agora' (Now Playing Rail):**
+  - Carrossel rotativo a cada 6 segundos entre os jogos em andamento do usuário com controles de play/pause, tempo registrado e meta HLTB.
+- **Vídeos de Gameplay na Galeria & Proteção Anti-Spoiler:**
+  - Suporte a clipes de vídeo de até 90s (.mp4/.webm) e marcação de spoiler com efeito de desfoque (blur) e botão para revelar.
+- **Jogar Steam Direto do Navegador:**
+  - Ação rápida nativa via protocolo `steam://run/[appId]` nos cards de jogos PC/Steam, exclusiva para o próprio dono do perfil.
+
+---
+
 ## [v4.11.0] — 2026-09-21
  
 ### 🚀 Novidades: Upload Direto de Imagens, Vitrine de Troféus Importados & Gamificação de Franquias

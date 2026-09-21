@@ -29,6 +29,8 @@ import FinancialStatsCard from "@/components/profile/FinancialStatsCard";
 import ActivityHeatmapSection from "@/components/profile/ActivityHeatmapSection";
 import FavoriteCharactersSection from "@/components/profile/FavoriteCharactersSection";
 import SetupShowcaseSection from "@/components/profile/SetupShowcaseSection";
+import TwitchLiveSection from "@/components/profile/TwitchLiveSection";
+import NowPlayingRail from "@/components/profile/NowPlayingRail";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
 import { scopeProfileCss } from "@/lib/sanitizeCss";
@@ -104,7 +106,24 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
   const renderSection = useCallback((sectionId: ProfileSectionId) => {
     if (!activeUser) return null;
+
     switch (sectionId) {
+      case "twitch_live":
+        return activeUser.twitchChannel || activeUser.socialLinks?.twitch ? (
+          <TwitchLiveSection
+            channel={activeUser.twitchChannel || activeUser.socialLinks?.twitch || ""}
+            currentGame={activeLibrary.find((g) => g.status === "playing")?.gameTitle}
+          />
+        ) : null;
+      case "now_playing":
+        return (
+          <NowPlayingRail
+            games={activeLibrary}
+            pinnedGameIds={activeUser.nowPlayingConfig?.pinnedGameIds}
+            intervalSeconds={activeUser.nowPlayingConfig?.intervalSeconds || 6}
+            isOwner={isOwnProfile}
+          />
+        );
       case "game_tracker":
         return (
           <ProfileGameTracker
@@ -228,6 +247,18 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         isOwner={isOwnProfile}
         isAdmin={isAdmin}
         isPremium={isPremium}
+        isFavorited={Boolean(authUser?.favoritedUserAlerts?.[activeUser.uid])}
+        onToggleFavorite={async (isFav, favSettings) => {
+          if (!authUser || isOwnProfile) return;
+          const currentAlerts = authUser.favoritedUserAlerts || {};
+          const updatedAlerts = { ...currentAlerts };
+          if (isFav) {
+            updatedAlerts[activeUser.uid] = favSettings;
+          } else {
+            delete updatedAlerts[activeUser.uid];
+          }
+          await updateUserProfile?.({ favoritedUserAlerts: updatedAlerts });
+        }}
         onOpenEditProfile={() => router.push("/perfil/editar?tab=info")}
         onOpenEditBio={() => router.push("/perfil/editar?tab=markdown")}
         onOpenTools={() => setIsToolsOpen(true)}

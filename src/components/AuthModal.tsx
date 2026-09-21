@@ -2,14 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { X, ShieldAlert, Mail, Lock, User, Loader2 } from "lucide-react";
+import { X, ShieldAlert, Mail, Lock, User, Loader2, Sparkles, Calendar, AtSign, HelpCircle } from "lucide-react";
 import Logo from "./Logo";
 import AdaptiveModal from "./ui/AdaptiveModal";
+import SyncExplainerModal from "./auth/SyncExplainerModal";
 import { trackSignUpSuccess } from "@/lib/analytics";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+const GAMER_PREFIXES = ["pixel", "cyber", "shadow", "retro", "ninja", "hyper", "neon", "astro", "titan", "phantom"];
+const GAMER_SUFFIXES = ["hunter", "slayer", "runner", "knight", "vault", "master", "gamer", "strider", "pilot", "phantom"];
+
+function generateGamerUsername(): string {
+  const p = GAMER_PREFIXES[Math.floor(Math.random() * GAMER_PREFIXES.length)];
+  const s = GAMER_SUFFIXES[Math.floor(Math.random() * GAMER_SUFFIXES.length)];
+  const n = Math.floor(Math.random() * 90) + 10;
+  return `${p}_${s}_${n}`;
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
@@ -18,6 +29,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [referredBy, setReferredBy] = useState("");
+  const [showSyncInfo, setShowSyncInfo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -33,6 +47,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   if (!isOpen) return null;
 
+  const handleRandomizeUsername = () => {
+    setUsername(generateGamerUsername());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -40,8 +58,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (isSignUp) {
-        if (!username.trim()) {
-          setError("Digite seu nome de usuário");
+        const cleanUser = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+        if (!cleanUser || cleanUser.length < 3) {
+          setError("O nome de usuário deve conter no mínimo 3 caracteres alfanuméricos ou sublinhado.");
+          setLoading(false);
+          return;
+        }
+        if (!birthDate) {
+          setError("Por favor, informe sua data de nascimento (exigido para proteção de menores).");
           setLoading(false);
           return;
         }
@@ -50,7 +74,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           setLoading(false);
           return;
         }
-        await signUpWithEmail(email, password, username);
+        await signUpWithEmail(email, password, cleanUser, {
+          birthDate,
+          referredByUsername: referredBy.replace(/^@/, "").trim() || undefined,
+        });
         trackSignUpSuccess("email");
       } else {
         await signInWithEmail(email, password);
@@ -186,20 +213,75 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {isSignUp && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1">Nome de Usuário</label>
-              <div className="relative">
-                <User className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  required
-                  placeholder="ex: shadow_gamer"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/10 border border-transparent focus:border-[#00E5FF] text-xs text-white focus:outline-none transition-all"
-                />
+            <>
+              {/* Nome de Usuário com Gerador Aleatório */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-gray-300">
+                    Nome de Usuário (@handle)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRandomizeUsername}
+                    className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Gerar Aleatório</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <User className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="ex: shadow_runner_42"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/10 border border-transparent focus:border-emerald-400 text-xs text-white focus:outline-none transition-all font-mono"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Seu @handle exclusivo no Game Vault (pode ser editado 1 vez após o cadastro).
+                </p>
               </div>
-            </div>
+
+              {/* Data de Nascimento (Idade & Proteção de Menores) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Data de Nascimento
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
+                  <input
+                    type="date"
+                    required
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/10 border border-transparent focus:border-emerald-400 text-xs text-white focus:outline-none transition-all"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Utilizada para conformidade de idade e proteção infantil (ECA / COPPA).
+                </p>
+              </div>
+
+              {/* Quem Indicou (Opcional) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Quem te indicou? <span className="text-gray-500 font-normal">(opcional)</span>
+                </label>
+                <div className="relative">
+                  <AtSign className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    placeholder="username do amigo"
+                    value={referredBy}
+                    onChange={(e) => setReferredBy(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/10 border border-transparent focus:border-emerald-400 text-xs text-white focus:outline-none transition-all font-mono"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <div>
@@ -251,16 +333,31 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </form>
 
         {/* Alternar entre login e cadastro */}
-        <div className="text-center pt-1">
+        <div className="text-center pt-1 space-y-2">
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-xs text-[#00E5FF] hover:underline font-medium"
+            className="text-xs text-emerald-400 hover:underline font-medium block mx-auto"
           >
             {isSignUp ? "Já tem uma conta? Entrar" : "Ainda não tem conta? Cadastre-se"}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowSyncInfo(true)}
+            className="text-[11px] text-gray-400 hover:text-white flex items-center justify-center gap-1.5 mx-auto transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Como funciona a sincronização de contas?</span>
+          </button>
         </div>
       </div>
+
+      {/* Modal Educativo de Sincronização */}
+      <SyncExplainerModal
+        isOpen={showSyncInfo}
+        onClose={() => setShowSyncInfo(false)}
+      />
     </AdaptiveModal>
   );
 }

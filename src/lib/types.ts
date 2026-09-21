@@ -507,6 +507,25 @@ export interface UserProfile {
   grantedAt?: string | null;    // ISO da concessão
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;
+  usernameChangeCount?: number;
+  usernameChangedAt?: string | null;
+  referredByUsername?: string | null;
+  twitchChannel?: string | null;
+  isTwitchLive?: boolean;
+  nowPlayingConfig?: {
+    mode?: "auto" | "manual";
+    pinnedGameIds?: number[];
+    intervalSeconds?: number;
+  };
+  favoritedUserAlerts?: Record<
+    string,
+    {
+      reviews: boolean;
+      completions: boolean;
+      guides: boolean;
+      lives: boolean;
+    }
+  >;
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
   gamesCount?: number;

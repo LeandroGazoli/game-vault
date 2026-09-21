@@ -100,7 +100,7 @@ export default function ProfileSettingsHub({
             equippedTitles={settings.equippedTitles}
             layout={settings.layout}
             theme={settings.theme}
-            customCss={settings.customCss}
+            customCss={(settings.user as any)?.customCss}
           />
 
           {/* Desktop-only Quick Drawer Shortcuts & Action Card */}
@@ -171,7 +171,9 @@ export default function ProfileSettingsHub({
               onToggle={() => settings.toggleAccordion(1)}
               displayName={settings.displayName}
               setDisplayName={settings.setDisplayName}
-              username={settings.user?.username || "jogador"}
+              username={settings.username}
+              setUsername={settings.setUsername}
+              usernameChangeCount={settings.user?.usernameChangeCount || 0}
               photoURL={settings.photoURL}
               setPhotoURL={settings.setPhotoURL}
               bio={settings.bio}

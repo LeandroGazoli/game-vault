@@ -33,7 +33,12 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithGoogleCredential: (idToken: string) => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
-  signUpWithEmail: (email: string, pass: string, username: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    pass: string,
+    username: string,
+    extra?: { birthDate?: string; referredByUsername?: string }
+  ) => Promise<void>;
   logout: () => Promise<void>;
   updateUserBio: (bio: string, favoriteGame?: string) => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -295,7 +300,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signUpWithEmail = useCallback(async (email: string, pass: string, username: string) => {
+  const signUpWithEmail = useCallback(async (
+    email: string,
+    pass: string,
+    username: string,
+    extra?: { birthDate?: string; referredByUsername?: string }
+  ) => {
     if (!auth) return;
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const userIsAdmin = Boolean(
@@ -312,12 +322,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isPremium: userIsAdmin,
       isAdmin: userIsAdmin,
       hideAds: userIsAdmin,
+      referredByUsername: extra?.referredByUsername?.trim() || null,
+      birthDate: extra?.birthDate?.trim() || null,
       acquisition: getStoredAcquisition(),
       createdAt: new Date().toISOString(),
     };
     setFirebaseUser(cred.user);
     updateAndCacheUser(newProfile);
     await saveUserProfile(cred.user.uid, newProfile);
+    if (extra?.birthDate?.trim()) {
+      await saveOwnPrivateData(cred.user.uid, { birthDate: extra.birthDate.trim() });
+    }
   }, [updateAndCacheUser]);
 
   const logout = useCallback(async () => {

@@ -21,6 +21,7 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
 
   const [activeAccordion, setActiveAccordion] = useState<number | null>(() => (initialTab ? TAB_MAP[initialTab] || 1 : 1));
   const [displayName, setDisplayName] = useState(user?.displayName || "");
+  const [username, setUsername] = useState(user?.username || "");
   const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [birthDate, setBirthDate] = useState(user?.birthDate || "");
@@ -122,8 +123,25 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
     setIsSaving(true);
     try {
       const banner = customBannerUrl.trim() || bannerURL;
+      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+      const isChangingUsername = cleanUsername && cleanUsername !== user.username;
+      const currentChangeCount = user.usernameChangeCount || 0;
+
+      if (isChangingUsername && currentChangeCount >= 1) {
+        showToast("O limite de 1 alteração de username já foi atingido.");
+        setIsSaving(false);
+        return;
+      }
+
       await updateUserProfile({
         displayName: displayName.trim() || user.displayName || user.username,
+        ...(isChangingUsername && currentChangeCount < 1
+          ? {
+              username: cleanUsername,
+              usernameChangeCount: currentChangeCount + 1,
+              usernameChangedAt: new Date().toISOString(),
+            }
+          : {}),
         photoURL: photoURL.trim() || null,
         bio: bio.trim(),
         birthDate: birthDate.trim() || null,
@@ -155,6 +173,7 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
 
   return {
     user, isPremium, activeAccordion, toggleAccordion, displayName, setDisplayName,
+    username, setUsername,
     photoURL, setPhotoURL, bio, setBio, birthDate, setBirthDate, showAge, setShowAge,
     bannerURL, setBannerURL, customBannerUrl, setCustomBannerUrl, theme, setTheme,
     layout, setLayout, customBgConfig, setCustomBgConfig, equippedTitles, moveEquippedTitle,
