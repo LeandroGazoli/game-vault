@@ -25,6 +25,7 @@ import ProfileModalsContainer from "@/components/profile/ProfileModalsContainer"
 import FranchiseBadgesSection from "@/components/profile/FranchiseBadgesSection";
 import ShowcaseTrophiesSection from "@/components/profile/ShowcaseTrophiesSection";
 import GamerGallerySection from "@/components/profile/GamerGallerySection";
+import FinancialStatsCard from "@/components/profile/FinancialStatsCard";
 import ActivityHeatmapSection from "@/components/profile/ActivityHeatmapSection";
 import FavoriteCharactersSection from "@/components/profile/FavoriteCharactersSection";
 import SetupShowcaseSection from "@/components/profile/SetupShowcaseSection";
@@ -147,6 +148,8 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onEdit={isOwnProfile ? () => router.push("/perfil/editar?tab=markdown") : undefined}
           />
         ) : null;
+      case "financial_stats":
+        return <FinancialStatsCard games={activeLibrary} isOwner={isOwnProfile} />;
       case "showcase_trophies":
         return <ShowcaseTrophiesSection isOwner={isOwnProfile} />;
       case "gamer_gallery":

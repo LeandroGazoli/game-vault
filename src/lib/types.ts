@@ -449,6 +449,10 @@ export interface UserGame {
   parentGameId?: number | null;
   parentGameTitle?: string | null;
   includeDlcHoursInTotal?: boolean;
+  /** Dados Financeiros / Resumo de Investimento Gamer */
+  pricePaid?: number | null; // Valor pago (ex: 79.90 ou 0 para grátis)
+  currency?: "BRL" | "USD" | "EUR" | "GBP" | "JPY"; // Moeda utilizada
+  acquisitionType?: "bought" | "subscription" | "gift" | "free_to_play"; // Como adquiriu
 }
 
 export type ProfileLayout = "default" | "cinematic" | "gamer_id" | "minimal";

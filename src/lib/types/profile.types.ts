@@ -5,6 +5,7 @@
 
 export type ProfileSectionId =
   | "game_tracker"
+  | "financial_stats"
   | "library"
   | "recent_games"
   | "achievements"
@@ -97,15 +98,16 @@ export interface ProfileMusicConfig {
 /** Configuração padrão inicial das seções do Perfil */
 export const DEFAULT_PROFILE_SECTIONS: ProfileSectionConfig[] = [
   { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 0 },
-  { id: "showcase_trophies", label: "Vitrine de Troféus & Platinas", visible: true, order: 1 },
-  { id: "gamer_gallery", label: "Galeria de Screenshots", visible: true, order: 2 },
-  { id: "activity_heatmap", label: "Mapa de Atividade Gamer", visible: true, order: 3 },
-  { id: "library", label: "Biblioteca Completa", visible: true, order: 4 },
-  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 5 },
-  { id: "franchise_badges", label: "Insígnias de Franquias", visible: true, order: 6 },
-  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 7 },
-  { id: "favorite_characters", label: "Personagens Favoritos", visible: true, order: 8 },
-  { id: "setup_showcase", label: "Setup Gamer & Hardware", visible: true, order: 9 },
-  { id: "bio", label: "Apresentação & Bio", visible: true, order: 10 },
-  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 11 },
+  { id: "financial_stats", label: "Resumo de Investimento & ROI", visible: true, order: 1 },
+  { id: "showcase_trophies", label: "Vitrine de Troféus & Platinas", visible: true, order: 2 },
+  { id: "gamer_gallery", label: "Galeria de Screenshots", visible: true, order: 3 },
+  { id: "activity_heatmap", label: "Mapa de Atividade Gamer", visible: true, order: 4 },
+  { id: "library", label: "Biblioteca Completa", visible: true, order: 5 },
+  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 6 },
+  { id: "franchise_badges", label: "Insígnias de Franquias", visible: true, order: 7 },
+  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 8 },
+  { id: "favorite_characters", label: "Personagens Favoritos", visible: true, order: 9 },
+  { id: "setup_showcase", label: "Setup Gamer & Hardware", visible: true, order: 10 },
+  { id: "bio", label: "Apresentação & Bio", visible: true, order: 11 },
+  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 12 },
 ];
