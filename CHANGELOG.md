@@ -4,6 +4,15 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.10.2] — 2026-09-21
+
+### 🛠️ Melhorias & Usabilidade
+- **Clique e Arraste no Menu do Perfil (Desktop / PC):** Implementado suporte a *drag-to-scroll* na barra de categorias de jogos do perfil (`Destaques Streaming`, `Coleção Completa`, `Jogando`, `Quero Jogar`, `Zerados`, `Pausados`, `Skins Steam`). Agora os usuários no computador podem rolar a barra horizontalmente clicando e arrastando com o botão esquerdo do mouse.
+- **Prevenção de Cliques Falsos:** Algoritmo com limiar (*threshold*) que distingue rolagem intencional de cliques simples para troca de aba, sem bloquear a navegação natural.
+- **Feedback Visual de Cursor:** Adição de classes dinâmicas de cursor (`cursor-grab` ao passar o mouse e `cursor-grabbing` durante o arraste) mantendo total conformidade e suavidade com a rolagem tátil mobile.
+
+---
+
 ## [v4.10.1] — 2026-09-21
 
 ### 🚀 Novidades: Suporte Oficial a Markdown para Agentes de IA (Content Negotiation)

@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.10.1";
+export const APP_VERSION = "v4.10.2";
 export const APP_RELEASE_DATE = "2026-09-21";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.10.2",
+    date: "21/09/2026",
+    title: "Suporte a Arrastar Menu de Abas no Perfil (Desktop / PC)",
+    highlights: [
+      "Permite clicar e arrastar (drag-to-scroll) na barra horizontal de categorias do perfil no PC",
+      "Diferenciação precisa entre clique e arrasto para navegação fluida sem ativações acidentais",
+      "Feedback visual de cursor (cursor-grab e cursor-grabbing) em desktop sem afetar touch no mobile",
+    ],
+  },
   {
     version: "v4.10.1",
     date: "21/09/2026",
