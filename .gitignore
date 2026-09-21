@@ -48,3 +48,6 @@ gamevault-profile-*.json
 firebase-adminsdk*.json
 *.pem
 *.p12
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/cache.db
