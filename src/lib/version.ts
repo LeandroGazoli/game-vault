@@ -18,7 +18,8 @@ export const RECENT_CHANGELOG: ChangelogEntry[] = [
     date: "24/09/2026",
     title: "Hiper-Personalização do Perfil: Drag & Drop Modular, Insígnias Pentágono e Hardware",
     highlights: [
-      "Organização 100% modular de quadros com Drag & Drop (HTML5) e posicionamento livre entre Coluna Principal e Barra Lateral",
+      "Modo de Edição Visual ao Vivo na Página: arraste e reordene os quadros diretamente na tela com feedback tátil e controles visuais de coluna",
+      "Organização 100% modular com Drag & Drop e posicionamento livre entre Coluna Principal e Barra Lateral",
       "Insígnias de Franquias com design pentágono de prestígio e background artístico das capas de jogos",
       "Remoção de mockups genéricos na Vitrine de Troféus, Galeria de Mídias, Personagens e Setup (ocultação inteligente quando vazio)",
       "Novas gavetas no estúdio /perfil/editar para cadastro de Setup Gamer & Hardware e Top 5 Personagens Favoritos",

@@ -39,6 +39,7 @@ export interface ProfileModalsContainerProps {
   sections: ProfileSectionConfig[];
   customTemplate?: ProfileTemplate | null;
   applySections: (newSections: ProfileSectionConfig[], templateId: ProfileTemplateId) => Promise<void>;
+  onOpenLiveCustomize?: () => void;
   isToolsOpen: boolean;
   setIsToolsOpen: (open: boolean) => void;
   isImporterOpen: boolean;
@@ -81,6 +82,7 @@ export default function ProfileModalsContainer({
   sections,
   customTemplate,
   applySections,
+  onOpenLiveCustomize,
   isToolsOpen,
   setIsToolsOpen,
   isImporterOpen,
@@ -119,6 +121,7 @@ export default function ProfileModalsContainer({
             isPremium={isPremium}
             onApplySections={applySections}
             onOpenUpgrade={() => setIsUpgradeOpen(true)}
+            onOpenLiveCustomize={onOpenLiveCustomize}
           />
           <ProfileToolsModal
             isOpen={isToolsOpen}

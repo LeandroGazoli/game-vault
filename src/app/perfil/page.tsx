@@ -33,6 +33,8 @@ import TwitchLiveSection from "@/components/profile/TwitchLiveSection";
 import NowPlayingRail from "@/components/profile/NowPlayingRail";
 import MostAnticipatedSection from "@/components/profile/MostAnticipatedSection";
 import ProfileGuestbookSection from "@/components/profile/ProfileGuestbookSection";
+import ProfilePageCustomizerBar from "@/components/profile/ProfilePageCustomizerBar";
+import { DEFAULT_PROFILE_SECTIONS } from "@/lib/types/profile.types";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
 import { scopeProfileCss } from "@/lib/sanitizeCss";
@@ -88,9 +90,11 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const activeStats = useMemo(() => (isViewingPublic ? computeLibraryStats(activeLibrary) : ownStats), [isViewingPublic, activeLibrary, ownStats]);
 
   // Hook Modular de Seções e Templates
-  const { activeTemplate, sections, customTemplate, applySections } = useProfileModules(activeUser, isOwnProfile ? updateUserProfile : undefined);
+  const { activeTemplate, setActiveTemplate, sections, setSections, customTemplate, applySections } = useProfileModules(activeUser, isOwnProfile ? updateUserProfile : undefined);
 
-  // Estados de Modais
+  // Estados de Modais & Live Customizer
+  const [isCustomizingPage, setIsCustomizingPage] = useState(false);
+  const [isSavingCustomizer, setIsSavingCustomizer] = useState(false);
   const [selectedGameToEdit, setSelectedGameToEdit] = useState<any | null>(null);
   const [isSectionsModalOpen, setIsSectionsModalOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
@@ -105,6 +109,59 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
+
+  // Handlers para o modo de edição ao vivo da página inteira
+  const handleMoveSection = useCallback((sectionId: ProfileSectionId, direction: "up" | "down") => {
+    setSections((prev) => {
+      const targetItem = prev.find((s) => s.id === sectionId);
+      if (!targetItem) return prev;
+      const placement = targetItem.placement || "main";
+
+      // Filtra o grupo da mesma coluna
+      const sameColumn = prev.filter((s) => (s.placement || "main") === placement).sort((a, b) => a.order - b.order);
+      const colIndex = sameColumn.findIndex((s) => s.id === sectionId);
+      const targetColIndex = direction === "up" ? colIndex - 1 : colIndex + 1;
+      if (targetColIndex < 0 || targetColIndex >= sameColumn.length) return prev;
+
+      const swapItem = sameColumn[targetColIndex];
+      return prev.map((s) => {
+        if (s.id === sectionId) return { ...s, order: swapItem.order };
+        if (s.id === swapItem.id) return { ...s, order: targetItem.order };
+        return s;
+      });
+    });
+  }, [setSections]);
+
+  const handleToggleVisibility = useCallback((sectionId: ProfileSectionId) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, visible: !s.visible } : s))
+    );
+  }, [setSections]);
+
+  const handleChangePlacement = useCallback((sectionId: ProfileSectionId, placement: "main" | "sidebar") => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, placement } : s))
+    );
+  }, [setSections]);
+
+  const handleResetDefaults = useCallback(() => {
+    setSections([...DEFAULT_PROFILE_SECTIONS]);
+    setActiveTemplate("tracker");
+  }, [setSections, setActiveTemplate]);
+
+  const handleSavePageLayout = useCallback(async () => {
+    setIsSavingCustomizer(true);
+    try {
+      await applySections(sections, "custom");
+      setIsCustomizingPage(false);
+      setCelebrationBanner("Layout da página atualizado com sucesso!");
+      setTimeout(() => setCelebrationBanner(null), 4000);
+    } catch (err) {
+      console.error("Erro ao salvar layout:", err);
+    } finally {
+      setIsSavingCustomizer(false);
+    }
+  }, [applySections, sections]);
 
   const renderSection = useCallback((sectionId: ProfileSectionId) => {
     if (!activeUser) return null;
@@ -325,6 +382,19 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         </div>
       )}
 
+      {/* Barra de Controle de Organização de Página ao Vivo */}
+      {isOwnProfile && (
+        <ProfilePageCustomizerBar
+          isEditing={isCustomizingPage}
+          onExit={() => setIsCustomizingPage(false)}
+          onSave={handleSavePageLayout}
+          onResetDefaults={handleResetDefaults}
+          sections={sections}
+          onToggleVisibility={handleToggleVisibility}
+          isSaving={isSavingCustomizer}
+        />
+      )}
+
       {/* Hero Mobile-First */}
       <ProfileHeroMobile
         user={activeUser}
@@ -352,6 +422,8 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         onOpenManagePlan={() => setIsManagePlanOpen(true)}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
         onOpenSectionsOrder={() => setIsSectionsModalOpen(true)}
+        onToggleCustomizePage={() => setIsCustomizingPage((prev) => !prev)}
+        isCustomizingPage={isCustomizingPage}
       />
 
       {/* Container Principal: 2 Colunas no Desktop (Principal + Sidebar Lateral com Links e XP) */}
@@ -362,6 +434,13 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             sections={sections}
             renderSection={renderSection}
             targetPlacement="main"
+            isCustomizing={isCustomizingPage}
+            onMoveSection={handleMoveSection}
+            onToggleVisibility={handleToggleVisibility}
+            onChangePlacement={handleChangePlacement}
+            onReorderSections={(newSections) => {
+              setSections(newSections);
+            }}
           />
         </div>
 
@@ -380,6 +459,13 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
                 renderSection={renderSection}
                 targetPlacement="sidebar"
                 className="space-y-4"
+                isCustomizing={isCustomizingPage}
+                onMoveSection={handleMoveSection}
+                onToggleVisibility={handleToggleVisibility}
+                onChangePlacement={handleChangePlacement}
+                onReorderSections={(newSections) => {
+                  setSections(newSections);
+                }}
               />
             }
           />
@@ -405,6 +491,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         sections={sections}
         customTemplate={customTemplate}
         applySections={applySections}
+        onOpenLiveCustomize={() => setIsCustomizingPage(true)}
         isToolsOpen={isToolsOpen}
         setIsToolsOpen={setIsToolsOpen}
         isImporterOpen={isImporterOpen}

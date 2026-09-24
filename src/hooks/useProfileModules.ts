@@ -50,7 +50,9 @@ export function useProfileModules(user: UserProfile | null, updateUserProfile?: 
 
   return {
     activeTemplate,
+    setActiveTemplate,
     sections,
+    setSections,
     customTemplate: (user as any)?.customProfileTemplate as ProfileTemplate | null,
     applySections,
   };

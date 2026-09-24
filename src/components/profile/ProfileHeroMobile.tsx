@@ -22,6 +22,7 @@ import {
   Edit2,
   Award,
   Radio,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface ProfileHeroMobileProps {
@@ -40,6 +41,8 @@ export interface ProfileHeroMobileProps {
   onOpenManagePlan?: () => void;
   onOpenUpgrade?: () => void;
   onOpenSectionsOrder?: () => void;
+  onToggleCustomizePage?: () => void;
+  isCustomizingPage?: boolean;
 }
 
 /**
@@ -62,6 +65,8 @@ export default function ProfileHeroMobile({
   onOpenManagePlan,
   onOpenUpgrade,
   onOpenSectionsOrder,
+  onToggleCustomizePage,
+  isCustomizingPage = false,
 }: ProfileHeroMobileProps) {
   const [bioExpanded, setBioExpanded] = useState(false);
   const themeStyles = getThemeStyles(user.theme);
@@ -335,15 +340,31 @@ export default function ProfileHeroMobile({
               </button>
             )}
 
+            {onToggleCustomizePage && (
+              <button
+                type="button"
+                onClick={() => handleAction(onToggleCustomizePage)}
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-2xl border text-xs font-bold flex items-center gap-1.5 shrink-0 active:scale-95 transition-all ${
+                  isCustomizingPage
+                    ? "bg-emerald-500 text-black border-emerald-400 shadow-lg shadow-emerald-500/20"
+                    : "bg-[#1c2230] hover:bg-[#252f42] border-white/10 text-emerald-400"
+                }`}
+                title="Ativar modo de drag-and-drop para mover quadros na página"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>{isCustomizingPage ? "Editando Tela" : "Organizar Tela"}</span>
+              </button>
+            )}
+
             {onOpenSectionsOrder && (
               <button
                 type="button"
                 onClick={() => handleAction(onOpenSectionsOrder)}
                 className="min-h-[38px] px-3 py-1.5 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-xs font-bold text-gray-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
-                title="Reordenar seções do perfil"
+                title="Templates e gerenciador de seções"
               >
                 <Layers className="w-3.5 h-3.5 text-amber-400" />
-                <span>Seções</span>
+                <span>Templates</span>
               </button>
             )}
 

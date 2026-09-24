@@ -7,8 +7,11 @@ O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0
 ## [v4.14.0] — 2026-09-24
 
 ### 🚀 Novidades
-- **Organização Modular 100% Customizável com Drag & Drop:**
-  - O perfil do jogador agora suporta reordenação total dos quadros via arrastar e soltar (HTML5 Drag & Drop) e setas de ajuste fino.
+- **Modo de Edição & Organização Visual ao Vivo na Página:**
+  - O perfil agora conta com o botão **"Organizar Tela"** no hero e no gerenciador de seções. Ao ativar, toda a página entra no modo interativo de edição visual, liberando o arrastar e soltar (Drag & Drop nativo) diretamente sobre cada quadro da página (Game Tracker, Mapa de Atividade, Vitrine de Troféus, Setup Gamer, etc.).
+  - Barra de controle flutuante superior elegante (**"Salvar & Concluir"**, gaveta de blocos ocultos para restaurá-los na tela com um clique, botão de restaurar padrão e cancelar).
+  - Cada quadro móvel na tela conta com indicador de arraste (*drag handle*), contorno dinâmico, alternador de coluna (*Sidebar vs Principal*), setas de subida/descida e botão rápido para ocultar/exibir.
+- **Organização Modular 100% Customizável:**
   - Suporte a posicionamento de seções entre a **Coluna Principal** e a **Barra Lateral (Desktop)**: você pode mover o Setup Gamer, Insígnias, Hardware ou qualquer outro quadro para a lateral ou centro do perfil.
 - **Insígnias de Franquias com Design Pentágono de Prestígio:**
   - Insígnias de sagas lendárias (Dark Souls, Resident Evil, Persona, God of War, Zelda) foram redesenhadas com emblema geométrico em pentágono recortado e background imersivo da arte e capa oficial dos jogos.

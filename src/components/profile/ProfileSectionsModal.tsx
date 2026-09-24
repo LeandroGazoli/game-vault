@@ -22,6 +22,7 @@ import {
   Minimize2,
   Save,
   Loader2,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface ProfileSectionsModalProps {
@@ -33,6 +34,7 @@ export interface ProfileSectionsModalProps {
   isPremium: boolean;
   onApplySections: (newSections: ProfileSectionConfig[], templateId: ProfileTemplateId) => Promise<void>;
   onOpenUpgrade?: () => void;
+  onOpenLiveCustomize?: () => void;
 }
 
 export default function ProfileSectionsModal({
@@ -44,6 +46,7 @@ export default function ProfileSectionsModal({
   isPremium,
   onApplySections,
   onOpenUpgrade,
+  onOpenLiveCustomize,
 }: ProfileSectionsModalProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"templates" | "reorder">("templates");
@@ -179,6 +182,29 @@ export default function ProfileSectionsModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Banner para Ativar Edição Direto na Página */}
+        {onOpenLiveCustomize && (
+          <div className="p-3 bg-gradient-to-r from-emerald-950/60 to-cyan-950/60 border-b border-white/5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <LayoutGrid className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-xs text-gray-200 font-medium truncate">
+                Prefere organizar arrastando os quadros na própria tela?
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerSelectionHaptic();
+                onClose();
+                onOpenLiveCustomize();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black shrink-0 transition-transform active:scale-95"
+            >
+              Organizar na Página
+            </button>
+          </div>
+        )}
 
         {/* Alternador de Abas */}
         <div className="flex p-2 gap-1.5 bg-[#0f1118] border-b border-white/5">
