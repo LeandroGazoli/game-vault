@@ -11,7 +11,7 @@ export interface ProfileEditViewProps {
   onClose?: () => void;
   onOpenUpgrade?: () => void;
   games?: UserGame[];
-  initialTab?: "info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "visibility";
+  initialTab?: "info" | "appearance" | "titles" | "markdown" | "socials" | "showcase" | "setup" | "characters" | "visibility";
 }
 
 export default function ProfileEditView({

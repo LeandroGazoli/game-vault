@@ -172,17 +172,42 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       case "financial_stats":
         return <FinancialStatsCard games={activeLibrary} isOwner={isOwnProfile} />;
       case "showcase_trophies":
-        return <ShowcaseTrophiesSection isOwner={isOwnProfile} />;
+        return (
+          <ShowcaseTrophiesSection
+            trophies={(activeUser.importedTrophies as any) || []}
+            isOwner={isOwnProfile}
+          />
+        );
       case "gamer_gallery":
-        return <GamerGallerySection isOwner={isOwnProfile} />;
+        return (
+          <GamerGallerySection
+            initialItems={(activeUser.gamerGallery as any) || []}
+            isOwner={isOwnProfile}
+            onSaveItems={async (newItems) => {
+              if (isOwnProfile) {
+                await updateUserProfile?.({ gamerGallery: newItems });
+              }
+            }}
+          />
+        );
       case "franchise_badges":
         return <FranchiseBadgesSection games={activeLibrary} isOwner={isOwnProfile} />;
       case "activity_heatmap":
         return <ActivityHeatmapSection games={activeLibrary} />;
       case "favorite_characters":
-        return <FavoriteCharactersSection isOwner={isOwnProfile} />;
+        return (
+          <FavoriteCharactersSection
+            characters={(activeUser.favoriteCharacters as any) || []}
+            isOwner={isOwnProfile}
+          />
+        );
       case "setup_showcase":
-        return <SetupShowcaseSection isOwner={isOwnProfile} />;
+        return (
+          <SetupShowcaseSection
+            setup={(activeUser.gamerSetup as any) || null}
+            isOwner={isOwnProfile}
+          />
+        );
       case "most_anticipated":
         return (
           <MostAnticipatedSection
@@ -331,12 +356,16 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
       {/* Container Principal: 2 Colunas no Desktop (Principal + Sidebar Lateral com Links e XP) */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* Coluna Principal: Game Tracker HUD, Seções de Streaming, Bio, Showcase */}
+        {/* Coluna Principal: Seções modulares configuradas para a coluna principal */}
         <div className="flex-1 w-full min-w-0">
-          <ProfileModularContainer sections={sections} renderSection={renderSection} />
+          <ProfileModularContainer
+            sections={sections}
+            renderSection={renderSection}
+            targetPlacement="main"
+          />
         </div>
 
-        {/* Coluna Lateral no Desktop (Sidebar com Nível/XP, Insígnias e Links Úteis) */}
+        {/* Coluna Lateral no Desktop (Sidebar com Nível/XP, Insígnias, Hardware/Seções fixadas e Links Úteis) */}
         <aside className="hidden lg:block w-80 shrink-0 sticky top-20 space-y-4" aria-label="Painel Lateral do Perfil">
           <ProfileDesktopSidebar
             user={activeUser}
@@ -345,6 +374,14 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onOpenImporter={() => setIsImporterOpen(true)}
             onOpenShare={() => setIsShareOpen(true)}
             onOpenRoulette={() => setIsRouletteOpen(true)}
+            sidebarCustomContent={
+              <ProfileModularContainer
+                sections={sections}
+                renderSection={renderSection}
+                targetPlacement="sidebar"
+                className="space-y-4"
+              />
+            }
           />
         </aside>
       </div>

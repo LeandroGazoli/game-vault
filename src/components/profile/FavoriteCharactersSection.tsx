@@ -18,9 +18,13 @@ const DEFAULT_CHARACTERS: FavoriteCharacter[] = [
 ];
 
 export default function FavoriteCharactersSection({
-  characters = DEFAULT_CHARACTERS,
+  characters = [],
 }: FavoriteCharactersSectionProps) {
-  const displayCharacters = characters.length > 0 ? characters : DEFAULT_CHARACTERS;
+  if (!characters || characters.length === 0) {
+    return null;
+  }
+
+  const displayCharacters = characters;
 
   return (
     <div className="rounded-3xl bg-[#141822] border border-white/10 p-4 sm:p-5 shadow-lg space-y-3">

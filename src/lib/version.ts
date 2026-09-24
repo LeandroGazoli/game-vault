@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.13.2";
+export const APP_VERSION = "v4.14.0";
 export const APP_RELEASE_DATE = "2026-09-24";
 
 export interface ChangelogEntry {
@@ -13,6 +13,19 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.14.0",
+    date: "24/09/2026",
+    title: "Hiper-Personalização do Perfil: Drag & Drop Modular, Insígnias Pentágono e Hardware",
+    highlights: [
+      "Organização 100% modular de quadros com Drag & Drop (HTML5) e posicionamento livre entre Coluna Principal e Barra Lateral",
+      "Insígnias de Franquias com design pentágono de prestígio e background artístico das capas de jogos",
+      "Remoção de mockups genéricos na Vitrine de Troféus, Galeria de Mídias, Personagens e Setup (ocultação inteligente quando vazio)",
+      "Novas gavetas no estúdio /perfil/editar para cadastro de Setup Gamer & Hardware e Top 5 Personagens Favoritos",
+      "Modal explicativo e didático 'Como Funciona?' sobre ROI Gamer, Custo por Hora e Total Investido",
+      "Redirecionamento automático e correção de rota para /perfil/badges e /profile/badges",
+    ],
+  },
   {
     version: "v4.13.2",
     date: "24/09/2026",

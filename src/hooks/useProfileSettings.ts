@@ -14,7 +14,7 @@ const RANDOM_AVATARS = [
   "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200",
 ];
 
-const TAB_MAP: Record<string, number> = { info: 1, appearance: 2, titles: 3, markdown: 4, socials: 5, showcase: 6, visibility: 7 };
+const TAB_MAP: Record<string, number> = { info: 1, appearance: 2, titles: 3, markdown: 4, socials: 5, showcase: 6, setup: 7, characters: 8, visibility: 9 };
 
 export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => void, onClose?: () => void) {
   const { user, isPremium, isLoading, updateUserProfile } = useAuth();
@@ -52,6 +52,8 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
 
   const [socials, setSocials] = useState<SocialLinks>(user?.socialLinks || {});
   const [showcaseGameId, setShowcaseGameId] = useState<number | null>(user?.showcaseGameId || null);
+  const [gamerSetup, setGamerSetup] = useState<any>(user?.gamerSetup || {});
+  const [favoriteCharacters, setFavoriteCharacters] = useState<any[]>(user?.favoriteCharacters || []);
   const [visibility, setVisibility] = useState<ProfileVisibility>(
     user?.visibility || { isPublic: user?.isPublic ?? true, showStats: true, showPlaytime: true, showRatings: true, showDropped: true }
   );
@@ -80,6 +82,8 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
     }
     if (user.socialLinks) setSocials(user.socialLinks);
     if (user.showcaseGameId !== undefined) setShowcaseGameId(user.showcaseGameId);
+    if (user.gamerSetup) setGamerSetup(user.gamerSetup);
+    if (user.favoriteCharacters) setFavoriteCharacters(user.favoriteCharacters);
     if (user.visibility) setVisibility(user.visibility);
   }, [user]);
 
@@ -186,6 +190,8 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
         customBioMode: bioMode,
         socialLinks: socials,
         showcaseGameId,
+        gamerSetup,
+        favoriteCharacters,
         isPublic: visibility.isPublic !== false,
         visibility: { ...visibility, isPublic: visibility.isPublic !== false },
       });
@@ -209,7 +215,8 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
     unequipTitle, toggleEquipTitle, createdTitles, newTitleInput, setNewTitleInput,
     newTitleEmoji, setNewTitleEmoji, handleCreateCustomTitle, markdownContent, setMarkdownContent,
     bioTab, setBioTab, bioMode, setBioMode, socials, setSocials, showcaseGameId,
-    setShowcaseGameId, visibility, setVisibility, isSaving, toastMessage, showToast,
+    setShowcaseGameId, gamerSetup, setGamerSetup, favoriteCharacters, setFavoriteCharacters,
+    visibility, setVisibility, isSaving, toastMessage, showToast,
     randomAvatar, suggestBio, copyHandle, handleSave,
   };
 }

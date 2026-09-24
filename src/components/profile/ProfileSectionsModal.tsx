@@ -82,6 +82,20 @@ export default function ProfileSectionsModal({
     setSelectedTemplate("custom");
   };
 
+  const handleReorderSections = (reordered: ProfileSectionConfig[]) => {
+    triggerSelectionHaptic();
+    setSections(reordered);
+    setSelectedTemplate("custom");
+  };
+
+  const handleChangePlacement = (id: string, placement: "main" | "sidebar") => {
+    triggerSelectionHaptic();
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, placement } : s))
+    );
+    setSelectedTemplate("custom");
+  };
+
   const toggleVisibility = (id: string) => {
     triggerSelectionHaptic();
     setSections((prev) =>
@@ -276,6 +290,8 @@ export default function ProfileSectionsModal({
               sections={sections}
               onToggleVisibility={toggleVisibility}
               onMoveSection={moveSection}
+              onReorderSections={handleReorderSections}
+              onChangePlacement={handleChangePlacement}
             />
           )}
         </div>

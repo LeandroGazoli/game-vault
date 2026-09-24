@@ -63,11 +63,16 @@ const DEFAULT_TROPHIES: ImportedTrophyItem[] = [
 ];
 
 export default function ShowcaseTrophiesSection({
-  trophies = DEFAULT_TROPHIES,
+  trophies = [],
   isOwner = false,
 }: ShowcaseTrophiesSectionProps) {
   const [selectedTrophy, setSelectedTrophy] = useState<ImportedTrophyItem | null>(null);
-  const displayTrophies = trophies.length > 0 ? trophies : DEFAULT_TROPHIES;
+
+  if (!isOwner && trophies.length === 0) {
+    return null;
+  }
+
+  const displayTrophies = trophies;
 
   return (
     <div className="rounded-3xl bg-[#141822] border border-white/10 p-4 sm:p-5 shadow-lg space-y-3">
@@ -91,20 +96,29 @@ export default function ShowcaseTrophiesSection({
         </div>
       </div>
 
-      {/* Grid de Troféus Raros */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
-        {displayTrophies.map((trophy) => {
-          const isSelected = selectedTrophy?.id === trophy.id;
-          return (
-            <div
-              key={trophy.id}
-              onClick={() => setSelectedTrophy(isSelected ? null : trophy)}
-              className={`group relative rounded-2xl p-2.5 cursor-pointer border transition-all duration-300 ${
-                isSelected
-                  ? "bg-[#1d2433] border-cyan-400 shadow-[0_0_15px_rgba(0,229,255,0.2)]"
-                  : "bg-[#181d28] border-white/5 hover:border-cyan-500/30"
-              }`}
-            >
+      {/* Grid de Troféus Raros ou CTA para Dono */}
+      {displayTrophies.length === 0 ? (
+        <div className="p-6 rounded-2xl bg-[#181d28]/70 border border-dashed border-white/10 text-center space-y-2">
+          <Trophy className="w-8 h-8 text-cyan-400/60 mx-auto" />
+          <p className="text-xs font-bold text-white">Nenhum troféu ou conquista importada</p>
+          <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+            Vincule sua conta Steam, PlayStation Network ou Xbox para exibir aqui suas platinas e troféus mais raros com artes oficiais!
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+          {displayTrophies.map((trophy) => {
+            const isSelected = selectedTrophy?.id === trophy.id;
+            return (
+              <div
+                key={trophy.id}
+                onClick={() => setSelectedTrophy(isSelected ? null : trophy)}
+                className={`group relative rounded-2xl p-2.5 cursor-pointer border transition-all duration-300 ${
+                  isSelected
+                    ? "bg-[#1d2433] border-cyan-400 shadow-[0_0_15px_rgba(0,229,255,0.2)]"
+                    : "bg-[#181d28] border-white/5 hover:border-cyan-500/30"
+                }`}
+              >
               {/* Ícone da Conquista / Troféu */}
               <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2 bg-[#0d1017] border border-white/10 flex items-center justify-center">
                 <img
@@ -146,6 +160,7 @@ export default function ShowcaseTrophiesSection({
           );
         })}
       </div>
+    )}
 
       {/* Banner de Detalhes do Troféu Selecionado */}
       {selectedTrophy && (

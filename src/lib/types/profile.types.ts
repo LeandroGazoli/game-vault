@@ -27,6 +27,7 @@ export interface ProfileSectionConfig {
   label: string;
   visible: boolean;
   order: number;
+  placement?: "main" | "sidebar";
 }
 
 export type ProfileTemplateId = "tracker" | "gamer" | "compact" | "minimal" | "custom";
@@ -133,21 +134,21 @@ export interface ProfileGuestbookConfig {
 
 /** Configuração padrão inicial das seções do Perfil */
 export const DEFAULT_PROFILE_SECTIONS: ProfileSectionConfig[] = [
-  { id: "twitch_live", label: "Transmissão Ao Vivo (Twitch)", visible: true, order: 0 },
-  { id: "now_playing", label: "Jogando Agora (Rail Rotativo)", visible: true, order: 1 },
-  { id: "most_anticipated", label: "Mais Aguardados (Countdown)", visible: true, order: 2 },
-  { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 3 },
-  { id: "financial_stats", label: "Resumo de Investimento & ROI", visible: true, order: 4 },
-  { id: "showcase_trophies", label: "Vitrine de Troféus & Platinas", visible: true, order: 5 },
-  { id: "gamer_gallery", label: "Galeria de Clipes & Screenshots", visible: true, order: 6 },
-  { id: "activity_heatmap", label: "Mapa de Atividade Gamer", visible: true, order: 7 },
-  { id: "library", label: "Biblioteca Completa", visible: true, order: 8 },
-  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 9 },
-  { id: "franchise_badges", label: "Insígnias de Franquias", visible: true, order: 10 },
-  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 11 },
-  { id: "favorite_characters", label: "Personagens Favoritos", visible: true, order: 12 },
-  { id: "setup_showcase", label: "Setup Gamer & Hardware", visible: true, order: 13 },
-  { id: "guestbook", label: "Mural da Comunidade (Guestbook)", visible: true, order: 14 },
-  { id: "bio", label: "Apresentação & Bio", visible: true, order: 15 },
-  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 16 },
+  { id: "twitch_live", label: "Transmissão Ao Vivo (Twitch)", visible: true, order: 0, placement: "main" },
+  { id: "now_playing", label: "Jogando Agora (Rail Rotativo)", visible: true, order: 1, placement: "main" },
+  { id: "most_anticipated", label: "Mais Aguardados (Countdown)", visible: true, order: 2, placement: "main" },
+  { id: "game_tracker", label: "Game Tracker & Métricas", visible: true, order: 3, placement: "main" },
+  { id: "financial_stats", label: "Resumo de Investimento & ROI", visible: true, order: 4, placement: "main" },
+  { id: "showcase_trophies", label: "Vitrine de Troféus & Platinas", visible: true, order: 5, placement: "main" },
+  { id: "gamer_gallery", label: "Galeria de Clipes & Screenshots", visible: true, order: 6, placement: "main" },
+  { id: "activity_heatmap", label: "Mapa de Atividade Gamer", visible: true, order: 7, placement: "main" },
+  { id: "library", label: "Biblioteca Completa", visible: true, order: 8, placement: "main" },
+  { id: "recent_games", label: "Atividades & Recentes", visible: true, order: 9, placement: "main" },
+  { id: "franchise_badges", label: "Insígnias de Franquias", visible: true, order: 10, placement: "main" },
+  { id: "achievements", label: "Conquistas & Nível", visible: true, order: 11, placement: "main" },
+  { id: "favorite_characters", label: "Personagens Favoritos", visible: true, order: 12, placement: "main" },
+  { id: "setup_showcase", label: "Setup Gamer & Hardware", visible: true, order: 13, placement: "sidebar" },
+  { id: "guestbook", label: "Mural da Comunidade (Guestbook)", visible: true, order: 14, placement: "main" },
+  { id: "bio", label: "Apresentação & Bio", visible: true, order: 15, placement: "main" },
+  { id: "showcase", label: "Jogo em Destaque", visible: true, order: 16, placement: "main" },
 ];

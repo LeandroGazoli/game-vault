@@ -19,6 +19,7 @@ export interface FranchiseBadgeDef {
   category: "soulsborne" | "horror" | "rpg" | "action" | "adventure" | "nintendo";
   iconName: string; // Ícone Lucide ou representação visual
   accentColor: string; // Hex ou Tailwind (ex: "#ef4444" ou "amber")
+  coverUrl?: string; // Capa icônica da franquia para background elegante
   games: FranchiseBadgeGame[];
   minGamesForBronze: number;
   minGamesForSilver: number;

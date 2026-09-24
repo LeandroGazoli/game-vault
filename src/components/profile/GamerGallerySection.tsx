@@ -8,45 +8,23 @@ import { triggerSelectionHaptic, triggerSuccessHaptic } from "@/lib/capacitor";
 interface GamerGallerySectionProps {
   initialItems?: GamerGalleryItem[];
   isOwner?: boolean;
+  onSaveItems?: (items: GamerGalleryItem[]) => Promise<void>;
 }
 
-const DEFAULT_GALLERY: GamerGalleryItem[] = [
-  {
-    id: "g1",
-    gameTitle: "Elden Ring: Shadow of the Erdtree",
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
-    caption: "Derrotando o Consorte Prometido em NG+7",
-    likesCount: 24,
-    uploadedAt: "2026-09-18",
-  },
-  {
-    id: "g2",
-    gameTitle: "Cyberpunk 2077",
-    imageUrl: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=800",
-    caption: "Final secreto da expansão (Momento épico)",
-    isSpoiler: true,
-    likesCount: 19,
-    uploadedAt: "2026-09-12",
-  },
-  {
-    id: "g3",
-    gameTitle: "Persona 5 Royal",
-    imageUrl: "https://images.unsplash.com/photo-1563089145-599997674d42?w=800",
-    caption: "All-Out Attack final em Shido",
-    likesCount: 31,
-    uploadedAt: "2026-09-02",
-  },
-];
-
 export default function GamerGallerySection({
-  initialItems = DEFAULT_GALLERY,
+  initialItems = [],
   isOwner = false,
+  onSaveItems,
 }: GamerGallerySectionProps) {
   const [items, setItems] = useState<GamerGalleryItem[]>(initialItems);
   const [revealedSpoilers, setRevealedSpoilers] = useState<Record<string, boolean>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadAsSpoiler, setUploadAsSpoiler] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!isOwner && items.length === 0) {
+    return null;
+  }
 
   const toggleSpoiler = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -144,16 +122,33 @@ export default function GamerGallerySection({
         </div>
       </div>
 
-      {/* Grid de Mídias */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-        {items.map((item) => {
-          const isSpoilerHidden = item.isSpoiler && !revealedSpoilers[item.id];
+      {/* Grid de Mídias ou Estado Vazio para o Dono */}
+      {items.length === 0 ? (
+        <div className="p-6 rounded-2xl bg-[#181d28]/70 border border-dashed border-white/10 text-center space-y-2">
+          <Film className="w-8 h-8 text-purple-400/60 mx-auto" />
+          <p className="text-xs font-bold text-white">Nenhuma captura de tela ou clipe adicionado</p>
+          <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+            Suba suas melhores screenshots ou clipes curtos de jogadas memoráveis diretamente do seu PC ou celular.
+          </p>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 text-purple-200 border border-purple-500/40 text-xs font-bold transition-all cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Adicionar Primeira Captura</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          {items.map((item) => {
+            const isSpoilerHidden = item.isSpoiler && !revealedSpoilers[item.id];
 
-          return (
-            <div
-              key={item.id}
-              className="group relative rounded-2xl bg-[#181d28] border border-white/10 overflow-hidden shadow-md transition-all duration-300 hover:border-purple-500/40"
-            >
+            return (
+              <div
+                key={item.id}
+                className="group relative rounded-2xl bg-[#181d28] border border-white/10 overflow-hidden shadow-md transition-all duration-300 hover:border-purple-500/40"
+              >
               <div className="relative aspect-video bg-black/60 overflow-hidden flex items-center justify-center">
                 {item.mediaType === "video" && item.videoUrl ? (
                   <video
@@ -232,6 +227,7 @@ export default function GamerGallerySection({
           );
         })}
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 }

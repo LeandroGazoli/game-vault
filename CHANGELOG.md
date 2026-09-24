@@ -4,6 +4,32 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.14.0] — 2026-09-24
+
+### 🚀 Novidades
+- **Organização Modular 100% Customizável com Drag & Drop:**
+  - O perfil do jogador agora suporta reordenação total dos quadros via arrastar e soltar (HTML5 Drag & Drop) e setas de ajuste fino.
+  - Suporte a posicionamento de seções entre a **Coluna Principal** e a **Barra Lateral (Desktop)**: você pode mover o Setup Gamer, Insígnias, Hardware ou qualquer outro quadro para a lateral ou centro do perfil.
+- **Insígnias de Franquias com Design Pentágono de Prestígio:**
+  - Insígnias de sagas lendárias (Dark Souls, Resident Evil, Persona, God of War, Zelda) foram redesenhadas com emblema geométrico em pentágono recortado e background imersivo da arte e capa oficial dos jogos.
+- **Novas Gavetas no Estúdio de Identidade (`/perfil/editar`):**
+  - **Setup Gamer & Hardware:** Cadastro completo de CPU, GPU, Monitor, Teclado, Mouse, Controle e Headset.
+  - **Personagens Favoritos:** Configuração do Top 5 heróis e ícones marcantes com nome, jogo e avatar.
+
+### 🛠️ Melhorias & Performance
+- **Remoção de Mockups Estáticos & Ocultação Inteligente:**
+  - Vitrine de Troféus, Galeria de Mídias, Setup Gamer e Personagens Favoritos agora só são exibidos quando há dados reais cadastrados pelo usuário. Caso estejam vazios, o bloco é ocultado para visitantes e exibe um call-to-action de adição direto para o dono da conta.
+- **Mapa de Atividade Gamer no Padrão GitHub:**
+  - Grade de contribuição refatorada para a estrutura autêntica do GitHub (colunas de semanas com 7 dias, indicadores Seg/Qua/Sex e paleta verde clássica de intensidades).
+- **Educação Financeira Gamer (ROI & Custo/Hora):**
+  - Adicionado botão interativo e modal explicativo *"Como Funciona?"* detalhando as fórmulas de Total Investido, Retorno por Hora de Gameplay e Melhores Negócios.
+
+### 🐛 Correções
+- **Rota Quebrada `/perfil/badges`:**
+  - Criadas rotas e redirecionamentos para `/perfil/badges` e `/profile/badges`, direcionando com segurança para a central de conquistas e insígnias.
+
+---
+
 ## [v4.13.2] — 2026-09-24
  
 ### 🐛 Correções & Estabilidade

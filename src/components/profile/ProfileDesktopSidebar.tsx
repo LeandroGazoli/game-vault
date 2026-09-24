@@ -28,6 +28,7 @@ export interface ProfileDesktopSidebarProps {
   onOpenImporter?: () => void;
   onOpenShare?: () => void;
   onOpenRoulette?: () => void;
+  sidebarCustomContent?: React.ReactNode;
 }
 
 /**
@@ -42,6 +43,7 @@ export default function ProfileDesktopSidebar({
   onOpenImporter,
   onOpenShare,
   onOpenRoulette,
+  sidebarCustomContent,
 }: ProfileDesktopSidebarProps) {
   const effectivePlan = getEffectiveAccess(user).plan;
   const gamerLevelInfo = calculateGamerLevel(stats, undefined, effectivePlan, user.bonusXp);
@@ -182,6 +184,9 @@ export default function ProfileDesktopSidebar({
           </div>
         </div>
       </div>
+
+      {/* Seções Modulares Movidas para a Sidebar Lateral pelo Usuário */}
+      {sidebarCustomContent}
 
       {/* 3. MENU DE LINKS ÚTEIS & FERRAMENTAS */}
       <nav className="p-3 rounded-3xl bg-[#141822] border border-white/10 shadow-lg space-y-1" aria-label="Links Úteis do Gamer">

@@ -12,6 +12,7 @@ export const OFFICIAL_FRANCHISE_BADGES: FranchiseBadgeDef[] = [
     category: "soulsborne",
     iconName: "Flame",
     accentColor: "#ef4444",
+    coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x77.webp",
     games: [
       { id: "ds1", title: "Dark Souls Remastered", platformTag: "Multi" },
       { id: "ds2", title: "Dark Souls II: Scholar of the First Sin", platformTag: "Multi" },
@@ -32,6 +33,7 @@ export const OFFICIAL_FRANCHISE_BADGES: FranchiseBadgeDef[] = [
     category: "horror",
     iconName: "Biohazard",
     accentColor: "#10b981",
+    coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5z81.webp",
     games: [
       { id: "re1", title: "Resident Evil HD Remaster", platformTag: "Multi" },
       { id: "re2", title: "Resident Evil 2 Remake", platformTag: "Multi" },
@@ -52,6 +54,7 @@ export const OFFICIAL_FRANCHISE_BADGES: FranchiseBadgeDef[] = [
     category: "rpg",
     iconName: "Sparkles",
     accentColor: "#f43f5e",
+    coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.webp",
     games: [
       { id: "p3r", title: "Persona 3 Reload", platformTag: "Multi" },
       { id: "p4g", title: "Persona 4 Golden", platformTag: "Multi" },
@@ -71,6 +74,7 @@ export const OFFICIAL_FRANCHISE_BADGES: FranchiseBadgeDef[] = [
     category: "action",
     iconName: "Axe",
     accentColor: "#38bdf8",
+    coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5v.webp",
     games: [
       { id: "gow_2018", title: "God of War (2018)", platformTag: "PlayStation/PC" },
       { id: "gow_ragnarok", title: "God of War Ragnarök", platformTag: "PlayStation/PC" },
@@ -90,6 +94,7 @@ export const OFFICIAL_FRANCHISE_BADGES: FranchiseBadgeDef[] = [
     category: "adventure",
     iconName: "Sword",
     accentColor: "#eab308",
+    coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.webp",
     games: [
       { id: "botw", title: "The Legend of Zelda: Breath of the Wild", platformTag: "Nintendo" },
       { id: "totk", title: "The Legend of Zelda: Tears of the Kingdom", platformTag: "Nintendo" },

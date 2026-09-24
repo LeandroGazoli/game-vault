@@ -7,6 +7,7 @@ export interface ProfileModularContainerProps {
   sections: ProfileSectionConfig[];
   renderSection: (sectionId: ProfileSectionId) => React.ReactNode;
   className?: string;
+  targetPlacement?: "main" | "sidebar";
 }
 
 /**
@@ -18,13 +19,21 @@ export default function ProfileModularContainer({
   sections,
   renderSection,
   className = "space-y-6",
+  targetPlacement,
 }: ProfileModularContainerProps) {
-  // Ordena as seções por `order` e filtra apenas as marcadas como `visible`
+  // Ordena as seções por `order` e filtra apenas as marcadas como `visible` e correspondentes ao placement
   const activeSections = useMemo(() => {
     return [...sections]
-      .filter((s) => s.visible !== false)
+      .filter((s) => {
+        if (s.visible === false) return false;
+        if (targetPlacement) {
+          const placement = s.placement || "main";
+          return placement === targetPlacement;
+        }
+        return true;
+      })
       .sort((a, b) => a.order - b.order);
-  }, [sections]);
+  }, [sections, targetPlacement]);
 
   return (
     <div className={`profile-sections-container ${className}`}>

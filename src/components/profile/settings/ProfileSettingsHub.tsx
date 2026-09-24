@@ -13,6 +13,8 @@ import BadgesAccordion from "./BadgesAccordion";
 import CustomBioAccordion from "./CustomBioAccordion";
 import ConnectedAccountsAccordion from "./ConnectedAccountsAccordion";
 import ShowcaseGameAccordion from "./ShowcaseGameAccordion";
+import SetupAccordion from "./SetupAccordion";
+import FavoriteCharactersAccordion from "./FavoriteCharactersAccordion";
 import PrivacyAccordion from "./PrivacyAccordion";
 
 export interface ProfileSettingsHubProps {
@@ -30,7 +32,9 @@ const DESKTOP_NAV_ITEMS = [
   { id: 4, label: "4. Bio Estilizada (HTML/MD)" },
   { id: 5, label: "5. Gamertags & Redes Conectadas" },
   { id: 6, label: "6. Vitrine do Jogo em Destaque" },
-  { id: 7, label: "7. Privacidade & Segurança" },
+  { id: 7, label: "7. Setup Gamer & Hardware" },
+  { id: 8, label: "8. Personagens Favoritos" },
+  { id: 9, label: "9. Privacidade & Segurança" },
 ];
 
 const EMPTY_USER_GAMES: UserGame[] = [];
@@ -152,7 +156,7 @@ export default function ProfileSettingsHub({
                 Atalhos Rápidos
               </span>
               <span className="text-[10px] font-mono text-emerald-400 font-semibold">
-                7 Seções
+                9 Seções
               </span>
             </div>
 
@@ -302,9 +306,27 @@ export default function ProfileSettingsHub({
           </div>
 
           <div id="accordion-7">
-            <PrivacyAccordion
+            <SetupAccordion
               isOpen={settings.activeAccordion === 7}
               onToggle={() => settings.toggleAccordion(7)}
+              setup={settings.gamerSetup}
+              setSetup={settings.setGamerSetup}
+            />
+          </div>
+
+          <div id="accordion-8">
+            <FavoriteCharactersAccordion
+              isOpen={settings.activeAccordion === 8}
+              onToggle={() => settings.toggleAccordion(8)}
+              characters={settings.favoriteCharacters}
+              setCharacters={settings.setFavoriteCharacters}
+            />
+          </div>
+
+          <div id="accordion-9">
+            <PrivacyAccordion
+              isOpen={settings.activeAccordion === 9}
+              onToggle={() => settings.toggleAccordion(9)}
               visibility={settings.visibility}
               setVisibility={settings.setVisibility}
             />

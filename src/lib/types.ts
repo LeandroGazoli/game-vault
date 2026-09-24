@@ -535,6 +535,46 @@ export interface UserProfile {
     platform?: string;
     hypeReason?: string;
   }>;
+  gamerSetup?: {
+    photoUrl?: string | null;
+    cpu?: string;
+    gpu?: string;
+    ram?: string;
+    mouse?: string;
+    keyboard?: string;
+    monitor?: string;
+    controller?: string;
+    headset?: string;
+  };
+  favoriteCharacters?: Array<{
+    id: string;
+    name: string;
+    gameTitle: string;
+    imageUrl: string;
+  }>;
+  importedTrophies?: Array<{
+    id: string;
+    gameTitle: string;
+    trophyName: string;
+    description?: string;
+    iconUrl: string;
+    platform: "steam" | "psn" | "xbox" | "retroachievements";
+    unlockedAt?: string;
+    rarity?: number;
+    isPlatinum?: boolean;
+  }>;
+  gamerGallery?: Array<{
+    id: string;
+    gameTitle: string;
+    imageUrl: string;
+    mediaType?: "image" | "video";
+    videoUrl?: string;
+    videoDurationSeconds?: number;
+    isSpoiler?: boolean;
+    caption?: string;
+    likesCount?: number;
+    uploadedAt: string;
+  }>;
   guestbookConfig?: {
     enabled: boolean;
     requireApproval: boolean;

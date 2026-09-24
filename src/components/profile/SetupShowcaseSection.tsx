@@ -20,17 +20,24 @@ const DEFAULT_SETUP: GamerSetupConfig = {
   headset: "Audeze Maxwell Wireless",
 };
 
-export default function SetupShowcaseSection({ setup = DEFAULT_SETUP }: SetupShowcaseSectionProps) {
-  const currentSetup = setup || DEFAULT_SETUP;
+export default function SetupShowcaseSection({ setup }: SetupShowcaseSectionProps) {
+  if (!setup) {
+    return null;
+  }
 
   const items = [
-    { label: "Processador", val: currentSetup.cpu, icon: Cpu },
-    { label: "Placa de Vídeo", val: currentSetup.gpu, icon: Sparkles },
-    { label: "Monitor", val: currentSetup.monitor, icon: Monitor },
-    { label: "Teclado", val: currentSetup.keyboard, icon: Keyboard },
-    { label: "Mouse", val: currentSetup.mouse, icon: Mouse },
-    { label: "Controle", val: currentSetup.controller, icon: Gamepad2 },
+    { label: "Processador", val: setup.cpu, icon: Cpu },
+    { label: "Placa de Vídeo", val: setup.gpu, icon: Sparkles },
+    { label: "Monitor", val: setup.monitor, icon: Monitor },
+    { label: "Teclado", val: setup.keyboard, icon: Keyboard },
+    { label: "Mouse", val: setup.mouse, icon: Mouse },
+    { label: "Controle", val: setup.controller, icon: Gamepad2 },
+    { label: "Headset", val: setup.headset, icon: Headphones },
   ].filter((item) => Boolean(item.val));
+
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <div className="rounded-3xl bg-[#141822] border border-white/10 p-4 sm:p-5 shadow-lg space-y-3">
