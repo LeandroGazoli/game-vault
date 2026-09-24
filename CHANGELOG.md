@@ -4,6 +4,66 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.13.0] — 2026-09-24
+
+### 🚀 Novidades: Mural da Comunidade (Guestbook) & Mais Aguardados com Countdown
+- **Mural da Comunidade (Guestbook no Perfil):**
+  - Permite que amigos e visitantes deixem mensagens públicas de amizade e reconhecimento diretamente no perfil.
+  - Seletor de *"Jogamos Juntos?"* para associar o recado a um jogo específico em comum (ex: *Helldivers 2*, *Call of Duty*, *Sea of Thieves*).
+  - Suporte a moderação opcional pelo proprietário (aprovação prévia das mensagens antes de se tornarem visíveis publicamente).
+- **Seção "Mais Aguardados" com Contagem Regressiva em Tempo Real:**
+  - Vitrine modular destacando os jogos mais aguardados pelo usuário com contagem regressiva viva de Dias, Horas e Minutos até o lançamento oficial.
+  - Personalização de capa, plataforma e motivo do *hype*.
+  - Celebração automática com badge visual *"Já Lançado!"* assim que a data de estreia é atingida.
+- **Integração Modular do Perfil:**
+  - Ambas as seções adicionadas ao catálogo e ao orquestrador modular (`ProfileModularContainer`), permitindo reordenar e ocultar conforme o gosto do usuário.
+
+---
+
+## [v4.12.0] — 2026-09-21
+ 
+### 🚀 Novidades: Identidade Gamer, Sincronização Explicada, Favoritos & Twitch Live
+- **Onboarding e Cadastro Enriquecido:**
+  - Escolha livre de `@username` único com gerador aleatório temático gamer (ex: `cyber_hunter_42`).
+  - Coleta de data de nascimento para conformidade com ECA/COPPA e proteção a menores de idade.
+  - Campo opcional de indicação por amigo (`@username`).
+  - Edição do `@username` permitida uma única vez nas configurações do perfil, bloqueando alterações subsequentes abusivas.
+- **Guia 'Como a Sincronização Funciona':**
+  - Modal explicativo passo a passo sobre perfis públicos, sincronização manual sob demanda e processamento em segundo plano.
+- **Sistema de Favoritar Usuários (Estrela ⭐):**
+  - Botão de favoritar ao lado do botão Seguir com popover de 4 toggles independentes: Notificações de Reviews, 100% Zerados, Guias/Artigos e Lives.
+- **Integração Twitch em Tempo Real:**
+  - Anel e selo "LIVE" pulsante e respirando ao redor do avatar do jogador no perfil.
+  - Player embutido da Twitch retrátil no topo do perfil exibindo o jogo atual e link direto.
+- **Rail 'Jogando Agora' (Now Playing Rail):**
+  - Carrossel rotativo a cada 6 segundos entre os jogos em andamento do usuário com controles de play/pause, tempo registrado e meta HLTB.
+- **Vídeos de Gameplay na Galeria & Proteção Anti-Spoiler:**
+  - Suporte a clipes de vídeo de até 90s (.mp4/.webm) e marcação de spoiler com efeito de desfoque (blur) e botão para revelar.
+- **Jogar Steam Direto do Navegador:**
+  - Ação rápida nativa via protocolo `steam://run/[appId]` nos cards de jogos PC/Steam, exclusiva para o próprio dono do perfil.
+
+---
+
+## [v4.11.0] — 2026-09-21
+ 
+### 🚀 Novidades: Upload Direto de Imagens, Vitrine de Troféus Importados & Gamificação de Franquias
+- **Upload Direto de Arquivos de Imagem:**
+  - Usuários não dependem mais de URLs externas de imagens ou links de terceiros.
+  - Suporte completo a seleção de arquivos do smartphone/computador para fotos de avatar, banners de capa e screenshots da galeria via FileReader.
+- **Vitrine de Troféus & Platinas Importadas:**
+  - Componente dedicado para exibição das conquistas e platinas mais raras importadas diretamente da Steam, PlayStation Network e Xbox.
+  - Indicadores de raridade global, insígnia de platina e modal com descrição completa do feito alcançado.
+- **Galeria de Screenshots Gamer:**
+  - Espaço dinâmico com suporte a envio direto de fotos de gameplay, contador de curtidas com feedback tátil e legendas personalizadas.
+- **Insígnias de Franquias Lendárias (Franchise Badges):**
+  - Mapeamento oficial de sagas consagradas (*Dark Souls*, *Resident Evil*, *Persona*, *God of War*, *Zelda*).
+  - Cada jogo zerado ou concluído na biblioteca adiciona progresso e estrelas para desbloquear os tiers de Bronze, Prata, Ouro e Platina (100% da saga).
+- **Métricas Visuais e Identidade Gamer:**
+  - Mapa de calor de atividade gamer dos últimos 90 dias estilo GitHub.
+  - Vitrines de Top 5 Personagens Favoritos e Ficha Técnica de Hardware/Setup Gamer.
+
+---
+
 ## [v4.10.2] — 2026-09-21
 
 ### 🛠️ Melhorias & Usabilidade

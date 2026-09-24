@@ -6,6 +6,7 @@ import { UserProfile, getEffectiveAccess } from "@/lib/types";
 import { getThemeStyles } from "@/lib/themeStyles";
 import UserAvatar from "@/components/UserAvatar";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
+import FavoriteUserPopover, { FavoriteAlertSettings } from "@/components/profile/FavoriteUserPopover";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 import {
   Crown,
@@ -20,6 +21,7 @@ import {
   Layers,
   Edit2,
   Award,
+  Radio,
 } from "lucide-react";
 
 export interface ProfileHeroMobileProps {
@@ -27,6 +29,8 @@ export interface ProfileHeroMobileProps {
   isOwner: boolean;
   isAdmin: boolean;
   isPremium: boolean;
+  isFavorited?: boolean;
+  onToggleFavorite?: (isFavorited: boolean, settings: FavoriteAlertSettings) => Promise<void>;
   onOpenEditProfile?: () => void;
   onOpenEditBio?: () => void;
   onOpenTools?: () => void;
@@ -44,6 +48,10 @@ export interface ProfileHeroMobileProps {
 export default function ProfileHeroMobile({
   user,
   isOwner,
+  isAdmin,
+  isPremium,
+  isFavorited = false,
+  onToggleFavorite,
   onOpenEditProfile,
   onOpenEditBio,
   onOpenTools,
@@ -56,6 +64,7 @@ export default function ProfileHeroMobile({
   const [bioExpanded, setBioExpanded] = useState(false);
   const themeStyles = getThemeStyles(user.theme);
   const access = getEffectiveAccess(user);
+  const isLive = Boolean(user.isTwitchLive || user.twitchChannel);
 
   const handleAction = (cb?: () => void) => {
     triggerSelectionHaptic();
@@ -84,10 +93,17 @@ export default function ProfileHeroMobile({
         {/* Linha Superior: Avatar, Identidade e Ação de Compartilhar */}
         <div className="flex items-start justify-between gap-3 pt-2 sm:pt-4">
           <div className="flex items-center gap-3.5 min-w-0">
-            {/* Avatar Gamer com Anel Neon e Botão Rápido */}
+            {/* Avatar Gamer com Anel Neon / LIVE e Botão Rápido */}
             <div id="profile-avatar" className="profile-avatar relative shrink-0">
+              {/* Efeito Respirando de LIVE da Twitch */}
+              {isLive && (
+                <span className="absolute -inset-1 rounded-2xl bg-purple-500/60 blur-[3px] animate-pulse pointer-events-none" />
+              )}
+
               <div
-                className={`rounded-2xl overflow-hidden border-2 ${themeStyles.avatarBorder} shadow-md ring-1 ring-white/10`}
+                className={`rounded-2xl overflow-hidden border-2 ${
+                  isLive ? "border-purple-500 shadow-purple-500/50" : themeStyles.avatarBorder
+                } shadow-md ring-1 ring-white/10 relative z-10`}
               >
                 <UserAvatar
                   photoURL={user.photoURL}
@@ -97,11 +113,21 @@ export default function ProfileHeroMobile({
                 />
               </div>
 
+              {/* Tag LIVE respirando */}
+              {isLive && (
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-20">
+                  <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white font-black font-mono text-[9px] tracking-wider uppercase shadow-md flex items-center gap-0.5 border border-purple-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    LIVE
+                  </span>
+                </div>
+              )}
+
               {isOwner && (
                 <button
                   type="button"
                   onClick={() => handleAction(onOpenEditProfile)}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 hover:bg-emerald-400 border-2 border-[#141822] flex items-center justify-center text-black font-black shadow-md active:scale-95 transition-transform"
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 hover:bg-emerald-400 border-2 border-[#141822] flex items-center justify-center text-black font-black shadow-md active:scale-95 transition-transform z-20"
                   title="Alterar foto do perfil"
                   aria-label="Alterar foto do perfil"
                 >
@@ -174,19 +200,30 @@ export default function ProfileHeroMobile({
             </div>
           </div>
 
-          {/* Botão Flutuante de Compartilhar */}
-          {onOpenShare && (
-            <button
-              type="button"
-              onClick={() => handleAction(onOpenShare)}
-              className="p-2 sm:px-3 sm:py-2 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-gray-300 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-all shrink-0 active:scale-95"
-              title="Compartilhar Perfil"
-              aria-label="Compartilhar Perfil"
-            >
-              <Share2 className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">Compartilhar</span>
-            </button>
-          )}
+          {/* Ações do Topo Direito (Compartilhar + Favoritar para Visitantes) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {!isOwner && (
+              <FavoriteUserPopover
+                targetUserId={user.uid}
+                targetUsername={user.username}
+                initialFavorited={isFavorited}
+                onToggleFavorite={onToggleFavorite}
+              />
+            )}
+
+            {onOpenShare && (
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenShare)}
+                className="p-2 sm:px-3 sm:py-2 rounded-2xl bg-[#1c2230] hover:bg-[#252f42] border border-white/10 text-gray-300 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-all shrink-0 active:scale-95"
+                title="Compartilhar Perfil"
+                aria-label="Compartilhar Perfil"
+              >
+                <Share2 className="w-4 h-4 text-emerald-400" />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bio Curta com Expansão Progressiva */}

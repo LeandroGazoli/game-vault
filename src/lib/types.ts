@@ -449,6 +449,10 @@ export interface UserGame {
   parentGameId?: number | null;
   parentGameTitle?: string | null;
   includeDlcHoursInTotal?: boolean;
+  /** Dados Financeiros / Resumo de Investimento Gamer */
+  pricePaid?: number | null; // Valor pago (ex: 79.90 ou 0 para grátis)
+  currency?: "BRL" | "USD" | "EUR" | "GBP" | "JPY"; // Moeda utilizada
+  acquisitionType?: "bought" | "subscription" | "gift" | "free_to_play"; // Como adquiriu
 }
 
 export type ProfileLayout = "default" | "cinematic" | "gamer_id" | "minimal";
@@ -503,6 +507,48 @@ export interface UserProfile {
   grantedAt?: string | null;    // ISO da concessão
   birthDate?: string | null;
   adultContentConfirmedAt?: string | null;
+  usernameChangeCount?: number;
+  usernameChangedAt?: string | null;
+  referredByUsername?: string | null;
+  twitchChannel?: string | null;
+  isTwitchLive?: boolean;
+  nowPlayingConfig?: {
+    mode?: "auto" | "manual";
+    pinnedGameIds?: number[];
+    intervalSeconds?: number;
+  };
+  favoritedUserAlerts?: Record<
+    string,
+    {
+      reviews: boolean;
+      completions: boolean;
+      guides: boolean;
+      lives: boolean;
+    }
+  >;
+  mostAnticipatedGames?: Array<{
+    id: string;
+    gameTitle: string;
+    coverUrl?: string;
+    releaseDate: string;
+    platform?: string;
+    hypeReason?: string;
+  }>;
+  guestbookConfig?: {
+    enabled: boolean;
+    requireApproval: boolean;
+  };
+  guestbookEntries?: Array<{
+    id: string;
+    authorUid: string;
+    authorUsername: string;
+    authorDisplayName: string;
+    authorPhotoURL?: string | null;
+    content: string;
+    playedTogetherGameTitle?: string;
+    createdAt: string;
+    approved: boolean;
+  }>;
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
   gamesCount?: number;

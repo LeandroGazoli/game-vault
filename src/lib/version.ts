@@ -2,8 +2,8 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.10.2";
-export const APP_RELEASE_DATE = "2026-09-21";
+export const APP_VERSION = "v4.13.0";
+export const APP_RELEASE_DATE = "2026-09-24";
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,42 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.13.0",
+    date: "24/09/2026",
+    title: "Mural da Comunidade (Guestbook) & Mais Aguardados com Countdown",
+    highlights: [
+      "Mural de Recados no perfil com suporte a marcar jogos jogados juntos e moderação opcional.",
+      "Seção Mais Aguardados com contagem regressiva em tempo real até o lançamento de cada jogo.",
+      "Novas seções integradas ao orquestrador modular de perfis.",
+    ],
+  },
+  {
+    version: "v4.12.0",
+    date: "21/09/2026",
+    title: "Identidade Gamer, Sincronização Explicada, Favoritos & Twitch Live",
+    highlights: [
+      "Cadastro com escolha/gerador de username único, data de nascimento e indicação.",
+      "Edição única do @username nas configurações com proteção de limite.",
+      "Modal 'Como a Sincronização Funciona' com suporte interno e orientações passo a passo.",
+      "Sistema de Favoritar Usuários com estrela e 4 toggles independentes de alertas.",
+      "Integração Twitch: anel LIVE pulsante no avatar do perfil e player retrátil.",
+      "Rail 'Jogando Agora' com rotação automática de 6s e fallback inteligente.",
+      "Suporte a vídeos de até 90s na galeria com proteção de spoiler interativo.",
+      "Botão de iniciar jogo Steam direto do navegador (steam://run/[appId]).",
+    ],
+  },
+  {
+    version: "v4.11.0",
+    date: "21/09/2026",
+    title: "Upload Direto de Imagens, Vitrine de Troféus & Insígnias de Franquias",
+    highlights: [
+      "Upload direto de fotos e screenshots do dispositivo para capa e galeria gamer.",
+      "Vitrine de troféus e platinas importadas da Steam, PSN e Xbox.",
+      "Insígnias de Franquias com progresso por jogo (Dark Souls, Resident Evil, Persona, etc.).",
+      "Mapa de Calor de Atividade Gamer estilo GitHub e Vitrines de Setup e Personagens.",
+    ],
+  },
   {
     version: "v4.10.2",
     date: "21/09/2026",

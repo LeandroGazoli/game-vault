@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Game, UserGame } from "@/lib/types";
 import { getGameUrl } from "@/lib/routes";
-import { Star, Clock, Check, Plus, Heart } from "lucide-react";
+import { Star, Clock, Check, Plus, Heart, Play } from "lucide-react";
 import GamePosterCover from "@/components/common/GamePosterCover";
 import StatusBadge from "@/components/StatusBadge";
 import MetacriticBadge from "@/components/MetacriticBadge";
@@ -18,6 +18,7 @@ export interface GamePosterCardProps {
   showRank?: number;
   className?: string;
   isPriority?: boolean;
+  isOwner?: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export default function GamePosterCard({
   showRank,
   className = "",
   isPriority = false,
+  isOwner = false,
 }: GamePosterCardProps) {
   const isUserGameObj = "gameId" in game;
   const gameId = isUserGameObj ? game.gameId : game.id;
@@ -46,6 +48,16 @@ export default function GamePosterCard({
 
   const resolvedUrl = getGameUrl({ id: gameId, slug: gameSlug, name: gameTitle });
   const activeUserGame = isUserGameObj ? game : userGame;
+
+  // Verifica se é plataforma PC/Steam e dono do perfil
+  const platforms = isUserGameObj
+    ? activeUserGame?.platformsPlayed || [activeUserGame?.platformPlayed]
+    : "platforms" in game
+    ? game.platforms?.map((p) => p.platform?.name)
+    : [];
+  const isSteamOrPc = platforms?.some((p) =>
+    p?.toLowerCase().includes("pc") || p?.toLowerCase().includes("steam")
+  );
 
   return (
     <div
@@ -75,6 +87,19 @@ export default function GamePosterCard({
                 <div className="absolute top-2 right-2 z-10">
                   <StatusBadge status={status} completionType={completionType} size="sm" />
                 </div>
+              )}
+
+              {/* Botão de Jogar na Steam direto do navegador (Exclusivo do dono do perfil) */}
+              {isOwner && isSteamOrPc && (
+                <a
+                  href={`steam://run/${gameId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-16 right-2 p-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/40 shadow-lg opacity-0 group-hover:opacity-100 transition-all active:scale-90 z-20"
+                  title="Jogar na Steam (Abre o Launcher)"
+                  aria-label="Jogar na Steam"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                </a>
               )}
 
               {/* Barra inferior solida com informacoes essenciais */}

@@ -22,6 +22,17 @@ import ProfileBioRenderer from "@/components/ProfileBioRenderer";
 import UserAvatar from "@/components/UserAvatar";
 
 import ProfileModalsContainer from "@/components/profile/ProfileModalsContainer";
+import FranchiseBadgesSection from "@/components/profile/FranchiseBadgesSection";
+import ShowcaseTrophiesSection from "@/components/profile/ShowcaseTrophiesSection";
+import GamerGallerySection from "@/components/profile/GamerGallerySection";
+import FinancialStatsCard from "@/components/profile/FinancialStatsCard";
+import ActivityHeatmapSection from "@/components/profile/ActivityHeatmapSection";
+import FavoriteCharactersSection from "@/components/profile/FavoriteCharactersSection";
+import SetupShowcaseSection from "@/components/profile/SetupShowcaseSection";
+import TwitchLiveSection from "@/components/profile/TwitchLiveSection";
+import NowPlayingRail from "@/components/profile/NowPlayingRail";
+import MostAnticipatedSection from "@/components/profile/MostAnticipatedSection";
+import ProfileGuestbookSection from "@/components/profile/ProfileGuestbookSection";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
 import { scopeProfileCss } from "@/lib/sanitizeCss";
@@ -59,7 +70,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
     if (isViewingPublic && routeUsername) {
       setPublicLoading(true);
       fetch(`/api/user/${encodeURIComponent(routeUsername)}/games.json?limit=all`)
-        .then(async (res) => (res.ok ? res.json() : null))
+        .then(async (res) => (res.ok ? ((await res.json()) as { user?: UserProfile; games?: UserGame[]; stats?: any }) : null))
         .then((data) => {
           if (data?.user) setPublicData(data);
           else setPublicNotFound(true);
@@ -97,7 +108,24 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
 
   const renderSection = useCallback((sectionId: ProfileSectionId) => {
     if (!activeUser) return null;
+
     switch (sectionId) {
+      case "twitch_live":
+        return activeUser.twitchChannel || activeUser.socialLinks?.twitch ? (
+          <TwitchLiveSection
+            channel={activeUser.twitchChannel || activeUser.socialLinks?.twitch || ""}
+            currentGame={activeLibrary.find((g) => g.status === "playing")?.gameTitle}
+          />
+        ) : null;
+      case "now_playing":
+        return (
+          <NowPlayingRail
+            games={activeLibrary}
+            pinnedGameIds={activeUser.nowPlayingConfig?.pinnedGameIds}
+            intervalSeconds={activeUser.nowPlayingConfig?.intervalSeconds || 6}
+            isOwner={isOwnProfile}
+          />
+        );
       case "game_tracker":
         return (
           <ProfileGameTracker
@@ -141,6 +169,77 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
             onEdit={isOwnProfile ? () => router.push("/perfil/editar?tab=markdown") : undefined}
           />
         ) : null;
+      case "financial_stats":
+        return <FinancialStatsCard games={activeLibrary} isOwner={isOwnProfile} />;
+      case "showcase_trophies":
+        return <ShowcaseTrophiesSection isOwner={isOwnProfile} />;
+      case "gamer_gallery":
+        return <GamerGallerySection isOwner={isOwnProfile} />;
+      case "franchise_badges":
+        return <FranchiseBadgesSection games={activeLibrary} isOwner={isOwnProfile} />;
+      case "activity_heatmap":
+        return <ActivityHeatmapSection games={activeLibrary} />;
+      case "favorite_characters":
+        return <FavoriteCharactersSection isOwner={isOwnProfile} />;
+      case "setup_showcase":
+        return <SetupShowcaseSection isOwner={isOwnProfile} />;
+      case "most_anticipated":
+        return (
+          <MostAnticipatedSection
+            games={activeUser.mostAnticipatedGames}
+            isOwner={isOwnProfile}
+            onSaveGames={async (updatedGames) => {
+              if (isOwnProfile) {
+                await updateUserProfile?.({ mostAnticipatedGames: updatedGames });
+              }
+            }}
+          />
+        );
+      case "guestbook":
+        return (
+          <ProfileGuestbookSection
+            entries={activeUser.guestbookEntries}
+            config={activeUser.guestbookConfig}
+            isOwner={isOwnProfile}
+            currentViewer={
+              authUser
+                ? {
+                    uid: authUser.uid,
+                    username: authUser.username,
+                    displayName: authUser.displayName,
+                    photoURL: authUser.photoURL,
+                  }
+                : null
+            }
+            onPostMessage={async (entryData) => {
+              const currentEntries = activeUser.guestbookEntries || [];
+              const isAutoApproved = !activeUser.guestbookConfig?.requireApproval || isOwnProfile;
+              const newEntry = {
+                id: "gb_" + Date.now(),
+                ...entryData,
+                createdAt: new Date().toISOString(),
+                approved: isAutoApproved,
+              };
+              if (isOwnProfile) {
+                await updateUserProfile?.({ guestbookEntries: [newEntry, ...currentEntries] });
+              }
+            }}
+            onApproveMessage={async (entryId) => {
+              if (isOwnProfile) {
+                const currentEntries = activeUser.guestbookEntries || [];
+                const updated = currentEntries.map((e) => (e.id === entryId ? { ...e, approved: true } : e));
+                await updateUserProfile?.({ guestbookEntries: updated });
+              }
+            }}
+            onDeleteMessage={async (entryId) => {
+              if (isOwnProfile) {
+                const currentEntries = activeUser.guestbookEntries || [];
+                const updated = currentEntries.filter((e) => e.id !== entryId);
+                await updateUserProfile?.({ guestbookEntries: updated });
+              }
+            }}
+          />
+        );
       case "showcase":
         return activeUser.showcaseGameId ? (
           <ShowcaseGameCard game={activeLibrary.find((g) => g.gameId === activeUser.showcaseGameId)} />
@@ -148,7 +247,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       default:
         return null;
     }
-  }, [activeUser, activeLibrary, activeStats, isOwnProfile, router, authUser?.socialLinks, updateUserProfile]);
+  }, [activeUser, activeLibrary, activeStats, isOwnProfile, router, authUser, updateUserProfile]);
 
   if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return <div className="space-y-4 animate-pulse"><div className="h-44 rounded-3xl bg-[#141822]" /><div className="h-64 rounded-3xl bg-[#141822]" /></div>;
@@ -207,6 +306,18 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         isOwner={isOwnProfile}
         isAdmin={isAdmin}
         isPremium={isPremium}
+        isFavorited={Boolean(authUser?.favoritedUserAlerts?.[activeUser.uid])}
+        onToggleFavorite={async (isFav, favSettings) => {
+          if (!authUser || isOwnProfile) return;
+          const currentAlerts = authUser.favoritedUserAlerts || {};
+          const updatedAlerts = { ...currentAlerts };
+          if (isFav) {
+            updatedAlerts[activeUser.uid] = favSettings;
+          } else {
+            delete updatedAlerts[activeUser.uid];
+          }
+          await updateUserProfile?.({ favoritedUserAlerts: updatedAlerts });
+        }}
         onOpenEditProfile={() => router.push("/perfil/editar?tab=info")}
         onOpenEditBio={() => router.push("/perfil/editar?tab=markdown")}
         onOpenTools={() => setIsToolsOpen(true)}

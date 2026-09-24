@@ -19,6 +19,8 @@ interface IdentityAccordionProps {
   displayName: string;
   setDisplayName: (val: string) => void;
   username: string;
+  setUsername: (val: string) => void;
+  usernameChangeCount?: number;
   photoURL: string;
   setPhotoURL: (val: string) => void;
   bio: string;
@@ -38,6 +40,8 @@ export default function IdentityAccordion({
   displayName,
   setDisplayName,
   username,
+  setUsername,
+  usernameChangeCount = 0,
   photoURL,
   setPhotoURL,
   bio,
@@ -176,24 +180,61 @@ export default function IdentityAccordion({
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
                 Nome de Usuário (@handle)
               </label>
-              <span className="px-1.5 py-0.5 rounded bg-[#1a2130] text-[9px] font-mono font-bold text-gray-400">
-                BLOQUEADO
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                usernameChangeCount < 1
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : "bg-[#1a2130] text-gray-400"
+              }`}>
+                {usernameChangeCount < 1 ? "1 EDIÇÃO DISPONÍVEL" : "BLOQUEADO PERMANENTEMENTE"}
               </span>
             </div>
-            <div className="flex items-center gap-2 bg-[#1a2130]/70 rounded-xl px-3.5 py-2.5 border border-white/10">
-              <Lock className="w-4 h-4 text-gray-500 shrink-0" />
-              <span className="font-mono text-sm font-semibold text-[#00E5FF] flex-1 truncate">
-                @{username || "jogador"}
-              </span>
-              <button
-                type="button"
-                onClick={copyHandle}
-                className="px-2.5 py-1 rounded-lg bg-[#1e2433] hover:bg-[#1a2130] text-xs font-semibold text-gray-200 flex items-center gap-1 active:scale-95 transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copiar</span>
-              </button>
-            </div>
+
+            {usernameChangeCount < 1 ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 bg-[#1a2130] rounded-xl px-3.5 py-2.5 border border-white/10 focus-within:border-emerald-400 transition-colors">
+                  <span className="font-mono text-sm font-bold text-emerald-400">@</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) =>
+                      setUsername(
+                        e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9_]/g, "")
+                      )
+                    }
+                    placeholder="novo_handle"
+                    className="w-full bg-transparent font-mono text-sm font-semibold text-white focus:outline-none placeholder:text-gray-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={copyHandle}
+                    className="px-2 py-1 rounded-lg bg-[#1e2433] hover:bg-[#252d3d] text-[10px] font-semibold text-gray-300 flex items-center gap-1 active:scale-95 transition-all shrink-0"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>Copiar</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-amber-300/80">
+                  ⚠️ Atenção: você só pode alterar seu username uma única vez. Escolha com cuidado.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-[#1a2130]/70 rounded-xl px-3.5 py-2.5 border border-white/10">
+                <Lock className="w-4 h-4 text-gray-500 shrink-0" />
+                <span className="font-mono text-sm font-semibold text-[#00E5FF] flex-1 truncate">
+                  @{username || "jogador"}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyHandle}
+                  className="px-2.5 py-1 rounded-lg bg-[#1e2433] hover:bg-[#1a2130] text-xs font-semibold text-gray-200 flex items-center gap-1 active:scale-95 transition-all"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copiar</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Bio Curta */}

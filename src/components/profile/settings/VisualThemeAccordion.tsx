@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Palette, ChevronDown, Sparkles, Code, Crown, Wand2 } from "lucide-react";
+import React, { useRef } from "react";
+import { Palette, ChevronDown, Sparkles, Code, Crown, Wand2, Upload } from "lucide-react";
 import { ProfileTheme, ProfileLayout, PRESET_BANNERS } from "@/lib/types";
 import { BackgroundConfig } from "@/lib/types/background.types";
 import VipBackgroundSelector from "@/components/profile/VipBackgroundSelector";
@@ -54,6 +54,21 @@ export default function VisualThemeAccordion({
   isPremium,
   onOpenUpgrade,
 }: VisualThemeAccordionProps) {
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setCustomBannerUrl(reader.result);
+          setBannerURL(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   return (
     <div className={`rounded-2xl bg-[#141822] border transition-all duration-300 overflow-hidden shadow-sm ${
       isOpen ? "border-[#00E5FF]/40 ring-1 ring-[#00E5FF]/20" : "border-white/10"
@@ -118,16 +133,33 @@ export default function VisualThemeAccordion({
                 );
               })}
             </div>
-            <input
-              type="text"
-              value={customBannerUrl}
-              onChange={(e) => {
-                setCustomBannerUrl(e.target.value);
-                if (e.target.value) setBannerURL(e.target.value);
-              }}
-              placeholder="Ou insira URL customizada de capa..."
-              className="w-full bg-[#1a2130] text-xs rounded-lg px-2.5 py-1.5 border border-white/10 text-white font-mono placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF] mt-1"
-            />
+            <div className="flex gap-2 items-center mt-2">
+              <input
+                ref={bannerFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBannerUpload}
+              />
+              <button
+                type="button"
+                onClick={() => bannerFileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-lg bg-[#1a2130] hover:bg-[#1e2433] text-xs font-semibold text-white border border-white/10 flex items-center gap-1.5 active:scale-95 transition-all shrink-0"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span>Upload Imagem</span>
+              </button>
+              <input
+                type="text"
+                value={customBannerUrl}
+                onChange={(e) => {
+                  setCustomBannerUrl(e.target.value);
+                  if (e.target.value) setBannerURL(e.target.value);
+                }}
+                placeholder="Ou insira link de imagem/GIF..."
+                className="w-full bg-[#1a2130] text-xs rounded-lg px-2.5 py-1.5 border border-white/10 text-white font-mono placeholder:text-gray-500 focus:outline-none focus:border-[#00E5FF]"
+              />
+            </div>
           </div>
 
           {/* Seletor de Paletas de Destaque */}
