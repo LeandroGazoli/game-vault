@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UserProfile, LibraryStats } from "@/lib/types";
+import { UserProfile, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { GamerRankResult } from "@/lib/firebase";
 import LegendaryVaultCard from "@/components/profile/LegendaryVaultCard";
 import GamerScoreboardCard from "@/components/profile/GamerScoreboardCard";
@@ -30,6 +30,8 @@ export default function ProfileGamificationSection({
   onOpenXpBreakdown,
   onOpenCustomizer,
 }: ProfileGamificationSectionProps) {
+  const effectivePlan = getEffectiveAccess(user).plan;
+
   return (
     <div id="profile-achievements" className="profile-achievements space-y-4 animate-fadeIn">
       {/* Cabeçalho da Central Gamer */}
@@ -59,7 +61,7 @@ export default function ProfileGamificationSection({
       {/* Placar de Pontos e XP */}
       <GamerScoreboardCard
         stats={stats}
-        plan={user.plan}
+        plan={effectivePlan}
         bonusXp={user.bonusXp}
         onOpenXpBreakdown={onOpenXpBreakdown}
       />
@@ -67,7 +69,7 @@ export default function ProfileGamificationSection({
       {/* Expositor de Insígnias */}
       <GamerBadgesCard
         stats={stats}
-        gamerLevel={user.gamerLevel}
+        gamerLevel={stats ? calculateGamerLevel(stats, undefined, effectivePlan, user.bonusXp).level : user.gamerLevel}
         userId={user.uid}
         isOwner={isOwner}
         claimedRewards={user.claimedRewards}

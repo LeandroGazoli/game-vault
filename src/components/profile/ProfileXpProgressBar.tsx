@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UserProfile, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { UserProfile, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { getSteamLevelTier } from "@/lib/steamUtils";
 import { Trophy, ChevronRight, Sparkles, Zap } from "lucide-react";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
@@ -23,10 +23,11 @@ export default function ProfileXpProgressBar({
   onOpenXpBreakdown,
   onOpenUpgrade,
 }: ProfileXpProgressBarProps) {
-  const isVip = user.plan === "vip";
-  const isPro = user.plan === "pro";
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank, user.plan);
-  const displayLevel = user.gamerLevel || gamerLevelInfo.level;
+  const access = getEffectiveAccess(user);
+  const isVip = access.plan === "vip";
+  const isPro = access.plan === "pro";
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, access.plan, user.bonusXp);
+  const displayLevel = stats ? gamerLevelInfo.level : (user.gamerLevel || gamerLevelInfo.level);
   const tier = getSteamLevelTier(displayLevel);
 
   return (

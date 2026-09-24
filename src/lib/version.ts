@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.13.0";
+export const APP_VERSION = "v4.13.2";
 export const APP_RELEASE_DATE = "2026-09-24";
 
 export interface ChangelogEntry {
@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.13.2",
+    date: "24/09/2026",
+    title: "Correção de Hidratação e Estabilidade no Estúdio de Edição de Perfil",
+    highlights: [
+      "Correção de sincronização de dados e campo de data de nascimento em /perfil/editar",
+      "Suporte reativo completo a estilização customizada CSS Scoped para membros VIP/PRO",
+      "Proteção de acesso com tela de carregamento e barreira amigável para usuários não autenticados",
+    ],
+  },
+  {
+    version: "v4.13.1",
+    date: "24/09/2026",
+    title: "Unificação de Nível Gamer & Otimização do SplashScreen",
+    highlights: [
+      "Unificação do cálculo de nível gamer em todos os elementos de perfil e modais",
+      "Sincronização correta do plano VIP/PRO efetivo com o cálculo de XP",
+      "Eliminação do piscar repetido e carregamento acelerado do SplashScreen mobile",
+    ],
+  },
   {
     version: "v4.13.0",
     date: "24/09/2026",

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { UserProfile, getEffectiveAccess } from "@/lib/types";
+import { UserProfile, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { getThemeStyles } from "@/lib/themeStyles";
 import UserAvatar from "@/components/UserAvatar";
 import SocialGamertagsBar from "@/components/SocialGamertagsBar";
@@ -26,6 +26,7 @@ import {
 
 export interface ProfileHeroMobileProps {
   user: UserProfile;
+  stats?: LibraryStats | null;
   isOwner: boolean;
   isAdmin: boolean;
   isPremium: boolean;
@@ -47,6 +48,7 @@ export interface ProfileHeroMobileProps {
  */
 export default function ProfileHeroMobile({
   user,
+  stats,
   isOwner,
   isAdmin,
   isPremium,
@@ -65,6 +67,9 @@ export default function ProfileHeroMobile({
   const themeStyles = getThemeStyles(user.theme);
   const access = getEffectiveAccess(user);
   const isLive = Boolean(user.isTwitchLive || user.twitchChannel);
+
+  const gamerLevelInfo = calculateGamerLevel(stats, undefined, access.plan, user.bonusXp);
+  const displayLevel = stats ? gamerLevelInfo.level : (user.gamerLevel || gamerLevelInfo.level);
 
   const handleAction = (cb?: () => void) => {
     triggerSelectionHaptic();
@@ -165,7 +170,7 @@ export default function ProfileHeroMobile({
                   title="Abrir Central de Conquistas & Missões"
                 >
                   <Trophy className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform" />
-                  <span>LV. {user.gamerLevel || 1} • CONQUISTAS →</span>
+                  <span>LV. {displayLevel} • CONQUISTAS →</span>
                 </Link>
 
                 {/* Selo de Assinatura */}

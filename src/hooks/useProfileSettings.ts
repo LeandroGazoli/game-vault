@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { triggerSelectionHaptic, triggerSuccessHaptic } from "@/lib/capacitor";
 import { PRESET_BANNERS, ProfileTheme, DEFAULT_GAMER_TITLES, SocialLinks, ProfileVisibility, ProfileLayout } from "@/lib/types";
@@ -17,7 +17,7 @@ const RANDOM_AVATARS = [
 const TAB_MAP: Record<string, number> = { info: 1, appearance: 2, titles: 3, markdown: 4, socials: 5, showcase: 6, visibility: 7 };
 
 export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => void, onClose?: () => void) {
-  const { user, isPremium, updateUserProfile } = useAuth();
+  const { user, isPremium, isLoading, updateUserProfile } = useAuth();
 
   const [activeAccordion, setActiveAccordion] = useState<number | null>(() => (initialTab ? TAB_MAP[initialTab] || 1 : 1));
   const [displayName, setDisplayName] = useState(user?.displayName || "");
@@ -32,6 +32,7 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
   const [theme, setTheme] = useState<ProfileTheme>(user?.theme || "cyan");
   const [layout, setLayout] = useState<ProfileLayout>(user?.profileLayout || "default");
   const [customBgConfig, setCustomBgConfig] = useState<BackgroundConfig | null>((user?.customBackground as BackgroundConfig) || null);
+  const [customCss, setCustomCss] = useState(user?.customCss || "");
 
   const [equippedTitles, setEquippedTitles] = useState<string[]>(() => {
     if (user?.customTitles?.length) return user.customTitles.slice(0, 3);
@@ -54,6 +55,33 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
   const [visibility, setVisibility] = useState<ProfileVisibility>(
     user?.visibility || { isPublic: user?.isPublic ?? true, showStats: true, showPlaytime: true, showRatings: true, showDropped: true }
   );
+
+  // Sincroniza o estado do formulário assim que os dados do usuário forem carregados/hidratados
+  useEffect(() => {
+    if (!user) return;
+    setDisplayName((prev) => prev || user.displayName || "");
+    setUsername((prev) => prev || user.username || "");
+    setPhotoURL((prev) => prev || user.photoURL || "");
+    setBio((prev) => prev || user.bio || "");
+    setBirthDate((prev) => prev || user.birthDate || "");
+    if (user.bannerURL) setBannerURL(user.bannerURL);
+    if (user.theme) setTheme(user.theme);
+    if (user.profileLayout) setLayout(user.profileLayout);
+    if (user.customBackground) setCustomBgConfig(user.customBackground as BackgroundConfig);
+    if (user.customCss) setCustomCss((prev) => prev || user.customCss || "");
+    if (user.customTitles?.length) {
+      setEquippedTitles(user.customTitles.slice(0, 3));
+    } else if (user.customTitle) {
+      setEquippedTitles([user.customTitle]);
+    }
+    if (user.createdCustomTitles?.length) setCreatedTitles(user.createdCustomTitles);
+    if (user.customMarkdown || user.customHtml) {
+      setMarkdownContent((prev) => prev || user.customMarkdown || user.customHtml || "");
+    }
+    if (user.socialLinks) setSocials(user.socialLinks);
+    if (user.showcaseGameId !== undefined) setShowcaseGameId(user.showcaseGameId);
+    if (user.visibility) setVisibility(user.visibility);
+  }, [user]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -147,6 +175,7 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
         birthDate: birthDate.trim() || null,
         bannerURL: banner,
         customBackground: customBgConfig,
+        customCss: customCss.trim(),
         theme,
         profileLayout: layout,
         customTitle: equippedTitles[0] || null,
@@ -172,11 +201,11 @@ export function useProfileSettings(initialTab?: string, onOpenUpgrade?: () => vo
   };
 
   return {
-    user, isPremium, activeAccordion, toggleAccordion, displayName, setDisplayName,
+    user, isPremium, isLoading, activeAccordion, toggleAccordion, displayName, setDisplayName,
     username, setUsername,
     photoURL, setPhotoURL, bio, setBio, birthDate, setBirthDate, showAge, setShowAge,
     bannerURL, setBannerURL, customBannerUrl, setCustomBannerUrl, theme, setTheme,
-    layout, setLayout, customBgConfig, setCustomBgConfig, equippedTitles, moveEquippedTitle,
+    layout, setLayout, customBgConfig, setCustomBgConfig, customCss, setCustomCss, equippedTitles, moveEquippedTitle,
     unequipTitle, toggleEquipTitle, createdTitles, newTitleInput, setNewTitleInput,
     newTitleEmoji, setNewTitleEmoji, handleCreateCustomTitle, markdownContent, setMarkdownContent,
     bioTab, setBioTab, bioMode, setBioMode, socials, setSocials, showcaseGameId,

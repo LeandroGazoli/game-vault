@@ -19,9 +19,30 @@ interface VisualThemeAccordionProps {
   setLayout: (layout: ProfileLayout) => void;
   customBgConfig: BackgroundConfig | null;
   setCustomBgConfig: (config: BackgroundConfig) => void;
+  customCss?: string;
+  setCustomCss?: (css: string) => void;
   isPremium: boolean;
   onOpenUpgrade?: () => void;
 }
+
+const CSS_SNIPPETS: { label: string; code: string }[] = [
+  {
+    label: "Borda Neon Ciano",
+    code: `#profile .profile-hero {\n  border: 1px solid rgba(0, 229, 255, 0.4);\n  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);\n}`,
+  },
+  {
+    label: "Cards Translúcidos",
+    code: `#profile .vault-card {\n  background: rgba(20, 24, 34, 0.65) !important;\n  backdrop-filter: blur(12px);\n}`,
+  },
+  {
+    label: "Destaque Dourado",
+    code: `#profile h1, #profile h2 {\n  color: #f59e0b !important;\n  text-shadow: 0 0 12px rgba(245, 158, 11, 0.3);\n}`,
+  },
+  {
+    label: "Avatar Brilhante",
+    code: `#profile .avatar-ring {\n  animation: pulse 2s infinite ease-in-out;\n}`,
+  },
+];
 
 const ACCENT_COLORS: { id: ProfileTheme; hex: string; name: string }[] = [
   { id: "cyan", hex: "#00E5FF", name: "Ciano Cyber" },
@@ -51,6 +72,8 @@ export default function VisualThemeAccordion({
   setLayout,
   customBgConfig,
   setCustomBgConfig,
+  customCss,
+  setCustomCss,
   isPremium,
   onOpenUpgrade,
 }: VisualThemeAccordionProps) {

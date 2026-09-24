@@ -5,22 +5,36 @@ import { gsap } from "@/lib/gsap";
 import { Gamepad2 } from "lucide-react";
 
 export default function PwaSplashScreen() {
-  const [isRendered, setIsRendered] = useState(true);
+  const [isRendered, setIsRendered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const spinnerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Só exibe a splash screen no primeiro acesso da sessão para evitar piscar em cada refresh/navegação
+    if (typeof window !== "undefined") {
+      try {
+        if (sessionStorage.getItem("gv_splash_shown")) {
+          return;
+        }
+        sessionStorage.setItem("gv_splash_shown", "1");
+      } catch {
+        // Ignora restrições de sessionStorage
+      }
+    }
+
+    setIsRendered(true);
+
     // Se o usuário preferir movimento reduzido, desativa animações pesadas
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Timeout mínimo de exibição para permitir uma transição estética fluida
+    // Timeout mínimo reduzido para resposta imediata no mobile sem segurar a tela
     const startTime = Date.now();
-    const MIN_DISPLAY_MS = 800;
-    const MAX_TIMEOUT_MS = 3000;
+    const MIN_DISPLAY_MS = 250;
+    const MAX_TIMEOUT_MS = 1200;
 
     let pulseTween: gsap.core.Tween | null = null;
 
@@ -36,13 +50,20 @@ export default function PwaSplashScreen() {
     }
 
     let dismissTimer: NodeJS.Timeout | null = null;
+    let dismissed = false;
 
     const dismissSplash = () => {
+      if (dismissed) return;
+      dismissed = true;
+
       const elapsed = Date.now() - startTime;
       const remainingTime = Math.max(0, MIN_DISPLAY_MS - elapsed);
 
       dismissTimer = setTimeout(() => {
-        if (!containerRef.current) return;
+        if (!containerRef.current) {
+          setIsRendered(false);
+          return;
+        }
 
         if (pulseTween) pulseTween.kill();
 
@@ -59,33 +80,36 @@ export default function PwaSplashScreen() {
 
         tl.to([badgeRef.current, spinnerRef.current, textRef.current], {
           opacity: 0,
-          scale: 0.92,
-          y: -15,
-          duration: 0.35,
-          stagger: 0.05,
+          scale: 0.95,
+          y: -10,
+          duration: 0.22,
+          stagger: 0.03,
           ease: "power2.in",
         }).to(
           containerRef.current,
           {
             opacity: 0,
-            duration: 0.4,
+            duration: 0.25,
             ease: "power2.out",
           },
-          "-=0.15"
+          "-=0.1"
         );
       }, remainingTime);
     };
 
-    // Aguarda o carregamento completo da janela ou aciona pelo timer de segurança
-    if (document.readyState === "complete") {
+    // Não espera scripts de terceiros / anúncios terminarem (window.load).
+    // Dispara assim que a árvore DOM estiver pronta ou se já for interactive/complete.
+    if (document.readyState === "complete" || document.readyState === "interactive") {
       dismissSplash();
     } else {
+      window.addEventListener("DOMContentLoaded", dismissSplash, { once: true });
       window.addEventListener("load", dismissSplash, { once: true });
     }
 
     const maxTimer = setTimeout(dismissSplash, MAX_TIMEOUT_MS);
 
     return () => {
+      window.removeEventListener("DOMContentLoaded", dismissSplash);
       window.removeEventListener("load", dismissSplash);
       if (dismissTimer) clearTimeout(dismissTimer);
       clearTimeout(maxTimer);

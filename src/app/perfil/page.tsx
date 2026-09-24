@@ -303,6 +303,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       {/* Hero Mobile-First */}
       <ProfileHeroMobile
         user={activeUser}
+        stats={activeStats}
         isOwner={isOwnProfile}
         isAdmin={isAdmin}
         isPremium={isPremium}

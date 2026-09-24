@@ -267,28 +267,48 @@ export default function IdentityAccordion({
           </div>
 
           {/* Nascimento & Idade */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#4edea3]/10 text-[#4edea3] flex items-center justify-center">
-                <Cake className="w-4 h-4" />
+          <div className="space-y-2 pt-2 border-t border-white/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#4edea3]/10 text-[#4edea3] flex items-center justify-center">
+                  <Cake className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block">
+                    {birthDate && calculatedAge !== null && calculatedAge > 0
+                      ? `Data de Nascimento: ${calculatedAge} anos`
+                      : "Definir Data de Nascimento"}
+                  </span>
+                  <span className="text-[10px] text-gray-400">Exibir idade publicamente</span>
+                </div>
               </div>
-              <div>
-                <span className="text-xs font-bold text-white block">
-                  {birthDate ? `${birthDate} (${calculatedAge} anos)` : "Definir Data de Nascimento"}
-                </span>
-                <span className="text-[10px] text-gray-400">Exibir idade publicamente</span>
-              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showAge}
+                  onChange={(e) => setShowAge(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5 bg-[#1e2433] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#10b981]" />
+              </label>
             </div>
 
-            <label className="relative inline-flex items-center cursor-pointer">
+            <div className="flex items-center gap-2 bg-[#1a2130] rounded-xl px-3.5 py-2 border border-white/10 focus-within:border-emerald-400 transition-colors">
               <input
-                type="checkbox"
-                checked={showAge}
-                onChange={(e) => setShowAge(e.target.checked)}
-                className="sr-only peer"
+                type="date"
+                value={birthDate}
+                max={new Date().toISOString().split("T")[0]}
+                min="1920-01-01"
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="w-full bg-transparent text-xs text-white focus:outline-none [color-scheme:dark]"
               />
-              <div className="w-10 h-5 bg-[#1e2433] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#10b981]" />
-            </label>
+              {birthDate && calculatedAge !== null && (
+                <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0">
+                  {calculatedAge} anos
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}

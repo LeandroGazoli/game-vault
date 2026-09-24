@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { UserProfile, LibraryStats, UserGame, calculateGamerLevel } from "@/lib/types";
+import { UserProfile, LibraryStats, UserGame, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { getMetricValue } from "@/lib/gamification";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import {
@@ -49,8 +49,9 @@ export default function ShareGamerCardModal({
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank, user.plan);
-  const displayLevel = user.gamerLevel || gamerLevelInfo.level;
+  const access = getEffectiveAccess(user);
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, access.plan, user.bonusXp);
+  const displayLevel = stats ? gamerLevelInfo.level : (user.gamerLevel || gamerLevelInfo.level);
   const rankTitle = gamerLevelInfo.rankTitle;
 
   const completedCount = stats?.completedCount || 0;

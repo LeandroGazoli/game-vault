@@ -29,6 +29,7 @@ interface GamerXpBreakdownModalProps {
   gamerLevel?: number;
   realRank?: string;
   plan?: UserPlan;
+  bonusXp?: number;
   onOpenUpgrade?: () => void;
 }
 
@@ -39,10 +40,11 @@ export default function GamerXpBreakdownModal({
   gamerLevel,
   realRank,
   plan,
+  bonusXp,
   onOpenUpgrade,
 }: GamerXpBreakdownModalProps) {
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank, plan);
-  const displayLevel = gamerLevel || gamerLevelInfo.level;
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, plan, bonusXp);
+  const displayLevel = stats ? gamerLevelInfo.level : (gamerLevel || gamerLevelInfo.level);
   const steamTier = getSteamLevelTier(displayLevel);
   const { breakdown } = gamerLevelInfo;
 

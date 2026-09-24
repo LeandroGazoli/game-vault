@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGameLibrary } from "@/context/GameLibraryContext";
-import { UserProfile, UserGame, calculateGamerLevel } from "@/lib/types";
+import { UserProfile, UserGame, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { computeLibraryStats } from "@/lib/gamificationCore";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
 import UserAvatar from "@/components/UserAvatar";
@@ -69,8 +69,9 @@ export default function ConquistasClient({ targetUsername }: ConquistasClientPro
   const activeLibrary = isOwn ? ownLibrary : publicData?.games || [];
   const activeStats = useMemo(() => (isOwn ? ownStats : computeLibraryStats(activeLibrary)), [isOwn, activeLibrary, ownStats]);
 
-  const gamerLevelInfo = calculateGamerLevel(activeStats, undefined, activeUser?.plan, activeUser?.bonusXp);
-  const displayLevel = activeUser?.gamerLevel || gamerLevelInfo.level;
+  const effectivePlan = activeUser ? getEffectiveAccess(activeUser).plan : "free";
+  const gamerLevelInfo = calculateGamerLevel(activeStats, undefined, effectivePlan, activeUser?.bonusXp);
+  const displayLevel = gamerLevelInfo.level;
   const progressPercent = Math.min(100, Math.max(0, Math.round(gamerLevelInfo.percentToNext)));
 
   const profileUrl = activeUser?.username ? `/perfil/${encodeURIComponent(activeUser.username)}` : "/perfil";
@@ -266,7 +267,7 @@ export default function ConquistasClient({ targetUsername }: ConquistasClientPro
             <div className="animate-fadeIn">
               <GamerScoreboardCard
                 stats={activeStats}
-                plan={activeUser.plan}
+                plan={effectivePlan}
                 bonusXp={activeUser.bonusXp}
                 onOpenRankings={() => router.push("/rankings")}
               />

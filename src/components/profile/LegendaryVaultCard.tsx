@@ -1,5 +1,5 @@
 import React from "react";
-import { UserProfile, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { UserProfile, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { getSteamLevelTier } from "@/lib/steamUtils";
 import { Crown, Sparkles, Trophy, ArrowRight, Award, Zap, Shield, Bookmark } from "lucide-react";
 
@@ -22,11 +22,12 @@ export default function LegendaryVaultCard({
   onOpenManagePlan,
   onOpenXpBreakdown,
 }: LegendaryVaultCardProps) {
-  const isVip = user.plan === "vip";
-  const isPro = user.plan === "pro";
+  const access = getEffectiveAccess(user);
+  const isVip = access.plan === "vip";
+  const isPro = access.plan === "pro";
   const isVipOrPro = isVip || isPro;
-  const gamerLevelInfo = calculateGamerLevel(stats, realRank, user.plan);
-  const displayLevel = user.gamerLevel || gamerLevelInfo.level;
+  const gamerLevelInfo = calculateGamerLevel(stats, realRank, access.plan, user.bonusXp);
+  const displayLevel = stats ? gamerLevelInfo.level : (user.gamerLevel || gamerLevelInfo.level);
   const steamTier = getSteamLevelTier(displayLevel);
 
   // Insígnia em destaque automática baseada nas estatísticas

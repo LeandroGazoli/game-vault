@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { UserGame, GameStatus, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { UserGame, GameStatus, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { computeLibraryStats } from "@/lib/gamificationCore";
 import { useAuth } from "./AuthContext";
 import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames, saveUserProfile } from "@/lib/firebase";
@@ -390,6 +390,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
   const isHydratedRef = useRef(false);
   const celebratedLevelRef = useRef<number>(0);
   const lastSyncSigRef = useRef<string | null>(null);
+  const lastPlanRef = useRef<string | null>(null);
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; oldLevel: number; rankTitle: string } | null>(null);
 
   // Reseta referências se o usuário mudar ou deslogar
@@ -400,6 +401,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
       isHydratedRef.current = false;
       celebratedLevelRef.current = 0;
       lastSyncSigRef.current = null;
+      lastPlanRef.current = null;
       setLevelUpData(null);
     }
   }, [user?.uid]);
@@ -438,7 +440,8 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!user || isLoading) return;
-    const currentInfo = calculateGamerLevel(stats, undefined, user.plan, user.bonusXp);
+    const effectivePlan = getEffectiveAccess(user).plan;
+    const currentInfo = calculateGamerLevel(stats, undefined, effectivePlan, user.bonusXp);
     const { level, rankTitle } = currentInfo;
 
     // Assinatura baseada SOMENTE nas estatísticas (não no bonusXp) para evitar loop:
@@ -463,6 +466,7 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
     // 1. Fase de Hidratação Inicial: NUNCA dispara comemoração no carregamento/F5/login.
     if (!isHydratedRef.current) {
       isHydratedRef.current = true;
+      lastPlanRef.current = effectivePlan;
 
       let storedCelebrated = 0;
       try {
@@ -484,6 +488,17 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
           console.warn("Erro ao sincronizar celebração de nível:", err)
         );
       }
+      return;
+    }
+
+    // Se o plano mudou depois da hidratação inicial (ex: admin reconhecido ou upgrade/downgrade),
+    // atualizamos o teto sem disparar popup falso de level-up.
+    if (lastPlanRef.current !== effectivePlan) {
+      lastPlanRef.current = effectivePlan;
+      celebratedLevelRef.current = Math.max(celebratedLevelRef.current, level);
+      try {
+        localStorage.setItem(`gamevault_celebrated_level_${user.uid}`, String(celebratedLevelRef.current));
+      } catch {}
       return;
     }
 

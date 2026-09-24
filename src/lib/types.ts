@@ -487,6 +487,7 @@ export interface UserProfile {
   customHtml?: string | null;
   customMarkdown?: string | null;
   customBioMode?: "markdown" | "html" | null;
+  customCss?: string | null;
   socialLinks?: SocialLinks;
   showcaseGameId?: number | null;
   isPublic?: boolean;

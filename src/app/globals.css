@@ -325,13 +325,13 @@ div[class*="fixed"][class*="inset-0"] {
   view-transition-name: none !important;
 }
 
-/* Transição sutil no conteúdo principal */
+/* Transição fluida e suave no conteúdo principal sem piscar */
 .vt-main {
   view-transition-name: app-main;
 }
 
 ::view-transition-group(app-main) {
-  animation-duration: 0.2s;
+  animation-duration: 0.18s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -340,56 +340,48 @@ div[class*="fixed"][class*="inset-0"] {
 }
 
 ::view-transition-new(app-main) {
-  animation: 0.2s ease-out both vt-page-in;
+  animation: 0.18s ease-out both vt-page-in;
 }
 
 @keyframes vt-page-out {
   from {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translateY(-4px) scale(0.994);
   }
 }
 
 @keyframes vt-page-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.996);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
-/* Mobile fine-tuning: faster response & touch-oriented feel */
+/* Mobile: transição instantânea e pura de opacidade para evitar trepidação no toque */
 @media (max-width: 768px) {
   ::view-transition-group(app-main) {
-    animation-duration: 0.24s;
+    animation-duration: 0.15s;
   }
   
   @keyframes vt-page-out {
     from {
       opacity: 1;
-      transform: translateY(0);
     }
     to {
       opacity: 0;
-      transform: translateY(-6px);
     }
   }
 
   @keyframes vt-page-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
     }
   }
 }
@@ -499,6 +491,20 @@ div[class*="fixed"][class*="inset-0"] {
 .glass-card-hover:hover {
   border-color: rgba(16, 185, 129, 0.35);
   transform: translateY(-2px);
+}
+
+/* Suavização de animate-pulse: evita oscilação drástica de opacidade (0.5 -> 1) que causa efeito de estroboscópio */
+@keyframes soft-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.animate-pulse {
+  animation: soft-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
 }
 
 

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Cloud, Save, ChevronRight } from "lucide-react";
+import { ArrowLeft, Check, Cloud, Save, ChevronRight, Lock } from "lucide-react";
 import { UserGame } from "@/lib/types";
 import { useProfileSettings } from "@/hooks/useProfileSettings";
+import AuthModal from "@/components/AuthModal";
 import ProfilePreviewCard from "./ProfilePreviewCard";
 import IdentityAccordion from "./IdentityAccordion";
 import VisualThemeAccordion from "./VisualThemeAccordion";
@@ -42,6 +43,7 @@ export default function ProfileSettingsHub({
   games = EMPTY_USER_GAMES,
 }: ProfileSettingsHubProps) {
   const router = useRouter();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const handleBack = () => (onClose ? onClose() : router.back());
   const settings = useProfileSettings(initialTab, onOpenUpgrade, onClose);
 
@@ -54,6 +56,46 @@ export default function ProfileSettingsHub({
       }
     }
   }, [settings.activeAccordion]);
+
+  if (settings.isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b0d12] text-white flex flex-col items-center justify-center gap-3">
+        <div className="w-9 h-9 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+        <span className="text-xs font-mono text-gray-400">Carregando estúdio de identidade...</span>
+      </div>
+    );
+  }
+
+  if (!settings.isLoading && !settings.user) {
+    return (
+      <div className="min-h-screen bg-[#0b0d12] text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-emerald-400">
+          <Lock className="w-7 h-7" />
+        </div>
+        <h2 className="text-lg font-bold mb-1">Acesso Restrito ao Estúdio</h2>
+        <p className="text-xs text-gray-400 max-w-sm mb-6">
+          Você precisa estar conectado à sua conta para personalizar seu perfil, insígnias e temas visuais.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-gray-300"
+          >
+            Voltar
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAuthOpen(true)}
+            className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-transform"
+          >
+            Fazer Login
+          </button>
+        </div>
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0b0d12] text-[#e2e2e9] selection:bg-[#10b981] selection:text-black">
@@ -100,7 +142,7 @@ export default function ProfileSettingsHub({
             equippedTitles={settings.equippedTitles}
             layout={settings.layout}
             theme={settings.theme}
-            customCss={(settings.user as any)?.customCss}
+            customCss={settings.customCss}
           />
 
           {/* Desktop-only Quick Drawer Shortcuts & Action Card */}

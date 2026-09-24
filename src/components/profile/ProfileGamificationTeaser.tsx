@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { UserProfile, LibraryStats, calculateGamerLevel } from "@/lib/types";
+import { UserProfile, LibraryStats, calculateGamerLevel, getEffectiveAccess } from "@/lib/types";
 import { Trophy, ChevronRight, Sparkles, Zap } from "lucide-react";
 
 export interface ProfileGamificationTeaserProps {
@@ -21,8 +21,9 @@ export default function ProfileGamificationTeaser({
   stats,
   isOwner,
 }: ProfileGamificationTeaserProps) {
-  const gamerLevelInfo = calculateGamerLevel(stats, undefined, user.plan, user.bonusXp);
-  const displayLevel = user.gamerLevel || gamerLevelInfo.level;
+  const effectivePlan = getEffectiveAccess(user).plan;
+  const gamerLevelInfo = calculateGamerLevel(stats, undefined, effectivePlan, user.bonusXp);
+  const displayLevel = gamerLevelInfo.level;
   const progressPercent = Math.min(100, Math.max(0, Math.round(gamerLevelInfo.percentToNext)));
 
   const conquistasUrl = user.username

@@ -12,12 +12,15 @@ import {
   calculateGamerLevel,
   DEFAULT_GAMIFICATION_CONFIG,
   setRankTiers,
+  getEffectiveAccess,
+  ADMIN_EMAILS,
   type UserGame,
   type UserPlan,
   type LibraryStats,
   type GamificationAchievementDef,
   type GamificationMissionDef,
   type GamificationConfig,
+  type UserProfile,
 } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +120,20 @@ export async function POST(request: NextRequest) {
     }
 
     const userData = userSnap.data() || {};
-    const plan: UserPlan = (userData.plan as UserPlan) || "free";
+    const isAdmin = Boolean(
+      userData.isAdmin ||
+        (userData.email && ADMIN_EMAILS.includes(String(userData.email).toLowerCase()))
+    );
+    const effectivePlan = getEffectiveAccess({
+      plan: userData.plan,
+      isPremium: userData.isPremium,
+      hideAds: userData.hideAds,
+      premiumUntil: userData.premiumUntil,
+      planSource: userData.planSource,
+      planLabel: userData.planLabel,
+      isAdmin,
+    }).plan;
+    const plan: UserPlan = effectivePlan;
     const existingBonusXp = Math.max(0, Math.floor(Number(userData.bonusXp) || 0));
     const claimed = new Set<string>(
       Array.isArray(userData.claimedRewards) ? userData.claimedRewards : []

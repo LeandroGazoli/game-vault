@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { UserGame, UserProfile } from "@/lib/types";
+import { UserGame, UserProfile, getEffectiveAccess } from "@/lib/types";
 import { ProfileSectionConfig, ProfileTemplate, ProfileTemplateId } from "@/lib/types/profile.types";
 import { GamerRankResult } from "@/lib/firebase";
 import ProfileSectionsModal from "@/components/profile/ProfileSectionsModal";
@@ -210,7 +210,8 @@ export default function ProfileModalsContainer({
         stats={activeStats}
         gamerLevel={activeUser.gamerLevel}
         realRank={realGamerRank?.formattedRank}
-        plan={activeUser.plan}
+        plan={getEffectiveAccess(activeUser).plan}
+        bonusXp={activeUser.bonusXp}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
       />
 

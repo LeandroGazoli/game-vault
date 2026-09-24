@@ -4,6 +4,31 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.13.2] — 2026-09-24
+ 
+### 🐛 Correções & Estabilidade
+- **Estúdio de Edição de Perfil (`/perfil/editar`):**
+  - **Sincronização de Hidratação de Sessão:** Corrigido o problema em que o formulário de personalização de perfil carregava com campos vazios caso os dados do usuário do Firebase demorassem para hidratar. Agora um listener reativo atualiza os dados locais de forma fluida.
+  - **Edição da Data de Nascimento:** Adicionado campo `input type="date"` estilizado e integrado ao tema escuro na gaveta *"Dados do Perfil & Identidade"*, permitindo definir a data de nascimento e visualizar o cálculo de idade imediatamente.
+  - **Custom CSS & Snippets VIP/PRO:** Corrigidas as propriedades de `customCss` e snippets rápidos na gaveta de temas visuais, ligando o estado reativo diretamente ao preview do perfil (`ProfilePreviewCard`).
+  - **Proteção de Acesso & Loading State:** Adicionada tela de carregamento suave enquanto a autenticação é resolvida e exibição amigável de barreira com convite para login (`AuthModal`) caso o usuário acesse a rota sem estar autenticado.
+
+---
+
+## [v4.13.1] — 2026-09-24
+
+### 🐛 Correções & Unificação
+- **Unificação de Nível Gamer & Prevenção de Falsos Level-Ups:**
+  - Corrigida a divergência em que o popup de comemoração exibia Nível 66 enquanto o perfil/sidebar exibiam 42.
+  - O cálculo de nível agora deriva consistentemente o plano efetivo (`getEffectiveAccess`) em todos os componentes e na rota de sincronização do servidor (`/api/gamification/sync`), alinhando permissões VIP/PRO administrativas com a base de dados.
+  - Implementada proteção para evitar disparo do modal de celebração durante a hidratação de sessão ou mudança de plano.
+- **Fluidez do SplashScreen & Animações de Carregamento:**
+  - Corrigido o efeito de piscar consecutivo e demora no carregamento mobile do PWA.
+  - SplashScreen agora persiste exibição apenas na primeira visita da sessão (`sessionStorage`) com timeout reduzido de 250ms e resposta imediata no evento `DOMContentLoaded`.
+  - Suavização da animação pulsante (`animate-pulse`) e transição contínua sem saltos no CSS global.
+
+---
+
 ## [v4.13.0] — 2026-09-24
 
 ### 🚀 Novidades: Mural da Comunidade (Guestbook) & Mais Aguardados com Countdown
