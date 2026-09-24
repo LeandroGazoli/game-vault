@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserGame, LibraryStats, GameStatus } from "@/lib/types";
 import { getThemeStyles } from "@/lib/themeStyles";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import ProfileLibraryCard from "@/components/profile/ProfileLibraryCard";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
 import {
@@ -52,6 +53,7 @@ export default function ProfileLibrarySection({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "playtime" | "title" | "year">("recent");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { ref: tabsRef, isDragging: isDraggingTabs, dragProps: tabsDragProps } = useDragScroll<HTMLDivElement>();
 
   const themeStyles = getThemeStyles(theme as any);
 
@@ -100,7 +102,14 @@ export default function ProfileLibrarySection({
       {/* Abas Superiores & Controles */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
         {/* Abas com scroll horizontal suave */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div
+          ref={tabsRef}
+          {...tabsDragProps}
+          className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 select-none ${
+            isDraggingTabs ? "cursor-grabbing" : "cursor-grab"
+          }`}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {[
             { id: "all", label: "Todos", icon: Layers, count: stats.totalGames },
             { id: "library", label: "Biblioteca", icon: Library, count: stats.libraryCount ?? stats.totalGames },

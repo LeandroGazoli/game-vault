@@ -83,6 +83,16 @@ export const RECENT_CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    version: "v4.10.2",
+    date: "21/09/2026",
+    title: "Suporte a Arrastar Menu de Abas no Perfil (Desktop / PC)",
+    highlights: [
+      "Permite clicar e arrastar (drag-to-scroll) na barra horizontal de categorias do perfil no PC",
+      "Diferenciação precisa entre clique e arrasto para navegação fluida sem ativações acidentais",
+      "Feedback visual de cursor (cursor-grab e cursor-grabbing) em desktop sem afetar touch no mobile",
+    ],
+  },
+  {
     version: "v4.10.1",
     date: "21/09/2026",
     title: "Suporte Oficial a Markdown para Agentes de IA (Content Negotiation)",

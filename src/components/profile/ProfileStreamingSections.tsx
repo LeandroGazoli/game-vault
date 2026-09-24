@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserGame, LibraryStats, GameStatus } from "@/lib/types";
 import { getThemeStyles } from "@/lib/themeStyles";
 import { triggerSelectionHaptic } from "@/lib/capacitor";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import ProfileStreamingRows from "@/components/profile/ProfileStreamingRows";
 import ProfileLibraryCard from "@/components/profile/ProfileLibraryCard";
 import SteamInventoryViewer from "@/components/steam/SteamInventoryViewer";
@@ -63,6 +64,7 @@ export default function ProfileStreamingSections({
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "playtime" | "title" | "year">("recent");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const themeStyles = getThemeStyles(theme as any);
+  const { ref: tabsRef, isDragging: isDraggingTabs, dragProps: tabsDragProps } = useDragScroll<HTMLDivElement>();
 
   // Listas especializadas para os 3 blocos de streaming
   const playingGames = useMemo(() => games.filter((g) => g.status === "playing"), [games]);
@@ -113,7 +115,14 @@ export default function ProfileStreamingSections({
     <section id="profile-library-streaming" className="profile-library-streaming space-y-6" aria-label="Biblioteca de Jogos">
       {/* 1. SELETOR ERGONÔMICO DE CATEGORIAS / MODO STREAMING (ÚNICA FONTE DE CONTROLE) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div
+          ref={tabsRef}
+          {...tabsDragProps}
+          className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 select-none ${
+            isDraggingTabs ? "cursor-grabbing" : "cursor-grab"
+          }`}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {[
             { id: "stream", label: "Destaques Streaming", icon: Sparkles, count: "" },
             { id: "all", label: "Coleção Completa", icon: Layers, count: stats.totalGames },
