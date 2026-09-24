@@ -322,6 +322,12 @@ export default function RootLayout({
                     </h4>
                     <ul className="space-y-2 text-xs">
                       <li>
+                        <Link href="/changelog" className="hover:text-emerald-400 transition-colors font-medium flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                          Novidades &amp; Atualizações
+                        </Link>
+                      </li>
+                      <li>
                         <Link href="/sobre" className="hover:text-white transition-colors">
                           Sobre o MyGameList
                         </Link>
@@ -380,6 +386,10 @@ export default function RootLayout({
                   <div className="flex flex-wrap items-center justify-center gap-4 text-gray-400 font-medium">
                     <Link href="/artigos" className="hover:text-emerald-400 transition-colors">
                       Artigos &amp; Guias
+                    </Link>
+                    <span>•</span>
+                    <Link href="/changelog" className="hover:text-emerald-400 transition-colors">
+                      Novidades
                     </Link>
                     <span>•</span>
                     <Link href="/sobre" className="hover:text-white transition-colors">
