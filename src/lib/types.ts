@@ -526,6 +526,29 @@ export interface UserProfile {
       lives: boolean;
     }
   >;
+  mostAnticipatedGames?: Array<{
+    id: string;
+    gameTitle: string;
+    coverUrl?: string;
+    releaseDate: string;
+    platform?: string;
+    hypeReason?: string;
+  }>;
+  guestbookConfig?: {
+    enabled: boolean;
+    requireApproval: boolean;
+  };
+  guestbookEntries?: Array<{
+    id: string;
+    authorUid: string;
+    authorUsername: string;
+    authorDisplayName: string;
+    authorPhotoURL?: string | null;
+    content: string;
+    playedTogetherGameTitle?: string;
+    createdAt: string;
+    approved: boolean;
+  }>;
   readNotificationIds?: string[];
   dismissedNotificationIds?: string[];
   gamesCount?: number;

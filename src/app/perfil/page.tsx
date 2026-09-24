@@ -31,6 +31,8 @@ import FavoriteCharactersSection from "@/components/profile/FavoriteCharactersSe
 import SetupShowcaseSection from "@/components/profile/SetupShowcaseSection";
 import TwitchLiveSection from "@/components/profile/TwitchLiveSection";
 import NowPlayingRail from "@/components/profile/NowPlayingRail";
+import MostAnticipatedSection from "@/components/profile/MostAnticipatedSection";
+import ProfileGuestbookSection from "@/components/profile/ProfileGuestbookSection";
 import AuthModal from "@/components/AuthModal";
 import { Gamepad2, XCircle } from "lucide-react";
 import { scopeProfileCss } from "@/lib/sanitizeCss";
@@ -68,7 +70,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
     if (isViewingPublic && routeUsername) {
       setPublicLoading(true);
       fetch(`/api/user/${encodeURIComponent(routeUsername)}/games.json?limit=all`)
-        .then(async (res) => (res.ok ? res.json() : null))
+        .then(async (res) => (res.ok ? ((await res.json()) as { user?: UserProfile; games?: UserGame[]; stats?: any }) : null))
         .then((data) => {
           if (data?.user) setPublicData(data);
           else setPublicNotFound(true);
@@ -181,6 +183,63 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
         return <FavoriteCharactersSection isOwner={isOwnProfile} />;
       case "setup_showcase":
         return <SetupShowcaseSection isOwner={isOwnProfile} />;
+      case "most_anticipated":
+        return (
+          <MostAnticipatedSection
+            games={activeUser.mostAnticipatedGames}
+            isOwner={isOwnProfile}
+            onSaveGames={async (updatedGames) => {
+              if (isOwnProfile) {
+                await updateUserProfile?.({ mostAnticipatedGames: updatedGames });
+              }
+            }}
+          />
+        );
+      case "guestbook":
+        return (
+          <ProfileGuestbookSection
+            entries={activeUser.guestbookEntries}
+            config={activeUser.guestbookConfig}
+            isOwner={isOwnProfile}
+            currentViewer={
+              authUser
+                ? {
+                    uid: authUser.uid,
+                    username: authUser.username,
+                    displayName: authUser.displayName,
+                    photoURL: authUser.photoURL,
+                  }
+                : null
+            }
+            onPostMessage={async (entryData) => {
+              const currentEntries = activeUser.guestbookEntries || [];
+              const isAutoApproved = !activeUser.guestbookConfig?.requireApproval || isOwnProfile;
+              const newEntry = {
+                id: "gb_" + Date.now(),
+                ...entryData,
+                createdAt: new Date().toISOString(),
+                approved: isAutoApproved,
+              };
+              if (isOwnProfile) {
+                await updateUserProfile?.({ guestbookEntries: [newEntry, ...currentEntries] });
+              }
+            }}
+            onApproveMessage={async (entryId) => {
+              if (isOwnProfile) {
+                const currentEntries = activeUser.guestbookEntries || [];
+                const updated = currentEntries.map((e) => (e.id === entryId ? { ...e, approved: true } : e));
+                await updateUserProfile?.({ guestbookEntries: updated });
+              }
+            }}
+            onDeleteMessage={async (entryId) => {
+              if (isOwnProfile) {
+                const currentEntries = activeUser.guestbookEntries || [];
+                const updated = currentEntries.filter((e) => e.id !== entryId);
+                await updateUserProfile?.({ guestbookEntries: updated });
+              }
+            }}
+          />
+        );
       case "showcase":
         return activeUser.showcaseGameId ? (
           <ShowcaseGameCard game={activeLibrary.find((g) => g.gameId === activeUser.showcaseGameId)} />
@@ -188,7 +247,7 @@ export default function ProfilePage({ targetUsername }: ProfilePageProps = {}) {
       default:
         return null;
     }
-  }, [activeUser, activeLibrary, activeStats, isOwnProfile, router, authUser?.socialLinks, updateUserProfile]);
+  }, [activeUser, activeLibrary, activeStats, isOwnProfile, router, authUser, updateUserProfile]);
 
   if (authLoading || (authUser && !isViewingPublic && libraryLoading) || (isViewingPublic && publicLoading)) {
     return <div className="space-y-4 animate-pulse"><div className="h-44 rounded-3xl bg-[#141822]" /><div className="h-64 rounded-3xl bg-[#141822]" /></div>;

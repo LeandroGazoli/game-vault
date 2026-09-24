@@ -2,8 +2,8 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.12.0";
-export const APP_RELEASE_DATE = "2026-09-21";
+export const APP_VERSION = "v4.13.0";
+export const APP_RELEASE_DATE = "2026-09-24";
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.13.0",
+    date: "24/09/2026",
+    title: "Mural da Comunidade (Guestbook) & Mais Aguardados com Countdown",
+    highlights: [
+      "Mural de Recados no perfil com suporte a marcar jogos jogados juntos e moderação opcional.",
+      "Seção Mais Aguardados com contagem regressiva em tempo real até o lançamento de cada jogo.",
+      "Novas seções integradas ao orquestrador modular de perfis.",
+    ],
+  },
   {
     version: "v4.12.0",
     date: "21/09/2026",

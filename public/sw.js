@@ -2,7 +2,7 @@
 // GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v4.12.0"; // Atualize este valor a cada deploy para invalidar caches antigos
+const SW_VERSION = "v4.13.0"; // Atualize este valor a cada deploy para invalidar caches antigos
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,

@@ -4,6 +4,22 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.13.0] — 2026-09-24
+
+### 🚀 Novidades: Mural da Comunidade (Guestbook) & Mais Aguardados com Countdown
+- **Mural da Comunidade (Guestbook no Perfil):**
+  - Permite que amigos e visitantes deixem mensagens públicas de amizade e reconhecimento diretamente no perfil.
+  - Seletor de *"Jogamos Juntos?"* para associar o recado a um jogo específico em comum (ex: *Helldivers 2*, *Call of Duty*, *Sea of Thieves*).
+  - Suporte a moderação opcional pelo proprietário (aprovação prévia das mensagens antes de se tornarem visíveis publicamente).
+- **Seção "Mais Aguardados" com Contagem Regressiva em Tempo Real:**
+  - Vitrine modular destacando os jogos mais aguardados pelo usuário com contagem regressiva viva de Dias, Horas e Minutos até o lançamento oficial.
+  - Personalização de capa, plataforma e motivo do *hype*.
+  - Celebração automática com badge visual *"Já Lançado!"* assim que a data de estreia é atingida.
+- **Integração Modular do Perfil:**
+  - Ambas as seções adicionadas ao catálogo e ao orquestrador modular (`ProfileModularContainer`), permitindo reordenar e ocultar conforme o gosto do usuário.
+
+---
+
 ## [v4.12.0] — 2026-09-21
  
 ### 🚀 Novidades: Identidade Gamer, Sincronização Explicada, Favoritos & Twitch Live

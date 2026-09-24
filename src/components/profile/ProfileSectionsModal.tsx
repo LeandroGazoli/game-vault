@@ -123,8 +123,8 @@ export default function ProfileSectionsModal({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erro ao salvar template");
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data?.error || "Erro ao salvar template");
       }
 
       triggerSuccessHaptic();
