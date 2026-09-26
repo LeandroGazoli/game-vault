@@ -4,6 +4,23 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.14.2] — 2026-09-26
+
+### 🚀 Novidades: Resiliência Total contra Erro 404 & Auto-Cura de Catálogo Gamer
+- **Recuperação Inteligente de Fichas de Jogos:**
+  - A rota `/game/[id]/[slug]` agora possui fallback de busca bidirecional por `slug` ou nome do jogo via IGDB e banco de jogos nacionais/indies.
+  - Eliminação de erros 404 para jogos com identificadores legados, sintéticos ou URLs compartilhadas antigas.
+  - Redirecionamento canônico 301 automático para a URL definitiva do jogo quando resolvido por slug.
+- **Auto-Cura em Segundo Plano da Biblioteca Gamer (`LibraryHealer`):**
+  - Módulo que detecta e converte de forma transparente IDs sintéticos gerados em importações anteriores (IDs `>= 9000000`) para os IDs canônicos do IGDB.
+  - Atualização automática dos registros no Firestore e remoção limpa dos documentos sintéticos obsoletos sem interrupção para o jogador.
+- **Importador de Jogos (Xbox, Steam, PSN) Aprimorado:**
+  - Remoção do limite rígido de 50 jogos por lote no backend de correspondência (`batch-match`), agora suportando até 500 títulos em lotes concorrentes.
+  - Sanitização profunda de títulos com sufixos específicos de consoles (ex: *"para Xbox Series X|S"*, *"- PC Edition"*, *"(Retired)"*, símbolos de marcas registradas).
+  - Geração de slugs normalizados de fallback no importador para assegurar que nenhum jogo fique inacessível caso a API externa sofra oscilações.
+
+---
+
 ## [v4.14.1] — 2026-09-26
 
 ### 🛠️ Melhorias & Performance

@@ -8,6 +8,7 @@ import { getUserLibrary, saveUserGame, removeUserGame, batchSaveUserGames, saveU
 import { auth } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 import { triggerSuccessHaptic } from "@/lib/capacitor";
+import { healSyntheticLibraryIds } from "@/lib/libraryHealer";
 
 interface GameLibraryContextType {
   library: UserGame[];
@@ -109,6 +110,12 @@ export function GameLibraryProvider({ children }: { children: React.ReactNode })
         if (!user.libraryUpdatedAt) {
           saveUserProfile(user.uid, { libraryUpdatedAt: now }).catch(() => {});
         }
+
+        // Executa auto-cura em segundo plano para IDs sintéticos/fallback (ex: importações antigas)
+        healSyntheticLibraryIds(user.uid, finalList, (healed) => {
+          setLibrary(healed);
+          setCachedLibrary(user.uid, healed);
+        });
       } catch (err) {
         console.error("Erro ao carregar biblioteca:", err);
       } finally {

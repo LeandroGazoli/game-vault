@@ -136,13 +136,18 @@ export async function getPopularGamesApi(limit = 20): Promise<Game[]> {
   return await enrichWithHLTB(games, 3);
 }
 
-async function getGameDetailsApi_uncached(id: string | number): Promise<Game | null> {
-  const game = await getGameDetailsIGDB(id);
+async function getGameDetailsApi_uncached(
+  id: string | number,
+  fallbackSlug?: string
+): Promise<Game | null> {
+  const game = await getGameDetailsIGDB(id, fallbackSlug);
   if (!game) return null;
 
   // Tradução sob demanda persistida no banco (100% gratuita no Firestore para Sinopse e Enredo/Narrativa)
+  // Utiliza SEMPRE o game.id canônico (mesmo se a requisição original veio com fallbackSlug ou ID de import)
+  const canonicalId = game.id;
   try {
-    const stored = await getStoredGameTranslations(id);
+    const stored = await getStoredGameTranslations(canonicalId);
 
     // 1. Tradução da Sinopse / Sobre o Jogo (description_raw)
     if (stored.description) {
@@ -153,7 +158,7 @@ async function getGameDetailsApi_uncached(id: string | number): Promise<Game | n
       if (translatedDesc) {
         game.description_raw = translatedDesc;
         if (translatedDesc !== originalDesc) {
-          saveGameTranslations(id, {
+          saveGameTranslations(canonicalId, {
             originalDescription: originalDesc,
             translatedDescription: translatedDesc,
             gameName: game.name,
@@ -173,7 +178,7 @@ async function getGameDetailsApi_uncached(id: string | number): Promise<Game | n
       if (translatedStory) {
         game.storyline = translatedStory;
         if (translatedStory !== originalStory) {
-          saveGameTranslations(id, {
+          saveGameTranslations(canonicalId, {
             originalStoryline: originalStory,
             translatedStoryline: translatedStory,
             gameName: game.name,

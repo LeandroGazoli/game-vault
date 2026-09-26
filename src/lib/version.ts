@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.14.1";
+export const APP_VERSION = "v4.14.2";
 export const APP_RELEASE_DATE = "2026-09-26";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.14.2",
+    date: "26/09/2026",
+    title: "Resiliência Total contra Erro 404 & Auto-Cura de Catálogo Gamer",
+    highlights: [
+      "Fim dos erros 404 em fichas de jogos: recuperação inteligente por slug ou título caso o ID falhe.",
+      "Auto-cura transparente da biblioteca: substituição assíncrona de IDs sintéticos de importação pelos IDs canônicos do IGDB.",
+      "Importação otimizada sem limite de 50 jogos e sanitização automática de sufixos de plataformas (Xbox, Steam).",
+      "Redirecionamento canônico 301 automático e suporte resiliente a jogos independentes.",
+    ],
+  },
   {
     version: "v4.14.1",
     date: "26/09/2026",

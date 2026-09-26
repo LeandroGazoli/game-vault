@@ -17,7 +17,7 @@ export const revalidate = 86400; // ISR: 24 horas em cache na CDN Edge
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id, slug } = await params;
-  const game = await getGameDetailsApi(id).catch(() => null);
+  const game = await getGameDetailsApi(id, slug).catch(() => null);
 
   if (!game) {
     return {
@@ -112,7 +112,7 @@ export default async function GameSlugPage({ params }: PageProps) {
   // aplicação", o que é pior ainda para quem está lendo.
   let game: Awaited<ReturnType<typeof getGameDetailsApi>> = null;
   try {
-    game = await getGameDetailsApi(id);
+    game = await getGameDetailsApi(id, slug);
   } catch (erro) {
     if (erro instanceof IgdbIndisponivelError) {
       console.error(`[game/${id}] IGDB indisponível — servindo aviso em vez de 404:`, erro.message);
@@ -122,11 +122,26 @@ export default async function GameSlugPage({ params }: PageProps) {
   }
 
   if (!game) {
+    // Rede de segurança: verifica se é um jogo indie cadastrado na plataforma
+    let indieRedirectUrl: string | null = null;
+    try {
+      const { fetchIndieBySlugServer } = await import("@/lib/serverData");
+      const indie = await fetchIndieBySlugServer(slug);
+      if (indie) {
+        indieRedirectUrl = `/indies/${indie.slug || indie.id}`;
+      }
+    } catch {}
+
+    if (indieRedirectUrl) {
+      permanentRedirect(indieRedirectUrl);
+    }
+
     notFound();
   }
 
-  // 301 Permanent Redirect se o slug na URL divergir do slug CANÔNICO (getGameUrl).
-  // Compara contra o slug canônico (não o slug cru do IGDB) para evitar loop de redirecionamento.
+  // 301 Permanent Redirect se o ID ou slug na URL divergir do canônico oficial (getGameUrl).
+  // Ex: se veio de importação com ID sintético (/game/16256624/elden-ring),
+  // redireciona automaticamente para o ID canônico oficial (/game/119133/elden-ring).
   const canonicalPath = getGameUrl(game);
   let decodedSlug = slug;
   try {
