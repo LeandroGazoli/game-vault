@@ -25,9 +25,15 @@ export default function PwaRegister() {
       return;
     }
 
+    let isMounted = true;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let handleVisibilityChange: (() => void) | null = null;
+    let handleControllerChange: (() => void) | null = null;
+
     const registerSW = async () => {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js");
+        if (!isMounted) return;
 
         const notifyUpdate = (worker: ServiceWorker) => {
           waitingWorkerRef.current = worker;
@@ -67,7 +73,7 @@ export default function PwaRegister() {
         });
 
         // Verificação periódica suave de atualizações ao retornar à aba
-        const handleVisibilityChange = () => {
+        handleVisibilityChange = () => {
           if (document.visibilityState === "visible") {
             reg.update().catch(() => {});
           }
@@ -75,7 +81,7 @@ export default function PwaRegister() {
         document.addEventListener("visibilitychange", handleVisibilityChange);
 
         // Intervalo de verificação a cada 1 hora
-        const intervalId = setInterval(() => {
+        intervalId = setInterval(() => {
           reg.update().catch(() => {});
         }, 60 * 60 * 1000);
 
@@ -84,7 +90,7 @@ export default function PwaRegister() {
         // para não interromper a navegação inicial do usuário.
         let hadController = Boolean(navigator.serviceWorker.controller);
         let refreshing = false;
-        const handleControllerChange = () => {
+        handleControllerChange = () => {
           if (!hadController) {
             hadController = true;
             return;
@@ -95,16 +101,6 @@ export default function PwaRegister() {
           }
         };
         navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
-
-        // Estes precisam ser guardados FORA: `registerSW` é async, então este `return`
-        // devolveria uma Promise<() => void> — que o React descarta, e o listener de `load`
-        // também. Resultado: o setInterval de 1h e o listener de visibilitychange nunca
-        // eram removidos. Único desbalanceamento add/remove do projeto.
-        cleanupRef.current = () => {
-          clearInterval(intervalId);
-          document.removeEventListener("visibilitychange", handleVisibilityChange);
-          navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
-        };
       } catch (err) {
         console.warn("[PWA] Falha no registro do Service Worker:", err);
       }
@@ -117,9 +113,15 @@ export default function PwaRegister() {
     }
 
     return () => {
+      isMounted = false;
       window.removeEventListener("load", registerSW);
-      cleanupRef.current?.();
-      cleanupRef.current = null;
+      if (intervalId) clearInterval(intervalId);
+      if (handleVisibilityChange) {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+      if (handleControllerChange) {
+        navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      }
     };
   }, []);
 
