@@ -4,6 +4,24 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.15.0] — 2026-09-26
+
+### 🚀 Novidades: Navegação Mobile com Animação Líquida GSAP & Menu Desacoplado
+- **Menu Inferior Mobile Reformulado (5 Opções Únicas e Úteis):**
+  - **Início (`/`):** Feed principal, tendências e lançamentos em destaque.
+  - **Buscar (`/search`):** Exploração do acervo completo de 800k+ jogos com filtros avançados.
+  - **Ações Rápidas (`+`):** Abertura do painel tátil para adicionar jogos, sortear na Roleta 3D ou importar da Steam/PSN/Xbox.
+  - **Rankings (`/rankings`):** Hall da Fama, melhores jogos da história, votações e notas da comunidade (substituindo a antiga rota duplicada da biblioteca).
+  - **Perfil Gamer (`/perfil`):** Acesso direto ao perfil próprio, backlog, tempo de jogo e conquistas.
+- **Animação Líquida com GSAP & Filtro SVG Gooey (Metaball Physics):**
+  - O círculo vibrante de acento (gradiente esmeralda/teal) agora viaja suavemente entre as opções com física elástica (squash & stretch baseado na distância percorrida).
+  - Gota secundária de rastro líquido conectada via filtro SVG `feColorMatrix` e `feGaussianBlur`, recriando tensão superficial e fusão fluida entre abas.
+  - Efeito de impacto e respingo líquido (*ripple drop*) suave no momento do pouso.
+  - Brilho especular 3D de alta nitidez e halo neon sem comprometer performance ou bateria no celular.
+- **Ícones Ativos Integrados:**
+  - Remoção da antiga bolinha verde estática sob o texto.
+  - O ícone da aba ativa agora se eleva suavemente para o centro da bolha líquida, exibindo contraste refinado e feedback tátil (haptics).
+
 ## [v4.14.2] — 2026-09-26
 
 ### 🚀 Novidades: Resiliência Total contra Erro 404 & Auto-Cura de Catálogo Gamer

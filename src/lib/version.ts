@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.14.2";
+export const APP_VERSION = "v4.15.0";
 export const APP_RELEASE_DATE = "2026-09-26";
 
 export interface ChangelogEntry {
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.15.0",
+    date: "26/09/2026",
+    title: "Navegação Mobile com Animação Líquida GSAP e Links Dedicados",
+    highlights: [
+      "Reformulação completa do menu inferior mobile com 5 opções exclusivas sem repetição: Início, Buscar, Ações Rápidas (+), Rankings e Perfil.",
+      "Círculo animado com física líquida GSAP: deslocamento fluido entre as abas com esticamento elástico (squash & stretch), rastro metaball e onda de pouso.",
+      "Filtro SVG Gooey e brilho especular 3D de alta performance sem drenagem de bateria.",
+      "Eliminação do ponto estático verde sob o texto, integrando a elevação do ícone ativo diretamente dentro da bolha esmeralda líquida.",
+    ],
+  },
   {
     version: "v4.14.2",
     date: "26/09/2026",
