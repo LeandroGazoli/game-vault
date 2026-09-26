@@ -28,7 +28,7 @@ set -euo pipefail
 ENV_FILE=".env.local"
 
 # Só o necessário para revisar catálogo e navegação.
-SECRETS_NECESSARIOS=(TWITCH_CLIENT_ID TWITCH_CLIENT_SECRET)
+SECRETS_NECESSARIOS=(TWITCH_CLIENT_ID TWITCH_CLIENT_SECRET INTERNAL_API_SECRET)
 
 # Opcionais: sem eles a revisão funciona, só algumas telas ficam vazias.
 SECRETS_OPCIONAIS=(GEMINI_API_KEY GNEWS_API_KEY NEWSDATA_API_KEY STEAM_API_KEY XBL_API_KEY)

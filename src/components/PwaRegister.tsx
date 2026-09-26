@@ -79,9 +79,16 @@ export default function PwaRegister() {
           reg.update().catch(() => {});
         }, 60 * 60 * 1000);
 
-        // Recarrega suavemente a página quando uma nova versão do Service Worker assume o controle
+        // Recarrega suavemente a página quando uma nova versão do Service Worker assume o controle.
+        // Se a página iniciou sem controller prévio (primeira instalação do SW), não recarrega
+        // para não interromper a navegação inicial do usuário.
+        let hadController = Boolean(navigator.serviceWorker.controller);
         let refreshing = false;
         const handleControllerChange = () => {
+          if (!hadController) {
+            hadController = true;
+            return;
+          }
           if (!refreshing) {
             refreshing = true;
             window.location.reload();

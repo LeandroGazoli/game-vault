@@ -2,7 +2,7 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.14.1";
+export const APP_VERSION = "v4.14.2";
 export const APP_RELEASE_DATE = "2026-09-26";
 
 export interface ChangelogEntry {
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.14.2",
+    date: "26/09/2026",
+    title: "Correção de Navegação e Resiliência do Service Worker",
+    highlights: [
+      "Correção no roteamento de páginas e navegação suave entre jogos, buscas e catálogo.",
+      "Blindagem do Service Worker evitando recarregamento indevido e loops de loading.",
+      "Novo esqueleto neutro e compacto de carregamento global para transições mais limpas.",
+    ],
+  },
   {
     version: "v4.14.1",
     date: "26/09/2026",

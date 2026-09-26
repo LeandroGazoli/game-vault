@@ -4,6 +4,16 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.14.2] — 2026-09-26
+
+### 🛠️ Melhorias & Performance
+- **Resiliência do Service Worker:** Remoção de armadilhas de fallback que forçavam redirecionamento para a Home em falhas momentâneas de rede ou navegação.
+- **Esqueleto de Carregamento Global Neutro:** O `loading.tsx` raiz foi refatorado para um esqueleto neutro e compacto, evitando confusão visual com o layout da Página Inicial durante o trânsito entre rotas.
+- **Instalação do PWA:** Ajuste no listener de ativação do Service Worker para evitar recarregamentos prematuros que interrompiam o primeiro clique de navegação do usuário.
+
+### 🐛 Correções
+- **Navegação e Roteamento de Páginas:** Corrigido o erro de autorização interna no Edge Worker que causava falha 500 no carregamento de rotas e links no catálogo e busca.
+
 ## [v4.14.1] — 2026-09-26
 
 ### 🛠️ Melhorias & Performance

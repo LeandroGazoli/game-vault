@@ -2,7 +2,7 @@
 // GAMEVAULT / MYGAMELIST - SERVICE WORKER DE ALTA PERFORMANCE (v4)
 // ============================================================
 
-const SW_VERSION = "v4.14.1"; // Atualize este valor a cada deploy para invalidar caches antigos
+const SW_VERSION = "v4.14.2"; // Atualize este valor a cada deploy para invalidar caches antigos
 
 const CACHE_NAMES = {
   static: `mgl-static-${SW_VERSION}`,
@@ -151,8 +151,6 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => {
           const cached = await caches.match(request);
           if (cached) return cached;
-          const rootCached = await caches.match("/");
-          if (rootCached) return rootCached;
 
           return new Response(
             `<!DOCTYPE html>
