@@ -16,11 +16,15 @@ export const RECENT_CHANGELOG: ChangelogEntry[] = [
   {
     version: "v4.14.2",
     date: "26/09/2026",
-    title: "Correção de Navegação e Resiliência do Service Worker",
+    title: "Resiliência de Catálogo, Fim dos Erros 404 e Correção de Navegação",
     highlights: [
       "Correção no roteamento de páginas e navegação suave entre jogos, buscas e catálogo.",
       "Blindagem do Service Worker evitando recarregamento indevido e loops de loading.",
       "Novo esqueleto neutro e compacto de carregamento global para transições mais limpas.",
+      "Fim dos erros 404 em fichas de jogos: recuperação inteligente por slug ou título caso o ID falhe.",
+      "Auto-cura transparente da biblioteca: substituição assíncrona de IDs sintéticos de importação pelos IDs canônicos do IGDB.",
+      "Importação otimizada sem limite de 50 jogos e sanitização automática de sufixos de plataformas (Xbox, Steam).",
+      "Redirecionamento canônico 301 automático e suporte resiliente a jogos independentes.",
     ],
   },
   {

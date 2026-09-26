@@ -80,35 +80,41 @@ export default function GameImporterModal({
 
     try {
       const titlesToMatch = drafts.map((d) => d.originalTitle);
-      const res = await fetch("/api/games/batch-match", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titles: titlesToMatch }),
-      });
+      const CHUNK_SIZE = 200;
+      let allMatches: Record<string, any> = {};
 
-      if (res.ok) {
-        const data: any = await res.json();
-        const matches = data.matches || {};
+      for (let i = 0; i < titlesToMatch.length; i += CHUNK_SIZE) {
+        const chunk = titlesToMatch.slice(i, i + CHUNK_SIZE);
+        const res = await fetch("/api/games/batch-match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles: chunk }),
+        });
 
-        setDraftGames((prev) =>
-          prev.map((d) => {
-            const m = matches[d.originalTitle];
-            if (m) {
-              return {
-                ...d,
-                matchedGameId: m.gameId,
-                matchedSlug: m.slug,
-                matchedTitle: m.title || d.originalTitle,
-                matchedCover: m.cover || d.matchedCover,
-                matchedMetacritic: m.metacritic,
-                matchedReleaseYear: m.releaseYear,
-                matchedGenres: m.genres,
-              };
-            }
-            return d;
-          })
-        );
+        if (res.ok) {
+          const data: any = await res.json();
+          allMatches = { ...allMatches, ...(data.matches || {}) };
+        }
       }
+
+      setDraftGames((prev) =>
+        prev.map((d) => {
+          const m = allMatches[d.originalTitle];
+          if (m) {
+            return {
+              ...d,
+              matchedGameId: m.gameId,
+              matchedSlug: m.slug,
+              matchedTitle: m.title || d.originalTitle,
+              matchedCover: m.cover || d.matchedCover,
+              matchedMetacritic: m.metacritic,
+              matchedReleaseYear: m.releaseYear,
+              matchedGenres: m.genres,
+            };
+          }
+          return d;
+        })
+      );
     } catch (err) {
       console.warn("Matching inteligente IGDB falhou parcialmente:", err);
     }
@@ -130,12 +136,16 @@ export default function GameImporterModal({
       const numId = typeof d.matchedGameId === "number" ? d.matchedGameId : parseInt(String(d.matchedGameId || ""), 10);
       const finalGameId = !isNaN(numId) && numId > 0 ? numId : fallbackId;
 
+      const normalizedSlug = d.originalTitle
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
       return {
         gameId: finalGameId,
-        gameSlug:
-          d.matchedSlug ||
-          d.originalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") ||
-          String(finalGameId),
+        gameSlug: d.matchedSlug || normalizedSlug || "jogo",
         gameTitle: d.matchedTitle || d.originalTitle,
         gameCover: d.matchedCover || null,
         status: d.status,

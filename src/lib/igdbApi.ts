@@ -70,7 +70,10 @@ export async function getTwitchAccessToken(): Promise<string | null> {
     );
 
     if (res.ok) {
-      const data = await res.json();
+      const data = (await res.json()) as { access_token?: string; expires_in?: number };
+      if (!data?.access_token || !data?.expires_in) {
+        throw new Error("Token OAuth inválido retornado pela Twitch.");
+      }
       cachedToken = {
         token: data.access_token,
         expiresAt: Date.now() + (data.expires_in * 1000),
@@ -908,10 +911,102 @@ export async function getCalendarGamesIGDB(year: number, month: number): Promise
   return grouped;
 }
 
+// 6. Campos canônicos completos da ficha de um jogo no IGDB
+const IGDB_GAME_DETAIL_FIELDS =
+  "fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, keywords.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.category, age_ratings.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id;";
+
+/**
+ * Resolução resiliente de jogo por SLUG ou TÍTULO no IGDB.
+ * Utilizado como rede de segurança quando o ID numérico for sintético (ex: 9000000+ de imports)
+ * ou quando o jogo não for encontrado por ID direto, evitando erro 404 em links de perfis.
+ */
+export async function getGameDetailsBySlugOrNameIGDB(slugOrTitle: string): Promise<Game | null> {
+  const clean = slugOrTitle.trim();
+  if (!clean) return null;
+
+  const slugCandidate = clean
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+
+  // 1. Tenta buscar direto por igualdade de slug no IGDB (suporta sufixos de desambiguação --1, --2)
+  try {
+    const slugQuery = `where (slug = "${slugCandidate}" | slug = "${slugCandidate}--1" | slug = "${slugCandidate}--2") & parent_game = null; limit 1;`;
+    const slugData = await fetchIGDBOuFalhar("games", `${IGDB_GAME_DETAIL_FIELDS} ${slugQuery}`);
+    if (slugData && slugData.length > 0) {
+      const game = mapIGDBGameToGame(slugData[0]);
+      await enrichGameWithTimeToBeat(game);
+      return game;
+    }
+  } catch (err) {
+    console.warn(`[IGDB] Falha na busca por slug '${slugCandidate}':`, err);
+  }
+
+  // 2. Se não encontrar pelo slug exato, tenta busca textual por título limpo (sem hífens)
+  try {
+    const titleCandidate = clean.replace(/-/g, " ").trim();
+    if (titleCandidate) {
+      const searchResults = await searchAndFilterGamesIGDB({
+        query: titleCandidate,
+        limit: 3,
+      });
+
+      if (searchResults && searchResults.length > 0) {
+        // Pega a ficha completa rica usando o ID canônico do primeiro resultado mais relevante
+        const bestMatch = searchResults[0];
+        return await getGameDetailsIGDB(bestMatch.id);
+      }
+    }
+  } catch (err) {
+    console.warn(`[IGDB] Falha no fallback por título '${clean}':`, err);
+  }
+
+  return null;
+}
+
+async function enrichGameWithTimeToBeat(game: Game): Promise<void> {
+  try {
+    const hltbData = await fetchIGDB(
+      "game_time_to_beats",
+      `fields completely, hastily, normally, count, game_id; where game_id = ${game.id}; limit 1;`,
+      TTL_CONFIG.GAME_DETAILS
+    ).catch(() => []);
+
+    if (hltbData && hltbData.length > 0 && hltbData[0]) {
+      const b = hltbData[0];
+      const mainSec = b.normally || b.hastily;
+      if (mainSec) {
+        const mainStory = Math.round(mainSec / 3600);
+        const completionist = b.completely ? Math.round(b.completely / 3600) : null;
+        const mainExtra = completionist && mainStory ? Math.round((mainStory + completionist) / 2) : null;
+
+        game.hltb = {
+          gameTitle: game.name,
+          mainStory: mainStory > 0 ? mainStory : null,
+          mainExtra: mainExtra && mainExtra > mainStory ? mainExtra : null,
+          completionist: completionist && completionist > mainStory ? completionist : null,
+          source: "IGDB Community Time",
+        };
+      }
+    }
+  } catch {}
+}
+
 // 6. Detalhes de um Jogo por ID (TTL: 144 horas / 6 dias)
-export async function getGameDetailsIGDB(id: string | number): Promise<Game | null> {
-  if (isNaN(Number(id))) return null;
+export async function getGameDetailsIGDB(id: string | number, fallbackSlug?: string): Promise<Game | null> {
   const numId = Number(id);
+
+  // Se o ID for sintético (gerado em importações de bibliotecas sem match, ex: 9000000+)
+  // ou inválido, ativa imediatamente o resgate resiliente pelo slug/título para evitar 404!
+  if (isNaN(numId) || numId >= 9000000) {
+    if (fallbackSlug) {
+      return await getGameDetailsBySlugOrNameIGDB(fallbackSlug);
+    }
+    return null;
+  }
 
   // Consulta rica do jogo e duração nativa (game_time_to_beats) em paralelo
   const [gameData, hltbData] = await Promise.all([
@@ -920,7 +1015,7 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
     // numa URL que está no nosso sitemap faz o Google desindexá-la.
     fetchIGDBOuFalhar(
       "games",
-      `fields name, slug, summary, storyline, cover.image_id, first_release_date, genres.name, platforms.name, aggregated_rating, total_rating, rating, screenshots.image_id, artworks.image_id, videos.name, videos.video_id, themes.name, keywords.name, game_modes.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, websites.category, websites.url, similar_games.name, similar_games.cover.image_id, similar_games.rating, age_ratings.organization.name, age_ratings.rating_category.rating, age_ratings.category, age_ratings.rating, franchises.name, collections.name, player_perspectives.name, language_supports.language.name, language_supports.language_support_type.name, category, dlcs.name, dlcs.id, dlcs.slug, dlcs.cover.image_id, dlcs.first_release_date, dlcs.category, expansions.name, expansions.id, expansions.slug, expansions.cover.image_id, expansions.first_release_date, expansions.category, parent_game.name, parent_game.id, parent_game.slug, parent_game.cover.image_id; where id = ${numId}; limit 1;`,
+      `${IGDB_GAME_DETAIL_FIELDS} where id = ${numId}; limit 1;`,
     ),
     fetchIGDB(
       "game_time_to_beats",
@@ -929,7 +1024,13 @@ export async function getGameDetailsIGDB(id: string | number): Promise<Game | nu
     ).catch(() => []),
   ]);
 
-  if (gameData.length === 0) return null;
+  if (gameData.length === 0) {
+    // Se o ID não retornou dados no IGDB, tenta o resgate pelo slug antes de declarar 404
+    if (fallbackSlug) {
+      return await getGameDetailsBySlugOrNameIGDB(fallbackSlug);
+    }
+    return null;
+  }
 
   const game = mapIGDBGameToGame(gameData[0]);
 
@@ -1057,10 +1158,10 @@ export async function getFilteredGamesCountIGDB(options: SearchFilterOptions): P
         body,
       });
       if (!response.ok) return { count: 0 };
-      return response.json();
+      return (await response.json()) as { count?: number };
     });
 
-    const count = typeof res?.count === "number" ? res.count : 0;
+    const count = typeof (res as { count?: number })?.count === "number" ? (res as { count?: number }).count! : 0;
     if (count > 0) {
       setToCache(cacheKey, count, TTL_CONFIG.SEARCH);
     }
