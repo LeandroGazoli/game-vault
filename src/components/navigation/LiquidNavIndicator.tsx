@@ -14,16 +14,18 @@ export default function LiquidNavIndicator({
   tabRefs,
   containerRef,
 }: LiquidNavIndicatorProps) {
-  const mainOrbRef = useRef<HTMLDivElement>(null);
-  const trailOrbRef = useRef<HTMLDivElement>(null);
-  const rippleOrbRef = useRef<HTMLDivElement>(null);
-  const orbRingRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const humpPathRef = useRef<SVGPathElement>(null);
+  const circleRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
 
   const prevIndexRef = useRef<number>(activeIndex);
   const isInitializedRef = useRef<boolean>(false);
 
-  // Calcula a coordenada X relativa ao container onde o círculo de 48px deve ficar centrado
+  // Largura total do elemento indicador (hump de 88px)
+  const INDICATOR_WIDTH = 88;
+
+  // Calcula a coordenada X para que o hump e o círculo fiquem perfeitamente alinhados com o botão
   const getTargetX = useCallback(
     (index: number): number | null => {
       const container = containerRef.current;
@@ -33,34 +35,27 @@ export default function LiquidNavIndicator({
       const containerRect = container.getBoundingClientRect();
       const tabRect = tab.getBoundingClientRect();
       const tabCenterX = tabRect.left - containerRect.left + tabRect.width / 2;
-      const orbWidth = 48;
 
-      return tabCenterX - orbWidth / 2;
+      return tabCenterX - INDICATOR_WIDTH / 2;
     },
     [containerRef, tabRefs]
   );
 
-  // Animação GSAP com efeito líquido, metaball stretch, lag de rastro e spring landing
   useEffect(() => {
     const targetX = getTargetX(activeIndex);
     if (targetX === null) return;
 
     const prevIndex = prevIndexRef.current;
-    const mainOrb = mainOrbRef.current;
-    const trailOrb = trailOrbRef.current;
-    const rippleOrb = rippleOrbRef.current;
-    const orbRing = orbRingRef.current;
+    const indicator = indicatorRef.current;
+    const circle = circleRef.current;
     const glow = glowRef.current;
 
-    if (!mainOrb || !orbRing) return;
+    if (!indicator || !circle) return;
 
-    // Primeira renderização: posiciona sem animação de transição para não cruzar a tela
+    // Primeiro carregamento: posiciona instantaneamente no elemento ativo sem animação
     if (!isInitializedRef.current) {
-      gsap.set([mainOrb, orbRing], { x: targetX, scaleX: 1, scaleY: 1, rotation: 0 });
-      if (trailOrb) gsap.set(trailOrb, { x: targetX, scale: 0, opacity: 0 });
-      if (rippleOrb) gsap.set(rippleOrb, { x: targetX, scale: 0, opacity: 0 });
-      if (glow) gsap.set(glow, { x: targetX, opacity: 0.6 });
-
+      gsap.set(indicator, { x: targetX, scaleX: 1, scaleY: 1 });
+      if (glow) gsap.set(glow, { opacity: 0.6 });
       isInitializedRef.current = true;
       prevIndexRef.current = activeIndex;
       return;
@@ -70,16 +65,10 @@ export default function LiquidNavIndicator({
 
     const diff = activeIndex - prevIndex;
     const distance = Math.abs(diff);
-    const direction = Math.sign(diff); // 1 = direita, -1 = esquerda
-    const prevX = getTargetX(prevIndex) ?? targetX;
+    const duration = Math.min(0.38 + distance * 0.06, 0.55);
 
-    // Fatores orgânicos de squash e stretch de acordo com a distância
-    const duration = Math.min(0.42 + distance * 0.07, 0.65);
-    const stretchFactor = Math.min(1 + distance * 0.16, 1.45);
-    const squashY = Math.max(1 - distance * 0.1, 0.78);
-
-    // Cancela tweens em andamento nos elementos do indicador
-    gsap.killTweensOf([mainOrb, orbRing, trailOrb, rippleOrb, glow]);
+    // Cancela animações anteriores para transição limpa
+    gsap.killTweensOf([indicator, circle, glow]);
 
     const tl = gsap.timeline({
       defaults: { ease: "power2.out" },
@@ -88,94 +77,56 @@ export default function LiquidNavIndicator({
       },
     });
 
-    // 1. Deslocamento do Círculo Principal e Anel Exterior
-    tl.to([mainOrb, orbRing], {
-      x: targetX,
-      duration: duration,
-      ease: "power3.inOut",
-    }, 0);
-
-    if (glow) {
-      tl.to(glow, {
+    // 1. Deslocamento horizontal do hump e círculo elevado
+    tl.to(
+      indicator,
+      {
         x: targetX,
         duration: duration,
-        ease: "power3.inOut",
-      }, 0);
-    }
-
-    // 2. Física Líquida: Estica na largada, achata no impacto e oscila elasticamente
-    tl.to([mainOrb, orbRing], {
-      scaleX: stretchFactor,
-      scaleY: squashY,
-      rotation: direction * Math.min(distance * 5, 14),
-      duration: duration * 0.42,
-      ease: "power2.in",
-    }, 0)
-    .to([mainOrb, orbRing], {
-      scaleX: 0.84,
-      scaleY: 1.16,
-      rotation: -direction * 4,
-      duration: duration * 0.28,
-      ease: "power2.out",
-    }, duration * 0.42)
-    .to([mainOrb, orbRing], {
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-      duration: duration * 0.42,
-      ease: "elastic.out(1.2, 0.45)",
-    }, duration * 0.68);
-
-    // 3. Gota de Rastro Líquido (Metaball com filtro Gooey)
-    if (trailOrb) {
-      // Inicia a gota de rastro próxima à posição de partida com leve recuo
-      gsap.set(trailOrb, {
-        x: prevX + (direction > 0 ? -4 : 4),
-        scale: 0.75,
-        opacity: 0.95,
-      });
-
-      // A gota de rastro segue com atraso, criando a ponte líquida que se estica
-      tl.to(trailOrb, {
-        x: targetX,
-        duration: duration * 0.75,
-        delay: duration * 0.1,
         ease: "power2.inOut",
-      }, 0);
+      },
+      0
+    );
 
-      // A gota é reabsorvida pela gota principal antes do pouso
-      tl.to(trailOrb, {
-        scale: 0.15,
-        opacity: 0,
+    // 2. Squash & Stretch sutil durante o voo horizontal (efeito líquido na parte superior)
+    tl.to(
+      indicator,
+      {
+        scaleX: Math.min(1 + distance * 0.08, 1.25),
+        scaleY: Math.max(1 - distance * 0.06, 0.88),
         duration: duration * 0.45,
-        ease: "power2.in",
-      }, duration * 0.35);
-    }
+        ease: "power1.in",
+      },
+      0
+    )
+    .to(
+      indicator,
+      {
+        scaleX: 1,
+        scaleY: 1,
+        duration: duration * 0.55,
+        ease: "back.out(1.5)",
+      },
+      duration * 0.45
+    );
 
-    // 4. Efeito de Respingo / Ondulação Líquida no Pouso
-    if (rippleOrb) {
-      gsap.set(rippleOrb, { x: targetX });
-      tl.fromTo(
-        rippleOrb,
-        { scale: 0.8, opacity: 0.6 },
-        { scale: 1.4, opacity: 0, duration: 0.45, ease: "power2.out" },
-        duration * 0.65
-      );
-    }
+    // 3. Efeito elástico no círculo central esmeralda
+    tl.fromTo(
+      circle,
+      { scale: 0.9 },
+      { scale: 1, duration: duration * 0.6, ease: "elastic.out(1.2, 0.5)" },
+      duration * 0.4
+    );
 
     prevIndexRef.current = activeIndex;
   }, [activeIndex, getTargetX]);
 
-  // Recalcula a posição em redimensionamentos de tela ou giro de orientação
+  // Recalcula posição ao redimensionar tela ou rotacionar dispositivo
   useEffect(() => {
     const handleResize = () => {
       const targetX = getTargetX(activeIndex);
       if (targetX === null) return;
-      if (mainOrbRef.current) gsap.set(mainOrbRef.current, { x: targetX });
-      if (orbRingRef.current) gsap.set(orbRingRef.current, { x: targetX });
-      if (glowRef.current) gsap.set(glowRef.current, { x: targetX });
-      if (trailOrbRef.current) gsap.set(trailOrbRef.current, { x: targetX });
-      if (rippleOrbRef.current) gsap.set(rippleOrbRef.current, { x: targetX });
+      if (indicatorRef.current) gsap.set(indicatorRef.current, { x: targetX });
     };
 
     window.addEventListener("resize", handleResize);
@@ -187,70 +138,48 @@ export default function LiquidNavIndicator({
   }, [activeIndex, getTargetX]);
 
   return (
-    <>
-      {/* Definição do Filtro SVG Gooey (Metaball Shader) */}
-      <svg className="fixed w-0 h-0 pointer-events-none -z-50" aria-hidden="true">
-        <defs>
-          <filter id="liquid-nav-goo" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-            <feColorMatrix
-              in="blur"
-              type="matrix"
-              values="
-                1 0 0 0 0
-                0 1 0 0 0
-                0 0 1 0 0
-                0 0 0 19 -8
-              "
-              result="goo"
-            />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </defs>
+    <div
+      ref={indicatorRef}
+      className="absolute top-0 left-0 w-[88px] pointer-events-none z-0"
+      style={{ transform: "translate3d(0, 0, 0)" }}
+      aria-hidden="true"
+    >
+      {/* 1. Hump SVG: Curva orgânica contínua que sobe da linha superior da barra */}
+      <svg
+        className="absolute -top-[18px] left-0 w-[88px] h-[20px] overflow-visible"
+        viewBox="0 0 88 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Preenchimento escuro contínuo com o fundo da navbar (#090b0f) */}
+        <path
+          ref={humpPathRef}
+          d="M 0 20 C 18 20 24 0 44 0 C 64 0 70 20 88 20 Z"
+          fill="#090b0f"
+        />
+        {/* Contorno sutil da curva conectando perfeitamente com border-white/10 da navbar */}
+        <path
+          d="M 0 20 C 18 20 24 0 44 0 C 64 0 70 20 88 20"
+          stroke="rgba(255, 255, 255, 0.12)"
+          strokeWidth="1.2"
+          fill="none"
+        />
       </svg>
 
-      {/* Halo de Brilho Neon Ambiente */}
+      {/* 2. Halo de brilho difuso verde esmeralda no topo */}
       <div
         ref={glowRef}
-        className="absolute -top-3 left-0 w-12 h-12 rounded-full bg-emerald-400/40 blur-xl pointer-events-none -z-10"
-        aria-hidden="true"
+        className="absolute -top-[20px] left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-emerald-400/35 blur-lg pointer-events-none -z-10"
       />
 
-      {/* Camada com Filtro Gooey Líquido (Metaballs ativas) */}
+      {/* 3. Círculo Elevado Esmeralda Perfeito (Centralizado com precisão matemática no topo do Hump) */}
       <div
-        className="absolute inset-0 pointer-events-none z-0 overflow-visible"
-        style={{ filter: "url(#liquid-nav-goo)" }}
-        aria-hidden="true"
+        ref={circleRef}
+        className="absolute -top-[14px] left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 shadow-[0_4px_16px_rgba(16,185,129,0.55),0_0_20px_rgba(16,185,129,0.3)] border-2 border-[#090b0f] flex items-center justify-center overflow-hidden"
       >
-        {/* Gota Secundária de Rastro Líquido */}
-        <div
-          ref={trailOrbRef}
-          className="absolute -top-1.5 left-0 w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 opacity-0"
-        />
-
-        {/* Corpo Líquido do Círculo Principal */}
-        <div
-          ref={mainOrbRef}
-          className="absolute -top-3 left-0 w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300"
-        />
-      </div>
-
-      {/* Onda de Respingo Líquido ao Pousar */}
-      <div
-        ref={rippleOrbRef}
-        className="absolute -top-3 left-0 w-12 h-12 rounded-full border-2 border-emerald-400/60 pointer-events-none z-0 opacity-0"
-        aria-hidden="true"
-      />
-
-      {/* Borda Nítida, Sombra e Brilho Especular 3D de Vidro Líquido */}
-      <div
-        ref={orbRingRef}
-        className="absolute -top-3 left-0 w-12 h-12 rounded-full border-[3px] border-[#090b0f] shadow-[0_4px_22px_rgba(16,185,129,0.55)] pointer-events-none z-0 overflow-hidden"
-        aria-hidden="true"
-      >
-        {/* Reflexo Especular Orgânico */}
+        {/* Brilho Especular Orgânico de Vidro Líquido */}
         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_35%_25%,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0.15)_35%,transparent_65%)] pointer-events-none" />
       </div>
-    </>
+    </div>
   );
 }

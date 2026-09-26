@@ -86,13 +86,13 @@ export default function MobileBottomNav() {
     <>
       <nav
         aria-label="Navegação móvel"
-        className="vt-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-[#090b0f]/95 backdrop-blur-2xl border-t border-white/10 shadow-[0_-8px_32px_rgba(0,0,0,0.85)] pt-2 pb-[max(env(safe-area-inset-bottom,0px)+4px,10px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
+        className="vt-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-[#090b0f] border-t border-white/10 shadow-[0_-8px_32px_rgba(0,0,0,0.85)] pb-[max(env(safe-area-inset-bottom,0px)+4px,8px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]"
       >
         <div
           ref={containerRef}
-          className="max-w-md mx-auto px-2 flex items-center justify-between relative"
+          className="max-w-md mx-auto relative h-[60px] flex items-stretch px-1"
         >
-          {/* Indicador Líquido com GSAP e Filtro SVG Gooey */}
+          {/* Indicador Hump com Círculo Elevado Esmeralda */}
           <LiquidNavIndicator
             activeIndex={activeIndex}
             tabRefs={tabRefs}
@@ -104,11 +104,11 @@ export default function MobileBottomNav() {
             href="/"
             ref={(el) => { tabRefs.current[0] = el; }}
             onClick={() => handleTabClick(0)}
-            className="group relative flex flex-col items-center justify-center min-h-[48px] flex-1 py-1 rounded-2xl active:scale-95 transition-transform duration-200 touch-manipulation z-10 cursor-pointer"
+            className="group relative flex-1 flex flex-col items-center justify-between py-1.5 touch-manipulation z-10 cursor-pointer active:scale-95 transition-transform duration-200"
           >
             <div
-              className={`relative transition-transform duration-300 ease-out ${
-                activeIndex === 0 ? "-translate-y-2.5 scale-110" : "translate-y-0 scale-100"
+              className={`w-10 h-10 flex items-center justify-center transition-transform duration-300 ease-out ${
+                activeIndex === 0 ? "-translate-y-[20px] scale-110" : "translate-y-0 scale-100"
               }`}
             >
               <Flame
@@ -120,8 +120,8 @@ export default function MobileBottomNav() {
               />
             </div>
             <span
-              className={`text-[10px] font-medium tracking-tight mt-1 transition-all duration-200 select-none ${
-                activeIndex === 0 ? "text-emerald-400 font-bold scale-105" : "text-neutral-400"
+              className={`text-[10px] tracking-tight transition-colors duration-200 select-none pb-0.5 ${
+                activeIndex === 0 ? "text-emerald-400 font-bold" : "text-neutral-400 font-medium"
               }`}
             >
               Início
@@ -133,11 +133,11 @@ export default function MobileBottomNav() {
             href="/search"
             ref={(el) => { tabRefs.current[1] = el; }}
             onClick={() => handleTabClick(1)}
-            className="group relative flex flex-col items-center justify-center min-h-[48px] flex-1 py-1 rounded-2xl active:scale-95 transition-transform duration-200 touch-manipulation z-10 cursor-pointer"
+            className="group relative flex-1 flex flex-col items-center justify-between py-1.5 touch-manipulation z-10 cursor-pointer active:scale-95 transition-transform duration-200"
           >
             <div
-              className={`relative transition-transform duration-300 ease-out ${
-                activeIndex === 1 ? "-translate-y-2.5 scale-110" : "translate-y-0 scale-100"
+              className={`w-10 h-10 flex items-center justify-center transition-transform duration-300 ease-out ${
+                activeIndex === 1 ? "-translate-y-[20px] scale-110" : "translate-y-0 scale-100"
               }`}
             >
               <Search
@@ -149,8 +149,8 @@ export default function MobileBottomNav() {
               />
             </div>
             <span
-              className={`text-[10px] font-medium tracking-tight mt-1 transition-all duration-200 select-none ${
-                activeIndex === 1 ? "text-emerald-400 font-bold scale-105" : "text-neutral-400"
+              className={`text-[10px] tracking-tight transition-colors duration-200 select-none pb-0.5 ${
+                activeIndex === 1 ? "text-emerald-400 font-bold" : "text-neutral-400 font-medium"
               }`}
             >
               Buscar
@@ -165,25 +165,25 @@ export default function MobileBottomNav() {
               handleTabClick(2);
               setIsActionSheetOpen(true);
             }}
-            className="group relative flex flex-col items-center justify-center min-h-[48px] flex-1 py-1 rounded-2xl active:scale-95 transition-transform duration-200 touch-manipulation z-10 cursor-pointer"
+            className="group relative flex-1 flex flex-col items-center justify-between py-1.5 touch-manipulation z-10 cursor-pointer active:scale-95 transition-transform duration-200"
             aria-label="Abrir menu de ações rápidas gamer"
           >
             <div
-              className={`relative transition-transform duration-300 ease-out ${
-                activeIndex === 2 ? "-translate-y-2.5 scale-110" : "translate-y-0 scale-100"
+              className={`w-10 h-10 flex items-center justify-center transition-transform duration-300 ease-out ${
+                activeIndex === 2 ? "-translate-y-[20px] scale-110" : "translate-y-0 scale-100"
               }`}
             >
-              {activeIndex === 2 ? (
-                <Plus className="w-5 h-5 text-[#06140e] stroke-[3] drop-shadow-sm" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                  <Plus className="w-3.5 h-3.5 stroke-[2.8]" />
-                </div>
-              )}
+              <Plus
+                className={`w-5 h-5 transition-colors duration-200 ${
+                  activeIndex === 2
+                    ? "text-[#06140e] stroke-[3] drop-shadow-sm"
+                    : "text-neutral-400 group-hover:text-neutral-200 stroke-[2.5]"
+                }`}
+              />
             </div>
             <span
-              className={`text-[10px] font-medium tracking-tight mt-1 transition-all duration-200 select-none ${
-                activeIndex === 2 ? "text-emerald-400 font-bold scale-105" : "text-neutral-400"
+              className={`text-[10px] tracking-tight transition-colors duration-200 select-none pb-0.5 ${
+                activeIndex === 2 ? "text-emerald-400 font-bold" : "text-neutral-400 font-medium"
               }`}
             >
               Ações
@@ -195,11 +195,11 @@ export default function MobileBottomNav() {
             href="/rankings"
             ref={(el) => { tabRefs.current[3] = el; }}
             onClick={() => handleTabClick(3)}
-            className="group relative flex flex-col items-center justify-center min-h-[48px] flex-1 py-1 rounded-2xl active:scale-95 transition-transform duration-200 touch-manipulation z-10 cursor-pointer"
+            className="group relative flex-1 flex flex-col items-center justify-between py-1.5 touch-manipulation z-10 cursor-pointer active:scale-95 transition-transform duration-200"
           >
             <div
-              className={`relative transition-transform duration-300 ease-out ${
-                activeIndex === 3 ? "-translate-y-2.5 scale-110" : "translate-y-0 scale-100"
+              className={`w-10 h-10 flex items-center justify-center transition-transform duration-300 ease-out ${
+                activeIndex === 3 ? "-translate-y-[20px] scale-110" : "translate-y-0 scale-100"
               }`}
             >
               <Trophy
@@ -211,8 +211,8 @@ export default function MobileBottomNav() {
               />
             </div>
             <span
-              className={`text-[10px] font-medium tracking-tight mt-1 transition-all duration-200 select-none ${
-                activeIndex === 3 ? "text-emerald-400 font-bold scale-105" : "text-neutral-400"
+              className={`text-[10px] tracking-tight transition-colors duration-200 select-none pb-0.5 ${
+                activeIndex === 3 ? "text-emerald-400 font-bold" : "text-neutral-400 font-medium"
               }`}
             >
               Rankings
@@ -224,18 +224,18 @@ export default function MobileBottomNav() {
             href={profileHref}
             ref={(el) => { tabRefs.current[4] = el; }}
             onClick={handleProfileClick}
-            className="group relative flex flex-col items-center justify-center min-h-[48px] flex-1 py-1 rounded-2xl active:scale-95 transition-transform duration-200 touch-manipulation z-10 cursor-pointer"
+            className="group relative flex-1 flex flex-col items-center justify-between py-1.5 touch-manipulation z-10 cursor-pointer active:scale-95 transition-transform duration-200"
           >
             <div
-              className={`relative transition-transform duration-300 ease-out ${
-                activeIndex === 4 ? "-translate-y-2.5 scale-110" : "translate-y-0 scale-100"
+              className={`w-10 h-10 flex items-center justify-center transition-transform duration-300 ease-out ${
+                activeIndex === 4 ? "-translate-y-[20px] scale-110" : "translate-y-0 scale-100"
               }`}
             >
               {user ? (
                 <div
                   className={`w-6 h-6 rounded-full overflow-hidden transition-all duration-200 ${
                     activeIndex === 4
-                      ? "ring-2 ring-[#090b0f] shadow-sm"
+                      ? "ring-2 ring-[#06140e] shadow-sm"
                       : "ring-1 ring-white/20 opacity-80"
                   }`}
                 >
@@ -257,8 +257,8 @@ export default function MobileBottomNav() {
               )}
             </div>
             <span
-              className={`text-[10px] font-medium tracking-tight mt-1 transition-all duration-200 max-w-[54px] truncate select-none ${
-                activeIndex === 4 ? "text-emerald-400 font-bold scale-105" : "text-neutral-400"
+              className={`text-[10px] tracking-tight transition-colors duration-200 max-w-[54px] truncate select-none pb-0.5 ${
+                activeIndex === 4 ? "text-emerald-400 font-bold" : "text-neutral-400 font-medium"
               }`}
             >
               {user ? "Perfil" : "Entrar"}
