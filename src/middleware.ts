@@ -80,7 +80,9 @@ export async function middleware(request: NextRequest) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge: 4 * 60 * 60, // 4 horas
-      httpOnly: false, // Permite que o frontend leia para enviar no cabeçalho x-app-token
+      // O cookie é enviado automaticamente nas chamadas same-origin. Mantê-lo inacessível
+      // ao JavaScript impede que uma eventual XSS exfiltre a assinatura de integridade.
+      httpOnly: true,
     });
   }
 

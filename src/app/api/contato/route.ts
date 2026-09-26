@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { ContactSubject } from "@/lib/types/contact.types";
+import { checkRateLimit, getClientIp } from "@/lib/apiSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,18 @@ const VALID_SUBJECTS: ContactSubject[] = ["duvida", "sugestao", "bug", "imprensa
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(getClientIp(request), {
+      max: 5,
+      windowMs: 60 * 60 * 1000,
+      namespace: "contact",
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas mensagens enviadas. Tente novamente mais tarde." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.resetInSeconds) } }
+      );
+    }
+
     const body: any = await request.json().catch(() => ({}));
     const { nome, email, assunto, mensagem, honeypot } = body;
 

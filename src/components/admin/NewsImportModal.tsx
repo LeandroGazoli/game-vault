@@ -111,8 +111,11 @@ export default function NewsImportModal({
     setLoadingNewsData(true);
     try {
       const q = encodeURIComponent(customQuery ?? newsDataQuery);
-      const keyParam = newsDataCustomKey.trim() ? `&apiKey=${encodeURIComponent(newsDataCustomKey.trim())}` : "";
-      const res = await fetch(`/api/newsdata?q=${q}&country=br&language=pt${keyParam}`);
+      const res = await fetch(`/api/newsdata?q=${q}&country=br&language=pt`, {
+        headers: newsDataCustomKey.trim()
+          ? { "x-newsdata-api-key": newsDataCustomKey.trim() }
+          : undefined,
+      });
       if (res.ok) {
         const data = await res.json();
         setNewsDataArticles(data.results || []);
@@ -132,8 +135,11 @@ export default function NewsImportModal({
     setLoadingGNews(true);
     try {
       const q = encodeURIComponent(customQuery ?? gnewsQuery);
-      const keyParam = gnewsCustomKey.trim() ? `&apiKey=${encodeURIComponent(gnewsCustomKey.trim())}` : "";
-      const res = await fetch(`/api/gnews?q=${q}&lang=pt&max=10${keyParam}`);
+      const res = await fetch(`/api/gnews?q=${q}&lang=pt&max=10`, {
+        headers: gnewsCustomKey.trim()
+          ? { "x-gnews-api-key": gnewsCustomKey.trim() }
+          : undefined,
+      });
       if (res.ok) {
         const data = await res.json();
         setGnewsArticles(data.articles || []);

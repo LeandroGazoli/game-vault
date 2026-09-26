@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Chave secreta de assinatura interna do servidor
-const TOKEN_SECRET =
-  process.env.INTERNAL_API_SECRET ||
-  process.env.STRIPE_SECRET_KEY ||
-  process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||
-  "gv_secure_internal_api_token_2026";
+const TOKEN_SECRET = process.env.INTERNAL_API_SECRET?.trim();
 
 // Validade máxima do token interno: 4 horas
 const TOKEN_MAX_AGE_MS = 4 * 60 * 60 * 1000;
@@ -49,6 +45,9 @@ function isHostPermitido(host: string): boolean {
 let cachedCryptoKey: CryptoKey | null = null;
 
 async function getCryptoKey(): Promise<CryptoKey> {
+  if (!TOKEN_SECRET) {
+    throw new Error("INTERNAL_API_SECRET não configurado.");
+  }
   if (cachedCryptoKey) return cachedCryptoKey;
   const enc = new TextEncoder();
   cachedCryptoKey = await crypto.subtle.importKey(
@@ -151,33 +150,39 @@ function cleanupRateLimits() {
   }
 }
 
-export function checkRateLimit(ip: string): {
+export function checkRateLimit(
+  ip: string,
+  options: { max?: number; windowMs?: number; namespace?: string } = {}
+): {
   allowed: boolean;
   remaining: number;
   resetInSeconds: number;
 } {
   cleanupRateLimits();
   const now = Date.now();
-  const record = rateLimitMap.get(ip);
+  const max = options.max ?? RATE_LIMIT_MAX;
+  const windowMs = options.windowMs ?? RATE_LIMIT_WINDOW_MS;
+  const key = `${options.namespace ?? "games"}:${ip}`;
+  const record = rateLimitMap.get(key);
 
-  if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now });
-    return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetInSeconds: 60 };
+  if (!record || now - record.windowStart > windowMs) {
+    rateLimitMap.set(key, { count: 1, windowStart: now });
+    return { allowed: true, remaining: max - 1, resetInSeconds: Math.ceil(windowMs / 1000) };
   }
 
   record.count += 1;
   const resetInSeconds = Math.max(
     1,
-    Math.ceil((record.windowStart + RATE_LIMIT_WINDOW_MS - now) / 1000)
+    Math.ceil((record.windowStart + windowMs - now) / 1000)
   );
 
-  if (record.count > RATE_LIMIT_MAX) {
+  if (record.count > max) {
     return { allowed: false, remaining: 0, resetInSeconds };
   }
 
   return {
     allowed: true,
-    remaining: Math.max(0, RATE_LIMIT_MAX - record.count),
+    remaining: Math.max(0, max - record.count),
     resetInSeconds,
   };
 }
@@ -248,12 +253,14 @@ export function isSameOriginOrLegit(request: NextRequest): {
  * Extrai o IP real do cliente a partir dos cabeçalhos do proxy/Vercel.
  */
 export function getClientIp(request: NextRequest): string {
+  const cloudflareIp = request.headers.get("cf-connecting-ip");
+  if (cloudflareIp) return cloudflareIp.trim();
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
     return forwardedFor.split(",")[0].trim();
   }
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
   return "127.0.0.1";
 }
 

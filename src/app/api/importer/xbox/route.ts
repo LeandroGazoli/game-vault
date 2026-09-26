@@ -49,7 +49,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const gamertag = searchParams.get("gamertag")?.trim();
     const apiKey =
-      searchParams.get("apiKey")?.trim() ||
       req.headers.get("x-authorization")?.trim() ||
       process.env.XBL_API_KEY?.trim() ||
       process.env.OPENXBL_API_KEY?.trim();

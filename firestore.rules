@@ -20,7 +20,11 @@ service cloud.firestore {
 
     // Regras para configurações do sistema e planos da plataforma
     match /system/{document=**} {
-      allow read: if true;
+      // Os clientes consultam documentos conhecidos (`settings`, `plans_config` e
+      // gamificação), mas nunca precisam enumerar a coleção. Bloquear `list` impede
+      // a extração em massa de documentos administrativos ou campos legados.
+      allow get: if true;
+      allow list: if false;
       allow write: if isVerifiedAdmin();
     }
 

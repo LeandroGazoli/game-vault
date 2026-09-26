@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 
-// Fallback para build estático do Next.js caso as variáveis ainda não tenham sido injetadas
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_placeholder_for_build_environment";
+// Valor deliberadamente inválido, usado somente para permitir a avaliação do módulo durante
+// o build sem carregar um segredo embutido. Em produção STRIPE_SECRET_KEY é obrigatória.
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim() || "invalid-stripe-key";
 
 export const stripe = new Stripe(
   stripeSecretKey,

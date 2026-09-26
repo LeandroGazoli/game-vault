@@ -4,6 +4,16 @@ Todas as atualizações notáveis, melhorias de experiência, correções e nova
 
 O formato baseia-se em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue o versionamento semântico.
 
+## [v4.14.1] — 2026-09-26
+
+### 🛠️ Melhorias & Performance
+- Limites por IP agora protegem recursos custosos de recomendações por IA e mensagens de contato.
+- O proxy de imagens valida protocolo, tipo, tamanho e redirecionamentos para reduzir uso indevido de recursos.
+
+### 🐛 Correções
+- Reforçada a proteção contra XSS no conteúdo Markdown e contra o acesso não autorizado às ferramentas editoriais com IA.
+- Tokens e chaves de integrações deixaram de ser expostos em URLs ou ao JavaScript da página.
+
 ## [v4.14.0] — 2026-09-24
 
 ### 🚀 Novidades

@@ -3,19 +3,14 @@
 import { useEffect } from "react";
 import { auth } from "@/lib/firebase";
 
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 export default function SecurityTokenInterceptor() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const originalFetch = window.fetch;
 
-    // Intercepta chamadas de fetch no cliente para injetar o x-app-token e o token de autenticação de forma transparente
+    // O token de integridade é um cookie HttpOnly e acompanha fetches same-origin
+    // automaticamente. Aqui só anexamos o ID token onde há autenticação de usuário.
     window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
       let url = "";
       if (typeof input === "string") {
@@ -26,13 +21,14 @@ export default function SecurityTokenInterceptor() {
         url = input.url;
       }
 
-      if (url.includes("/api/games")) {
-        const headers = new Headers(init?.headers);
-        const token = getCookie("__gv_app_token");
-        if (token && !headers.has("x-app-token")) {
-          headers.set("x-app-token", token);
-        }
+      const requiresUserToken =
+        url.includes("/api/games") ||
+        url.includes("/api/articles/rewrite") ||
+        url.includes("/api/newsdata") ||
+        url.includes("/api/gnews");
 
+      if (requiresUserToken) {
+        const headers = new Headers(init?.headers);
         if (auth?.currentUser && !headers.has("Authorization") && !headers.has("authorization")) {
           try {
             const idToken = await auth.currentUser.getIdToken();

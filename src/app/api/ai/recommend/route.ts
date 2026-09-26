@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSystemSettingsServer } from "@/lib/serverData";
 import { searchAndFilterGamesIGDB } from "@/lib/igdbApi";
 import { Game } from "@/lib/types";
+import { checkRateLimit, getClientIp } from "@/lib/apiSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,18 @@ function setAiCache(key: string, value: { games: Game[]; explanation: string; ti
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(getClientIp(request), {
+      max: 10,
+      windowMs: 60_000,
+      namespace: "ai-recommend",
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas solicitações de IA. Aguarde um minuto antes de tentar novamente." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.resetInSeconds) } }
+      );
+    }
+
     // 1. Verifica se a feature flag 'aiRecommendations' está ativa no Admin
     const settings = await getSystemSettingsServer();
     if (!settings.features?.aiRecommendations) {
@@ -42,6 +55,12 @@ export async function POST(request: NextRequest) {
     if (!prompt || prompt.length < 3) {
       return NextResponse.json(
         { error: "Digite uma descrição ou estilo de jogo para receber recomendações." },
+        { status: 400 }
+      );
+    }
+    if (prompt.length > 1_000) {
+      return NextResponse.json(
+        { error: "O pedido deve ter no máximo 1000 caracteres." },
         { status: 400 }
       );
     }

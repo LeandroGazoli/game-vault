@@ -3,7 +3,6 @@
 import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import { useSanitizedHtml } from "@/lib/sanitizeHtml";
 import { Sparkles, FileText, Edit2 } from "lucide-react";
 
@@ -52,7 +51,6 @@ export default function MarkdownProfileBio({
       <div className="custom-profile-bio custom-profile-html prose prose-invert max-w-none space-y-4 text-xs sm:text-sm text-gray-200 leading-relaxed break-words font-sans">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
           components={{
             h1: ({ node, ...props }) => (
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight pb-2 border-b border-white/10 mt-4 mb-2 text-[#00E5FF]" {...props} />

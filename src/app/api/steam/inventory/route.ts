@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const appId = parseInt(searchParams.get("appId") || "730", 10);
   const count = Math.min(100, Math.max(1, parseInt(searchParams.get("count") || "75", 10)));
   const startAssetId = searchParams.get("startAssetId") || "";
-  const apiKey = getSteamApiKey(searchParams.get("apiKey") || undefined);
+  const apiKey = getSteamApiKey(request.headers.get("x-steam-api-key") || undefined);
 
   // Encontra configuração do app suportado
   const supportedApp = STEAM_SUPPORTED_APPS.find((a) => a.id === appId) || STEAM_SUPPORTED_APPS[0];

@@ -26,7 +26,8 @@ export default function XboxImportTab({
   const [isLoading, setIsLoading] = useState(false);
   const [isKeySavedInDb, setIsKeySavedInDb] = useState(false);
 
-  // Carrega a chave privada salva no Firestore (users/{uid}/private/data) ou localStorage
+  // A chave fica somente no documento privado do usuário. Nunca usar localStorage:
+  // qualquer XSS na origem conseguiria exfiltrá-la.
   useEffect(() => {
     let isMounted = true;
     async function loadSavedKey() {
@@ -41,10 +42,6 @@ export default function XboxImportTab({
         } catch {}
       }
 
-      if (typeof window !== "undefined" && isMounted) {
-        const localKey = localStorage.getItem("gamevault_xbox_api_key");
-        if (localKey) setXboxApiKey(localKey);
-      }
     }
 
     loadSavedKey();
@@ -55,9 +52,6 @@ export default function XboxImportTab({
 
   const handleApiKeyChange = async (val: string) => {
     setXboxApiKey(val);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("gamevault_xbox_api_key", val.trim());
-    }
     // Salva na subcoleção privada no Firestore se o usuário estiver autenticado
     if (user?.uid) {
       try {
@@ -104,9 +98,9 @@ export default function XboxImportTab({
     try {
       const params = new URLSearchParams();
       params.set("gamertag", xboxInput.trim());
-      if (xboxApiKey.trim()) params.set("apiKey", xboxApiKey.trim());
-
-      const res = await fetch(`/api/importer/xbox?${params.toString()}`);
+      const res = await fetch(`/api/importer/xbox?${params.toString()}`, {
+        headers: xboxApiKey.trim() ? { "x-authorization": xboxApiKey.trim() } : undefined,
+      });
       const data: any = await res.json();
 
       if (!data.success || !Array.isArray(data.games) || data.games.length === 0) {

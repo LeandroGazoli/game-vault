@@ -4,7 +4,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const psnId = searchParams.get("psnId")?.trim();
-    const npsso = searchParams.get("npsso")?.trim() || process.env.PSN_NPSSO?.trim();
+    const npsso = req.headers.get("x-psn-npsso")?.trim() || process.env.PSN_NPSSO?.trim();
 
     if (!psnId) {
       return NextResponse.json(

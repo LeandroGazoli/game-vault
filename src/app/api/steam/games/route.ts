@@ -9,7 +9,7 @@ import {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const steamInput = searchParams.get("steamId") || searchParams.get("id") || "";
-  const apiKey = getSteamApiKey(searchParams.get("apiKey") || undefined);
+  const apiKey = getSteamApiKey(request.headers.get("x-steam-api-key") || undefined);
 
   if (!steamInput.trim()) {
     return NextResponse.json(

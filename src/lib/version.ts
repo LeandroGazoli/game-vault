@@ -2,8 +2,8 @@
  * Versão pública do MyGameList / Game Vault.
  * Sincronizada com o Service Worker (public/sw.js) e documentada no CHANGELOG.md.
  */
-export const APP_VERSION = "v4.14.0";
-export const APP_RELEASE_DATE = "2026-09-24";
+export const APP_VERSION = "v4.14.1";
+export const APP_RELEASE_DATE = "2026-09-26";
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,15 @@ export interface ChangelogEntry {
 }
 
 export const RECENT_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "v4.14.1",
+    date: "26/09/2026",
+    title: "Segurança e Resiliência de APIs",
+    highlights: [
+      "Reforços contra XSS, abuso de IA e acesso indevido a serviços administrativos.",
+      "Proteções extras para proxy de imagens e uso de chaves de integrações.",
+    ],
+  },
   {
     version: "v4.14.0",
     date: "24/09/2026",

@@ -11,7 +11,12 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const incomingSecret = request.headers.get("x-email-worker-secret");
-    const configuredSecret = process.env.EMAIL_WORKER_SECRET || "mgl-email-worker-secure-secret-2026";
+    const configuredSecret = process.env.EMAIL_WORKER_SECRET?.trim();
+
+    if (!configuredSecret) {
+      console.error("[api/webhooks/email-inbound] EMAIL_WORKER_SECRET não configurado.");
+      return NextResponse.json({ error: "Webhook indisponível." }, { status: 503 });
+    }
 
     if (incomingSecret !== configuredSecret) {
       return NextResponse.json({ error: "Acesso não autorizado." }, { status: 401 });

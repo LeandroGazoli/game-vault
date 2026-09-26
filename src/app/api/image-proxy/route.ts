@@ -17,6 +17,8 @@ const ALLOWED_HOSTS = [
   "firebasestorage.googleapis.com",
 ];
 
+const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,6 +29,9 @@ export async function GET(request: NextRequest) {
     }
 
     const parsed = new URL(imageUrl);
+    if (parsed.protocol !== "https:") {
+      return new NextResponse("Protocolo não permitido", { status: 400 });
+    }
     const hostname = parsed.hostname.toLowerCase();
 
     const isAllowed = ALLOWED_HOSTS.some(
@@ -38,6 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(imageUrl, {
+      redirect: "error",
       headers: {
         "User-Agent": "GameVault-App/1.0 (ImageProxy)",
       },
@@ -50,13 +56,22 @@ export async function GET(request: NextRequest) {
     }
 
     const contentType = response.headers.get("content-type") || "image/jpeg";
+    if (!contentType.toLowerCase().startsWith("image/")) {
+      return new NextResponse("Resposta remota não é uma imagem", { status: 415 });
+    }
+    const contentLength = Number(response.headers.get("content-length") || "0");
+    if (contentLength > MAX_IMAGE_SIZE_BYTES) {
+      return new NextResponse("Imagem excede o tamanho máximo permitido", { status: 413 });
+    }
     const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > MAX_IMAGE_SIZE_BYTES) {
+      return new NextResponse("Imagem excede o tamanho máximo permitido", { status: 413 });
+    }
 
     return new NextResponse(arrayBuffer, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
-        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch (error) {

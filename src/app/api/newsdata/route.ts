@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchNewsDataArticles } from "@/lib/newsDataService";
+import { requireAdminUser } from "@/lib/serverAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const authCheck = await requireAdminUser(req);
+    if (!authCheck.authenticated) {
+      return NextResponse.json({ error: authCheck.error }, { status: authCheck.status });
+    }
+
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q") || undefined;
     const country = searchParams.get("country") || undefined;
     const language = searchParams.get("language") || undefined;
     const category = searchParams.get("category") || undefined;
     const page = searchParams.get("page") || undefined;
-    const customApiKey = searchParams.get("apiKey") || undefined;
+    const customApiKey = req.headers.get("x-newsdata-api-key") || undefined;
 
     const data = await fetchNewsDataArticles({
       q,
